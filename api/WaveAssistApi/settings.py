@@ -81,10 +81,14 @@ WSGI_APPLICATION = 'WaveAssistApi.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': 'waveassistdatabase.chjtszq6llmw.us-east-1.rds.amazonaws.com',  # WaveAssist DB
+        'NAME': 'waveassistdb',
+        'USER': 'admin',
+        'PASSWORD': 'waveassistdbpassword',
+        }
 }
+
 
 
 # Password validation
@@ -127,3 +131,26 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://waveassistcachecluster.lqjglu.ng.0001.use1.cache.amazonaws.com:6379',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+
+#
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379',
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         }
+#     }
+# }
+

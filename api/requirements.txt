@@ -5,3 +5,5 @@ sqlparse==0.4.4
 mysqlclient==2.0.3
 django-cors-headers==3.14.0
 firebase-admin==6.1.0
+django-redis==5.2.0
+numpy==1.21.5
