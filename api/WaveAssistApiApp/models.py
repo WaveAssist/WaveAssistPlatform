@@ -69,8 +69,7 @@ class Project(models.Model):
         project_dict = {}
         project_dict['id'] = self.id
         project_dict['project_key'] = self.project_key
-        project_dict['client'] = self.client.get_dict()
-        project_dict['creation_status'] = self.creation_status
+        project_dict['creation_status'] = self.running_status
         project_dict['payment_status'] = self.payment_status
         return project_dict
 
