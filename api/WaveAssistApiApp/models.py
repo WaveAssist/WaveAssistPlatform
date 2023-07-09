@@ -50,11 +50,14 @@ class IOData(models.Model):
 
 class Project(models.Model):
     id = models.BigAutoField(primary_key=True)
+    project_key = models.CharField(unique=True, max_length=255)
+
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     node_list = models.ManyToManyField('Nodes')
 
-    creation_status = models.IntegerField(default=0)
+    running_status = models.IntegerField(default=0) ##0 is not running, 1 is start to run
     payment_status = models.IntegerField(default=0)
+
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -65,6 +68,7 @@ class Project(models.Model):
     def get_dict(self):
         project_dict = {}
         project_dict['id'] = self.id
+        project_dict['project_key'] = self.project_key
         project_dict['client'] = self.client.get_dict()
         project_dict['creation_status'] = self.creation_status
         project_dict['payment_status'] = self.payment_status
@@ -76,6 +80,9 @@ class Project(models.Model):
 
 class Nodes(models.Model):
     id = models.BigAutoField(primary_key=True)
+
+    node_key = models.CharField(unique=True, max_length=255)
+
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
     type = models.IntegerField(default=0)
@@ -98,10 +105,12 @@ class Nodes(models.Model):
     def get_dict(self):
         node_dict = {}
         node_dict['id'] = self.id
+        node_dict['node_key'] = self.node_key
         node_dict['name'] = self.name
         node_dict['description'] = self.description
         node_dict['type'] = self.type
         node_dict['start_frequency_in_seconds'] = self.start_frequency_in_seconds
+        node_dict['sleep_duration'] = self.start_frequency_in_seconds
         node_dict['python_code'] = self.python_code
         node_dict['running_status'] = self.running_status
         node_dict['server_status'] = self.server_status

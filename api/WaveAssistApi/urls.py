@@ -17,14 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from WaveAssistApiApp import views
-
+from WaveAssistApiApp import engine_views
 from django.views.decorators.csrf import csrf_exempt
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("load_all_clients/", csrf_exempt(views.load_all_clients), name="load_all_clients"),
-    path("load_node_data/", csrf_exempt(views.load_node_data), name="load_node_data"),
+    path("load_all_projects/", csrf_exempt(engine_views.load_all_projects), name="load_all_projects"),
+    path("load_node_data/", csrf_exempt(engine_views.load_node_data), name="load_node_data"),
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
+    path("download_client_file_data/", csrf_exempt(engine_views.download_client_file_data), name="download_client_file_data"),
 ]
 
