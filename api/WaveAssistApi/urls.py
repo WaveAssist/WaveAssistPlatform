@@ -26,6 +26,6 @@ urlpatterns = [
     path("load_all_projects/", csrf_exempt(engine_views.load_all_projects), name="load_all_projects"),
     path("load_node_data/", csrf_exempt(engine_views.load_node_data), name="load_node_data"),
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
-    path("download_client_file_data/", csrf_exempt(engine_views.download_client_file_data), name="download_client_file_data"),
+    path("download_project_file_data/", csrf_exempt(engine_views.download_project_file_data), name="download_project_file_data"),
 ]
 
