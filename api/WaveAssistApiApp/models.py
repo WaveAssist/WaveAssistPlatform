@@ -55,7 +55,7 @@ class Project(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     node_list = models.ManyToManyField('Nodes')
 
-    running_status = models.IntegerField(default=0) ##0 is not running, 1 is start to run
+    running_status = models.IntegerField(default=0) ##0 is not running, 1 is start to run, 2 is restart
     payment_status = models.IntegerField(default=0)
 
 
@@ -71,6 +71,10 @@ class Project(models.Model):
         project_dict['project_key'] = self.project_key
         project_dict['creation_status'] = self.running_status
         project_dict['payment_status'] = self.payment_status
+        if self.running_status == 2:
+            project_dict['should_refresh'] = '1'
+        else:
+            project_dict['should_refresh'] = '0'
         return project_dict
 
     class Meta:

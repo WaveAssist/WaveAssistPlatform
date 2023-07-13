@@ -71,7 +71,6 @@ def download_project_file_data(request):
                 return ResponseParser.getParsedErrorMessage('Python code is not valid for node: ' + node_object.node_key + " Error: " + str(e))
 
             ##Create a python code text which has the python_code of each node as a function, with the function name as the node_key
-
             ##The code needs to be properly intended, so that the function is properly defined
             python_code_text += "def " + node_object.node_key + "():\n"
             python_code_text += "    " + python_code.replace("\n", "\n    ") + "\n\n"
