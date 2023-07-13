@@ -94,12 +94,13 @@ def download_project_file_data(request):
 
 def update_project_refresh_status(request):
     worker_token = request.POST.get('token', '')
-    new_status = int(request.POST.get('new_status', '1'))
     if worker_token != WORKER_TOKEN:
         return ResponseParser.getParsedErrorMessage('No access')
 
+    new_status = int(request.POST.get('new_status', '1'))
     project_key = request.POST.get('project_key', '')
     project_object = None
+
     try:
         project_object = Project.objects.get(project_key=project_key)
     except Exception as e:
