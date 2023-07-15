@@ -1,9 +1,14 @@
+import io
+
 from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
 from .Utils.constants import WORKER_TOKEN
 # Create your views here.
-
+import json
+import pandas as pd
+from WaveAssistApiApp.Utils.MongoManager import MongoManager
+from io import StringIO as StringIO
 
 ## API to load client details
 def load_all_projects(request):
@@ -135,6 +140,42 @@ def update_project_refresh_status(request):
                                                         'Refresh status updated successfully.')
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong with refresh status: ' + str(e))
+
+
+def set_data_for_input(request):
+    worker_token = request.POST.get('token', '')
+    if worker_token != WORKER_TOKEN:
+        return ResponseParser.getParsedErrorMessage('No access')
+
+    project_key = request.POST.get('project_key', '')
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Project not found!')
+
+    io_data_key = request.POST.get('io_data_key', '')
+    try:
+        io_data_object = IOData.objects.get(key=io_data_key)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('IOData not found!')
+
+    csv_data = str(request.POST.get('csv_data', ''))
+    try:
+        pd_data = pd.read_csv(StringIO(csv_data))
+        ##Save in mongo db
+        mongo_manager = MongoManager(project_key)
+        success = mongo_manager.insert_or_replace_data_as_dataframe(io_data_key, pd_data)
+        mongo_manager.close_connection()
+
+        if not success:
+            return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
+
+        ##Response
+        output_dictionary = {'io_data_key': io_data_key}
+        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
+                                                        'Data saved successfully.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
 
 
 
