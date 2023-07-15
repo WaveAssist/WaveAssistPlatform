@@ -52,12 +52,6 @@ def generate_python_code_text(node_array):
         for node_object in node_array:
             python_code = node_object.python_code
 
-            # try:
-            #     compile(python_code, '<string>', 'exec')
-            # except Exception as e:
-            #     return False, 'Python code is not valid for node: ' + node_object.node_key + " Error: " + str(e)
-
-
             ##Create a python code text which has the python_code of each node as a function, with the function name as the node_key
             ##The code needs to be properly intended, so that the function is properly defined
 
@@ -78,11 +72,11 @@ def generate_python_code_text(node_array):
 
 
 
-        ##Validate if the entire code is proper python code, if not, return error
-        # try:
-        #     compile(python_code_text, '<string>', 'exec')
-        # except Exception as e:
-        #     return False, "Error in compiling code: " + str(e)
+        #Validate if the entire code is proper python code, if not, return error
+        try:
+            compile(python_code_text, '<string>', 'exec')
+        except Exception as e:
+            return False, "Error in compiling code: " + str(e)
 
 
         return True, python_code_text
