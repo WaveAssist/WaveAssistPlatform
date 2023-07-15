@@ -23,6 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("", csrf_exempt(views.index), name="index"),
     path("load_all_projects/", csrf_exempt(engine_views.load_all_projects), name="load_all_projects"),
     path("load_node_data/", csrf_exempt(engine_views.load_node_data), name="load_node_data"),
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),

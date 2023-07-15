@@ -4,6 +4,11 @@ from .Utils.responseParser import ResponseParser
 
 # Create your views here.
 
+def index(request):
+    return ResponseParser.getParsedSuccessMessage([],"S01","Hello, world. You're at the WaveAssist index...")
+
+
+
 ## API to get formatted data of the project
 def load_project_data(request):
     uid = request.POST.get('uid', '')
