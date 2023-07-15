@@ -41,6 +41,5 @@ class NodesAdmin(admin.ModelAdmin):
     list_filter = ('type', 'running_status', 'server_status', 'created_at')
     autocomplete_fields = ('input_data_array', 'output_data_array')
     readonly_fields = ('id', 'created_at')
-    date_hierarchy = 'created_at'
 
 
