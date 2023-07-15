@@ -71,9 +71,11 @@ def generate_python_code_text(node_array):
             python_code_text += "def " + node_object.node_key + "(" + parameters_string +  "):\n"
             python_code_text += "    " + python_code.replace("\n", "\n    ") + "\n\n"
 
-            ##Check if python code has a return statement
-            if python_code.find("return") == -1:
+            ##Check if python code has a return statement if output_data_array is not empty
+            output_data_array = node_object.output_data_array.all()
+            if len(output_data_array) > 0 and python_code.find("return") == -1:
                 return False, "Python code does not have a return statement for node: " + node_object.node_key
+
 
 
         ##Validate if the entire code is proper python code, if not, return error
