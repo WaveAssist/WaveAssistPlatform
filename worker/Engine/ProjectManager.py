@@ -2,7 +2,7 @@ import time
 from Engine.NodeThread import NodeThread
 import Utils.utils as utils
 import Utils.network_connect as network_connect
-
+from Engine.MongoManager import MongoManager
 
 # Thread Manager class
 class ProjectManager(object):
@@ -10,6 +10,7 @@ class ProjectManager(object):
     def __init__(self, project_key):
         self.project_key = project_key
         self.nodes_dict = {}
+        self.mongo_manager = MongoManager(self.project_key)
 
     def load_node_array(self):
         node_array = network_connect.load_node_array(self.project_key)
@@ -62,7 +63,7 @@ class ProjectManager(object):
             self.stop_and_remove_node(node_key)
 
         utils.logger.info(f'Creating node "{node_key}"')
-        node = NodeThread(self.project_key, node_key, sleep_duration, input_data_array, output_data_array)
+        node = NodeThread(self.project_key, node_key, sleep_duration, input_data_array, output_data_array, self.mongo_manager)
         self.nodes_dict[node_key] = node
         utils.logger.info(f'Node "{node_key}" created')
         return node

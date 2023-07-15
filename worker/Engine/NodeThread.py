@@ -26,7 +26,7 @@ class NodeThread(threading.Thread):
                 return self.mongo_manager.insert_or_replace_data_as_dataframe(output_key, output_data)
             return True
         except Exception as e:
-            utils.logger.error(f'Exception in manage_output for {self.node_key}: {e}')
+            utils.logger.error("Exception in manage_output for: " + str(self.node_key) + " + Error: " + str(e))
             return False
 
     def get_input(self):
@@ -37,19 +37,19 @@ class NodeThread(threading.Thread):
                 input_key = str(input_data['key'])
                 input_data = self.mongo_manager.fetch_data_as_dataframe(input_key)
                 if input_data is None:
-                    utils.logger.error("Input data is None for key: ", input_key)
+                    utils.logger.error("Input data is None for key: " + str(input_key))
                     input_data = pd.DataFrame()
                 input_array.append(input_data)
             return input_array
         except Exception as e:
-            utils.logger.error(f'Exception in get_input for {self.node_key}: {e}')
+            utils.logger.error("Exception in get_input for: " + str(self.node_key) + " + Error: " + str(e))
             return []
 
 
     def run(self):
-        utils.logger.info(f'{self.node_key} started')
+        utils.logger.info("Starting Node: " + str(self.node_key))
         while not self.stop_event.is_set():
-            utils.logger.info(f'{self.node_key} is running')
+            utils.logger.info(str(self.node_key) + " is running")
             try:
                 ##Run function here
 
@@ -80,14 +80,13 @@ class NodeThread(threading.Thread):
                     output_data = self.output_data_array[i]
                     self.manage_output(actual_output, output_data)
 
-                utils.logger.info("Code run completed for node: ", self.node_key)
+                utils.logger.info("Code run completed for node: " + str(self.node_key))
 
             except Exception as e:
-                ##May need to restart thread.
-                utils.logger.error("Error occured in thread: ", self.node_key + " Error: ", e)
+                utils.logger.error("Error occured in thread: " + str(self.node_key) + ". Error: " + str(e))
 
             time.sleep(self.sleep_duration)
-        utils.logger.warn(f'{self.node_key} stopped')
+        utils.logger.warn(str(self.node_key) + " stopped")
 
     def stop(self):
         self.stop_event.set()

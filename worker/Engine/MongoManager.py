@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 from Utils.constants import *
 
-class MongoDBManager:
+class MongoManager:
     def __init__(self, collection_name, connection_string=CONNECTION_STRING, database_name=DB_NAME):
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]

@@ -1,5 +1,5 @@
 import unittest
-from Engine.MongoManager import MongoDBManager
+from Engine.MongoManager import MongoManager
 
 import Utils.utils as utils
 import pandas as pd
@@ -8,10 +8,10 @@ import pandas as pd
 class TestMongo(unittest.TestCase):
 
     def setUp(self):
-       self.mongoManager = MongoDBManager("TestCollection")
+       self.mongoManager = MongoManager("TestCollection")
 
     def tearDown(self):
-        self.mongoManager.delete_collection()
+        # self.mongoManager.delete_collection()
         self.mongoManager.close_connection()
 
     def test_insert(self):
