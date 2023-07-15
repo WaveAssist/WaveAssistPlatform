@@ -31,7 +31,8 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter = ('running_status', 'payment_status', 'created_at')
     autocomplete_fields = ('client',)
     readonly_fields = ('id', 'created_at')
-
+    ##Make client field optional
+    optional_fields = ('node_array',)
 
 @admin.register(Nodes)
 class NodesAdmin(admin.ModelAdmin):
@@ -41,5 +42,6 @@ class NodesAdmin(admin.ModelAdmin):
     list_filter = ('type', 'running_status', 'server_status', 'created_at')
     autocomplete_fields = ('input_data_array', 'output_data_array')
     readonly_fields = ('id', 'created_at')
+    optional_fields = ('python_code','input_data_array', 'output_data_array')
 
 

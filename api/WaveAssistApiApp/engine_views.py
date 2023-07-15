@@ -41,7 +41,7 @@ def load_node_data(request):
         return ResponseParser.getParsedErrorMessage('Project not found!')
 
     try:
-        node_array = project_object.node_list.all()
+        node_array = project_object.node_array.all()
         node_dict_array = []
         for node_object in node_array:
             node_dict_array.append(node_object.get_dict())
@@ -104,7 +104,7 @@ def download_project_file_data(request):
         return ResponseParser.getParsedErrorMessage('Project not found!')
 
     try:
-        node_array = project_object.node_list.all()
+        node_array = project_object.node_array.all()
         success, python_code_text = generate_python_code_text(node_array)
 
         if not success:

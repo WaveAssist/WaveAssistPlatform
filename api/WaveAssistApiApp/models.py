@@ -63,7 +63,7 @@ class Project(models.Model):
     project_key = models.CharField(unique=True, max_length=255)
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    node_list = models.ManyToManyField('Nodes')
+    node_array = models.ManyToManyField('Nodes', blank=True)
 
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is start to run, 2 is restart
     payment_status = models.IntegerField(default=0)
@@ -104,8 +104,8 @@ class Nodes(models.Model):
 
     start_frequency_in_seconds = models.IntegerField(default=0)
 
-    input_data_array = models.ManyToManyField("IOData", related_name="input_data_array")
-    output_data_array = models.ManyToManyField("IOData", related_name="output_data_array")
+    input_data_array = models.ManyToManyField("IOData", related_name="input_data_array", blank=True)
+    output_data_array = models.ManyToManyField("IOData", related_name="output_data_array", blank=True)
 
     python_code = models.TextField(default="")
 
