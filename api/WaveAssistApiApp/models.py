@@ -10,6 +10,7 @@ class Client(models.Model):
     firebase_uid = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
     def __str__(self):
         return f"Client: {self.name} ({self.client_key})"
 
@@ -25,6 +26,8 @@ class Client(models.Model):
 
     class Meta:
         db_table = "WaveAssist_Client"
+        verbose_name = 'Client'
+        verbose_name_plural = 'Clients'
 
 
 class IOData(models.Model):
@@ -52,7 +55,8 @@ class IOData(models.Model):
 
     class Meta:
         db_table = "WaveAssist_IOData"
-
+        verbose_name = 'IOData'
+        verbose_name_plural = 'IOData'
 
 class Project(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -85,6 +89,8 @@ class Project(models.Model):
 
     class Meta:
         db_table = "WaveAssist_Project"
+        verbose_name = 'Project'
+        verbose_name_plural = 'Projects'
 
 
 class Nodes(models.Model):
@@ -139,3 +145,5 @@ class Nodes(models.Model):
 
     class Meta:
         db_table = "WaveAssist_Nodes"
+        verbose_name = 'Nodes'
+        verbose_name_plural = 'Nodes'
