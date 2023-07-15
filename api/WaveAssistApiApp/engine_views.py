@@ -23,6 +23,7 @@ def load_all_projects(request):
 
 ## API to load nodes details
 def load_node_data(request):
+
     worker_token = request.POST.get('token', '')
     if worker_token != WORKER_TOKEN:
         return ResponseParser.getParsedErrorMessage('No access')
@@ -45,6 +46,49 @@ def load_node_data(request):
         return ResponseParser.getParsedErrorMessage('Something went wrong: ' + str(e))
 
 
+def generate_python_code_text(node_array):
+    try:
+        python_code_text = ''
+        for node_object in node_array:
+            python_code = node_object.python_code
+
+            try:
+                compile(python_code, '<string>', 'exec')
+            except Exception as e:
+                return False, 'Python code is not valid for node: ' + node_object.node_key + " Error: " + str(e)
+
+
+            ##Create a python code text which has the python_code of each node as a function, with the function name as the node_key
+            ##The code needs to be properly intended, so that the function is properly defined
+
+            input_data_array = node_object.input_data_array.all()
+            ##For each IODataObject in input_data_array, add a parameter to the parameters_string with name as key
+            parameters_string = ""
+            for input_data_object in input_data_array:
+                parameters_string += str(input_data_object.key) + ", "
+
+
+            python_code_text += "def " + node_object.node_key + "(" + parameters_string +  "):\n"
+            python_code_text += "    " + python_code.replace("\n", "\n    ") + "\n\n"
+
+            ##Check if python code has a return statement
+            if python_code.find("return") == -1:
+                return False, "Python code does not have a return statement for node: " + node_object.node_key
+
+
+        ##Validate if the entire code is proper python code, if not, return error
+        try:
+            compile(python_code_text, '<string>', 'exec')
+        except Exception as e:
+            return False, "Error in compiling code: " + str(e)
+
+
+        return True, python_code_text
+
+    except Exception as e:
+        return False, "Error in generate_python_code_text: " + str(e)
+
+    ##Create a python code text which has the python_code of each node as a function, with the function name as the node_key
 ## API to get code of the node
 def download_project_file_data(request):
     worker_token = request.POST.get('token', '')
@@ -60,29 +104,10 @@ def download_project_file_data(request):
 
     try:
         node_array = project_object.node_list.all()
+        success, python_code_text = generate_python_code_text(node_array)
 
-        python_code_text = ''
-        for node_object in node_array:
-            python_code = node_object.python_code
-            ##Also validate if the code is proper python code, if not, return error
-            try:
-                compile(python_code, '<string>', 'exec')
-            except Exception as e:
-                return ResponseParser.getParsedErrorMessage('Python code is not valid for node: ' + node_object.node_key + " Error: " + str(e))
-
-            ##Create a python code text which has the python_code of each node as a function, with the function name as the node_key
-            ##The code needs to be properly intended, so that the function is properly defined
-            python_code_text += "def " + node_object.node_key + "():\n"
-            python_code_text += "    " + python_code.replace("\n", "\n    ") + "\n\n"
-
-
-
-        ##Vadlidate if the entire code is proper python code, if not, return error
-        try:
-            compile(python_code_text, '<string>', 'exec')
-        except Exception as e:
-            return ResponseParser.getParsedErrorMessage('Python code is not valid for project: ' + project_object.project_key + " Error: " + str(e))
-
+        if not success:
+            return ResponseParser.getParsedErrorMessage('Something went wrong with python code generation: ' + str(python_code_text))
 
         output_dictionary = {'file_data': python_code_text}
         return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',

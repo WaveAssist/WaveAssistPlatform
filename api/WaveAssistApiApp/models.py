@@ -30,8 +30,13 @@ class Client(models.Model):
 class IOData(models.Model):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True)
-    type = models.IntegerField(default=0)
+    type = models.IntegerField(default=0) ## 0 is default, 1 is final_output
+    output_type = models.IntegerField(default=0) ##0 is replace, 1 is update, 2 is append, 3 is delete
+
+
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
+
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -42,6 +47,7 @@ class IOData(models.Model):
         iodata_dict['id'] = self.id
         iodata_dict['key'] = self.key
         iodata_dict['type'] = self.type
+        iodata_dict['output_type'] = self.output_type
         return iodata_dict
 
     class Meta:
@@ -92,8 +98,8 @@ class Nodes(models.Model):
 
     start_frequency_in_seconds = models.IntegerField(default=0)
 
-    input_data_list = models.ManyToManyField("IOData", related_name="input_data_list")
-    output_data_list = models.ManyToManyField("IOData", related_name="output_data_list")
+    input_data_array = models.ManyToManyField("IOData", related_name="input_data_array")
+    output_data_array = models.ManyToManyField("IOData", related_name="output_data_array")
 
     python_code = models.TextField(default="")
 
@@ -117,6 +123,18 @@ class Nodes(models.Model):
         node_dict['python_code'] = self.python_code
         node_dict['running_status'] = self.running_status
         node_dict['server_status'] = self.server_status
+
+        ##Also optimially load and pass the input and output data list
+        input_data_array = []
+        for input_data in self.input_data_array.all():
+            input_data_array.append(input_data.get_dict())
+        node_dict['input_data_array'] = input_data_array
+
+        output_data_array = []
+        for output_data in self.output_data_array.all():
+            output_data_array.append(output_data.get_dict())
+        node_dict['output_data_array'] = output_data_array
+
         return node_dict
 
     class Meta:
