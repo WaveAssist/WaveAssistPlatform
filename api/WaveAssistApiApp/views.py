@@ -13,7 +13,7 @@ def index(request):
 
 ## API to get formatted data of the project
 def load_project_data(request):
-    uid = request.POST.get('uid', '')
+    uid = request.GET.get('uid', '')
     try:
         client_object = Client.objects.get(firebase_uid=uid)
     except:
@@ -21,7 +21,7 @@ def load_project_data(request):
 
 
     try:
-        project_key = request.POST.get('project_key', '')
+        project_key = request.GET.get('project_key', '')
         project_object = Project.objects.get(project_key=project_key)
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project not found.')
