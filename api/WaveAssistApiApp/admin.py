@@ -17,8 +17,8 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(IOData)
 class IODataAdmin(admin.ModelAdmin):
-    list_display = ('id', 'key', 'type', 'output_type', 'project', 'created_at')
-    search_fields = ('key', 'project__project_key')
+    list_display = ('id', 'key', 'type', 'output_type', 'project', 'created_at', 'description')
+    search_fields = ('key', 'project__project_key', 'description')
     list_filter = ('type', 'output_type', 'project__project_key')
     readonly_fields = ('id', 'created_at')
     list_per_page = 25

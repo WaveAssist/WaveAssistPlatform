@@ -35,7 +35,7 @@ class IOData(models.Model):
     key = models.CharField(max_length=255, unique=True)
     type = models.IntegerField(default=0) ## 0 is default, 1 is final_output
     output_type = models.IntegerField(default=0) ##0 is replace, 1 is update, 2 is append, 3 is delete
-
+    description = models.CharField(max_length=255, default="", null=True)
 
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
 
@@ -65,7 +65,7 @@ class Project(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     node_array = models.ManyToManyField('Nodes', blank=True)
 
-    running_status = models.IntegerField(default=0) ##0 is not running, 1 is start to run, 2 is restart
+    running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
     payment_status = models.IntegerField(default=0)
 
 
@@ -109,7 +109,7 @@ class Nodes(models.Model):
 
     python_code = models.TextField(default="")
 
-    running_status = models.IntegerField(default=0)
+    running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
     server_status = models.IntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)

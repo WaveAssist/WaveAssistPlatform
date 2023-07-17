@@ -26,7 +26,6 @@ urlpatterns = [
     path("", csrf_exempt(views.index), name="index"),
     path("load_all_projects/", csrf_exempt(engine_views.load_all_projects), name="load_all_projects"),
     path("load_node_data/", csrf_exempt(engine_views.load_node_data), name="load_node_data"),
-    path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
     path("download_project_file_data/", csrf_exempt(engine_views.download_project_file_data), name="download_project_file_data"),
     path("update_project_refresh_status/", csrf_exempt(engine_views.update_project_refresh_status), name="update_project_refresh_status"),
     path("set_data_for_input/", csrf_exempt(engine_views.set_data_for_input), name="set_data_for_input"),
