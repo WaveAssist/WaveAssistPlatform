@@ -15,7 +15,9 @@ from logging.handlers import RotatingFileHandler
 class Logger:
     def __init__(self):
         ##Logger
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(threadName)s] %(message)s')
+        # logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(threadName)s] %(message)s')
+        logging.basicConfig(level=logging.DEBUG)
+
         self.logger = logging.getLogger("EngineLogger")
         handler = RotatingFileHandler(PROJECT_LOGS_PATH,maxBytes=100000,backupCount=100)
         self.logger.addHandler(handler)

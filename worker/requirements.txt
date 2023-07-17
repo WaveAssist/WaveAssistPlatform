@@ -1,3 +1,4 @@
 requests==2.31.0
 pandas==2.0.3
 pymongo==4.4.1
+kiteconnect==4.2.0

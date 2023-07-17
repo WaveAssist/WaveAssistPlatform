@@ -26,7 +26,7 @@ def load_project_array_waiting():
             success, response_data = load_all_projects()
             if success:
                 break
-            sleep(5)
+            sleep(10)
     project_data_array = response_data['data']['project_array']
     return project_data_array
 

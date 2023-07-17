@@ -20,10 +20,12 @@ class NodeThread(threading.Thread):
 
     def manage_output(self,output_data, output_dict):
         try:
+            if output_data is None:
+                return True
             output_key = str(output_dict['key'])
-            output_type = str(output_dict['output_type'])
-            if output_type == '0': ##Replace
-                return self.mongo_manager.insert_or_replace_data_as_dataframe(output_key, output_data)
+            action_type = str(output_dict['action_type'])
+            if action_type == '0': ##Replace
+                return self.mongo_manager.replace_data_as_dataframe(output_key, output_data)
             return True
         except Exception as e:
             utils.logger.error("Exception in manage_output for: " + str(self.node_key) + " + Error: " + str(e))

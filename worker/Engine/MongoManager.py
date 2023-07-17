@@ -2,51 +2,61 @@ import pandas as pd
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 from Utils.constants import *
+import Utils.utils as utils
 
 class MongoManager:
-    def __init__(self, collection_name, connection_string=CONNECTION_STRING, database_name=DB_NAME):
+
+    @classmethod
+    def remove_id_from_array(cls, data_array):
+        ##remove object ID from each element in data_array
+        for data in data_array:
+            data.pop('_id', None)
+        return data_array
+
+
+    def __init__(self, connection_string=CONNECTION_STRING, database_name=DB_NAME):
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
-        self.collection = self.database[collection_name]
 
     ##Insert or replace key and return the inserted/replaced ID
-    def insert_or_replace_key(self, io_key, pd_data):
+    def replace_data(self, io_key, data_array):
         try:
-            data = {}
-            data[PD_DATA_KEY] = pd_data
-            data[IO_DATA_KEY] = io_key ##Extra check
-            self.collection.replace_one({IO_DATA_KEY: io_key}, data, upsert=True)
+            collection = self.database[io_key]
+
+            ##Delete all existing data in collection
+            collection.delete_many({})
+
+            print("Inserting data: " + str(data_array))
+            ##Insert new data
+            collection.insert_many(data_array)
+
             return True
         except Exception as e:
-            print("Error in insert_data: ", e)
+            utils.logger.error("Error in insert_data: " + str(e))
             return False
 
     ##Fetch data, return None if no data exists.
     def fetch_data(self, io_key):
         try:
-            data = self.collection.find_one({IO_DATA_KEY: io_key})
-            if data is None:
-                return None
+            collection = self.database[io_key]
+            data = collection.find({})
+            return list(data)
 
-            if PD_DATA_KEY in data:
-                return data[PD_DATA_KEY]
-            else:
-                return None
         except Exception as e:
-            print("Error in fetch_data: ", e)
+            utils.logger.error("Error in fetch_data: " + str(e))
             return None
 
 
     def close_connection(self):
         self.client.close()
 
-    def delete_collection(self):
-        self.collection.drop()
-
+    def delete_collection(self,collection_name):
+        self.database[collection_name].drop()
 
     ##Helper functions
     def fetch_data_as_dataframe(self, io_key):
         data_fetched = self.fetch_data(io_key)
+
         if data_fetched is None:
             return None
 
@@ -55,18 +65,18 @@ class MongoManager:
             data = pd.DataFrame(data_fetched)
             return data
         except Exception as e:
-            print("Error in get_data_as_dataframe: ", e)
+            utils.logger.error("Error in get_data_as_dataframe: " + str(e))
             return None
 
 
-    def insert_or_replace_data_as_dataframe(self,io_key,df):
+    def replace_data_as_dataframe(self,io_key,df):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
         try:
             df = pd.DataFrame(df) ##Convert to dataframe if not already, to check if it is a valid dataframe
             data_df = df.to_dict(orient='records')
-            return self.insert_or_replace_key(io_key,data_df)
+            return self.replace_data(io_key,data_df)
         except Exception as e:
-            print("Error in replace_data_as_dataframe: ", e)
+            utils.logger.error("Error in replace_data_as_dataframe: " + str(e))
             return False
 
 

@@ -10,7 +10,7 @@ class ProjectManager(object):
     def __init__(self, project_key):
         self.project_key = project_key
         self.nodes_dict = {}
-        self.mongo_manager = MongoManager(self.project_key)
+        self.mongo_manager = MongoManager()
 
     def load_node_array(self):
         node_array = network_connect.load_node_array(self.project_key)
@@ -151,6 +151,7 @@ class ProjectManager(object):
             utils.logger.warning(f'Node "{node_key}" does not exist')
 
     def print_all_nodes_statuses(self):
+        utils.logger.info("Printing all nodes statuses")
         for node_key, thread in self.nodes_dict.items():
             if thread.is_alive():
                 utils.logger.info(f'Node "{node_key}" is running')

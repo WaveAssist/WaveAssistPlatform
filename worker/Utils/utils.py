@@ -63,6 +63,7 @@ def manage_data_update(new_project_data_array, managers_array):
             if manager.project_key == new_project_key:
                 did_find = True
                 if str(new_project_dict['should_refresh']) == '1':
+                    logger.info(f"Refreshing project {new_project_key}")
                     manager.refresh_project()
         if not did_find:
             new_manager = ProjectManager(new_project_key)
