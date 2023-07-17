@@ -17,9 +17,9 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(IOData)
 class IODataAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'key', 'type', 'output_type', 'project', 'created_at', 'description')
+    list_display = ('id', 'name', 'key', 'action_type', 'output_type', 'project', 'created_at', 'description')
     search_fields = ('key', 'project__project_key', 'description', 'name')
-    list_filter = ('type', 'output_type', 'project__project_key')
+    list_filter = ('output_type', 'project__project_key')
     readonly_fields = ('id', 'created_at')
     list_per_page = 25
 
@@ -36,10 +36,10 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Nodes)
 class NodesAdmin(admin.ModelAdmin):
-    list_display = ('id', 'node_key', 'name', 'description', 'type', 'start_frequency_in_seconds',
-                    'running_status', 'server_status', 'created_at')
+    list_display = ('id', 'node_key', 'name', 'description', 'start_frequency_in_seconds',
+                    'running_status', 'created_at')
     search_fields = ('node_key', 'name', 'description')
-    list_filter = ('type', 'running_status', 'server_status', 'created_at')
+    list_filter = ('running_status', 'created_at')
     autocomplete_fields = ('input_data_array', 'output_data_array')
     readonly_fields = ('id', 'created_at')
     optional_fields = ('python_code','input_data_array', 'output_data_array')

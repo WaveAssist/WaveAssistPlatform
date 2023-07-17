@@ -33,8 +33,8 @@ class Client(models.Model):
 class IOData(models.Model):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True)
-    type = models.IntegerField(default=0) ## 0 is default, 1 is final_output
-    output_type = models.IntegerField(default=0) ##0 is replace, 1 is update, 2 is append, 3 is delete
+    output_type = models.IntegerField(default=0) ## 0 is default, 1 is needed for output, 2 is final_output_format
+    action_type = models.IntegerField(default=0) ## 0 is replace, 1 is add
     description = models.CharField(max_length=255, default="", null=True)
     name = models.CharField(max_length=255, default="", null=True)
 
@@ -50,8 +50,8 @@ class IOData(models.Model):
         iodata_dict = {}
         iodata_dict['id'] = self.id
         iodata_dict['key'] = self.key
-        iodata_dict['type'] = self.type
         iodata_dict['output_type'] = self.output_type
+        iodata_dict['action_type'] = self.action_type
         return iodata_dict
 
     class Meta:
@@ -101,7 +101,6 @@ class Nodes(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
-    type = models.IntegerField(default=0)
 
     start_frequency_in_seconds = models.IntegerField(default=0)
 
@@ -111,7 +110,6 @@ class Nodes(models.Model):
     python_code = models.TextField(default="")
 
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
-    server_status = models.IntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -124,12 +122,10 @@ class Nodes(models.Model):
         node_dict['node_key'] = self.node_key
         node_dict['name'] = self.name
         node_dict['description'] = self.description
-        node_dict['type'] = self.type
         node_dict['start_frequency_in_seconds'] = self.start_frequency_in_seconds
         node_dict['sleep_duration'] = self.start_frequency_in_seconds
         node_dict['python_code'] = self.python_code
         node_dict['running_status'] = self.running_status
-        node_dict['server_status'] = self.server_status
 
         ##Also optimially load and pass the input and output data list
         input_data_array = []
