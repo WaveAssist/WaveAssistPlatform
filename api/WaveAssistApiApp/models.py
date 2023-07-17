@@ -67,7 +67,7 @@ class Project(models.Model):
     node_array = models.ManyToManyField('Nodes', blank=True)
 
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
-    payment_status = models.IntegerField(default=0)
+    payment_status = models.IntegerField(default=0) ##0 is unpaid, 1 is paid
 
 
     created_at = models.DateTimeField(auto_now_add=True)

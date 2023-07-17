@@ -2,7 +2,19 @@ import pandas as pd
 from WaveAssistApiApp.Utils.constants import *
 from pymongo import MongoClient
 
+
+
+
 class MongoManager:
+
+
+    @classmethod
+    def remove_id_from_array(cls, data_array):
+        ##remove object ID from each element in data_array
+        for data in data_array:
+            data.pop('_id', None)
+        return data_array
+
     def __init__(self, connection_string=CONNECTION_STRING, database_name=DB_NAME):
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
