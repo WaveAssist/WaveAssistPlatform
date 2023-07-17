@@ -36,7 +36,8 @@ class IOData(models.Model):
     type = models.IntegerField(default=0) ## 0 is default, 1 is final_output
     output_type = models.IntegerField(default=0) ##0 is replace, 1 is update, 2 is append, 3 is delete
     description = models.CharField(max_length=255, default="", null=True)
-
+    name = models.CharField(max_length=255, default="", null=True)
+    
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
 
 
