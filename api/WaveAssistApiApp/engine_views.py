@@ -163,8 +163,8 @@ def set_data_for_input(request):
     try:
         pd_data = pd.read_csv(StringIO(csv_data))
         ##Save in mongo db
-        mongo_manager = MongoManager(project_key)
-        success = mongo_manager.insert_or_replace_data_as_dataframe(io_data_key, pd_data)
+        mongo_manager = MongoManager()
+        success = mongo_manager.replace_data_as_dataframe(io_data_key, pd_data)
         mongo_manager.close_connection()
 
         if not success:
