@@ -30,5 +30,6 @@ urlpatterns = [
     path("update_project_refresh_status/", csrf_exempt(engine_views.update_project_refresh_status), name="update_project_refresh_status"),
     path("set_data_for_key/", csrf_exempt(views.set_data_for_key), name="set_data_for_key"),
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
+    path("login/", csrf_exempt(views.login), name="login"),
 ]
 

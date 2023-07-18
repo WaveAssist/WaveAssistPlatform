@@ -14,6 +14,22 @@ def index(request):
     return ResponseParser.getParsedSuccessMessage([],"S01","Hello, world. You're at the WaveAssist index...")
 
 
+def login(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    ##Fetch all projects of the client, as one to many key
+    project_array = Project.objects.filter(client=client_object)
+    project_dict_array = []
+    for project_object in project_array:
+        project_dict_array.append(project_object.get_dict())
+    output_dictionary = {'project_array': project_dict_array}
+    output_dictionary['client_data'] = client_object.get_dict()
+    return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
+
 
 ## API to get formatted data of the project
 def load_project_data(request):
