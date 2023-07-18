@@ -3,6 +3,10 @@ from .models import *
 from .Utils.responseParser import ResponseParser
 from WaveAssistApiApp.Utils.MongoManager import MongoManager
 # Create your views here.
+import pandas as pd
+from io import StringIO as StringIO
+from .Utils.constants import *
+
 
 mongo_manager = MongoManager()
 
@@ -13,7 +17,7 @@ def index(request):
 
 ## API to get formatted data of the project
 def load_project_data(request):
-    uid = request.GET.get('uid', '')
+    uid = request.POST.get('uid', '')
     try:
         client_object = Client.objects.get(firebase_uid=uid)
     except:
@@ -21,7 +25,7 @@ def load_project_data(request):
 
 
     try:
-        project_key = request.GET.get('project_key', '')
+        project_key = request.POST.get('project_key', '')
         project_object = Project.objects.get(project_key=project_key)
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project not found.')
@@ -46,5 +50,40 @@ def load_project_data(request):
 
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Some issue with IOData' + str(e))
+
+
+
+def set_data_for_key(request):
+
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    io_data_key = request.POST.get('io_data_key', '')
+    try:
+        io_data_object = IOData.objects.get(key=io_data_key, project__client=client_object)
+        if io_data_object is None:
+            return ResponseParser.getParsedErrorMessage('IOData not found!')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('IOData not found!')
+    csv_data = str(request.POST.get('csv_data', ''))
+
+    try:
+        pd_data = pd.read_csv(StringIO(csv_data))
+        ##Save in mongo db
+        mongo_manager = MongoManager()
+        success = mongo_manager.replace_data_as_dataframe(io_data_key, pd_data)
+        mongo_manager.close_connection()
+        if not success:
+            return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
+
+        ##Response
+        output_dictionary = {'io_data_key': io_data_key}
+        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
+                                                        'Data saved successfully.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
 
 
