@@ -17,6 +17,7 @@ def index(request):
 def login(request):
     jwt_token = request.POST.get('jwt_token', '')
     uid = verify_token(jwt_token)
+    print(uid)
     if uid == None:
         return ResponseParser.getParsedErrorMessage('Invalid token')
 
