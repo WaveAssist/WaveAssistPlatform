@@ -6,7 +6,7 @@ from WaveAssistApiApp.Utils.MongoManager import MongoManager
 import pandas as pd
 from io import StringIO as StringIO
 from .Utils.constants import *
-
+from .Utils.firebase_auth import verify_token
 
 mongo_manager = MongoManager()
 
@@ -15,7 +15,11 @@ def index(request):
 
 
 def login(request):
-    uid = request.POST.get('uid', '')
+    jwt_token = request.POST.get('jwt_token', '')
+    uid = verify_token(jwt_token)
+    if uid == None:
+        return ResponseParser.getParsedErrorMessage('Invalid token')
+
     try:
         client_object = Client.objects.get(firebase_uid=uid)
     except:
