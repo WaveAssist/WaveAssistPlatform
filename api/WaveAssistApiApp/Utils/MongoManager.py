@@ -11,9 +11,11 @@ class MongoManager:
     @classmethod
     def remove_id_from_array(cls, data_array):
         ##Remove any element with prefix _id from array
+        updated_data_array = []
         for data in data_array:
             data = {key: value for key, value in data.items() if not key.startswith('_id')}
-        return data_array
+            updated_data_array.append(data)
+        return updated_data_array
 
     def __init__(self, connection_string=CONNECTION_STRING, database_name=DB_NAME):
         self.client = MongoClient(connection_string)
