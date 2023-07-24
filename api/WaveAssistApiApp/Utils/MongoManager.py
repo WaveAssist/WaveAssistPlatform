@@ -10,9 +10,9 @@ class MongoManager:
 
     @classmethod
     def remove_id_from_array(cls, data_array):
-        ##remove object ID from each element in data_array
+        ##Remove any element with prefix _id from array
         for data in data_array:
-            data.pop('_id', None)
+            data = {key: value for key, value in data.items() if not key.startswith('_id')}
         return data_array
 
     def __init__(self, connection_string=CONNECTION_STRING, database_name=DB_NAME):
