@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
@@ -163,9 +165,13 @@ def update_specific_document(request):
         return ResponseParser.getParsedErrorMessage('IOData not found!')
 
 
-    search_key = request.POST.get('search_key', '')
-    search_value = request.POST.get('search_value', '')
-    data_dict = request.POST.get('data', '')
+    try:
+        search_key = request.POST['search_key']
+        search_value = request.POST['search_value']
+        data_dict = json.loads(request.POST['data'])
+    except Exception as e:
+        print(e)
+        return ResponseParser.getParsedErrorMessage('Some issue with parameters')
 
 
     try:
