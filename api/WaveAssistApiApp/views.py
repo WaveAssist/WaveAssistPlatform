@@ -65,8 +65,7 @@ def load_project_data(request):
             data_array = MongoManager.remove_id_from_array(data_array)
             if io_data_object.output_type == 2:
                 data_format_array = data_array
-            else:
-                data_dict[io_data_object.key] = data_array
+            data_dict[io_data_object.key] = data_array
 
         output_dict = {'data_dict': data_dict, 'data_format_array': data_format_array}
         return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Project data loaded successfully.')
