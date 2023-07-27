@@ -83,3 +83,23 @@ class MongoManager:
             return False
 
 
+    def udpate_specific_value(self,io_data_key, search_key, search_value, set_key, set_value):
+        try:
+            collection = self.database[io_data_key]
+            ##Update the mapping with the new value
+            update_result = collection.update_one({search_key: search_value}, {"$set": {set_key: set_value}})
+            if update_result.modified_count > 0:
+                return True
+            else:
+                return False
+
+
+
+
+
+
+
+
+        except Exception as e:
+            print("Error in replace_data_as_dataframe: " + str(e))
+            return False

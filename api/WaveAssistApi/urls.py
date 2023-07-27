@@ -31,5 +31,6 @@ urlpatterns = [
     path("set_data_for_key/", csrf_exempt(views.set_data_for_key), name="set_data_for_key"),
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
     path("login/", csrf_exempt(views.login), name="login"),
+    path("update_specific_value/", csrf_exempt(views.update_specific_value), name="update_specific_value"),
 ]
 

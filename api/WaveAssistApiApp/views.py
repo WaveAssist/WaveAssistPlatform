@@ -108,3 +108,39 @@ def set_data_for_key(request):
         return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
 
 
+
+def update_specific_value(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    io_data_key = request.POST.get('io_data_key', '')
+    try:
+        io_data_object = IOData.objects.get(key=io_data_key, project__client=client_object)
+        if io_data_object is None:
+            return ResponseParser.getParsedErrorMessage('IOData not found!')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('IOData not found!')
+
+
+    search_key = request.POST.get('search_key', '')
+    search_value = request.POST.get('search_value', '')
+    set_key = request.POST.get('set_key', '')
+    set_value = request.POST.get('set_value', '')
+
+    try:
+        ##Save in mongo db
+        mongo_manager = MongoManager()
+        success = mongo_manager.udpate_specific_value(io_data_key, search_key, search_value, set_key, set_value)
+        mongo_manager.close_connection()
+        if not success:
+            return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
+
+        ##Response
+        output_dictionary = {'io_data_key': io_data_key}
+        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
+                                                      'Data saved successfully.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))

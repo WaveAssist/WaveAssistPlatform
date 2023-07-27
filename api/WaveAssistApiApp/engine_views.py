@@ -124,7 +124,6 @@ def update_project_refresh_status(request):
 
     new_status = int(request.POST.get('new_status', '1'))
     project_key = request.POST.get('project_key', '')
-    project_object = None
 
     try:
         project_object = Project.objects.get(project_key=project_key)
