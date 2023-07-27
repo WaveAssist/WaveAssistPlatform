@@ -21,6 +21,21 @@ class MongoManager:
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
 
+
+    def update_specific_document(self,io_data_key, search_key, search_value, data_dict):
+        try:
+            collection = self.database[io_data_key]
+            ##Update the entire document with the new data
+            update_result = collection.update_one({search_key: search_value}, {"$set": data_dict})
+            if update_result.modified_count > 0:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print("Error in replace_data_as_dataframe: " + str(e))
+            return False
+
+
     ##Insert or replace key and return the inserted/replaced ID
     def replace_data(self, io_key, data_array):
         try:
@@ -92,14 +107,6 @@ class MongoManager:
                 return True
             else:
                 return False
-
-
-
-
-
-
-
-
         except Exception as e:
             print("Error in replace_data_as_dataframe: " + str(e))
             return False
