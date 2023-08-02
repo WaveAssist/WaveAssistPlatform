@@ -26,6 +26,8 @@ class NodeThread(threading.Thread):
             action_type = str(output_dict['action_type'])
             if action_type == '0': ##Replace
                 return self.mongo_manager.replace_data_as_dataframe(output_key, output_data)
+            if action_type == '1': ##Update
+                return self.mongo_manager.update_data_as_dataframe(output_key, output_data)
             return True
         except Exception as e:
             utils.logger.error("Exception in manage_output for: " + str(self.node_key) + " + Error: " + str(e))
@@ -87,7 +89,12 @@ class NodeThread(threading.Thread):
             except Exception as e:
                 utils.logger.error("Error occured in thread: " + str(self.node_key) + ". Error: " + str(e))
 
+
+
+            utils.logger.info("Node: " + str(self.node_key) + " sleeping for: " + str(self.sleep_duration))
             time.sleep(self.sleep_duration)
+            utils.logger.info("Node: " + str(self.node_key) + " back on")
+
         utils.logger.warn(str(self.node_key) + " stopped")
 
     def stop(self):

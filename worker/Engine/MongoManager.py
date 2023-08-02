@@ -35,6 +35,22 @@ class MongoManager:
             utils.logger.error("Error in insert_data: " + str(e))
             return False
 
+    def append_data(self, io_key, data_array):
+        try:
+            collection = self.database[io_key]
+
+            ##Delete all existing data in collection
+            # collection.delete_many({})
+
+            print("Inserting data: " + str(data_array))
+            ##Insert new data
+            collection.insert_many(data_array)
+
+            return True
+        except Exception as e:
+            utils.logger.error("Error in insert_data: " + str(e))
+            return False
+
     ##Fetch data, return None if no data exists.
     def fetch_data(self, io_key):
         try:
@@ -75,6 +91,16 @@ class MongoManager:
             df = pd.DataFrame(df) ##Convert to dataframe if not already, to check if it is a valid dataframe
             data_df = df.to_dict(orient='records')
             return self.replace_data(io_key,data_df)
+        except Exception as e:
+            utils.logger.error("Error in replace_data_as_dataframe: " + str(e))
+            return False
+
+    def update_data_as_dataframe(self,io_key, df):
+        ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
+        try:
+            df = pd.DataFrame(df) ##Convert to dataframe if not already, to check if it is a valid dataframe
+            data_df = df.to_dict(orient='records')
+            return self.append_data(io_key,data_df)
         except Exception as e:
             utils.logger.error("Error in replace_data_as_dataframe: " + str(e))
             return False
