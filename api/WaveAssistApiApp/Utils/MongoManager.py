@@ -2,11 +2,7 @@ import pandas as pd
 from WaveAssistApiApp.Utils.constants import *
 from pymongo import MongoClient
 
-
-
-
 class MongoManager:
-
 
     @classmethod
     def remove_id_from_array(cls, data_array):
@@ -14,6 +10,16 @@ class MongoManager:
         updated_data_array = []
         for data in data_array:
             data = {key: value for key, value in data.items() if not key.startswith('_id')}
+            data = {key: value for key, value in data.items() if not key.startswith('id')}
+            updated_data_array.append(data)
+        return updated_data_array
+
+    @classmethod
+    def convert_id_in_data(cls, data_array):
+        ##Convert _id to id in each element in data_array
+        updated_data_array = []
+        for data in data_array:
+            data['id'] = str(data.pop('_id', None))
             updated_data_array.append(data)
         return updated_data_array
 
@@ -30,9 +36,6 @@ class MongoManager:
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
 
-
-
-
     def update_specific_document(self,io_data_key, search_key, search_value, data_dict):
         try:
             collection = self.database[io_data_key]
@@ -46,7 +49,6 @@ class MongoManager:
         except Exception as e:
             print("Error in replace_data_as_dataframe: " + str(e))
             return False
-
 
     ##Insert or replace key and return the inserted/replaced ID
     def replace_data(self, io_key, data_array):
@@ -70,12 +72,12 @@ class MongoManager:
         try:
             collection = self.database[io_key]
             data = collection.find({})
+            data = MongoManager.convert_id_in_data(data)
             return list(data)
 
         except Exception as e:
             print("Error in fetch_data: " + str(e))
             return None
-
 
     def close_connection(self):
         self.client.close()
@@ -98,7 +100,6 @@ class MongoManager:
             print("Error in get_data_as_dataframe: " + str(e))
             return None
 
-
     def replace_data_as_dataframe(self,io_key,df):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
         try:
@@ -108,7 +109,6 @@ class MongoManager:
         except Exception as e:
             print("Error in replace_data_as_dataframe: " + str(e))
             return False
-
 
     def udpate_specific_value(self,io_data_key, search_key, search_value, set_key, set_value):
         try:
