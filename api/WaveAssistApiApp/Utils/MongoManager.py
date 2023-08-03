@@ -17,9 +17,20 @@ class MongoManager:
             updated_data_array.append(data)
         return updated_data_array
 
+    @classmethod
+    def manage_na(cls,data_array):
+        ##Update NA values to 0
+        updated_data_array = []
+        for data in data_array:
+            data = {key: value if value is not None else 0 for key, value in data.items()}
+            updated_data_array.append(data)
+        return updated_data_array
+
     def __init__(self, connection_string=CONNECTION_STRING, database_name=DB_NAME):
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
+
+
 
 
     def update_specific_document(self,io_data_key, search_key, search_value, data_dict):
