@@ -9,8 +9,15 @@ import pandas as pd
 from io import StringIO as StringIO
 from .Utils.constants import *
 from .Utils.firebase_auth import verify_token
+from kiteconnect import KiteConnect
 
+
+
+
+kite = KiteConnect(api_key=ZERODHA_API_KEY)
 mongo_manager = MongoManager()
+
+
 
 def index(request):
     return ResponseParser.getParsedSuccessMessage([],"S01","Hello, world. You're at the WaveAssist index...")
@@ -146,6 +153,20 @@ def update_specific_value(request):
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
 
+def zerodha_redirect(request):
+    request_token = request.GET.get('request_token', '')
+    status = request.GET.get('status', '')
+    if status != 'success':
+        return ResponseParser.getParsedErrorMessage('Something went wrong')
+    try:
+        data = kite.generate_session(request_token, api_secret=ZERODHA_API_SECRET)
+        access_token = data["access_token"]
+        kite.set_access_token(access_token)
+        response_dict = kite.profile()
+        response_dict['access_token'] = access_token
+        return ResponseParser.getParsedSuccessMessage(response_dict, '200', 'Zerodha is Logged in.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Something went wrong: ' + str(e))
 
 
 def update_specific_document(request):

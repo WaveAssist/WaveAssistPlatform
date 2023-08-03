@@ -33,5 +33,7 @@ urlpatterns = [
     path("login/", csrf_exempt(views.login), name="login"),
     path("update_specific_value/", csrf_exempt(views.update_specific_value), name="update_specific_value"),
     path("update_specific_document/", csrf_exempt(views.update_specific_document), name="update_specific_document"),
+    path("zerodha_redirect/", csrf_exempt(views.zerodha_redirect), name="zerodha_redirect"),
 ]
+
 
