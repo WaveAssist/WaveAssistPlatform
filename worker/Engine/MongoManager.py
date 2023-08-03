@@ -44,39 +44,14 @@ class MongoManager:
             collection = self.database[io_key]
 
             ##Delete all existing data in collection & Insert
-            with collection.write_concern(WriteConcern(w='majority')):
-                collection.delete_many({})  # Delete all existing documents
-                collection.insert_many(data_array)  # Insert new data
-
+            collection.delete_many({})  # Delete all existing documents
+            collection.insert_many(data_array)  # Insert new data
 
             return True
         except Exception as e:
             utils.logger.error("Error in insert_data: " + str(e))
             return False
 
-
-
-    def replace_data(self, io_key, data_array):
-        try:
-            with self.database.client.start_session() as session:
-                collection = self.database[io_key]
-                session.start_transaction()
-                try:
-                    # Delete all existing data in the collection within the transaction
-                    collection.delete_many({}, session=session)
-                    # Insert new data with keys auto-generated within the transaction
-                    collection.insert_many(data_array, session=session)
-                    # Commit the transaction once both delete and insert operations are successful
-                    session.commit_transaction()
-                    return True
-                except Exception as e:
-                    # Rollback the transaction if any error occurs during the operations
-                    session.abort_transaction()
-                    utils.logger.error("Error in replace_data: " + str(e))
-                    return False
-        except Exception as e:
-            utils.logger.error("Error starting session in replace_data: " + str(e))
-            return False
 
     def append_data(self, io_key, data_array):
         try:
@@ -98,10 +73,12 @@ class MongoManager:
     def fetch_data(self, io_key):
         try:
             collection = self.database[io_key]
-            data = collection.find({})
+            data = list(collection.find({}))
+            ##Check length of data
+            if len(data) == 0:
+                data = list(collection.find({}))
             data = MongoManager.convert_id_in_data(data)
-
-            return list(data)
+            return data
 
         except Exception as e:
             utils.logger.error("Error in fetch_data: " + str(e))
