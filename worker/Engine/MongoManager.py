@@ -47,7 +47,6 @@ class MongoManager:
             collection = self.database[io_data_key]
             ##Update the entire document with the new data
             replace_result = collection.replace_one({search_key: search_value}, data_dict)
-            print(replace_result)
             if replace_result.modified_count > 0:
                 return True
             else:
