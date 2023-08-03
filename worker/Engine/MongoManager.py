@@ -2,7 +2,7 @@ import pandas as pd
 from pymongo import MongoClient
 from Utils.constants import *
 import Utils.utils as utils
-
+from pymongo.write_concern import WriteConcern
 
 class MongoManager:
 
@@ -39,23 +39,22 @@ class MongoManager:
         self.database = self.client[database_name]
 
     # ##Insert or replace key and return the inserted/replaced ID
-    # def replace_data(self, io_key, data_array):
-    #     try:
-    #         collection = self.database[io_key]
-    #
-    #         ##Delete all existing data in collection
-    #         collection.delete_many({})
-    #
-    #         # print("Inserting data: " + str(data_array))
-    #         ##Insert new data with keys auto generated
-    #         collection.insert_many(data_array)
-    #
-    #         return True
-    #     except Exception as e:
-    #         utils.logger.error("Error in insert_data: " + str(e))
-    #         return False
-    #
-    #
+    def replace_data(self, io_key, data_array):
+        try:
+            collection = self.database[io_key]
+
+            ##Delete all existing data in collection & Insert
+            with collection.write_concern(WriteConcern(w='majority')):
+                collection.delete_many({})  # Delete all existing documents
+                collection.insert_many(data_array)  # Insert new data
+
+
+            return True
+        except Exception as e:
+            utils.logger.error("Error in insert_data: " + str(e))
+            return False
+
+
 
     def replace_data(self, io_key, data_array):
         try:
