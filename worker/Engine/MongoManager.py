@@ -26,7 +26,7 @@ class MongoManager:
             ##Delete all existing data in collection
             collection.delete_many({})
 
-            print("Inserting data: " + str(data_array))
+            # print("Inserting data: " + str(data_array))
             ##Insert new data
             collection.insert_many(data_array)
 
@@ -42,7 +42,7 @@ class MongoManager:
             ##Delete all existing data in collection
             # collection.delete_many({})
 
-            print("Inserting data: " + str(data_array))
+            # print("Inserting data: " + str(data_array))
             ##Insert new data
             collection.insert_many(data_array)
 
