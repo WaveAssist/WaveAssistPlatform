@@ -122,7 +122,7 @@ def update_project_refresh_status(request):
     if worker_token != WORKER_TOKEN:
         return ResponseParser.getParsedErrorMessage('No access')
 
-    new_status = int(request.POST.get('new_status', '1'))
+    new_status = int(request.POST.get('new_status', '0'))
     project_key = request.POST.get('project_key', '')
 
     try:
