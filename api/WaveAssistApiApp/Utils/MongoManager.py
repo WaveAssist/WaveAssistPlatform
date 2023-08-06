@@ -71,9 +71,12 @@ class MongoManager:
     def fetch_data(self, io_key):
         try:
             collection = self.database[io_key]
-            data = collection.find({})
+            data = list(collection.find({}))
+            ##Check length of data
+            if len(data) == 0:
+                data = list(collection.find({}))
             data = MongoManager.convert_id_in_data(data)
-            return list(data)
+            return data
 
         except Exception as e:
             print("Error in fetch_data: " + str(e))
