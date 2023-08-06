@@ -66,9 +66,10 @@ class Project(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     node_array = models.ManyToManyField('Nodes', blank=True)
 
-    running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
+    running_status = models.IntegerField(default=0) ##0 is not running, 1 is running
     payment_status = models.IntegerField(default=0) ##0 is unpaid, 1 is paid
 
+    refresh_status = models.IntegerField(default=0) ##0 is no, 1 is yes
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -82,10 +83,7 @@ class Project(models.Model):
         project_dict['project_key'] = self.project_key
         project_dict['creation_status'] = self.running_status
         project_dict['payment_status'] = self.payment_status
-        if self.running_status == 2:
-            project_dict['should_refresh'] = '1'
-        else:
-            project_dict['should_refresh'] = '0'
+        project_dict['refresh_status'] = self.refresh_status
         return project_dict
 
     class Meta:

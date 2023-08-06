@@ -77,7 +77,6 @@ class MongoManager:
                 data = list(collection.find({}))
             data = MongoManager.convert_id_in_data(data)
             return data
-
         except Exception as e:
             print("Error in fetch_data: " + str(e))
             return None
