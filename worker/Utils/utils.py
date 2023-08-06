@@ -51,7 +51,7 @@ def delete_file(project_key):
 
 def manage_data_update(new_project_data_array, managers_array):
     ##LOOP between managers_array and new_project_data_array, managers_array has manager objects with value project_key,
-    ##If project_key is in both, then check if should_refresh is 1, if yes, then call refresh_project
+    ##If project_key is in both, then check if refresh_status is 1, if yes, then call refresh_project
     ##If project_key is in managers_array but not in new_project_data_array, then call delete_project
     ##If project_key is in new_project_data_array but not in managers_array, then call get_started
     from Engine.ProjectManager import ProjectManager
@@ -62,7 +62,7 @@ def manage_data_update(new_project_data_array, managers_array):
         for manager in managers_array:
             if manager.project_key == new_project_key:
                 did_find = True
-                if str(new_project_dict['should_refresh']) == '1':
+                if str(new_project_dict['refresh_status']) == '1':
                     logger.info(f"Refreshing project {new_project_key}")
                     manager.refresh_project()
         if not did_find:

@@ -34,7 +34,7 @@
 #
 #
 #         ##Test case 5: new_project_data_array is not empty, managers_array is not empty, new_project_data_array has new project
-#         new_project_data_array = [{'project_key': 'test_project_1', 'should_refresh': '0'}, {'project_key': 'test_project_2', 'should_refresh': '0'}]
+#         new_project_data_array = [{'project_key': 'test_project_1', 'refresh_status': '0'}, {'project_key': 'test_project_2', 'refresh_status': '0'}]
 #         managers_array = [ProjectManager('test_project_1')]
 #         utils.manage_data_update(new_project_data_array, managers_array)
 #         self.assertEqual(len(managers_array), 2)
