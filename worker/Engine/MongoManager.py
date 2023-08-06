@@ -2,7 +2,6 @@ import pandas as pd
 from pymongo import MongoClient
 from Utils.constants import *
 import Utils.utils as utils
-from pymongo.write_concern import WriteConcern
 
 class MongoManager:
 

@@ -95,7 +95,7 @@ class NodeThread(threading.Thread):
             time.sleep(self.sleep_duration)
             utils.logger.info("Node: " + str(self.node_key) + " back on")
 
-        utils.logger.warn(str(self.node_key) + " stopped")
+        utils.logger.warning(str(self.node_key) + " stopped")
 
     def stop(self):
         self.stop_event.set()
