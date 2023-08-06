@@ -26,6 +26,9 @@ class ProjectManager(object):
 
     def refresh_project(self):
         ##Refresh project
+
+        self.delete_project()
+
         self.get_started()
 
         ##Update backend
@@ -151,10 +154,10 @@ class ProjectManager(object):
             utils.logger.warning(f'Node "{node_key}" does not exist')
 
     def print_all_nodes_statuses(self):
-        utils.logger.info("Printing all nodes statuses")
+        utils.logger.info("Printing all nodes statuses for project status...")
         for node_key, thread in self.nodes_dict.items():
             if thread.is_alive():
-                utils.logger.info(f'Node "{node_key}" is running')
+                utils.logger.info(f'Project Status: Node "{node_key}" is running')
             else:
-                utils.logger.info(f'Node "{node_key}" is stopped')
+                utils.logger.info(f'Project Status: Node "{node_key}" is stopped')
 

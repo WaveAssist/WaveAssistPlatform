@@ -65,6 +65,7 @@ def manage_data_update(new_project_data_array, managers_array):
                 if str(new_project_dict['refresh_status']) == '1':
                     logger.info(f"Refreshing project {new_project_key}")
                     manager.refresh_project()
+
         if not did_find:
             new_manager = ProjectManager(new_project_key)
             new_manager.get_started()
@@ -74,7 +75,6 @@ def manage_data_update(new_project_data_array, managers_array):
     ##Delete projects which are not in the new one
     objects_to_remove = []
     for manager_object in managers_array:
-
         existing_project_key = manager_object.project_key
         if not any(existing_project_key == new_data['project_key'] for new_data in new_project_data_array):
             manager_object.delete_project()
@@ -82,6 +82,5 @@ def manage_data_update(new_project_data_array, managers_array):
 
     for manager_object in objects_to_remove:
         managers_array.remove(manager_object)
-
     # return managers_array
 

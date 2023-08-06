@@ -24,7 +24,6 @@ if __name__ == '__main__':
     ## Third: Keep printing the status of the project manager.
     while True:
         try:
-
             for project_manager in managers_array:
                 project_manager.print_all_nodes_statuses()
                 ## Fourth: If the status is not running, then tell the project manager to make changes.
