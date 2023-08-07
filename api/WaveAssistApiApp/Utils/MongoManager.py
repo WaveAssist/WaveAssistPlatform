@@ -36,12 +36,11 @@ class MongoManager:
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
 
-    def update_specific_document(self,io_data_key, search_key, search_value, data_dict):
+    def update_specific_document_by_id(self,io_data_key, document_id, data_dict):
         try:
             collection = self.database[io_data_key]
-            ##Update the entire document with the new data
-            replace_result = collection.replace_one({search_key: search_value}, data_dict)
-            print(replace_result)
+            ##Update the entire document with the new data where _id = document_id
+            replace_result = collection.replace_one({'_id': document_id}, data_dict)
             if replace_result.modified_count > 0:
                 return True
             else:
