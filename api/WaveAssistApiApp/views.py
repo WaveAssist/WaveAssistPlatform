@@ -189,9 +189,8 @@ def update_specific_document(request):
 
 
     try:
-        search_key = request.POST['search_key']
-        search_value = request.POST['search_value']
         data_dict = json.loads(request.POST['data'])
+        document_id = data_dict['id']
     except Exception as e:
         print(e)
         return ResponseParser.getParsedErrorMessage('Some issue with parameters')
@@ -200,7 +199,7 @@ def update_specific_document(request):
     try:
         ##Save in mongo db
         mongo_manager = MongoManager()
-        success = mongo_manager.update_specific_document(io_data_key, search_key, search_value, data_dict)
+        success = mongo_manager.update_specific_document(io_data_key, 'id', document_id, data_dict)
         mongo_manager.close_connection()
         if not success:
             return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
