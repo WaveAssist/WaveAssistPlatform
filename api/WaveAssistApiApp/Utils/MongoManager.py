@@ -1,6 +1,7 @@
 import pandas as pd
 from WaveAssistApiApp.Utils.constants import *
 from pymongo import MongoClient
+from bson import ObjectId
 
 class MongoManager:
 
@@ -39,8 +40,15 @@ class MongoManager:
     def update_specific_document_by_id(self,io_data_key, document_id, data_dict):
         try:
             collection = self.database[io_data_key]
+
+            ##remove id from data_dict
+            data_dict.pop('id', None)
+
+            ##replace id in data_dict with _id
+            data_dict['_id'] = ObjectId(document_id)
+
             ##Update the entire document with the new data where _id = document_id
-            replace_result = collection.replace_one({'_id': document_id}, data_dict)
+            replace_result = collection.replace_one({'_id': data_dict['_id']}, data_dict)
             if replace_result.modified_count > 0:
                 return True
             else:
