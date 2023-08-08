@@ -26,13 +26,12 @@ class IODataAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project_key', 'client', 'running_status','refresh_status', 'payment_status', 'created_at')
-    search_fields = ('project_key', 'client__name')
+    list_display = ('id', 'project_key', 'running_status','refresh_status', 'payment_status', 'created_at')
+    search_fields = ['project_key']
     list_filter = ('running_status', 'payment_status', 'created_at')
-    autocomplete_fields = ('client',)
     readonly_fields = ('id', 'created_at')
     ##Make client field optional
-    optional_fields = ('node_array',)
+    optional_fields = ('node_array','client_array')
 
 @admin.register(Nodes)
 class NodesAdmin(admin.ModelAdmin):

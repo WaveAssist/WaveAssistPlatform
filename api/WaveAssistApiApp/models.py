@@ -63,7 +63,7 @@ class Project(models.Model):
     id = models.BigAutoField(primary_key=True)
     project_key = models.CharField(unique=True, max_length=255)
 
-    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    client_array = models.ManyToManyField('Client', blank=True)
     node_array = models.ManyToManyField('Nodes', blank=True)
 
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is running

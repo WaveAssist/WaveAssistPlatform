@@ -35,8 +35,10 @@ def login(request):
     except:
         return ResponseParser.getParsedErrorMessage('User not found')
 
-    ##Fetch all projects of the client, as one to many key
-    project_array = Project.objects.filter(client=client_object)
+    ##Fetch all projects of the client, where project's client_array contains client
+
+    project_array = client_object.project_set.filter(running_status=1)
+
     project_dict_array = []
     for project_object in project_array:
         project_dict_array.append(project_object.get_dict())
