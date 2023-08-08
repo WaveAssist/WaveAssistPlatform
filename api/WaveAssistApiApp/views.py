@@ -100,7 +100,8 @@ def set_data_for_key(request):
 
     io_data_key = request.POST.get('io_data_key', '')
     try:
-        io_data_object = IOData.objects.get(key=io_data_key, project__client=client_object)
+        ##ToDo: add checks for client and project
+        io_data_object = IOData.objects.get(key=io_data_key)
         if io_data_object is None:
             return ResponseParser.getParsedErrorMessage('IOData not found!')
     except Exception as e:
@@ -134,7 +135,7 @@ def update_specific_value(request):
 
     io_data_key = request.POST.get('io_data_key', '')
     try:
-        io_data_object = IOData.objects.get(key=io_data_key, project__client=client_object)
+        io_data_object = IOData.objects.get(key=io_data_key)
         if io_data_object is None:
             return ResponseParser.getParsedErrorMessage('IOData not found!')
     except Exception as e:
@@ -186,7 +187,7 @@ def update_specific_document(request):
 
     io_data_key = request.POST.get('io_data_key', '')
     try:
-        io_data_object = IOData.objects.get(key=io_data_key, project__client=client_object)
+        io_data_object = IOData.objects.get(key=io_data_key)
         if io_data_object is None:
             return ResponseParser.getParsedErrorMessage('IOData not found!')
     except Exception as e:
