@@ -14,6 +14,14 @@ class MongoManager:
             data = {key: value for key, value in data.items() if not key.startswith('id')}
             updated_data_array.append(data)
         return updated_data_array
+    @classmethod
+    def add_row_number(cls,data_array):
+        ##Add a row_number column to each element in data_array starting with 1..
+        updated_data_array = []
+        for data in data_array:
+            data['row_number'] = data_array.index(data) + 1
+            updated_data_array.append(data)
+        return updated_data_array
 
     @classmethod
     def convert_id_in_data(cls, data_array):
