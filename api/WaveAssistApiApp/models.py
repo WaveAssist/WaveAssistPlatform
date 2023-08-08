@@ -75,7 +75,7 @@ class Project(models.Model):
 
     def __str__(self):
         ##Add all the fields
-        return f"Project: {self.id} ({self.client})"
+        return f"Project: {self.id} ({self.project_key})"
 
     def get_dict(self):
         project_dict = {}
