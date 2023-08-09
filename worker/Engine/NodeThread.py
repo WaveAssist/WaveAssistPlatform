@@ -62,6 +62,9 @@ class NodeThread(threading.Thread):
                 input_data = None
                 # Import the module dynamically
                 project_module = importlib.import_module(f"Projects.{self.project_key}")
+
+                # importlib.reload(project_module) ##Optimise: only load when refreshed!
+
                 # Get the function dynamically
                 project_function = getattr(project_module, self.node_key)
                 # Call the function
