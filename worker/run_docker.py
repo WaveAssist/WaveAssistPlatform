@@ -124,4 +124,4 @@ while True:
         print(f"An error occurred: {e}")
 
     # Wait for a specified interval before checking again
-    time.sleep(300)  # Wait for 5 minutes before checking again
+    time.sleep(30)  # Wait for 5 minutes before checking again
