@@ -216,3 +216,41 @@ def update_specific_document(request):
                                                       'Data saved successfully.')
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
+
+
+
+def add_new_document(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    io_data_key = request.POST.get('io_data_key', '')
+    try:
+        io_data_object = IOData.objects.get(key=io_data_key)
+        if io_data_object is None:
+            return ResponseParser.getParsedErrorMessage('IOData not found!')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('IOData not found!')
+
+
+    try:
+        data_dict = json.loads(request.POST['data'])
+    except Exception as e:
+        print(e)
+        return ResponseParser.getParsedErrorMessage('Some issue with parameters')
+    try:
+        ##Save in mongo db
+        mongo_manager = MongoManager()
+        inserted_id = mongo_manager.create_new_document(io_data_key, data_dict)
+        mongo_manager.close_connection()
+        if inserted_id is None:
+            return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
+
+        ##Response
+        output_dictionary = {'io_data_key': io_data_key}
+        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
+                                                      'Data saved successfully.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))

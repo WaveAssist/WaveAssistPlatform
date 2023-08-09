@@ -45,6 +45,19 @@ class MongoManager:
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
 
+
+    def create_new_document(self,io_data_key, data_dict):
+        try:
+            collection = self.database[io_data_key]
+            insert_result = collection.insert_one(data_dict)
+            if insert_result.inserted_id:
+                return str(insert_result.inserted_id)
+            else:
+                return None
+        except Exception as e:
+            print("Error in create_new_document: " + str(e))
+            return None
+
     def update_specific_document_by_id(self,io_data_key, document_id, data_dict):
         try:
             collection = self.database[io_data_key]
