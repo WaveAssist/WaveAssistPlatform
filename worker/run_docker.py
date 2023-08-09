@@ -79,7 +79,6 @@ def create_container(project_key):
             docker_image,
             project_key,
             name=container_name,
-            cpus=cpu_limit,
             mem_limit=memory_limit,
             detach=True
         )
@@ -104,10 +103,9 @@ while True:
     try:
         project_array = load_project_array_waiting()
 
-        # Get currently running containers
+        # Get currently running containers where name starts from "engine-container-"
         client = docker.from_env()
-        running_containers = [container.name for container in client.containers.list()]
-
+        running_containers = [container.name for container in client.containers.list() if container.name.startswith("engine-container-")]
         for project_dict in project_array:
             project_key = project_dict['project_key']
             container_name = f"engine-container-{project_key}"
