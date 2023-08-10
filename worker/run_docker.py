@@ -69,8 +69,6 @@ def load_project_array_waiting():
 
 def create_container(project_key):
     docker_image = "waveassistengine"
-    cpu_limit = 1
-    memory_limit = '0.5g'
     container_name = f"engine-container-{project_key}"
 
     client = docker.from_env()
@@ -79,7 +77,6 @@ def create_container(project_key):
             docker_image,
             project_key,
             name=container_name,
-            mem_limit=memory_limit,
             detach=True
         )
         print(f"Started container for project {project_key}")
