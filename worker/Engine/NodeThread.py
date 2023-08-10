@@ -4,7 +4,7 @@ import importlib
 import Utils.utils as utils
 # Custom Thread class
 import pandas as pd
-
+from Utils.Timer import Timer
 
 class NodeThread(threading.Thread):
     def __init__(self, project_key, node_key, sleep_duration,  input_data_array, output_data_array, mongo_manager):
@@ -23,11 +23,9 @@ class NodeThread(threading.Thread):
             if output_data is None:
                 return True
             output_key = str(output_dict['key'])
-            action_type = str(output_dict['action_type'])
-            if action_type == '0': ##Replace
+            action_type = int(output_dict['action_type'])
+            if action_type == 0: ##Replace
                 return self.mongo_manager.replace_data_as_dataframe(output_key, output_data)
-            if action_type == '1': ##Update
-                return self.mongo_manager.update_data_as_dataframe(output_key, output_data)
             return True
         except Exception as e:
             utils.logger.error("Exception in manage_output for: " + str(self.node_key) + " + Error: " + str(e))
@@ -52,8 +50,11 @@ class NodeThread(threading.Thread):
 
     def run(self):
         utils.logger.info("Starting Node: " + str(self.node_key))
+        timer = Timer(str(self.node_key))
         while not self.stop_event.is_set():
             utils.logger.info(str(self.node_key) + " is running")
+            timer.start()
+
             try:
                 ##Run function here
 
@@ -88,11 +89,9 @@ class NodeThread(threading.Thread):
                     self.manage_output(actual_output, output_data)
 
                 utils.logger.info("Code run completed for node: " + str(self.node_key))
-
+                timer.print_elapsed()
             except Exception as e:
                 utils.logger.error("Error occured in thread: " + str(self.node_key) + ". Error: " + str(e))
-
-
 
             utils.logger.info("Node: " + str(self.node_key) + " sleeping for: " + str(self.sleep_duration))
             time.sleep(self.sleep_duration)

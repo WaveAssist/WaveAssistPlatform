@@ -16,7 +16,7 @@ class Logger:
     def __init__(self):
         ##Logger
         # logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(threadName)s] %(message)s')
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.INFO)
 
         self.logger = logging.getLogger("EngineLogger")
         handler = RotatingFileHandler(PROJECT_LOGS_PATH,maxBytes=100000,backupCount=100)
@@ -29,7 +29,6 @@ class Logger:
 
 
     def log(self,level,message):
-        print(str(message))
         if hasattr(self.logger,level):
             getattr(self.logger, str(level))(str(message))
 

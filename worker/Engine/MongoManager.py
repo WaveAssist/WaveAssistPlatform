@@ -48,7 +48,7 @@ class MongoManager:
 
             return True
         except Exception as e:
-            utils.logger.error("Error in insert_data: " + str(e))
+            utils.logger.error("Error in insert_data for key " + io_key + ": " + str(e))
             return False
 
 
@@ -65,7 +65,7 @@ class MongoManager:
 
             return True
         except Exception as e:
-            utils.logger.error("Error in insert_data: " + str(e))
+            utils.logger.error("Error in insert_data for key " + io_key + ": " + str(e))
             return False
 
     ##Fetch data, return None if no data exists.
@@ -80,7 +80,7 @@ class MongoManager:
             return data
 
         except Exception as e:
-            utils.logger.error("Error in fetch_data: " + str(e))
+            utils.logger.error("Error in fetch_data for key " + io_key + ": " + str(e))
             return None
 
     def close_connection(self):
@@ -121,7 +121,7 @@ class MongoManager:
             data_df = df.to_dict(orient='records')
             return self.append_data(io_key,data_df)
         except Exception as e:
-            utils.logger.error("Error in replace_data_as_dataframe: " + str(e))
+            utils.logger.error("Error in replace_data_as_dataframe for key " + io_key + ": " + str(e))
             return False
 
 
