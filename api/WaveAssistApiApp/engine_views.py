@@ -52,7 +52,7 @@ def load_node_data(request):
 
 def generate_python_code_text(node_array):
     try:
-        python_code_text = 'from Integrations.Zerodha import * \n from Integrations.IB import * \n'
+        python_code_text = 'from Integrations.Zerodha import * \nfrom Integrations.IB import *\n'
 
 
         for node_object in node_array:
