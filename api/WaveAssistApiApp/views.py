@@ -58,6 +58,7 @@ def load_project_data(request):
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project not found.')
 
+
     try:
         ##Load IOData with type as 1 and project_key as project_key
         io_data_array = IOData.objects.filter(project__project_key=project_key, output_type__in=[1,2])
@@ -77,9 +78,9 @@ def load_project_data(request):
 
         output_dict = {'data_dict': data_dict, 'data_format_array': data_format_array}
         return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Project data loaded successfully.')
-
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Some issue with IOData' + str(e))
+        return ResponseParser.getParsedErrorMessage('Something went wrong with data loading: ' + str(e))
+
 
 
 def has_access(client_object, project_key):

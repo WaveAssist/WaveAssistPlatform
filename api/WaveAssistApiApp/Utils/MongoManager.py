@@ -75,14 +75,14 @@ class MongoManager:
         try:
             full_data = self.collection.find_one({IO_DATA_KEY: io_key})
             if full_data is None or len(full_data) == 0 or DATA_KEY not in full_data:
-                return None
+                return []
 
             data = full_data[DATA_KEY]
             return data
 
         except Exception as e:
             utils.logger.error("Error in fetch_data for key " + io_key + ": " + str(e))
-            return None
+            return []
 
     def close_connection(self):
         self.client.close()
@@ -92,7 +92,7 @@ class MongoManager:
     ##Helper functions
     def fetch_data_as_dataframe(self, io_key):
         data_fetched = self.fetch_data_for_key(io_key)
-        if data_fetched is None:
+        if len(data_fetched) == 0:
             return None
         ##Check if data can be converted to proper PD dataframe
         try:
