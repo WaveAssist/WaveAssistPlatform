@@ -146,13 +146,18 @@ def zerodha_redirect(request):
     project_integrations_key = INTEGRATIONS_PREFIX_KEY + project_key
     mongo_manager.collection = mongo_manager.database[project_key]
 
+    zerodha_api_key = ''
+    zerodha_api_secret = ''
+    integrations_data_array = []
     try:
-        integrations_data_dict = mongo_manager.fetch_data_for_key(project_integrations_key)[0]
-        zerodha_api_key = integrations_data_dict[ZERODHA_API_KEY]
-        zerodha_api_secret = integrations_data_dict[ZERODHA_API_SECRET_KEY]
+        integrations_data_array = mongo_manager.fetch_data_for_key(project_integrations_key)
+        for data_dict in integrations_data_array:
+            if data_dict['name'] == ZERODHA_API_KEY:
+                zerodha_api_key = data_dict['value']
+            elif data_dict['name'] == ZERODHA_API_SECRET_KEY:
+                zerodha_api_secret = data_dict['value']
     except:
         return ResponseParser.getParsedErrorMessage('Integrations data not found')
-
 
     try:
         kite = KiteConnect(api_key=zerodha_api_key)
@@ -163,9 +168,12 @@ def zerodha_redirect(request):
 
 
     ##Save access token in mongo
-    integrations_data_dict[ZERODHA_ACCESS_TOKEN_KEY] = access_token
-    new_data_array = [integrations_data_dict]
-    success = mongo_manager.insert_or_replace_data_for_key(project_integrations_key,new_data_array)
+    access_data_dict = {}
+    access_data_dict['name'] = ZERODHA_ACCESS_TOKEN_KEY
+    access_data_dict['value'] = access_token
+    integrations_data_array.append(access_data_dict)
+
+    success = mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
     if not success:
         return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
 
