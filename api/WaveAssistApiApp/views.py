@@ -169,10 +169,18 @@ def zerodha_redirect(request):
 
 
     ##Save access token in mongo
-    access_data_dict = {}
-    access_data_dict['name'] = ZERODHA_ACCESS_TOKEN_KEY
-    access_data_dict['value'] = access_token
-    integrations_data_array.append(access_data_dict)
+    did_find = False
+    for data_dict in integrations_data_array:
+        if data_dict['name'] == ZERODHA_ACCESS_TOKEN_KEY:
+            data_dict['value'] = access_token
+            did_find = True
+            break
+
+    if not did_find:
+        access_data_dict = {}
+        access_data_dict['name'] = ZERODHA_ACCESS_TOKEN_KEY
+        access_data_dict['value'] = access_token
+        integrations_data_array.append(access_data_dict)
 
     success = mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
     if not success:
