@@ -1,10 +1,14 @@
 import pandas as pd
 from WaveAssistApiApp.Utils.constants import *
 from pymongo import MongoClient
-from bson import ObjectId
+import WaveAssistApiApp.Utils.utils as utils
+
+
 
 class MongoManager:
 
+
+    ##Class Functions
     @classmethod
     def remove_id_from_array(cls, data_array):
         ##Remove any element with prefix _id from array
@@ -14,6 +18,7 @@ class MongoManager:
             data = {key: value for key, value in data.items() if not key.startswith('id')}
             updated_data_array.append(data)
         return updated_data_array
+
     @classmethod
     def add_row_number(cls,data_array):
         ##Add a row_number column to each element in data_array starting with 1..
@@ -41,114 +46,72 @@ class MongoManager:
             updated_data_array.append(data)
         return updated_data_array
 
-    def __init__(self, connection_string=CONNECTION_STRING, database_name=DB_NAME):
+
+
+
+
+    ##Init Function
+    def __init__(self, collection_name=None, connection_string=CONNECTION_STRING, database_name=DB_NAME):
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
+        if collection_name is not None:
+            self.collection = self.database[collection_name]
 
 
-    def create_new_document(self,io_data_key, data_dict):
+    ##Instance Functions
+    def insert_or_replace_data_for_key(self, io_key, data_array):
         try:
-            collection = self.database[io_data_key]
-            insert_result = collection.insert_one(data_dict)
-            if insert_result.inserted_id:
-                return str(insert_result.inserted_id)
-            else:
-                return None
-        except Exception as e:
-            print("Error in create_new_document: " + str(e))
-            return None
-
-    def update_specific_document_by_id(self,io_data_key, document_id, data_dict):
-        try:
-            collection = self.database[io_data_key]
-
-            ##remove id from data_dict
-            data_dict.pop('id', None)
-
-            ##replace id in data_dict with _id
-            data_dict['_id'] = ObjectId(document_id)
-
-            ##Update the entire document with the new data where _id = document_id
-            replace_result = collection.replace_one({'_id': data_dict['_id']}, data_dict)
-            if replace_result.modified_count > 0:
-                return True
-            else:
-                return False
-        except Exception as e:
-            print("Error in replace_data_as_dataframe: " + str(e))
-            return False
-
-    ##Insert or replace key and return the inserted/replaced ID
-    def replace_data(self, io_key, data_array):
-        try:
-            collection = self.database[io_key]
-
-            ##Delete all existing data in collection
-            collection.delete_many({})
-
-            print("Inserting data: " + str(data_array))
-            ##Insert new data
-            collection.insert_many(data_array)
-
+            new_data_dict = {}
+            new_data_dict[IO_DATA_KEY] = io_key
+            new_data_dict[DATA_KEY] = data_array
+            self.collection.replace_one({IO_DATA_KEY: io_key}, new_data_dict, upsert=True)
             return True
         except Exception as e:
-            print("Error in insert_data: " + str(e))
+            utils.logger.error("Error in insert_or_replace_data_for_key: " + io_key + ": " + str(e))
             return False
 
     ##Fetch data, return None if no data exists.
-    def fetch_data(self, io_key):
+    def fetch_data_for_key(self, io_key):
         try:
-            collection = self.database[io_key]
-            data = list(collection.find({}))
-            ##Check length of data
-            if len(data) == 0:
-                data = list(collection.find({}))
-            data = MongoManager.convert_id_in_data(data)
+            full_data = self.collection.find_one({IO_DATA_KEY: io_key})
+            if full_data is None or len(full_data) == 0 or DATA_KEY not in full_data:
+                return None
+
+            data = full_data[DATA_KEY]
             return data
+
         except Exception as e:
-            print("Error in fetch_data: " + str(e))
+            utils.logger.error("Error in fetch_data for key " + io_key + ": " + str(e))
             return None
 
     def close_connection(self):
         self.client.close()
 
-    def delete_collection(self,collection_name):
-        self.database[collection_name].drop()
+
 
     ##Helper functions
     def fetch_data_as_dataframe(self, io_key):
-        data_fetched = self.fetch_data(io_key)
-
+        data_fetched = self.fetch_data_for_key(io_key)
         if data_fetched is None:
             return None
-
         ##Check if data can be converted to proper PD dataframe
         try:
             data = pd.DataFrame(data_fetched)
             return data
         except Exception as e:
-            print("Error in get_data_as_dataframe: " + str(e))
+            utils.logger.error("Error in get_data_as_dataframe: " + str(e))
             return None
 
     def replace_data_as_dataframe(self,io_key,df):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
         try:
-            df = pd.DataFrame(df) ##Convert to dataframe if not already, to check if it is a valid dataframe
+            df = pd.DataFrame(df)
             data_df = df.to_dict(orient='records')
-            return self.replace_data(io_key,data_df)
+            return self.insert_or_replace_data_for_key(io_key,data_df)
         except Exception as e:
-            print("Error in replace_data_as_dataframe: " + str(e))
+            utils.logger.error("Error in replace_data_as_dataframe: " + str(e))
             return False
 
-    def udpate_specific_value(self,io_data_key, search_key, search_value, set_key, set_value):
-        try:
-            collection = self.database[io_data_key]
-            ##Update the mapping with the new value
-            update_result = collection.update_one({search_key: search_value}, {"$set": {set_key: set_value}})
-            if update_result.modified_count > 0:
-                return True
-            else:
-                return False
-        except Exception as e:
-            print("Error in replace_data_as_dataframe: " + str(e))
-            return False
+
+
+

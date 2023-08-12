@@ -31,10 +31,7 @@ urlpatterns = [
     path("set_data_for_key/", csrf_exempt(views.set_data_for_key), name="set_data_for_key"),
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
     path("login/", csrf_exempt(views.login), name="login"),
-    path("update_specific_value/", csrf_exempt(views.update_specific_value), name="update_specific_value"),
-    path("update_specific_document/", csrf_exempt(views.update_specific_document), name="update_specific_document"),
     path("zerodha_redirect/", csrf_exempt(views.zerodha_redirect), name="zerodha_redirect"),
-    path("add_new_document/", csrf_exempt(views.add_new_document), name="add_new_document"),
 ]
 
 

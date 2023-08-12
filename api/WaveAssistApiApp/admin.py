@@ -2,9 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from .models import *
-
 from django.contrib import admin
-from .models import Client, IOData, Project, Nodes
 
 
 @admin.register(Client)
@@ -43,4 +41,9 @@ class NodesAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'created_at')
     optional_fields = ('python_code','input_data_array', 'output_data_array')
 
-
+@admin.register(Integrations)
+class IntegrationsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'created_at')
+    search_fields = ['name']
+    readonly_fields = ('id', 'created_at')
+    optional_fields = ('import_code',)

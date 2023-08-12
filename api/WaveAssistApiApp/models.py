@@ -30,6 +30,30 @@ class Client(models.Model):
         verbose_name_plural = 'Clients'
 
 
+class Integrations(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255, default="", null=True)
+    import_code = models.TextField(default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Integrations: {self.id} ({self.name})"
+
+    def get_dict(self):
+        integrations_dict = {}
+        integrations_dict['id'] = self.id
+        integrations_dict['name'] = self.name
+        integrations_dict['import_code'] = self.import_code
+
+        return integrations_dict
+
+    class Meta:
+        db_table = "WaveAssist_Integrations"
+        verbose_name = 'Integrations'
+        verbose_name_plural = 'Integrations'
+
+
 class IOData(models.Model):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True)
@@ -65,6 +89,8 @@ class Project(models.Model):
 
     client_array = models.ManyToManyField('Client', blank=True)
     node_array = models.ManyToManyField('Nodes', blank=True)
+    integration_array = models.ManyToManyField('Integrations', blank=True)
+
 
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is running
     payment_status = models.IntegerField(default=0) ##0 is unpaid, 1 is paid

@@ -12,11 +12,7 @@ from .Utils.firebase_auth import verify_token
 from kiteconnect import KiteConnect
 
 
-
-
-kite = KiteConnect(api_key=ZERODHA_API_KEY)
 mongo_manager = MongoManager()
-
 
 
 def index(request):
@@ -55,14 +51,12 @@ def load_project_data(request):
     except:
         return ResponseParser.getParsedErrorMessage('User not found')
 
-    print("here1")
-
     try:
         project_key = request.POST.get('project_key', '')
         project_object = Project.objects.get(project_key=project_key)
+        mongo_manager.collection = mongo_manager.database[project_object.project_key]
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project not found.')
-    print("here2")
 
     try:
         ##Load IOData with type as 1 and project_key as project_key
@@ -72,8 +66,7 @@ def load_project_data(request):
         data_dict = {}
         data_format_array = []
         for io_data_object in io_data_array:
-            data_array = mongo_manager.fetch_data(io_data_object.key)
-            # data_array = MongoManager.remove_id_from_array(data_array)
+            data_array = mongo_manager.fetch_data_for_key(io_data_object.key)
             data_array = MongoManager.add_row_number(data_array)
             data_array = MongoManager.manage_na(data_array)
             if io_data_object.output_type == 2:
@@ -82,12 +75,23 @@ def load_project_data(request):
                 data_format_array = data_array
             data_dict[io_data_object.key] = data_array
 
+        integrations_key = INTEGRATIONS_PREFIX_KEY + project_key
+        integrations_data = mongo_manager.fetch_data_for_key(integrations_key)
+        data_dict[integrations_key] = integrations_data
+
         output_dict = {'data_dict': data_dict, 'data_format_array': data_format_array}
         return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Project data loaded successfully.')
 
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Some issue with IOData' + str(e))
 
+
+def has_access(client_object, project_key):
+    project_list = client_object.project_set.filter(project_key=project_key)
+    if project_list.count() > 0:
+        return True
+    else:
+        return False
 
 
 def set_data_for_key(request):
@@ -100,23 +104,23 @@ def set_data_for_key(request):
 
     io_data_key = request.POST.get('io_data_key', '')
     try:
-        ##ToDo: add checks for client and project
         io_data_object = IOData.objects.get(key=io_data_key)
-        if io_data_object is None:
-            return ResponseParser.getParsedErrorMessage('IOData not found!')
+        project_key = io_data_object.project.project_key
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('IOData not found!')
-    csv_data = str(request.POST.get('csv_data', ''))
 
+    if not has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+
+    csv_data = str(request.POST.get('csv_data', ''))
     try:
         pd_data = pd.read_csv(StringIO(csv_data))
         ##Save in mongo db
-        mongo_manager = MongoManager()
+        mongo_manager.collection = mongo_manager.database[project_key]
         success = mongo_manager.replace_data_as_dataframe(io_data_key, pd_data)
-        mongo_manager.close_connection()
         if not success:
             return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
-
         ##Response
         output_dictionary = {'io_data_key': io_data_key}
         return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
@@ -126,131 +130,47 @@ def set_data_for_key(request):
 
 
 
-def update_specific_value(request):
-    uid = request.POST.get('uid', '')
+def zerodha_redirect(request):
+    request_token = request.GET.get('request_token', '')
+    status = request.GET.get('status', '')
+    project_key = request.GET.get('project_key', '')
+    uid = request.GET.get('uid', '')
+
+    if status != 'success':
+        return ResponseParser.getParsedErrorMessage('Something went wrong')
+
     try:
         client_object = Client.objects.get(firebase_uid=uid)
     except:
         return ResponseParser.getParsedErrorMessage('User not found')
 
-    io_data_key = request.POST.get('io_data_key', '')
-    try:
-        io_data_object = IOData.objects.get(key=io_data_key)
-        if io_data_object is None:
-            return ResponseParser.getParsedErrorMessage('IOData not found!')
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('IOData not found!')
+    if not has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
-
-    search_key = request.POST.get('search_key', '')
-    search_value = request.POST.get('search_value', '')
-    set_key = request.POST.get('set_key', '')
-    set_value = request.POST.get('set_value', '')
+    project_integrations_key = INTEGRATIONS_PREFIX_KEY + project_key
+    mongo_manager.collection = mongo_manager.database[project_key]
 
     try:
-        ##Save in mongo db
-        mongo_manager = MongoManager()
-        success = mongo_manager.udpate_specific_value(io_data_key, search_key, search_value, set_key, set_value)
-        mongo_manager.close_connection()
-        if not success:
-            return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
+        integrations_data_dict = mongo_manager.fetch_data_for_key(project_integrations_key)[0]
+        zerodha_api_key = integrations_data_dict[ZERODHA_API_KEY]
+        zerodha_api_secret = integrations_data_dict[ZERODHA_API_SECRET_KEY]
+    except:
+        return ResponseParser.getParsedErrorMessage('Integrations data not found')
 
-        ##Response
-        output_dictionary = {'io_data_key': io_data_key}
-        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
-                                                      'Data saved successfully.')
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
 
-def zerodha_redirect(request):
-    request_token = request.GET.get('request_token', '')
-    status = request.GET.get('status', '')
-    if status != 'success':
-        return ResponseParser.getParsedErrorMessage('Something went wrong')
     try:
-        data = kite.generate_session(request_token, api_secret=ZERODHA_API_SECRET)
+        kite = KiteConnect(api_key=zerodha_api_key)
+        data = kite.generate_session(request_token, api_secret=zerodha_api_secret)
         access_token = data["access_token"]
-        kite.set_access_token(access_token)
-        response_dict = kite.profile()
-        response_dict['access_token'] = access_token
-        return ResponseParser.getParsedSuccessMessage(response_dict, '200', 'Zerodha is Logged in.')
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong: ' + str(e))
 
 
-def update_specific_document(request):
-    uid = request.POST.get('uid', '')
-    try:
-        client_object = Client.objects.get(firebase_uid=uid)
-    except:
-        return ResponseParser.getParsedErrorMessage('User not found')
+    ##Save access token in mongo
+    integrations_data_dict[ZERODHA_ACCESS_TOKEN_KEY] = access_token
+    new_data_array = [integrations_data_dict]
+    success = mongo_manager.insert_or_replace_data_for_key(project_integrations_key,new_data_array)
+    if not success:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
 
-    io_data_key = request.POST.get('io_data_key', '')
-    try:
-        io_data_object = IOData.objects.get(key=io_data_key)
-        if io_data_object is None:
-            return ResponseParser.getParsedErrorMessage('IOData not found!')
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('IOData not found!')
-
-
-    try:
-        data_dict = json.loads(request.POST['data'])
-        document_id = data_dict['id']
-    except Exception as e:
-        print(e)
-        return ResponseParser.getParsedErrorMessage('Some issue with parameters')
-
-
-    try:
-        ##Save in mongo db
-        mongo_manager = MongoManager()
-        success = mongo_manager.update_specific_document_by_id(io_data_key, document_id, data_dict)
-        mongo_manager.close_connection()
-        if not success:
-            return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
-
-        ##Response
-        output_dictionary = {'io_data_key': io_data_key}
-        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
-                                                      'Data saved successfully.')
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
-
-
-
-def add_new_document(request):
-    uid = request.POST.get('uid', '')
-    try:
-        client_object = Client.objects.get(firebase_uid=uid)
-    except:
-        return ResponseParser.getParsedErrorMessage('User not found')
-
-    io_data_key = request.POST.get('io_data_key', '')
-    try:
-        io_data_object = IOData.objects.get(key=io_data_key)
-        if io_data_object is None:
-            return ResponseParser.getParsedErrorMessage('IOData not found!')
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('IOData not found!')
-
-
-    try:
-        data_dict = json.loads(request.POST['data'])
-    except Exception as e:
-        print(e)
-        return ResponseParser.getParsedErrorMessage('Some issue with parameters')
-    try:
-        ##Save in mongo db
-        mongo_manager = MongoManager()
-        inserted_id = mongo_manager.create_new_document(io_data_key, data_dict)
-        mongo_manager.close_connection()
-        if inserted_id is None:
-            return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
-
-        ##Response
-        output_dictionary = {'io_data_key': io_data_key}
-        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
-                                                      'Data saved successfully.')
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Zerodha access token saved successfully for your project.')
