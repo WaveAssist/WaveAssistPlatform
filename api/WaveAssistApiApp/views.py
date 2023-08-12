@@ -75,10 +75,6 @@ def load_project_data(request):
                 data_format_array = data_array
             data_dict[io_data_object.key] = data_array
 
-        integrations_key = INTEGRATIONS_PREFIX_KEY + project_key
-        integrations_data = mongo_manager.fetch_data_for_key(integrations_key)
-        data_dict[integrations_key] = integrations_data
-
         output_dict = {'data_dict': data_dict, 'data_format_array': data_format_array}
         return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Project data loaded successfully.')
 
