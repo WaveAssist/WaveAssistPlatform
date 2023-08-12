@@ -18,6 +18,7 @@ class NodeThread(threading.Thread):
         self.mongo_manager = mongo_manager
 
 
+
     def manage_output(self,output_data, output_dict):
         try:
             if output_data is None:

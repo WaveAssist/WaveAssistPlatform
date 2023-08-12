@@ -14,9 +14,7 @@ logging.getLogger("ibapi").setLevel(logging.CRITICAL)  # Set level higher than C
 
 class IBapi(EWrapper, EClient):
     tick_data_dictionary = {}
-    future_price = 0
-    is_next_month = True
-    is_set = False
+
 
     def __init__(self):
         EClient.__init__(self, self)
@@ -25,20 +23,6 @@ class IBapi(EWrapper, EClient):
         super().tickPrice(reqId, tickType, price, attrib)
         if price == 0 or price is None:
             return
-
-        if reqId in [3001, 3002] and tickType in [4,6,7,9]: ##Futures - Last Price
-            if not self.is_set:
-                ##update the future price as price
-                self.future_price = price
-                self.is_set = True
-                if reqId == 3001:
-                    print("Setting next month price to: " + str(price))
-                    self.is_next_month = True
-
-                elif reqId == 3002:
-                    print("Setting subsequent month price to: " + str(price))
-                    self.is_next_month = False
-
 
         if tickType == 4:  ##Last Price
             if reqId in self.tick_data_dictionary:
@@ -76,5 +60,8 @@ def connect_ib(ib_url):
 
     print("Did connect: " + str(app.isConnected()))
     return app, api_thread
+
+
+
 
 ib_app, api_thread = connect_ib("18.210.163.209")

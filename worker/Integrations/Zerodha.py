@@ -1,3 +1,3 @@
 from kiteconnect import KiteConnect
 kite = KiteConnect(api_key='REMOVED_CREDENTIAL')
-kite.set_access_token('z2oBZMjEgpIlXoWnBWCA4AZjOaoA7j8b')
+kite.set_access_token('O63iyvrA3km0lH7QfI7ZsZY5AoGLK35h')

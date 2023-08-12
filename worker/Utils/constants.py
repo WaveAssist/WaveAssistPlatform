@@ -11,5 +11,6 @@ PROJECTS_FOLDER = os.path.join(CWD_PATH, 'Projects')
 UPDATE_PROJECT_REFRESH_STATUS = BASE_URL + "/update_project_refresh_status/"
 PD_DATA_KEY = 'PDData'
 IO_DATA_KEY = 'IODataKey'
+DATA_KEY = "DATA"
 DB_NAME = "WaveAssist"
 CONNECTION_STRING = "REMOVED_CREDENTIAL"

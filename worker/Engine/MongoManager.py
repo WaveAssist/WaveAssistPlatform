@@ -3,8 +3,11 @@ from pymongo import MongoClient
 from Utils.constants import *
 import Utils.utils as utils
 
+
 class MongoManager:
 
+
+    ##Class Functions
     @classmethod
     def remove_id_from_array(cls, data_array):
         ##Remove any element with prefix _id from array
@@ -12,6 +15,15 @@ class MongoManager:
         for data in data_array:
             data = {key: value for key, value in data.items() if not key.startswith('_id')}
             data = {key: value for key, value in data.items() if not key.startswith('id')}
+            updated_data_array.append(data)
+        return updated_data_array
+
+    @classmethod
+    def add_row_number(cls,data_array):
+        ##Add a row_number column to each element in data_array starting with 1..
+        updated_data_array = []
+        for data in data_array:
+            data['row_number'] = data_array.index(data) + 1
             updated_data_array.append(data)
         return updated_data_array
 
@@ -33,50 +45,34 @@ class MongoManager:
             updated_data_array.append(data)
         return updated_data_array
 
-    def __init__(self, connection_string=CONNECTION_STRING, database_name=DB_NAME):
+        ##Init Function
+
+    def __init__(self, collection_name=None, connection_string=CONNECTION_STRING, database_name=DB_NAME):
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
+        if collection_name is not None:
+            self.collection = self.database[collection_name]
 
-    # ##Insert or replace key and return the inserted/replaced ID
-    def replace_data(self, io_key, data_array):
+    ##Instance Functions
+    def insert_or_replace_data_for_key(self, io_key, data_array):
         try:
-            collection = self.database[io_key]
-
-            ##Delete all existing data in collection & Insert
-            collection.delete_many({})  # Delete all existing documents
-            collection.insert_many(data_array)  # Insert new data
-
+            new_data_dict = {}
+            new_data_dict[IO_DATA_KEY] = io_key
+            new_data_dict[DATA_KEY] = data_array
+            self.collection.replace_one({IO_DATA_KEY: io_key}, new_data_dict, upsert=True)
             return True
         except Exception as e:
-            utils.logger.error("Error in insert_data for key " + io_key + ": " + str(e))
-            return False
-
-
-    def append_data(self, io_key, data_array):
-        try:
-            collection = self.database[io_key]
-
-            ##Delete all existing data in collection
-            # collection.delete_many({})
-
-            # print("Inserting data: " + str(data_array))
-            ##Insert new data
-            collection.insert_many(data_array)
-
-            return True
-        except Exception as e:
-            utils.logger.error("Error in insert_data for key " + io_key + ": " + str(e))
+            utils.logger.error("Error in insert_or_replace_data_for_key: " + io_key + ": " + str(e))
             return False
 
     ##Fetch data, return None if no data exists.
-    def fetch_data(self, io_key):
+    def fetch_data_for_key(self, io_key):
         try:
-            collection = self.database[io_key]
-            data = list(collection.find({}))
-            ##Check length of data
-            if len(data) == 0:
-                data = list(collection.find({}))
-            data = MongoManager.convert_id_in_data(data)
+            full_data = self.collection.find_one({IO_DATA_KEY: io_key})
+            if full_data is None or len(full_data) == 0 or DATA_KEY not in full_data:
+                return None
+
+            data = full_data[DATA_KEY]
             return data
 
         except Exception as e:
@@ -86,16 +82,15 @@ class MongoManager:
     def close_connection(self):
         self.client.close()
 
-    def delete_collection(self,collection_name):
-        self.database[collection_name].drop()
+
+
+
 
     ##Helper functions
     def fetch_data_as_dataframe(self, io_key):
-        data_fetched = self.fetch_data(io_key)
-
+        data_fetched = self.fetch_data_for_key(io_key)
         if data_fetched is None:
             return None
-
         ##Check if data can be converted to proper PD dataframe
         try:
             data = pd.DataFrame(data_fetched)
@@ -107,21 +102,11 @@ class MongoManager:
     def replace_data_as_dataframe(self,io_key,df):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
         try:
-            df = pd.DataFrame(df) ##Convert to dataframe if not already, to check if it is a valid dataframe
+            df = pd.DataFrame(df)
             data_df = df.to_dict(orient='records')
-            return self.replace_data(io_key,data_df)
+            return self.insert_or_replace_data_for_key(io_key,data_df)
         except Exception as e:
             utils.logger.error("Error in replace_data_as_dataframe: " + str(e))
-            return False
-
-    def update_data_as_dataframe(self,io_key, df):
-        ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
-        try:
-            df = pd.DataFrame(df) ##Convert to dataframe if not already, to check if it is a valid dataframe
-            data_df = df.to_dict(orient='records')
-            return self.append_data(io_key,data_df)
-        except Exception as e:
-            utils.logger.error("Error in replace_data_as_dataframe for key " + io_key + ": " + str(e))
             return False
 
 

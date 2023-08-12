@@ -10,7 +10,7 @@ class ProjectManager(object):
     def __init__(self, project_key):
         self.project_key = project_key
         self.nodes_dict = {}
-        self.mongo_manager = MongoManager()
+        self.mongo_manager = MongoManager(project_key)
 
     def load_node_array(self):
         node_array = network_connect.load_node_array(self.project_key)
