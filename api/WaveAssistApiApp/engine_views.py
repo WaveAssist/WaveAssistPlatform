@@ -57,7 +57,7 @@ def generate_integrations_code_text(project_object):
     python_code_text = ''
     integration_array = project_object.integration_array.all()
     for integration_object in integration_array:
-        python_code_text += integration_object.python_code + '\n'
+        python_code_text += integration_object.import_code + '\n'
     return python_code_text
 
 
