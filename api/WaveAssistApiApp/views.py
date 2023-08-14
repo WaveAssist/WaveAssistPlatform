@@ -115,6 +115,10 @@ def set_data_for_key(request):
         pd_data = pd.read_csv(StringIO(csv_data))
         ##Save in mongo db
         mongo_manager.collection = mongo_manager.database[project_key]
+
+        ##Remove row_number column in pd_data if it exists
+        pd_data = pd_data.drop('row_number', axis=1, errors='ignore')
+        
         success = mongo_manager.replace_data_as_dataframe(io_data_key, pd_data)
         if not success:
             return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
@@ -181,6 +185,7 @@ def zerodha_redirect(request):
         access_data_dict['name'] = ZERODHA_ACCESS_TOKEN_KEY
         access_data_dict['value'] = access_token
         integrations_data_array.append(access_data_dict)
+
 
     success = mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
     if not success:
