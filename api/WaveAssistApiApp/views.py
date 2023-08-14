@@ -109,16 +109,20 @@ def set_data_for_key(request):
     if not has_access(client_object, project_key):
         return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
-
-    csv_data = str(request.POST.get('csv_data', ''))
-    try:
+    data_type = request.POST.get('data_type', 'csv')
+    if data_type == 'csv':
+        csv_data = str(request.POST.get('csv_data', ''))
         pd_data = pd.read_csv(StringIO(csv_data))
+    if data_type == 'json':
+        json_data = str(request.POST.get('json_data', ''))
+        pd_data = pd.read_json(json_data)
+    try:
         ##Save in mongo db
         mongo_manager.collection = mongo_manager.database[project_key]
 
         ##Remove row_number column in pd_data if it exists
         pd_data = pd_data.drop('row_number', axis=1, errors='ignore')
-        
+
         success = mongo_manager.replace_data_as_dataframe(io_data_key, pd_data)
         if not success:
             return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
