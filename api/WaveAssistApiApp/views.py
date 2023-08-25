@@ -153,6 +153,9 @@ def zerodha_redirect(request):
     ##Convert csv to array
     project_key_array = project_key_csv.split(',')
     response_dict = {}
+    is_access_token_created = False
+    set_access_token = ""
+
     for project_key in project_key_array:
         if project_key == "" or project_key == " ":
             continue
@@ -179,9 +182,14 @@ def zerodha_redirect(request):
             continue
 
         try:
-            kite = KiteConnect(api_key=zerodha_api_key)
-            data = kite.generate_session(request_token, api_secret=zerodha_api_secret)
-            access_token = data["access_token"]
+            if not is_access_token_created:
+                kite = KiteConnect(api_key=zerodha_api_key)
+                data = kite.generate_session(request_token, api_secret=zerodha_api_secret)
+                access_token = data["access_token"]
+                set_access_token = access_token
+                is_access_token_created = True
+            else:
+                access_token = set_access_token
         except Exception as e:
             response_dict[project_key] = "Something went wrong setting token: " + str(e)
             continue
