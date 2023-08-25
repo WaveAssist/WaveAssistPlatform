@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 
 class Client(models.Model):
     id = models.AutoField(primary_key=True)
@@ -34,7 +35,7 @@ class Integrations(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255, default="", null=True)
     import_code = models.TextField(default="")
-
+    function_code = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -153,12 +154,12 @@ class Nodes(models.Model):
 
         ##Also optimially load and pass the input and output data list
         input_data_array = []
-        for input_data in self.input_data_array.all():
+        for input_data in self.input_data_array.all().order_by(Lower('key')):
             input_data_array.append(input_data.get_dict())
         node_dict['input_data_array'] = input_data_array
 
         output_data_array = []
-        for output_data in self.output_data_array.all():
+        for output_data in self.output_data_array.all().order_by(Lower('key')):
             output_data_array.append(output_data.get_dict())
         node_dict['output_data_array'] = output_data_array
 

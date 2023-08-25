@@ -61,21 +61,32 @@ def generate_integrations_code_text(project_object):
     return python_code_text
 
 
-def generate_python_code_text(node_array):
+def generate_integrations_function_prefix(project_object):
+    python_code_text = ''
+    integration_array = project_object.integration_array.all()
+    for integration_object in integration_array:
+        python_code_text += integration_object.function_code + '\n'
+    return python_code_text
+
+
+def generate_python_code_text(node_array, project_key, function_integration_code=""):
     try:
         python_code_text = ''
 
         for node_object in node_array:
             python_code = node_object.python_code
 
-            input_data_array = node_object.input_data_array.all()
+            input_data_array = node_object.input_data_array.all().order_by(Lower('key'))
             ##For each IODataObject in input_data_array, add a parameter to the parameters_string with name as key
 
             parameters_string = ""
             for input_data_object in input_data_array:
                 parameters_string += str(input_data_object.key) + ", "
+            parameters_string += 'integrations_df=None, '
+            parameters_string += 'project_key=' + str(project_key) + ","
 
 
+            python_code = function_integration_code + python_code
             python_code_text += "def " + node_object.node_key + "(" + parameters_string +  "):\n"
             python_code_text += "    " + python_code.replace("\n", "\n    ") + "\n\n"
 
@@ -113,7 +124,8 @@ def download_project_file_data(request):
 
     try:
         node_array = project_object.node_array.filter(running_status=1)
-        success, python_code_text = generate_python_code_text(node_array)
+        function_integration_code = generate_integrations_function_prefix(project_object)
+        success, python_code_text = generate_python_code_text(node_array, project_key, function_integration_code)
         integrations_code_text = generate_integrations_code_text(project_object)
         final_code_text = integrations_code_text + "\n\n" + python_code_text
         if not success:

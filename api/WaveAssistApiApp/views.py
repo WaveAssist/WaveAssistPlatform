@@ -138,7 +138,7 @@ def set_data_for_key(request):
 def zerodha_redirect(request):
     request_token = request.GET.get('request_token', '')
     status = request.GET.get('status', '')
-    project_key = request.GET.get('project_key', '')
+    project_key_csv = request.GET.get('project_key_csv', '')
     uid = request.GET.get('uid', '')
 
     if status != 'success':
@@ -149,50 +149,62 @@ def zerodha_redirect(request):
     except:
         return ResponseParser.getParsedErrorMessage('User not found')
 
-    if not has_access(client_object, project_key):
-        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
-    project_integrations_key = INTEGRATIONS_PREFIX_KEY + project_key
-    mongo_manager.collection = mongo_manager.database[project_key]
+    ##Convert csv to array
+    project_key_array = project_key_csv.split(',')
+    response_dict = {}
+    for project_key in project_key_array:
+        if project_key == "" or project_key == " ":
+            continue
 
-    zerodha_api_key = ''
-    zerodha_api_secret = ''
-    integrations_data_array = []
-    try:
-        integrations_data_array = mongo_manager.fetch_data_for_key(project_integrations_key)
+        if not has_access(client_object, project_key):
+            response_dict[project_key] = "You do not have access to this project"
+            continue
+
+        project_integrations_key = project_key + INTEGRATIONS_SUFFIX_KEY
+        mongo_manager.collection = mongo_manager.database[project_key]
+
+        zerodha_api_key = ''
+        zerodha_api_secret = ''
+        integrations_data_array = []
+        try:
+            integrations_data_array = mongo_manager.fetch_data_for_key(project_integrations_key)
+            for data_dict in integrations_data_array:
+                if data_dict['name'] == ZERODHA_API_KEY:
+                    zerodha_api_key = data_dict['value']
+                elif data_dict['name'] == ZERODHA_API_SECRET_KEY:
+                    zerodha_api_secret = data_dict['value']
+        except:
+            response_dict[project_key] = "Integrations data not found for this project"
+            continue
+
+        try:
+            kite = KiteConnect(api_key=zerodha_api_key)
+            data = kite.generate_session(request_token, api_secret=zerodha_api_secret)
+            access_token = data["access_token"]
+        except Exception as e:
+            response_dict[project_key] = "Something went wrong setting token: " + str(e)
+            continue
+
+
+        ##Save access token in mongo
+        did_find = False
         for data_dict in integrations_data_array:
-            if data_dict['name'] == ZERODHA_API_KEY:
-                zerodha_api_key = data_dict['value']
-            elif data_dict['name'] == ZERODHA_API_SECRET_KEY:
-                zerodha_api_secret = data_dict['value']
-    except:
-        return ResponseParser.getParsedErrorMessage('Integrations data not found')
+            if data_dict['name'] == ZERODHA_ACCESS_TOKEN_KEY:
+                data_dict['value'] = access_token
+                did_find = True
+                break
 
-    try:
-        kite = KiteConnect(api_key=zerodha_api_key)
-        data = kite.generate_session(request_token, api_secret=zerodha_api_secret)
-        access_token = data["access_token"]
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Something went wrong: ' + str(e))
+        if not did_find:
+            access_data_dict = {}
+            access_data_dict['name'] = ZERODHA_ACCESS_TOKEN_KEY
+            access_data_dict['value'] = access_token
+            integrations_data_array.append(access_data_dict)
 
-
-    ##Save access token in mongo
-    did_find = False
-    for data_dict in integrations_data_array:
-        if data_dict['name'] == ZERODHA_ACCESS_TOKEN_KEY:
-            data_dict['value'] = access_token
-            did_find = True
-            break
-
-    if not did_find:
-        access_data_dict = {}
-        access_data_dict['name'] = ZERODHA_ACCESS_TOKEN_KEY
-        access_data_dict['value'] = access_token
-        integrations_data_array.append(access_data_dict)
+        success = mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
+        if not success:
+            response_dict[project_key] = 'Something went wrong with data saving for this project'
+            continue
 
 
-    success = mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
-    if not success:
-        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
-
-    return ResponseParser.getParsedSuccessMessage({}, '200', 'Zerodha access token saved successfully for your project.')
+    return ResponseParser.getParsedSuccessMessage(response_dict, '200', 'Zerodha access workflow complete')
