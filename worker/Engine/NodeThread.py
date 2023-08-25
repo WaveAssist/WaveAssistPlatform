@@ -73,8 +73,6 @@ class NodeThread(threading.Thread):
                 ##number of outputs are dynamic
 
                 input_array = self.get_input()
-
-
                 output = project_function(*input_array)
 
                 output_array = []

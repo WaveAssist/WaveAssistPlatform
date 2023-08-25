@@ -3,3 +3,5 @@ pandas==2.0.3
 pymongo==4.4.1
 kiteconnect==4.2.0
 ibapi
+pyotp==2.9.0
+selenium==4.11.2

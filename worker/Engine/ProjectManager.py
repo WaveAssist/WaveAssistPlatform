@@ -3,6 +3,7 @@ from Engine.NodeThread import NodeThread
 import Utils.utils as utils
 import Utils.network_connect as network_connect
 from Engine.MongoManager import MongoManager
+from Utils.constants import *
 
 # Thread Manager class
 class ProjectManager(object):
@@ -55,6 +56,8 @@ class ProjectManager(object):
             sleep_duration = float(node_dict['sleep_duration'])
             input_data_array = node_dict['input_data_array']
             output_data_array = node_dict['output_data_array']
+            input_data_array.append({"key":self.project_key + INTEGRATIONS_SUFFIX_KEY})
+
             node = self.create_node(node_key, sleep_duration, input_data_array, output_data_array)
             self.start_node(node)
 
