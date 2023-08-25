@@ -213,6 +213,8 @@ def zerodha_redirect(request):
         if not success:
             response_dict[project_key] = 'Something went wrong with data saving for this project'
             continue
+        else:
+            response_dict[project_key] = "Zerodha token successfully set!"
 
 
     return ResponseParser.getParsedSuccessMessage(response_dict, '200', 'Zerodha access workflow complete')
