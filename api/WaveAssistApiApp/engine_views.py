@@ -84,7 +84,7 @@ def generate_python_code_text(node_array, project_key, function_integration_code
                 parameters_string += str(input_data_object.key) + ", "
             parameters_string += 'integrations_df=None, '
             parameters_string += 'project_key="' + str(project_key) + '",'
-            
+
 
 
             python_code = function_integration_code + python_code

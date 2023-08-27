@@ -108,7 +108,7 @@ class Project(models.Model):
         project_dict = {}
         project_dict['id'] = self.id
         project_dict['project_key'] = self.project_key
-        project_dict['creation_status'] = self.running_status
+        project_dict['running_status'] = self.running_status
         project_dict['payment_status'] = self.payment_status
         project_dict['refresh_status'] = self.refresh_status
         return project_dict

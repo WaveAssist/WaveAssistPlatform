@@ -19,7 +19,7 @@ from django.urls import path
 from WaveAssistApiApp import views
 from WaveAssistApiApp import engine_views
 from django.views.decorators.csrf import csrf_exempt
-
+from WaveAssistApiApp import manage_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,6 +32,12 @@ urlpatterns = [
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
     path("login/", csrf_exempt(views.login), name="login"),
     path("zerodha_redirect/", csrf_exempt(views.zerodha_redirect), name="zerodha_redirect"),
+
+
+    ##Admin URL's
+    path("manage/fetch_all_project/", csrf_exempt(manage_views.fetch_all_project), name="fetch_all_project"),
+    path("manage/create_project/", csrf_exempt(manage_views.create_project), name="create_project"),
+
 ]
 
 
