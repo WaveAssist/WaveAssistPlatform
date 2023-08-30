@@ -5,7 +5,6 @@ from datetime import datetime
 from datetime import timedelta as td
 
 print("Starting CAGR LOAD")
-print("Test: " + str(kite.profile()))
 
 should_refresh_cagr = str(CAGR_input_df[CAGR_input_df['name'] == 'should_refresh_cagr']['value'].values[0])
 if should_refresh_cagr == "0":

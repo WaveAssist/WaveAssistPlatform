@@ -14,7 +14,7 @@ logging.getLogger("ibapi").setLevel(logging.CRITICAL)  # Set level higher than C
 
 class IBapi(EWrapper, EClient):
     tick_data_dictionary = {}
-
+    last_refreshed = None
 
     def __init__(self):
         EClient.__init__(self, self)
@@ -23,6 +23,8 @@ class IBapi(EWrapper, EClient):
         super().tickPrice(reqId, tickType, price, attrib)
         if price == 0 or price is None:
             return
+
+        self.last_refreshed = datetime.now(ist)
 
         if tickType == 4:  ##Last Price
             if reqId in self.tick_data_dictionary:

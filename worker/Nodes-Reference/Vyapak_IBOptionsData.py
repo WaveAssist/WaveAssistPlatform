@@ -73,7 +73,7 @@ try:
         print("No data returned from IB")
         return None, None
 
-    ib_updated = datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S")
+    ib_updated = ib_app.last_refreshed
     ib_dict = {'IB Updated': ib_updated}
 
     print("IB Data updated for " + str(len(output_df)) + " strikes")
