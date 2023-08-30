@@ -21,7 +21,7 @@ class IBapi(EWrapper, EClient):
     def tickPrice(self, reqId, tickType, price, attrib):
         super().tickPrice(reqId, tickType, price, attrib)
         # print("Tick Price. Ticker Id:", reqId, "tickType:", tickType, "Price:", price)
-        self.last_refreshed = str(datetime.now(ist))
+        self.last_refreshed = datetime.now(ist)
         if price == 0 or price is None:
             return
 
