@@ -14,13 +14,14 @@ logging.getLogger("ibapi").setLevel(logging.CRITICAL)  # Set level higher than C
 
 class IBapi(EWrapper, EClient):
     tick_data_dictionary = {}
-
-
+    last_refreshed = None
     def __init__(self):
         EClient.__init__(self, self)
 
     def tickPrice(self, reqId, tickType, price, attrib):
         super().tickPrice(reqId, tickType, price, attrib)
+        # print("Tick Price. Ticker Id:", reqId, "tickType:", tickType, "Price:", price)
+        self.last_refreshed = str(datetime.now(ist))
         if price == 0 or price is None:
             return
 
@@ -40,6 +41,7 @@ class IBapi(EWrapper, EClient):
                 self.tick_data_dictionary[reqId]['ask_price'] = price
             else:
                 self.tick_data_dictionary[reqId] = {'ask_price': price}
+
 
 
 def run_loop(app):
@@ -62,3 +64,4 @@ def connect_ib(ib_url):
     return app, api_thread
 
 ib_app, api_thread = connect_ib("18.210.163.209")
+
