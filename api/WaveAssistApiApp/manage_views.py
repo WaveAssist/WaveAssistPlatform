@@ -83,12 +83,13 @@ def fetch_project_data(request):
 
     ##Get IO Data array
     dashboard_data_key = ""
-    io_data_array = project_object.iodata_set.filter(output_type__in=[0,1])
+    io_data_array = project_object.iodata_set.filter(output_type__in=[0,1,2])
     io_data_dict_array = []
     for io_data_object in io_data_array:
-        io_data_dict_array.append(io_data_object.get_dict())
         if io_data_object.output_type == 2:
             dashboard_data_key = io_data_object.key
+            continue
+        io_data_dict_array.append(io_data_object.get_dict())
     project_dict['io_data_array'] = io_data_dict_array
 
     ##Get Node Data array
@@ -114,7 +115,7 @@ def fetch_project_data(request):
 
     ##Get Dashboard data from Mongo
 
-    mongo_manager = MongoManager()
+    mongo_manager = MongoManager(collection_name=project_key)
     mongo_manager.collection = mongo_manager.database[project_key]
     integrations_data_array = mongo_manager.fetch_data_for_key(dashboard_data_key)
     project_dict['dashboard_data_array'] = integrations_data_array
