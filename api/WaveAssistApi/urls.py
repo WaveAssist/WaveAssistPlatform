@@ -37,6 +37,8 @@ urlpatterns = [
     ##Admin URL's
     path("manage/fetch_all_project/", csrf_exempt(manage_views.fetch_all_project), name="fetch_all_project"),
     path("manage/create_project/", csrf_exempt(manage_views.create_project), name="create_project"),
+    path("manage/fetch_project_data/", csrf_exempt(manage_views.fetch_project_data), name="fetch_project_data"),
+
 
 ]
 

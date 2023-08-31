@@ -10,7 +10,7 @@ from io import StringIO as StringIO
 from .Utils.constants import *
 from .Utils.firebase_auth import verify_token
 from kiteconnect import KiteConnect
-
+import WaveAssistApiApp.Utils.utils as utils
 
 mongo_manager = MongoManager()
 
@@ -83,12 +83,7 @@ def load_project_data(request):
 
 
 
-def has_access(client_object, project_key):
-    project_list = client_object.project_set.filter(project_key=project_key)
-    if project_list.count() > 0:
-        return True
-    else:
-        return False
+
 
 
 def set_data_for_key(request):
@@ -106,7 +101,7 @@ def set_data_for_key(request):
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('IOData not found!')
 
-    if not has_access(client_object, project_key):
+    if not utils.has_access(client_object, project_key):
         return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
     data_type = request.POST.get('data_type', 'csv')
@@ -160,7 +155,7 @@ def zerodha_redirect(request):
         if project_key == "" or project_key == " ":
             continue
 
-        if not has_access(client_object, project_key):
+        if not utils.has_access(client_object, project_key):
             response_dict[project_key] = "You do not have access to this project"
             continue
 

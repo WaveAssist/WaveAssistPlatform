@@ -45,7 +45,6 @@ class Integrations(models.Model):
         integrations_dict = {}
         integrations_dict['id'] = self.id
         integrations_dict['name'] = self.name
-        integrations_dict['import_code'] = self.import_code
 
         return integrations_dict
 
@@ -58,7 +57,7 @@ class Integrations(models.Model):
 class IOData(models.Model):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True)
-    output_type = models.IntegerField(default=0) ## 0 is default, 1 is needed for output, 2 is final_output_format
+    output_type = models.IntegerField(default=0) ## 0 is default, 1 is needed for output, 2 is final_output_format, 3 is Integrations
     action_type = models.IntegerField(default=0) ## 0 is replace, 1 is add
     description = models.CharField(max_length=255, default="", null=True)
     name = models.CharField(max_length=255, default="", null=True)
@@ -149,7 +148,6 @@ class Nodes(models.Model):
         node_dict['description'] = self.description
         node_dict['start_frequency_in_seconds'] = self.start_frequency_in_seconds
         node_dict['sleep_duration'] = self.start_frequency_in_seconds
-        node_dict['python_code'] = self.python_code
         node_dict['running_status'] = self.running_status
 
         ##Also optimially load and pass the input and output data list
