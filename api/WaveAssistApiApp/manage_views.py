@@ -83,7 +83,7 @@ def fetch_project_data(request):
 
     ##Get IO Data array
     dashboard_data_key = ""
-    io_data_array = project_object.iodata_set.filter(output_type__in=[0,1,2])
+    io_data_array = project_object.iodata_set.filter(output_type__in=[0,1])
     io_data_dict_array = []
     for io_data_object in io_data_array:
         io_data_dict_array.append(io_data_object.get_dict())
