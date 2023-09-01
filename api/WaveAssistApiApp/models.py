@@ -149,7 +149,8 @@ class Nodes(models.Model):
         node_dict['start_frequency_in_seconds'] = self.start_frequency_in_seconds
         node_dict['sleep_duration'] = self.start_frequency_in_seconds
         node_dict['running_status'] = self.running_status
-
+        node_dict['python_code'] = self.python_code
+        
         ##Also optimially load and pass the input and output data list
         input_data_array = []
         for input_data in self.input_data_array.all().order_by(Lower('key')):
