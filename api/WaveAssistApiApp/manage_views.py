@@ -13,6 +13,8 @@ import WaveAssistApiApp.views as views
 import json
 import csv
 from django.http import JsonResponse
+from django.utils.text import slugify
+from django.http import HttpRequest
 
 
 def fetch_all_project(request):
@@ -157,22 +159,27 @@ def update_code(request):
 def upload_io_data_file(request):
     try:
         uploaded_file = request.FILES['file']
+
+        post_data = request.POST.copy()
         # Determine the file type by checking the file extension
         data_type = uploaded_file.name.split('.')[-1].lower()
-
         content = uploaded_file.read().decode('utf-8')
-        request.POST['data_type'] = data_type
+        post_data['data_type'] = data_type
 
         if data_type == 'csv':
-            request.POST['csv_data'] = content
+            post_data['csv_data'] = content
         elif data_type == 'json':
-            request.POST['json_data'] = content
+            post_data['json_data'] = content
         else:
             return ResponseParser.getParsedErrorMessage('Invalid file type')
 
-        return views.set_data_for_key(request)
+        new_request = HttpRequest()
+        new_request.method = 'POST'
+        new_request.POST = post_data
+        return views.set_data_for_key(new_request)
 
-    except:
+    except Exception as e:
+        print("Error with file upload: " + str(e))
         return ResponseParser.getParsedErrorMessage('Something went wrong with file extraction')
 
 
@@ -186,7 +193,7 @@ def update_io_data(request):
 
     try:
         io_data_id = int(request.POST.get('io_data_id', ''))
-        io_data_object = IOData.objects.get(id=io_data_id).select_related('project')
+        io_data_object = IOData.objects.get(id=io_data_id)
     except:
         return ResponseParser.getParsedErrorMessage('IO Data not found.')
 
@@ -232,7 +239,7 @@ def create_io_data(request):
     except:
         return ResponseParser.getParsedErrorMessage('Project not found')
 
-    if not utils.has_access(client_object, project_object):
+    if not utils.has_access(client_object, project_key):
         return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
     key = request.POST.get('key', '')
@@ -270,8 +277,8 @@ def delete_io_data(request):
         return ResponseParser.getParsedErrorMessage('User not found')
 
     try:
-        key = int(request.POST.get('key', ''))
-        io_data_object = IOData.objects.get(key=key).select_related('project')
+        key = request.POST.get('key', '')
+        io_data_object = IOData.objects.get(key=key)
     except:
         return ResponseParser.getParsedErrorMessage('IO Data not found.')
 
@@ -285,3 +292,28 @@ def delete_io_data(request):
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'IO Data deleted successfully.')
 
+def download_io_data(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    try:
+        key = request.POST.get('key', '')
+        io_data_object = IOData.objects.get(key=key)
+    except:
+        return ResponseParser.getParsedErrorMessage('IO Data not found.')
+
+    if not utils.does_user_have_io_data_access(client_object, io_data_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this IO Data')
+
+    project_key = io_data_object.project.project_key
+
+    mongo_manager = MongoManager(collection_name=project_key)
+    mongo_manager.collection = mongo_manager.database[project_key]
+    data_df = mongo_manager.fetch_data_as_dataframe(key)
+    csv_string = data_df.to_csv(index=False)
+    file_name = 'download_' + key
+
+    return ResponseParser.getHTTPResponseForCSV(csv_string, file_name)

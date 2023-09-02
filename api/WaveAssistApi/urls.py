@@ -42,6 +42,10 @@ urlpatterns = [
     path("manage/create_io_data/", csrf_exempt(manage_views.create_io_data), name="create_io_data"),
     path("manage/update_io_data/", csrf_exempt(manage_views.update_io_data), name="update_io_data"),
     path("manage/delete_io_data/", csrf_exempt(manage_views.delete_io_data), name="delete_io_data"),
+    path("manage/download_io_data/", csrf_exempt(manage_views.download_io_data), name="download_io_data"),
+    path("manage/upload_io_data_file/", csrf_exempt(manage_views.upload_io_data_file), name="upload_io_data_file"),
+
 ]
+
 
 
