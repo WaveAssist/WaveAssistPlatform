@@ -293,14 +293,14 @@ def delete_io_data(request):
     return ResponseParser.getParsedSuccessMessage({}, '200', 'IO Data deleted successfully.')
 
 def download_io_data(request):
-    uid = request.POST.get('uid', '')
+    uid = request.GET.get('uid', '')
     try:
         client_object = Client.objects.get(firebase_uid=uid)
     except:
         return ResponseParser.getParsedErrorMessage('User not found')
 
     try:
-        key = request.POST.get('key', '')
+        key = request.GET.get('key', '')
         io_data_object = IOData.objects.get(key=key)
     except:
         return ResponseParser.getParsedErrorMessage('IO Data not found.')
