@@ -122,3 +122,30 @@ def fetch_project_data(request):
 
     return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project data fetched successfully.')
 
+
+
+def update_code(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    node_key = request.POST.get('node_key', '')
+    python_code = request.POST.get('python_code', '')
+
+    try:
+        node_object = Nodes.objects.get(node_key=node_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Node not found')
+
+    if not utils.does_user_have_node_access(client_object, node_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this node')
+
+    node_object.python_code = python_code
+    node_object.save()
+
+    return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Code updated successfully.')
+
+
+
