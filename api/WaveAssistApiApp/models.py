@@ -64,7 +64,6 @@ class IOData(models.Model):
 
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
 
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -39,7 +39,9 @@ urlpatterns = [
     path("manage/create_project/", csrf_exempt(manage_views.create_project), name="create_project"),
     path("manage/fetch_project_data/", csrf_exempt(manage_views.fetch_project_data), name="fetch_project_data"),
     path("manage/update_code/", csrf_exempt(manage_views.update_code), name="update_code"),
-
+    path("manage/create_io_data/", csrf_exempt(manage_views.create_io_data), name="create_io_data"),
+    path("manage/update_io_data/", csrf_exempt(manage_views.update_io_data), name="update_io_data"),
+    path("manage/delete_io_data/", csrf_exempt(manage_views.delete_io_data), name="delete_io_data"),
 ]
 
 

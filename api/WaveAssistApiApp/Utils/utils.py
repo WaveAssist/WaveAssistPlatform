@@ -30,4 +30,8 @@ def does_user_have_node_access(client_object, node_object):
     node_array = client_object.project_set.all().values_list('node_array', flat=True)
     return node_object.id in node_array
 
+def does_user_have_io_data_access(client_object, io_data_object):
+    # project object has node_array
+    project_array = client_object.project_set.all()
+    return io_data_object.project in project_array
 

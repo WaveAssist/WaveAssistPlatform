@@ -9,6 +9,10 @@ from io import StringIO as StringIO
 from .Utils.constants import *
 from .Utils.firebase_auth import verify_token
 import WaveAssistApiApp.Utils.utils as utils
+import WaveAssistApiApp.views as views
+import json
+import csv
+from django.http import JsonResponse
 
 
 def fetch_all_project(request):
@@ -148,4 +152,136 @@ def update_code(request):
     return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Code updated successfully.')
 
 
+
+
+def upload_io_data_file(request):
+    try:
+        uploaded_file = request.FILES['file']
+        # Determine the file type by checking the file extension
+        data_type = uploaded_file.name.split('.')[-1].lower()
+
+        content = uploaded_file.read().decode('utf-8')
+        request.POST['data_type'] = data_type
+
+        if data_type == 'csv':
+            request.POST['csv_data'] = content
+        elif data_type == 'json':
+            request.POST['json_data'] = content
+        else:
+            return ResponseParser.getParsedErrorMessage('Invalid file type')
+
+        return views.set_data_for_key(request)
+
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with file extraction')
+
+
+
+def update_io_data(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    try:
+        io_data_id = int(request.POST.get('io_data_id', ''))
+        io_data_object = IOData.objects.get(id=io_data_id).select_related('project')
+    except:
+        return ResponseParser.getParsedErrorMessage('IO Data not found.')
+
+
+    if not utils.does_user_have_io_data_access(client_object, io_data_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this IO Data')
+
+    key = request.POST.get('key', '')
+    output_type = request.POST.get('output_type', '')
+
+    if output_type == '':
+        return ResponseParser.getParsedErrorMessage('Output type not found.')
+
+    if output_type not in ['0', '1', '2']:
+        return ResponseParser.getParsedErrorMessage('Invalid output type.')
+
+    ##Check if key has prefix of project_key + _ - case insensitive
+    project_key = io_data_object.project.project_key
+    if not key.lower().startswith(project_key.lower() + '_'):
+        return ResponseParser.getParsedErrorMessage('Key should start with project key + _')
+
+    try:
+        io_data_object.output_type = output_type
+        io_data_object.key = key
+        io_data_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while updating IO Data, ensure the key in unique')
+
+    return ResponseParser.getParsedSuccessMessage(io_data_object.get_dict(), '200', 'IO Data updated successfully.')
+
+
+
+def create_io_data(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    project_key = request.POST.get('project_key', '')
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    if not utils.has_access(client_object, project_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+    key = request.POST.get('key', '')
+    output_type = request.POST.get('output_type', '')
+
+    if output_type == '':
+        return ResponseParser.getParsedErrorMessage('Output type not found.')
+
+    if output_type not in ['0', '1', '2']:
+        return ResponseParser.getParsedErrorMessage('Invalid output type.')
+
+    ##Check if key has prefix of project_key + _ - case insensitive
+    if not key.lower().startswith(project_key.lower() + '_'):
+        return ResponseParser.getParsedErrorMessage('Key should start with project key + _')
+
+    try:
+        io_data_object = IOData(
+            project=project_object,
+            output_type=output_type,
+            key=key
+        )
+        io_data_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while updating IO Data, ensure the key in unique')
+
+    return ResponseParser.getParsedSuccessMessage(io_data_object.get_dict(), '200', 'IO Data updated successfully.')
+
+
+
+def delete_io_data(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    try:
+        key = int(request.POST.get('key', ''))
+        io_data_object = IOData.objects.get(key=key).select_related('project')
+    except:
+        return ResponseParser.getParsedErrorMessage('IO Data not found.')
+
+    if not utils.does_user_have_io_data_access(client_object, io_data_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this IO Data')
+
+    try:
+        io_data_object.delete()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while deleting IO Data')
+
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'IO Data deleted successfully.')
 
