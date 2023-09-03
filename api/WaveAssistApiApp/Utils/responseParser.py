@@ -30,6 +30,7 @@ class ResponseParser(object):
         writer = csv.writer(response)
         lines = csv_string.split("\n")
         for line in lines:
-            row = line.split(",")
-            writer.writerow(row)
+            if line != "" and line != " ":
+                row = line.split(",")
+                writer.writerow(row)
         return response

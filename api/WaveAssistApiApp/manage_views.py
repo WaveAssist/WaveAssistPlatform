@@ -202,7 +202,7 @@ def update_io_data(request):
         return ResponseParser.getParsedErrorMessage('You do not have access to this IO Data')
 
     key = request.POST.get('key', '')
-    output_type = request.POST.get('output_type', '')
+    output_type = str(request.POST.get('output_type', ''))
 
     if output_type == '':
         return ResponseParser.getParsedErrorMessage('Output type not found.')
@@ -243,7 +243,7 @@ def create_io_data(request):
         return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
     key = request.POST.get('key', '')
-    output_type = request.POST.get('output_type', '')
+    output_type = str(request.POST.get('output_type', ''))
 
     if output_type == '':
         return ResponseParser.getParsedErrorMessage('Output type not found.')
@@ -317,3 +317,184 @@ def download_io_data(request):
     file_name = 'download_' + key
 
     return ResponseParser.getHTTPResponseForCSV(csv_string, file_name)
+
+
+
+
+
+###Node
+
+
+def update_node(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    try:
+        node_id = int(request.POST.get('node_id', ''))
+        node_object = Nodes.objects.get(id=node_id)
+    except:
+        return ResponseParser.getParsedErrorMessage('Node not found.')
+
+
+    if not utils.does_user_have_node_access(client_object, node_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this IO Data')
+
+    node_key = request.POST.get('node_key', '')
+    name = request.POST.get('name', '')
+    running_status = str(request.POST.get('running_status', ''))
+    start_frequency_in_seconds = request.POST.get('start_frequency_in_seconds', '')
+    input_data_key_csv = request.POST.get('input_data_key_csv', '')
+    output_data_key_csv = request.POST.get('output_data_key_csv', '')
+
+
+    if running_status not in ['0', '1']:
+        return ResponseParser.getParsedErrorMessage('Invalid running status.')
+
+
+    ##Check if key has prefix of project_key + _ - case insensitive
+    project_key = node_object.project.project_key
+    if not node_key.lower().startswith(project_key.lower() + '_'):
+        return ResponseParser.getParsedErrorMessage('Key should start with project key + _')
+
+
+    ##Process input_data_key_csv. Remove all existing input data and add new ones.
+    node_object.input_data_array.clear()
+    if input_data_key_csv != '':
+        input_data_key_list = input_data_key_csv.split(',')
+        for input_data_key in input_data_key_list:
+            try:
+                io_data_object = IOData.objects.get(key=input_data_key)
+                if utils.does_user_have_io_data_access(client_object, io_data_object): ##Can be optimised.
+                    node_object.input_data_array.add(io_data_object)
+            except:
+                pass
+
+    ##Process output_data_key_csv. Remove all existing output data and add new ones.
+    node_object.output_data_array.clear()
+    if output_data_key_csv != '':
+        output_data_key_list = output_data_key_csv.split(',')
+        for output_data_key in output_data_key_list:
+            try:
+                io_data_object = IOData.objects.get(key=output_data_key)
+                if utils.does_user_have_io_data_access(client_object, io_data_object): ##Can be optimised.
+                    node_object.output_data_array.add(io_data_object)
+            except:
+                pass
+
+    try:
+        node_object.node_key = node_key
+        node_object.name = name
+        node_object.running_status = running_status
+        node_object.start_frequency_in_seconds = start_frequency_in_seconds
+        node_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while updating Node, ensure the key in unique')
+
+    return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Node updated successfully.')
+
+
+
+
+def create_node(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    project_key = request.POST.get('project_key', '')
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    if not utils.has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+
+    node_key = request.POST.get('node_key', '')
+    name = request.POST.get('name', '')
+    running_status = str(request.POST.get('running_status', ''))
+    start_frequency_in_seconds = request.POST.get('start_frequency_in_seconds', '')
+    input_data_key_csv = request.POST.get('input_data_key_csv', '')
+    output_data_key_csv = request.POST.get('output_data_key_csv', '')
+
+
+    if running_status not in ['0', '1']:
+        return ResponseParser.getParsedErrorMessage('Invalid running status.')
+
+
+
+    ##Check if key has prefix of project_key + _ - case insensitive
+    if not node_key.lower().startswith(project_key.lower() + '_'):
+        return ResponseParser.getParsedErrorMessage('Key should start with project key + _')
+
+    node_object = Nodes(
+        project=project_object,
+        node_key=node_key,
+        name=name,
+        description=name,
+        running_status=running_status,
+        start_frequency_in_seconds=start_frequency_in_seconds
+    )
+
+    ##Process input_data_key_csv. Remove all existing input data and add new ones.
+    node_object.input_data_array.clear()
+
+    if input_data_key_csv != '':
+        input_data_key_list = input_data_key_csv.split(',')
+        for input_data_key in input_data_key_list:
+            try:
+                io_data_object = IOData.objects.get(key=input_data_key)
+                if utils.does_user_have_io_data_access(client_object, io_data_object): ##Can be optimised.
+                    node_object.input_data_array.add(io_data_object)
+            except:
+                pass
+
+    ##Process output_data_key_csv. Remove all existing output data and add new ones.
+    node_object.output_data_array.clear()
+    if output_data_key_csv != '':
+        output_data_key_list = output_data_key_csv.split(',')
+        for output_data_key in output_data_key_list:
+            try:
+                io_data_object = IOData.objects.get(key=output_data_key)
+                if utils.does_user_have_io_data_access(client_object, io_data_object): ##Can be optimised.
+                    node_object.output_data_array.add(io_data_object)
+            except:
+                pass
+
+    try:
+        node_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while creating Node, ensure the key in unique')
+
+
+    return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Node updated successfully.')
+
+
+
+def delete_node(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    node_key = request.POST.get('node_key', '')
+    try:
+        node_object = Nodes.objects.get(node_key=node_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Node not found')
+
+    if not utils.does_user_have_node_access(client_object, node_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this Node')
+
+    try:
+        node_object.delete()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while deleting Node')
+
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Node deleted successfully.')
