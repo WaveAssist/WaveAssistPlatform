@@ -485,6 +485,15 @@ def create_node(request):
         return ResponseParser.getParsedErrorMessage('Something went wrong while creating node and assigning data.')
 
 
+    try:
+        ##Append the node_object to project_object's node_array
+        project_object.node_array.add(node_object)
+        project_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while creating node and assigning project.')
+
+
+
     return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Node updated successfully.')
 
 
