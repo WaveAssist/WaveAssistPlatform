@@ -338,6 +338,15 @@ def update_node(request):
     except:
         return ResponseParser.getParsedErrorMessage('Node not found.')
 
+    project_key = request.POST.get('project_key', '')
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    if not utils.has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
 
     if not utils.does_user_have_node_access(client_object, node_object):
         return ResponseParser.getParsedErrorMessage('You do not have access to this IO Data')
@@ -355,10 +364,8 @@ def update_node(request):
 
 
     ##Check if key has prefix of project_key + _ - case insensitive
-    project_key = node_object.project.project_key
     if not node_key.lower().startswith(project_key.lower() + '_'):
         return ResponseParser.getParsedErrorMessage('Key should start with project key + _')
-
 
     ##Process input_data_key_csv. Remove all existing input data and add new ones.
     node_object.input_data_array.clear()
@@ -432,14 +439,20 @@ def create_node(request):
     if not node_key.lower().startswith(project_key.lower() + '_'):
         return ResponseParser.getParsedErrorMessage('Key should start with project key + _')
 
-    node_object = Nodes(
-        project=project_object,
-        node_key=node_key,
-        name=name,
-        description=name,
-        running_status=running_status,
-        start_frequency_in_seconds=start_frequency_in_seconds
-    )
+    try:
+        node_object = Nodes(
+            project=project_object,
+            node_key=node_key,
+            name=name,
+            description=name,
+            running_status=running_status,
+            start_frequency_in_seconds=start_frequency_in_seconds
+        )
+        node_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while creating Node, ensure the key in unique')
+
+
 
     ##Process input_data_key_csv. Remove all existing input data and add new ones.
     node_object.input_data_array.clear()
@@ -469,7 +482,7 @@ def create_node(request):
     try:
         node_object.save()
     except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while creating Node, ensure the key in unique')
+        return ResponseParser.getParsedErrorMessage('Something went wrong while creating node and assigning data.')
 
 
     return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Node updated successfully.')
