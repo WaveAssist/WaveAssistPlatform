@@ -600,20 +600,21 @@ def update_dashboard_data(request):
 
     ##Find the IOData with type 2 for this project and get io_data_key
     try:
-        io_data_object = IOData.objects.get(project=project_object, type=2)
+        io_data_object = IOData.objects.get(project=project_object, output_type=2)
         io_data_key = io_data_object.key
     except:
         try:
             ##Delete all existing IOData objects with type 2 for this project
-            IOData.objects.filter(project=project_object, type=2).delete()
+            IOData.objects.filter(project=project_object, output_type=2).delete()
         except:
             pass
         try:
             ##Create a new IOData object with type 2 for this project
             io_data_key = project_key + '_dashboard_data'
-            io_data_object = IOData.objects.create(key=io_data_key, type=2, project=project_object)
+            io_data_object = IOData.objects.create(key=io_data_key, output_type=2, project=project_object)
             io_data_object.save()
-        except:
+        except Exception as e:
+            print("Error with IOData Create: " + str(e))
             return ResponseParser.getParsedErrorMessage('Something went wrong while creating IOData object')
 
 
