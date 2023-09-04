@@ -603,7 +603,19 @@ def update_dashboard_data(request):
         io_data_object = IOData.objects.get(project=project_object, type=2)
         io_data_key = io_data_object.key
     except:
-        return ResponseParser.getParsedErrorMessage('IOData not found')
+        try:
+            ##Delete all existing IOData objects with type 2 for this project
+            IOData.objects.filter(project=project_object, type=2).delete()
+        except:
+            pass
+        try:
+            ##Create a new IOData object with type 2 for this project
+            io_data_key = project_key + '_dashboard_data'
+            io_data_object = IOData.objects.create(key=io_data_key, type=2, project=project_object)
+            io_data_object.save()
+        except:
+            return ResponseParser.getParsedErrorMessage('Something went wrong while creating IOData object')
+
 
     post_data = request.POST.copy()
     post_data['io_data_key'] = io_data_key
