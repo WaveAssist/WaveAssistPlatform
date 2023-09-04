@@ -57,6 +57,9 @@ urlpatterns = [
     path("manage/update_integrations/", csrf_exempt(manage_views.update_integrations), name="update_integrations"),
     path("manage/remove_integrations/", csrf_exempt(manage_views.remove_integrations), name="remove_integrations"),
 
+    ##CRUD Dashboard Data
+    path("manage/update_dashboard_data/", csrf_exempt(manage_views.update_dashboard_data), name="update_dashboard_data"),
+
 ]
 
 

@@ -124,8 +124,8 @@ def fetch_project_data(request):
     ##Get Dashboard data from Mongo
 
     mongo_manager.collection = mongo_manager.database[project_key]
-    integrations_data_array = mongo_manager.fetch_data_for_key(dashboard_data_key)
-    project_dict['dashboard_data_array'] = integrations_data_array
+    dashboard_data_array = mongo_manager.fetch_data_for_key(dashboard_data_key)
+    project_dict['dashboard_data_array'] = dashboard_data_array
 
     return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project data fetched successfully.')
 
@@ -591,3 +591,30 @@ def remove_integrations(request):
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration removed successfully.')
 
 
+def update_dashboard_data(request):
+    project_key = request.POST.get('project_key', '')
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    ##Find the IOData with type 2 for this project and get io_data_key
+    try:
+        io_data_object = IOData.objects.get(project=project_object, type=2)
+        io_data_key = io_data_object.key
+    except:
+        return ResponseParser.getParsedErrorMessage('IOData not found')
+
+    post_data = request.POST.copy()
+    post_data['io_data_key'] = io_data_key
+    post_data['data_type'] = 'json'
+
+    try:
+        new_request = HttpRequest()
+        new_request.method = 'POST'
+        new_request.POST = post_data
+        return views.set_data_for_key(new_request)
+
+    except Exception as e:
+        print("Error with file upload: " + str(e))
+        return ResponseParser.getParsedErrorMessage('Something went wrong with file extraction')
