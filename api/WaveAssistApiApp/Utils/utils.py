@@ -15,6 +15,7 @@ import os
 import json
 from WaveAssistApiApp.Utils.Logger import Logger
 ##Logger
+from WaveAssistApiApp.Utils.MongoManager import MongoManager
 
 logger = Logger()
 
@@ -35,3 +36,28 @@ def does_user_have_io_data_access(client_object, io_data_object):
     project_array = client_object.project_set.all()
     return io_data_object.project in project_array
 
+
+def manage_integration_details(mongo_manager, integration_object, project_object):
+    project_key = project_object.project_key
+
+    if integration_object.name == "Zerodha":
+        ##Create a mongo collection for this project
+        project_integrations_key = project_key + INTEGRATIONS_SUFFIX_KEY
+        mongo_manager.collection = mongo_manager.database[project_key]
+
+        integrations_data_array = []
+
+
+        zerodha_key_dict = {}
+        zerodha_key_dict['name'] = ZERODHA_API_KEY
+        zerodha_key_dict['value'] = ZERODHA_API_KEY_VALUE
+        integrations_data_array.append(zerodha_key_dict)
+
+        zerodha_secret_dict = {}
+        zerodha_secret_dict['name'] = ZERODHA_API_SECRET_KEY
+        zerodha_secret_dict['value'] = ZERODHA_API_SECRET_KEY_VALUE
+        integrations_data_array.append(zerodha_secret_dict)
+
+        mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
+
+    return

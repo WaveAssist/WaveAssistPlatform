@@ -31,6 +31,6 @@ class ResponseParser(object):
         lines = csv_string.split("\n")
         for line in lines:
             if line != "" and line != " ":
-                row = line.split(",")
+                row = line.split(",") ##ToDo: Fix comma issue when in " " or '' as string
                 writer.writerow(row)
         return response

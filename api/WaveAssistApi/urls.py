@@ -53,6 +53,9 @@ urlpatterns = [
     path("manage/create_node/", csrf_exempt(manage_views.create_node), name="create_node"),
     path("manage/update_code/", csrf_exempt(manage_views.update_code), name="update_code"),
 
+    ##CRUD Integrations
+    path("manage/update_integrations/", csrf_exempt(manage_views.update_integrations), name="update_integrations"),
+    path("manage/remove_integrations/", csrf_exempt(manage_views.remove_integrations), name="remove_integrations"),
 
 ]
 

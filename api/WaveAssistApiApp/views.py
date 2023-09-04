@@ -83,11 +83,7 @@ def load_project_data(request):
 
 
 
-
-
-
 def set_data_for_key(request):
-
     uid = request.POST.get('uid', '')
     try:
         client_object = Client.objects.get(firebase_uid=uid)
@@ -213,3 +209,5 @@ def zerodha_redirect(request):
 
 
     return ResponseParser.getParsedSuccessMessage(response_dict, '200', 'Zerodha access workflow complete')
+
+

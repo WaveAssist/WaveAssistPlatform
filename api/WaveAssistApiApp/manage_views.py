@@ -16,6 +16,8 @@ from django.http import JsonResponse
 from django.utils.text import slugify
 from django.http import HttpRequest
 
+mongo_manager = MongoManager()
+
 
 def fetch_all_project(request):
     uid = request.POST.get('uid', '')
@@ -121,7 +123,6 @@ def fetch_project_data(request):
 
     ##Get Dashboard data from Mongo
 
-    mongo_manager = MongoManager(collection_name=project_key)
     mongo_manager.collection = mongo_manager.database[project_key]
     integrations_data_array = mongo_manager.fetch_data_for_key(dashboard_data_key)
     project_dict['dashboard_data_array'] = integrations_data_array
@@ -310,7 +311,6 @@ def download_io_data(request):
 
     project_key = io_data_object.project.project_key
 
-    mongo_manager = MongoManager(collection_name=project_key)
     mongo_manager.collection = mongo_manager.database[project_key]
     data_df = mongo_manager.fetch_data_as_dataframe(key)
     csv_string = data_df.to_csv(index=False)
@@ -485,13 +485,12 @@ def create_node(request):
         return ResponseParser.getParsedErrorMessage('Something went wrong while creating node and assigning data.')
 
 
+    ##Append the node_object to project_object's node_array
     try:
-        ##Append the node_object to project_object's node_array
         project_object.node_array.add(node_object)
         project_object.save()
     except:
         return ResponseParser.getParsedErrorMessage('Something went wrong while creating node and assigning project.')
-
 
 
     return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Node updated successfully.')
@@ -520,3 +519,75 @@ def delete_node(request):
         return ResponseParser.getParsedErrorMessage('Something went wrong while deleting Node')
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Node deleted successfully.')
+
+
+
+
+
+
+def update_integrations(request):
+    active_integrations_csv = request.POST.get('active_integrations_csv', '')
+    project_key = request.POST.get('project_key', '')
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    if not utils.has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+    active_integrations_list = active_integrations_csv.split(',')
+    project_object.integration_array.clear()
+    for integration_name in active_integrations_list:
+        try:
+            integration_object = Integrations.objects.get(name=integration_name)
+            utils.manage_integration_details(mongo_manager, integration_object, project_object)
+            project_object.integration_array.add(integration_object)
+        except:
+            pass
+    try:
+        project_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while updating integrations')
+
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Integrations updated successfully.')
+
+
+
+def remove_integrations(request):
+    integration_name = request.POST.get('integration_name', '')
+    project_key = request.POST.get('project_key', '')
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    if not utils.has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+    try:
+        integration_object = Integrations.objects.get(name=integration_name)
+    except:
+        return ResponseParser.getParsedErrorMessage('Integration not found')
+
+    try:
+        project_object.integration_array.remove(integration_object)
+        project_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while removing integration')
+
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration removed successfully.')
+
+
