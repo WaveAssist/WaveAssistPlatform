@@ -33,7 +33,7 @@ def login(request):
 
     ##Fetch all projects of the client, where project's client_array contains client
 
-    project_array = client_object.project_set.filter(running_status=1)
+    project_array = client_object.project_set.all()
 
     project_dict_array = []
     for project_object in project_array:
