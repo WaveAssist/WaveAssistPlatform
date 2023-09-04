@@ -15,7 +15,6 @@ import os
 import json
 from WaveAssistApiApp.Utils.Logger import Logger
 ##Logger
-from WaveAssistApiApp.Utils.MongoManager import MongoManager
 
 logger = Logger()
 
