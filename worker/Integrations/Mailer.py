@@ -2,6 +2,9 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
+import pytz
+ist = pytz.timezone('Asia/Kolkata')
+
 class Mailer:
     def __init__(self, from_email_address="support@waveassist.io", login_password='REMOVED_CREDENTIAL'):
         self.smtp_server = 'smtp.gmail.com'
@@ -23,18 +26,18 @@ class Mailer:
 
     def store_sent_email(self, to_email_address, subject, email_body, identifier):
 
+        timestamp = datetime.now(ist)
+
         email_dict = {
             'to': to_email_address,
             'subject': subject,
             'body': email_body,
-            'identifier': identifier
+            'identifier': identifier,
+            'timestamp': timestamp
         }
 
-        # Get the current timestamp
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
         # Append the sent email with timestamp to the list
-        self.sent_emails.append((timestamp, email_dict))
+        self.sent_emails.append(email_dict)
 
         # Keep only the last 20 emails in the list
         if len(self.sent_emails) > self.MAX_EMAILS_TO_STORE:
@@ -42,6 +45,8 @@ class Mailer:
 
     def fetch_recent_emails(self):
         return self.sent_emails
+
+
 
     def send_email(self, to, subject, body, identifier=""):
         try:
