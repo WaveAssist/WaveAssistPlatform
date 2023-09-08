@@ -29,8 +29,8 @@ class Telegram:
         return self.sent_messages
 
 # Integration code:
-from Integrations.Telegram import Telegram
-telegram = Telegram()
+# from Integrations.Telegram import Telegram
+# telegram = Telegram()
 
 ##Usage
 # telegram.send_message(user_id, message, identifier)
