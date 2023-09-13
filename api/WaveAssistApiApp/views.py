@@ -69,7 +69,7 @@ def load_project_data(request):
         for io_data_object in io_data_array:
             data_array = mongo_manager.fetch_data_for_key(io_data_object.key)
             data_array = MongoManager.add_row_number(data_array)
-            data_array = MongoManager.manage_na(data_array)
+            data_array = MongoManager.manage_formatting(data_array)
             if io_data_object.output_type == 2:
                 ##Sort data array's by row key in dict and then column key
                 data_array = sorted(data_array, key=lambda k: (k['Row'], k['Column']))

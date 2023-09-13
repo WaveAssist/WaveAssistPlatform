@@ -2,8 +2,8 @@ import pandas as pd
 from WaveAssistApiApp.Utils.constants import *
 from pymongo import MongoClient
 import WaveAssistApiApp.Utils.utils as utils
-
-
+import numpy as np
+from datetime import datetime
 
 class MongoManager:
 
@@ -46,9 +46,27 @@ class MongoManager:
             updated_data_array.append(data)
         return updated_data_array
 
+    @classmethod
+    def manage_formatting(cls,data_array):
+        updated_data_array = []
+        for data in data_array:
+            for key, value in data.items():
+                if value is None:
+                    value = 0
+                try:
+                    if np.isnan(value):
+                        value = 0
+                    if np.isinf(value):
+                        value = 0
+                except:
+                    pass
 
-
-
+                ##Check if value is of type datetime
+                if isinstance(value, datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                data[key] = value
+            updated_data_array.append(data)
+        return updated_data_array
 
     ##Init Function
     def __init__(self, collection_name=None, connection_string=CONNECTION_STRING, database_name=DB_NAME):
