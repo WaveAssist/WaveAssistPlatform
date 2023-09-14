@@ -46,10 +46,18 @@ class MongoManager:
             updated_data_array.append(data)
         return updated_data_array
 
+
+    @classmethod
+    def manage_dict_formatting(cls,data_dict):
+        for key, data_array in data_dict.items():
+            data_dict[key] = cls.manage_formatting(data_array)
+        return data_dict
+        
     @classmethod
     def manage_formatting(cls,data_array):
         updated_data_array = []
         for data in data_array:
+            data['row_number'] = data_array.index(data) + 1
             for key, value in data.items():
                 if value is None:
                     value = 0
@@ -101,6 +109,35 @@ class MongoManager:
         except Exception as e:
             utils.logger.error("Error in fetch_data for key " + io_key + ": " + str(e))
             return []
+
+
+
+    ## Fetch data for multiple keys, return an empty list if no data exists.
+    def fetch_data_for_keys_array(self, io_keys_array):
+        try:
+            output_dict = {}
+            # Fetch documents that have IO_DATA_KEY in io_keys_array
+            cursor = self.collection.find({IO_DATA_KEY: {"$in": io_keys_array}})
+
+            # Convert the cursor to a list of documents
+            documents_array = list(cursor)
+
+            if not documents_array:
+                return output_dict
+
+            for document_dict in documents_array:
+                try:
+                    key = document_dict[IO_DATA_KEY]
+                    value = document_dict['DATA']
+                    output_dict[key] = value
+                except:
+                    pass
+            return output_dict
+
+        except Exception as e:
+            utils.logger.error("Error in fetch_data_for_keys_array: " + str(e))
+            return []
+
 
     def close_connection(self):
         self.client.close()

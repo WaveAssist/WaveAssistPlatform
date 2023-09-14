@@ -57,30 +57,27 @@ def load_project_data(request):
         mongo_manager.collection = mongo_manager.database[project_object.project_key]
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project not found.')
-
-
     try:
         ##Load IOData with type as 1 and project_key as project_key
-        io_data_array = IOData.objects.filter(project__project_key=project_key, output_type__in=[1,2])
-        ##Fetch all IO Data from Mongo
+        # Fetch the objects based on the filters
+        io_data_objects = IOData.objects.filter(project__project_key=project_key, output_type__in=[1, 2])
 
-        data_dict = {}
-        data_format_array = []
-        for io_data_object in io_data_array:
-            data_array = mongo_manager.fetch_data_for_key(io_data_object.key)
-            data_array = MongoManager.add_row_number(data_array)
-            data_array = MongoManager.manage_formatting(data_array)
-            if io_data_object.output_type == 2:
-                ##Sort data array's by row key in dict and then column key
-                data_array = sorted(data_array, key=lambda k: (k['Row'], k['Column']))
-                data_format_array = data_array
-            data_dict[io_data_object.key] = data_array
 
+        # Extract the keys from the fetched objects
+        io_data_keys = [obj.key for obj in io_data_objects]
+        data_dict = mongo_manager.fetch_data_for_keys_array(io_data_keys)
+        data_dict = MongoManager.manage_dict_formatting(data_dict)
+
+        ##Fetch the data format array
+        dashboard_data_key = next((obj.key for obj in io_data_objects if obj.output_type == 2), None)
+        data_format_array = data_dict[dashboard_data_key]
+        data_format_array = sorted(data_format_array, key=lambda k: (k['Row'], k['Column']))
+
+        ##Response
         output_dict = {'data_dict': data_dict, 'data_format_array': data_format_array}
         return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Project data loaded successfully.')
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong with data loading: ' + str(e))
-
 
 
 def set_data_for_key(request):
