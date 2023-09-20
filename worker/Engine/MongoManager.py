@@ -79,11 +79,53 @@ class MongoManager:
             utils.logger.error("Error in fetch_data for key " + io_key + ": " + str(e))
             return None
 
+    ## Fetch data for multiple keys, return an empty list if no data exists.
+    def fetch_data_for_keys_array(self, io_keys_array):
+        try:
+            output_dict = {}
+            # Fetch documents that have IO_DATA_KEY in io_keys_array
+            cursor = self.collection.find({IO_DATA_KEY: {"$in": io_keys_array}})
+
+            # Convert the cursor to a list of documents
+            documents_array = list(cursor)
+
+            if not documents_array:
+                return output_dict
+
+            for document_dict in documents_array:
+                try:
+                    key = document_dict[IO_DATA_KEY]
+                    value = document_dict['DATA']
+                    output_dict[key] = value
+                except:
+                    pass
+            return output_dict
+
+        except Exception as e:
+            utils.logger.error("Error in fetch_data_for_keys_array: " + str(e))
+            return []
+
+
+
     def close_connection(self):
         self.client.close()
 
 
 
+
+    ##Helper functions
+    def fetch_data_as_dataframe_for_array(self, io_key_array):
+        output_dict = {}
+        data_fetched = self.fetch_data_for_keys_array(io_key_array)
+        for key, data_array in data_fetched.items():
+            ##Check if data can be converted to proper PD dataframe
+            try:
+                data = pd.DataFrame(data_array)
+                output_dict[key] = data
+            except Exception as e:
+                utils.logger.error("Error in get_data_as_dataframe: " + str(e))
+                output_dict[key] = pd.DataFrame()
+        return output_dict
 
 
     ##Helper functions

@@ -32,8 +32,12 @@ class NodeThread(threading.Thread):
             utils.logger.error("Exception in manage_output for: " + str(self.node_key) + " + Error: " + str(e))
             return False
 
-    def get_input(self):
+
+
+
+    def get_input_old(self):
         ##Get input data from mongo based on keys in input_data_array
+        print(self.input_data_array)
         try:
             input_array = []
             for input_data in self.input_data_array:
@@ -43,11 +47,28 @@ class NodeThread(threading.Thread):
                     utils.logger.error("Input data is None for key: " + str(input_key))
                     input_data = pd.DataFrame()
                 input_array.append(input_data)
+            print("START")
+            print(input_array)
+            print("LENGTH")
+            print(len(input_array))
+            print("END")
             return input_array
         except Exception as e:
             utils.logger.error("Exception in get_input for: " + str(self.node_key) + " + Error: " + str(e))
             return []
 
+
+
+    def get_input(self):
+        ##Get input data from mongo based on keys in input_data_array
+        try:
+            input_keys_array = [obj['key'] for obj in self.input_data_array]
+            input_dict = self.mongo_manager.fetch_data_as_dataframe_for_array(input_keys_array)
+            input_array = [input_dict.get(io_key, None) for io_key in input_keys_array]
+            return input_array
+        except Exception as e:
+            utils.logger.error("Exception in get_input for: " + str(self.node_key) + " + Error: " + str(e))
+            return []
 
     def run(self):
         utils.logger.info("Starting Node: " + str(self.node_key))

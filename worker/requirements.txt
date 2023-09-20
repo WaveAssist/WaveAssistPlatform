@@ -5,3 +5,4 @@ kiteconnect==4.2.0
 ibapi
 pyotp==2.9.0
 selenium==4.11.2
+python-telegram-bot==20.5
