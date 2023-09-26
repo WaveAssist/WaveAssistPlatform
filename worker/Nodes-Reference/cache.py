@@ -1,8 +1,12 @@
-import pandas as pd
+from datetime import datetime
+import pytz
+
+ist = pytz.timezone('Asia/Kolkata')
 from datetime import datetime
 from datetime import timedelta
-# fintrek_current - Symbol	Buy Price	Current Price	Quantity	Buy Date	Days	Returns(%)	Expected Returns(%)	Amount	Allocation(%)	Portfolio Returns(%)	P&L
-# fintrek_exited -  Symbol	Buy Price	Sell Price	Quantity	Buy Date	Sell Date	Days	Returns(%)	Expected Returns(%)	P&L
+##fintrek_remaining_buy_trades: isin_check	symbol	exchange	buy_date	remaining_qty	weighted_avg_price
+import pandas as pd
+
 
 def format_indian_currency(amount):
     """Format number to Indian style with ₹ symbol"""
@@ -11,153 +15,195 @@ def format_indian_currency(amount):
     return f'₹ {amount_str}'
 
 
-def calculate_invested_amount(df_input, start_date, end_date):
-    # Convert the date columns and input dates to datetime format
-    df = df_input.copy(deep=True)
-    df['Buy Date'] = pd.to_datetime(df['Buy Date'])
-
-    if 'Sell Date' in df.columns:
-        df['Sell Date'] = pd.to_datetime(df['Sell Date'])
-    else:
-        df['Sell Date'] = pd.to_datetime(datetime.now().date())  # Set Sell Date as today for all rows
+def format_percentages(value):
+    return f'{value:.2f}%'
 
 
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+def refresh_prices(df):
+    df['kite_symbol'] = df['exchange'] + ":" + df['symbol']
+    symbols_list = df['kite_symbol'].unique().tolist()
+    all_quotes = kite.quote(symbols_list)
 
-    total_days = (end_date - start_date).days   # +1 to make it inclusive of both start and end dates
-
-    # Calculate days invested for each stock within the given date range
-    df['invested_days'] = (
-        df.apply(lambda row:
-            min(row['Sell Date'], end_date) - max(row['Buy Date'], start_date) ,
-            axis=1
-        ).dt.days.clip(lower=0)  # Make sure we don't have negative days
-    )
-
-    # Calculate the amount invested for the duration the stock was held within the date range
-    df['invested_amount'] = (
-        df['Buy Price'] *
-        df['Quantity'] *
-        df['invested_days'] / total_days
-    )
-
-    # Calculate the adjusted returns based on the invested days during the date range
-    df['adjusted_profits'] = (
-        df['P&L'] * df['invested_days'] / df['Days']
-    )
-
-    df['adjusted_returns(%)'] = (
-        df['adjusted_profits']  / df['invested_amount'] * 100
-    )
-
-    # Calculate the total returns based on the invested amount and adjusted returns for each stock
-    df['individual_contribution'] = df['invested_amount'] * (
-                df['adjusted_returns(%)'] / 100)
+    # Moved datetime calculations out of the loop
+    today_str = datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S")
+    from_str = (datetime.now(ist) - timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")
 
 
-    total_invested_amount = df['invested_amount'].sum()
-    if total_invested_amount == 0:
-        total_returns = 0
-    else:
-        total_returns = df['individual_contribution'].sum() / total_invested_amount * 100
-
-    return df, total_invested_amount, total_returns
-
+    for key, value in all_quotes.items():
+        try:
+            price = value['last_price']
+            low = value['ohlc']['low']
+            high = value['ohlc']['high']
+            instrument_token = str(value['instrument_token'])
 
 
-should_refresh_returns = int(fintrek_input[fintrek_input['name'] == 'should_refresh_returns']['value'].values[0])
-if should_refresh_returns == 0:
-    return None, None, None, None
+            ##Get the historical data for each symbol
+            historical_data = kite.historical_data(instrument_token, from_str, today_str, 'day', continuous=False, oi=False)
+            history_df = pd.DataFrame(historical_data)
+            history_df.sort_values(by=['date'], inplace=True, ascending=False)
 
-returns_for_days = int(fintrek_input[fintrek_input['name'] == 'returns_for_days']['value'].values[0])
+            ##Remove today's date row if it exists
+            today_str_date_only = datetime.now(ist).strftime("%Y-%m-%d")
+            history_df = history_df[history_df['date'].dt.strftime("%Y-%m-%d") != today_str_date_only]
 
-offsets = [7, 30, 60, 90, 180, 270, 365, returns_for_days]
-# Current date
-end_date = datetime.now().date()
-returns_array = []
-
-select_dict = {}
-select_current_df = None
-select_exited_df = None
+            ##Get the close of first row
+            yesterday_price = history_df.iloc[0]['close']
 
 
-for offset in offsets:
-    start_date = end_date - timedelta(days=offset)
-    current_df, current_invested_amount, current_returns = calculate_invested_amount(fintrek_current, start_date, end_date)
-    exited_df, exited_invested_amount, exited_returns = calculate_invested_amount(fintrek_exited, start_date, end_date)
-    total_invested_amount = current_invested_amount + exited_invested_amount
-    total_returns = (current_invested_amount * current_returns + exited_invested_amount * exited_returns) / total_invested_amount
-    returns_dict = {
-        'offset': offset,
-        'start_date': start_date.strftime('%d-%m-%Y'),
-        'end_date': end_date.strftime('%d-%m-%Y'),
-        'current_invested_amount': current_invested_amount,
-        'current_returns': current_returns,
-        'exited_invested_amount': exited_invested_amount,
-        'exited_returns': exited_returns,
-        'total_invested_amount': total_invested_amount,
-        'total_returns': total_returns
-    }
-    returns_array.append(returns_dict)
-    if offset == returns_for_days:
-        select_dict = returns_dict
-        select_current_df = current_df.copy(deep=True)
-        select_exited_df = exited_df.copy(deep=True)
+            ##Set values
+            df.loc[df['kite_symbol'] == key, 'current_price'] = price
+            df.loc[df['kite_symbol'] == key, 'low'] = low
+            df.loc[df['kite_symbol'] == key, 'high'] = high
+            df.loc[df['kite_symbol'] == key, 'yesterday_close'] = yesterday_price
+        except Exception as e:
+            print("Error with symbol: " + key + " error: " + str(e))
+            continue
+
+    return df
 
 
-returns_df = pd.DataFrame(returns_array)
+recent_emails = mailer.fetch_recent_emails()
+messages_today = 0
+message_identifier = 'finTrek_emails'
+for message_dict in recent_emails:
+    timestamp = message_dict['timestamp']
+    today = datetime.now(ist)
+    ##Check if timestamp is of today
+    timestamp = ist.localize(timestamp)
+    is_today = (timestamp.date() == today.date())
+    if is_today:
+        if message_dict['identifier'] == message_identifier:
+            messages_today += 1
 
-##These are optional and maybe removed as this makes it a string.
-returns_df['current_invested_amount'] = returns_df['current_invested_amount'].apply(format_indian_currency)
-returns_df['exited_invested_amount'] = returns_df['exited_invested_amount'].apply(format_indian_currency)
-returns_df['total_invested_amount'] = returns_df['total_invested_amount'].apply(format_indian_currency)
-returns_df['current_returns'] = returns_df['current_returns'].apply(lambda x: f'{x:.2f}%')
-returns_df['exited_returns'] = returns_df['exited_returns'].apply(lambda x: f'{x:.2f}%')
-returns_df['total_returns'] = returns_df['total_returns'].apply(lambda x: f'{x:.2f}%')
 
-##Rename all columns
-returns_df = returns_df.rename(columns={
-    'offset': 'Days',
-    'start_date': 'Start Date',
-    'end_date': 'End Date',
-    'current_invested_amount': 'Current Invested Amount',
-    'current_returns': 'Current Returns',
-    'exited_invested_amount': 'Exited Invested Amount',
-    'exited_returns': 'Exited Returns',
-    'total_invested_amount': 'Total Invested Amount',
-    'total_returns': 'Total Returns'
-})
+should_email_summary = False
+##Check if time is between 6 & 7 AM with timezone of IST
+current_time = datetime.now(ist).strftime("%H:%M:%S")
+if current_time < '10:30:00' and current_time > '10:00:00':
+    if messages_today == 0:
+        should_email_summary = True
+
+if current_time > '15:30:00' and current_time < '23:59:59':
+    if messages_today <= 1:
+        should_email_summary = True
+
+if should_email_summary:
+    df = refresh_prices(fintrek_remaining_buy_trades)
+
+
+    # Calculate the new columns
+    df['quantity'] = df['remaining_qty']
+    df['buy_amount'] = df['weighted_avg_price'] * df['quantity']
+    df['current_amount'] = df['current_price'] * df['quantity']
+
+    ##Today
+    df['today_p&l'] = df['current_price'] - df['yesterday_close']
+    df['today_p&l_amount'] = df['today_p&l'] * df['quantity']
+    df['today_p&l_percent'] = (df['today_p&l'] / df['yesterday_close']) * 100
+
+    ##Total
+    df['total_p&l'] = df['current_price'] - df['weighted_avg_price']
+    df['total_p&l_amount'] = df['total_p&l'] * df['quantity']
+    df['total_p&l_percent'] = (df['total_p&l_amount'] / df['buy_amount']) * 100
+
+
+    # Create the result dataframe with the desired columns
+    df = df[
+        ['symbol', 'buy_amount', 'current_price', 'yesterday_close', 'current_amount', 'high', 'low', 'today_p&l', 'today_p&l_amount', 'today_p&l_percent',
+            'total_p&l', 'total_p&l_amount', 'total_p&l_percent','quantity']]
+
+
+    # Assuming you have 'yesterday_close' column in df
+    portfolio_yesterday = (df['yesterday_close'] * df['quantity']).sum()
+    portfolio_high = (df['high'] * df['quantity']).sum()
+    high_percent = ((portfolio_high - portfolio_yesterday) / portfolio_yesterday) * 100
+
+    portfolio_low = (df['low'] * df['quantity']).sum()
+    low_percent = ((portfolio_low - portfolio_yesterday) / portfolio_yesterday) * 100
+
+
+    total_pnl_amount = df['total_p&l_amount'].sum()
+    total_buy_amount = df['buy_amount'].sum()
+    total_pnl_percent = (total_pnl_amount / total_buy_amount) * 100
 
 
 
-## process select_dict, select_current_df, select_exited_df
-## Remove start_date,  end_date  from select_dict
-select_dict.pop('start_date')
-select_dict.pop('end_date')
-
-## Format the keys in select_dict with proper caps and spaces
-select_dict = {k.replace('_', ' ').title(): v for k, v in select_dict.items()}
-select_dict['Total Returns'] = f'{select_dict["Total Returns"]:.2f}%'
-select_dict['Current Returns'] = f'{select_dict["Current Returns"]:.2f}%'
-select_dict['Exited Returns'] = f'{select_dict["Exited Returns"]:.2f}%'
-select_dict['Current Invested Amount'] = format_indian_currency(select_dict['Current Invested Amount'])
-select_dict['Exited Invested Amount'] = format_indian_currency(select_dict['Exited Invested Amount'])
-select_dict['Total Invested Amount'] = format_indian_currency(select_dict['Total Invested Amount'])
+    today_pnl_amount = df['today_p&l_amount'].sum()
+    today_pnl_percent = (today_pnl_amount / total_buy_amount) * 100
 
 
-##Rename Current Invested Amount to Invested Amount in select_dict
-select_dict['Current Amount'] = select_dict.pop('Current Invested Amount')
-select_dict['Exited Amount'] = select_dict.pop('Exited Invested Amount')
 
-##Make select_dict into a dataframe
-select_numbers_df = pd.DataFrame([select_dict])
-
-
-##Remove rows from select_exited_df where individual_contribution is 0
-select_exited_df = select_exited_df[select_exited_df['individual_contribution'] != 0]
-select_current_df = select_current_df[select_current_df['individual_contribution'] != 0]
-
-return returns_df, select_current_df, select_exited_df, select_numbers_df
+    # Format the values
+    high_percent_str = f'{high_percent:.2f}%'
+    low_percent_str = f'{low_percent:.2f}%'
+    total_pnl_str = format_indian_currency(total_pnl_amount)
+    total_pnl_percent_str = f'{total_pnl_percent:.2f}%'
+    today_pnl_str = format_indian_currency(today_pnl_amount)
+    today_pnl_percent_str = f'{today_pnl_percent:.2f}%'
 
 
+    ## Format df
+    df['buy_amount'] = df['buy_amount'].apply(format_indian_currency)
+    df['current_amount'] = df['current_amount'].apply(format_indian_currency)
+    # df['high'] = df['high'].apply(format_indian_currency)
+    # df['low'] = df['low'].apply(format_indian_currency)
+    # df['yesterday_close'] = df['yesterday_close'].apply(format_indian_currency)
+    # df['today_p&l'] = df['today_p&l'].apply(format_indian_currency)
+    df['today_p&l_amount'] = df['today_p&l_amount'].apply(format_indian_currency)
+    # df['total_p&l'] = df['total_p&l'].apply(format_indian_currency)
+    df['total_p&l_amount'] = df['total_p&l_amount'].apply(format_indian_currency)
+
+
+    df['today_p&l_percent'] = df['today_p&l_percent'].apply(format_percentages)
+    df['total_p&l_percent'] = df['total_p&l_percent'].apply(format_percentages)
+
+
+    ##Sort df by symbol
+    df = df.sort_values(by=['symbol'])
+
+
+    # Creating a styled HTML string for the numbers
+    numbers_html = f"""
+    <table border='1' cellspacing='0' cellpadding='5'>
+
+        <tr>
+            <th>Today P&L</th>
+            <td>{today_pnl_str}</td>
+        </tr>
+
+
+        <tr>
+            <th>Today P&L Percent</th>
+            <td>{today_pnl_percent_str}</td>
+        </tr>
+
+
+        <tr>
+            <th>Total P&L</th>
+            <td>{total_pnl_str}</td>
+        </tr>
+        
+        <tr>
+            <th>Total P&L Percent</th>
+            <td>{total_pnl_percent_str}</td>
+        </tr>
+       
+        <tr>
+            <th>High Percent</th>
+            <td>{high_percent_str}</td>
+        </tr>
+        <tr>
+            <th>Low Percent</th>
+            <td>{low_percent_str}</td>
+        </tr>
+    </table>
+    <br/>
+    """
+
+    # Adding the new HTML to your email body
+    email_body = "<h3>Current Portfolio</h3>"
+    email_body += numbers_html  # Add the numbers above the table
+    email_body += df.to_html(index=False)
+
+    to = 'kakshil.shah@wavepredict.com'
+    mailer.send_email(to, "Daily stock updates from FinTrek", email_body, message_identifier)

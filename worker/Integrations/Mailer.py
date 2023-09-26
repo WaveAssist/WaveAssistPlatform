@@ -21,7 +21,7 @@ class Mailer:
         message['From'] = self.from_email_address
         message['To'] = to_email_address
         message['Subject'] = subject
-        message.attach(MIMEText(email_body, 'plain'))
+        message.attach(MIMEText(email_body, 'html'))
         return message
 
     def store_sent_email(self, to_email_address, subject, email_body, identifier):
@@ -78,7 +78,7 @@ class Mailer:
 # mailer = Mailer()
 
 ##Usage
-# mailer.send_email(to_email_address, subject, email_body)
+# mailer.send_email(to_email_address, subject, email_body, optional_identifier)
 
 ## Fetch recent emails
 # mailer.fetch_recent_emails()
