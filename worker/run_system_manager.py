@@ -41,8 +41,9 @@ def delete_service_file(project_name):
 
 
 def manage_service(action, project_name):
-    subprocess.run(["sudo", "systemctl", action, project_name])
-    utils.logger.info(f"Ran {action} service for {project_name}.")
+    service_name = project_name + ".service"
+    subprocess.run(["sudo", "systemctl", action, service_name])
+    utils.logger.info(f"Ran {action} service for {service_name}.")
 
 
 while True:
