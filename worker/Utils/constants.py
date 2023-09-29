@@ -34,7 +34,7 @@ Restart=always
 RestartSec=1
 User=ubuntu
 WorkingDirectory=/home/ubuntu/WaveAssistEngine/WavePredictEngine/
-ExecStart=/bin/bash -c 'cd /home/ubuntu/WaveAssistEngine/WavePredictEngine/ && /home/ubuntu/WaveAssistEngine/waveassistenv/bin/python3 run_project.py {project_name}'
+ExecStart=/bin/bash -c 'cd /home/ubuntu/WaveAssistEngine/WavePredictEngine/ && /home/ubuntu/WaveAssistEngine/waveenv/bin/python3 run_project.py {project_name}'
 
 [Install]
 WantedBy=multi-user.target
