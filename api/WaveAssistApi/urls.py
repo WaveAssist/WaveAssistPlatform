@@ -60,6 +60,9 @@ urlpatterns = [
     ##CRUD Dashboard Data
     path("manage/update_dashboard_data/", csrf_exempt(manage_views.update_dashboard_data), name="update_dashboard_data"),
 
+    ##Manage Project
+    path("manage/set_restart_status/", csrf_exempt(manage_views.set_restart_status), name="set_restart_status"),
+
 ]
 
 

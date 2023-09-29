@@ -52,7 +52,7 @@ class MongoManager:
         for key, data_array in data_dict.items():
             data_dict[key] = cls.manage_formatting(data_array)
         return data_dict
-        
+
     @classmethod
     def manage_formatting(cls,data_array):
         updated_data_array = []
@@ -156,6 +156,22 @@ class MongoManager:
         except Exception as e:
             utils.logger.error("Error in get_data_as_dataframe: " + str(e))
             return None
+
+    ##Helper functions
+    def fetch_data_as_dataframe_for_array(self, io_key_array):
+        output_dict = {}
+        data_fetched = self.fetch_data_for_keys_array(io_key_array)
+        for key, data_array in data_fetched.items():
+            ##Check if data can be converted to proper PD dataframe
+            try:
+                data = pd.DataFrame(data_array)
+                output_dict[key] = data
+            except Exception as e:
+                utils.logger.error("Error in get_data_as_dataframe: " + str(e))
+                output_dict[key] = pd.DataFrame()
+        return output_dict
+
+
 
     def replace_data_as_dataframe(self,io_key,df):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe

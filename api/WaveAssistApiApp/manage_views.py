@@ -591,6 +591,37 @@ def remove_integrations(request):
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration removed successfully.')
 
 
+
+
+def set_restart_status(request):
+    project_key = request.POST.get('project_key', '')
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    new_status = int(request.POST.get('new_status', '1'))
+
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    if not utils.has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+    try:
+        project_object.refresh_status = new_status
+        project_object.save()
+        output_dictionary = {'status': str(new_status)}
+        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
+                                                        'Refresh status updated successfully.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with restarting: ' + str(e))
+
+
+
 def update_dashboard_data(request):
     project_key = request.POST.get('project_key', '')
     try:
