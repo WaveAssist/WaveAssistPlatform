@@ -86,11 +86,7 @@ class ProjectManager(object):
 
 
     def fix_things(self):
-        ##Restart everything
-        self.stop_and_remove_all_nodes()
-        self.get_started()
-
-        
+        network_connect.update_project_refresh(self.project_key, "1")
 
     def start_node(self,node):
         if node:

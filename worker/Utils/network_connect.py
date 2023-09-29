@@ -48,11 +48,12 @@ def download_project_file_data(project_key):
         return ""
 
 
-def update_project_refresh(project_key):
+def update_project_refresh(project_key, status='0'):
     try:
         utils.logger.info("Updating project refresh")
         data = {'token': WORKER_TOKEN}
         data['project_key'] = project_key
+        data['new_status'] = str(status)
         success,response_data = network_utils.call_api(UPDATE_PROJECT_REFRESH_STATUS,data)
         if success:
             return True
