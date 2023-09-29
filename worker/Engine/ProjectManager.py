@@ -86,16 +86,11 @@ class ProjectManager(object):
 
 
     def fix_things(self):
-        for node_key, node in self.nodes_dict.items():
-            if node.is_alive():
-                continue
-            else:
-                utils.logger.warning(f'Node "{node_key}" is not running')
-                self.stop_and_remove_node(node_key)
-                node = self.create_node(node_key, node.sleep_duration)
-                self.start_node(node)
-        return
+        ##Restart everything
+        self.stop_and_remove_all_nodes()
+        self.get_started()
 
+        
 
     def start_node(self,node):
         if node:
