@@ -16,7 +16,7 @@ def get_existing_project_names():
         with open("existing_projects.txt", "r") as f:
             return f.read().splitlines()
     except FileNotFoundError:
-        utils.logger.warn("existing_projects.txt file not found. Returning an empty list.")
+        utils.logger.error("existing_projects.txt file not found. Returning an empty list.")
         return []
 
 def save_existing_projects(project_names_array):
