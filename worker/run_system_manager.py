@@ -47,13 +47,13 @@ def manage_service(action, project_name):
 
 while True:
     project_data_array = fetch_projects_from_api()
-    api_project_names = {project['key'] for project in project_data_array}
+    api_project_names = {project['project_key'] for project in project_data_array}
     existing_projects = set(get_existing_project_names())
 
     new_projects = api_project_names - existing_projects
     removed_projects = existing_projects - api_project_names
 
-    restart_projects = {project['key'] for project in project_data_array if str(project.get('restart_status')) == "1"}
+    restart_projects = {project['project_key'] for project in project_data_array if str(project.get('restart_status')) == "1"}
 
     for project in new_projects:
         create_service_file(project)
