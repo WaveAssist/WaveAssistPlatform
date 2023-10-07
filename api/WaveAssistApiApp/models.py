@@ -90,7 +90,6 @@ class Project(models.Model):
     node_array = models.ManyToManyField('Nodes', blank=True)
     integration_array = models.ManyToManyField('Integrations', blank=True)
 
-
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is running
     payment_status = models.IntegerField(default=0) ##0 is unpaid, 1 is paid
 
@@ -132,6 +131,9 @@ class Nodes(models.Model):
 
     python_code = models.TextField(default="")
 
+    test_status = models.IntegerField(default=0) ##0 is dont test, 1 is start test
+    test_output = models.TextField(default="")
+
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -149,6 +151,8 @@ class Nodes(models.Model):
         node_dict['sleep_duration'] = self.start_frequency_in_seconds
         node_dict['running_status'] = self.running_status
         node_dict['python_code'] = self.python_code
+        node_dict['test_status'] = self.test_status
+        node_dict['test_output'] = self.test_output
 
         ##Also optimially load and pass the input and output data list
         input_data_array = []

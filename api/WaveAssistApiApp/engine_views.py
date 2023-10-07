@@ -164,3 +164,37 @@ def update_project_refresh_status(request):
 
 
 
+def fetch_all_test_nodes(request):
+    worker_token = request.POST.get('token', '')
+    if worker_token != WORKER_TOKEN:
+        return ResponseParser.getParsedErrorMessage('No access')
+    try:
+        node_array = Nodes.objects.filter(test_status=1)
+        node_dict_array = []
+        for node_object in node_array:
+            node_dict_array.append(node_object.get_dict())
+        output_dictionary = {'node_array': node_dict_array}
+        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Node details loaded successfully.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Something went wrong: ' + str(e))
+
+def update_node_test_results(request):
+    worker_token = request.POST.get('token', '')
+    if worker_token != WORKER_TOKEN:
+        return ResponseParser.getParsedErrorMessage('No access')
+
+    node_key = request.POST.get('node_key', '')
+    test_status = int(request.POST.get('test_status', '0'))
+    test_output = request.POST.get('test_output', '')
+    try:
+        node_object = Nodes.objects.get(node_key=node_key)
+        node_object.test_status = test_status
+        node_object.test_output = test_output
+        node_object.save()
+        output_dictionary = {'node_key': node_key}
+        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Node test results updated successfully.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Something went wrong: ' + str(e))
+
+
+

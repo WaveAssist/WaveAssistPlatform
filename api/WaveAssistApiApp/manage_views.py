@@ -591,6 +591,38 @@ def remove_integrations(request):
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration removed successfully.')
 
 
+def set_node_test_status(request):
+    project_key = request.POST.get('project_key', '')
+    node_key = request.POST.get('node_key', '')
+    uid = request.POST.get('uid', '')
+    test_status = int(request.POST.get('test_status', '0'))
+
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    try:
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    if not utils.has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+    try:
+        node_object = Nodes.objects.get(node_key=node_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Node not found')
+
+    try:
+        node_object.test_status = test_status
+        node_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while updating node')
+
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Node updated successfully.')
+
 
 
 def set_restart_status(request):

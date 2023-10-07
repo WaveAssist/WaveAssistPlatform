@@ -24,6 +24,9 @@ from WaveAssistApiApp import manage_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", csrf_exempt(views.index), name="index"),
+
+
+    ##Engine URL's
     path("load_all_projects/", csrf_exempt(engine_views.load_all_projects), name="load_all_projects"),
     path("load_node_data/", csrf_exempt(engine_views.load_node_data), name="load_node_data"),
     path("download_project_file_data/", csrf_exempt(engine_views.download_project_file_data), name="download_project_file_data"),
@@ -32,7 +35,8 @@ urlpatterns = [
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
     path("login/", csrf_exempt(views.login), name="login"),
     path("zerodha_redirect/", csrf_exempt(views.zerodha_redirect), name="zerodha_redirect"),
-
+    path("fetch_all_test_nodes/", csrf_exempt(engine_views.fetch_all_test_nodes), name="fetch_all_test_nodes"),
+    path("update_node_test_results/", csrf_exempt(engine_views.update_node_test_results), name="update_node_test_results"),
 
     ##Admin URL's
     path("manage/fetch_all_project/", csrf_exempt(manage_views.fetch_all_project), name="fetch_all_project"),
@@ -62,7 +66,7 @@ urlpatterns = [
 
     ##Manage Project
     path("manage/set_restart_status/", csrf_exempt(manage_views.set_restart_status), name="set_restart_status"),
-
+    path("manage/set_node_test_status/", csrf_exempt(manage_views.set_node_test_status), name="set_node_test_status"),
 ]
 
 
