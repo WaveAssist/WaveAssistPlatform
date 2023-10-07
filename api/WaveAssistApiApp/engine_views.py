@@ -172,7 +172,16 @@ def fetch_all_test_nodes(request):
         node_array = Nodes.objects.filter(test_status=1)
         node_dict_array = []
         for node_object in node_array:
-            node_dict_array.append(node_object.get_dict())
+            node_dict = node_object.get_dict()
+
+
+            ##ToDo: Optimisation needed.
+            project_array = Project.objects.filter(node_array=node_object)
+            project_key = project_array.first().project_key
+            node_dict['project_key'] = project_key
+
+            
+            node_dict_array.append(node_dict)
         output_dictionary = {'node_array': node_dict_array}
         return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Node details loaded successfully.')
     except Exception as e:
