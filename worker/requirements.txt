@@ -6,3 +6,6 @@ ibapi
 pyotp==2.9.0
 selenium==4.11.2
 python-telegram-bot==20.5
+boto3==1.28.58
+tensorflow==2.13.0
+scikit_learn==1.3.1

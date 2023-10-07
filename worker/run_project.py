@@ -10,12 +10,22 @@ except:
     utils.logger.error('Please provide a project key.')
     sys.exit()
 
+node_key_input = ''
+try:
+    node_key_input = str(sys.argv[2])
+except:
+    node_key_input = ''
+
 
 ## Second: For project, start the project manager.x
-
 utils.logger.info("Starting project manager for project: " + project_key)
 project_manager = ProjectManager(project_key)
-project_manager.get_started()
+
+if node_key_input != '':
+    project_manager.start_node_for_key(node_key_input)
+else:
+    project_manager.get_started()
+
 
 if __name__ == '__main__':
     ## Third: Keep printing the status of the project manager.

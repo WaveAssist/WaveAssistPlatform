@@ -1,149 +1,204 @@
+import pytz
+ist = pytz.timezone('Asia/Kolkata')
+from datetime import datetime
+from datetime import timedelta
 import pandas as pd
 
+##fintrek_remaining_buy_trades: isin_check	symbol	exchange	buy_date	remaining_qty	weighted_avg_price
+
+def format_indian_currency(amount):
+    """Format number to Indian style with ₹ symbol"""
+    amount = int(amount)
+    amount_str = format(amount, ",")  # Add commas
+    return f'₹ {amount_str}'
+
+def format_percentages(value):
+    return f'{value:.2f}%'
 
 
-should_refresh = int(fintrek_input[fintrek_input['name'] == 'should_refresh_trades']['value'].values[0])
+def refresh_prices(df):
+    df['kite_symbol'] = df['exchange'] + ":" + df['symbol']
+    symbols_list = df['kite_symbol'].unique().tolist()
+    all_quotes = kite.quote(symbols_list)
 
-if should_refresh == 0:
-    return None, None, None
-
-
-# Convert 'trade_date' column to datetime if it's not already
-fintrek_tradebook['trade_date'] = pd.to_datetime(fintrek_tradebook['trade_date'])
-fintrek_tradebook['weighted_price'] = fintrek_tradebook['price'] * fintrek_tradebook['quantity']
-
-
-##Buy df
-buy_df = fintrek_tradebook[fintrek_tradebook['trade_type'] == 'buy']
-
-grouped_buy_df = (
-    buy_df.groupby(['isin', 'trade_date'])
-    .agg(
-        symbol=('symbol', 'first'),
-        exchange=('exchange', 'first'),
-        total_quantity=('quantity', 'sum'),
-        total_weighted_price=('weighted_price', 'sum')
-    )
-    .reset_index()
-)
-
-# Compute the weighted average price using the aggregated data
-grouped_buy_df['weighted_avg_price'] = grouped_buy_df['total_weighted_price'] / grouped_buy_df['total_quantity']
-
-# Drop the intermediate column if you no longer need it
-grouped_buy_df.drop(columns=['total_weighted_price'], inplace=True)
+    # Moved datetime calculations out of the loop
+    today_str = datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S")
+    from_str = (datetime.now(ist) - timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")
 
 
-
-##Sell df
-sell_df = fintrek_tradebook[fintrek_tradebook['trade_type'] == 'sell']
-grouped_sell_df = (
-    sell_df.groupby(['isin', 'trade_date'])
-    .agg(
-        symbol=('symbol', 'first'),
-        exchange=('exchange', 'first'),
-        total_quantity=('quantity', 'sum'),
-        total_weighted_price=('weighted_price', 'sum')
-    )
-    .reset_index()
-)
-
-grouped_sell_df['weighted_avg_price'] = grouped_sell_df['total_weighted_price'] / grouped_sell_df['total_quantity']
-grouped_sell_df.drop(columns=['total_weighted_price'], inplace=True)
+    for key, value in all_quotes.items():
+        try:
+            price = value['last_price']
+            low = value['ohlc']['low']
+            high = value['ohlc']['high']
+            instrument_token = str(value['instrument_token'])
 
 
-# Sort both DataFrames by trade_date
-grouped_buy_df = grouped_buy_df.sort_values(by='trade_date')
-grouped_sell_df = grouped_sell_df.sort_values(by='trade_date')
+            ##Get the historical data for each symbol
+            historical_data = kite.historical_data(instrument_token, from_str, today_str, 'day', continuous=False, oi=False)
+            history_df = pd.DataFrame(historical_data)
+            history_df.sort_values(by=['date'], inplace=True, ascending=False)
 
-# List to store P&L data
-pnl_list = []
+            ##Remove today's date row if it exists
+            today_str_date_only = datetime.now(ist).strftime("%Y-%m-%d")
+            history_df = history_df[history_df['date'].dt.strftime("%Y-%m-%d") != today_str_date_only]
 
-# Loop through unique ISINs in buy dataframe
-for isin_val in grouped_buy_df['isin'].unique():
+            ##Get the close of first row
+            yesterday_price = history_df.iloc[0]['close']
 
-    specific_isin_buy_df = grouped_buy_df[grouped_buy_df['isin'] == isin_val]
-    specific_isin_sell_df = grouped_sell_df[grouped_sell_df['isin'] == isin_val]
+
+            ##Set values
+            df.loc[df['kite_symbol'] == key, 'current_price'] = price
+            df.loc[df['kite_symbol'] == key, 'low'] = low
+            df.loc[df['kite_symbol'] == key, 'high'] = high
+            df.loc[df['kite_symbol'] == key, 'yesterday_close'] = yesterday_price
+        except Exception as e:
+            print("Error with symbol: " + key + " error: " + str(e))
+            continue
+
+    return df
 
 
 
-    for buy_index, buy_row in specific_isin_buy_df.iterrows():
-        remaining_buy_qty = buy_row['total_quantity']
+def get_message_count_for_today(alerts_df):
+    # Localize the timestamp to IST
+    if len(alerts_df) == 0:
+        return 0
 
-        while remaining_buy_qty > 0 and not specific_isin_sell_df.empty:
-            sell_row = specific_isin_sell_df.iloc[0]
-            matched_qty = min(remaining_buy_qty, sell_row['total_quantity'])
+    ist_timezone = pytz.timezone('Asia/Kolkata')
+    today = datetime.now(ist_timezone).date()
 
-            # Compute P&L
-            profit_or_loss = (sell_row['weighted_avg_price'] - buy_row['weighted_avg_price']) * matched_qty
-            pnl_list.append({
-                'isin': buy_row['isin'],
-                  'symbol': buy_row['symbol'],
-                  'exchange': buy_row['exchange'],
-                  'buy_date': buy_row['trade_date'],
-                  'sell_date': sell_row['trade_date'],
-                  'matched_qty': matched_qty,
-                  'buy_price': buy_row['weighted_avg_price'],
-                  'sell_price': sell_row['weighted_avg_price'],
-                  'pnl': profit_or_loss
-            })
+    # Filter for today's alerts
+    alerts_today = alerts_df[pd.to_datetime(alerts_df['timestamp']).dt.date == today]
+
+    # Count the alerts
+    count_today = len(alerts_today)
+    return count_today
 
 
-            # Update quantities
-            remaining_buy_qty -= matched_qty
-            grouped_buy_df.at[buy_index, 'total_quantity'] -= matched_qty
-            if matched_qty == sell_row['total_quantity']:
-                specific_isin_sell_df.drop(sell_row.name, inplace=True, errors='ignore')
-                grouped_sell_df.drop(sell_row.name, inplace=True, errors='ignore')
-            else:
-                specific_isin_sell_df.at[sell_row.name, 'total_quantity'] -= matched_qty
-                grouped_sell_df.at[sell_row.name, 'total_quantity'] -= matched_qty
-
-pnl_df = pd.DataFrame(pnl_list)
-
-print("P&L df: " + str(pnl_df))
-
-
-# Remaining buys after matching
-remaining_buys = []
-for _, buy_row in grouped_buy_df.iterrows():
-    remaining_buy_qty = int(buy_row['total_quantity'])
-    if remaining_buy_qty > 0:
-        remaining_buys.append({
-            'isin_check': buy_row['isin'],
-            'symbol': buy_row['symbol'],
-            'exchange': buy_row['exchange'],
-            'buy_date': buy_row['trade_date'],
-            'remaining_qty': remaining_buy_qty,
-            'weighted_avg_price': buy_row['weighted_avg_price']
-        })
-
-
-remaining_buys_df = pd.DataFrame(remaining_buys)
-
-# In case you want to check if any sells were not processed (though it's unlikely based on the scenario described):
-remaining_sells = []
-for _, sell_row in grouped_sell_df.iterrows():
-    remaining_sell_qty = sell_row['total_quantity']
-    if remaining_sell_qty > 0:
-        remaining_sells.append({
-            'symbol': sell_row['symbol'],
-            'Date': sell_row['trade_date'].strftime('%d-%m-%Y'),
-            'Quantity': int(remaining_sell_qty),
-            'Price': int(sell_row['weighted_avg_price']),
-            'Amount': int(remaining_sell_qty * float(sell_row['weighted_avg_price']))
-        })
-
-
-remaining_sells_df = pd.DataFrame(remaining_sells)
-remaining_buys_df.fillna(0, inplace=True)
-remaining_sells_df.fillna(0, inplace=True)
-
-pnl_df.fillna(0, inplace=True)
-
-return remaining_buys_df , remaining_sells_df, pnl_df
+def update_alerts(alerts_df):
+    alert_dict = {
+        'alert_type': 'email',
+        'alert_name': 'finTrek_emails',
+        'timestamp': datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    alerts_df = pd.concat([alerts_df, pd.DataFrame([alert_dict])], ignore_index=True)
+    alerts_df = alerts_df.tail(20) ##Capping to only last 20 in storage
+    return alerts_df
 
 
 
+should_email_summary = False
+
+messages_today = get_message_count_for_today(fintrek_alerts)
+
+##Check if time is between 6 & 7 AM with timezone of IST
+current_time = datetime.now(ist).strftime("%H:%M:%S")
 
 
+if current_time > '10:00:00':
+    if messages_today == 0:
+        should_email_summary = True
+
+if current_time > '15:30:00':
+    if messages_today < 2:
+        should_email_summary = True
+
+
+
+if should_email_summary:
+    df = refresh_prices(fintrek_remaining_buy_trades)
+
+    # Calculate the new columns
+    df['quantity'] = df['remaining_qty']
+    df['buy_amount'] = df['weighted_avg_price'] * df['quantity']
+    df['current_amount'] = df['current_price'] * df['quantity']
+
+    ##Today
+    df['today_p&l'] = df['current_price'] - df['yesterday_close']
+    df['today_p&l_amount'] = df['today_p&l'] * df['quantity']
+    df['today_p&l_percent'] = (df['today_p&l'] / df['yesterday_close']) * 100
+
+    ##Total
+    df['total_p&l'] = df['current_price'] - df['weighted_avg_price']
+    df['total_p&l_amount'] = df['total_p&l'] * df['quantity']
+    df['total_p&l_percent'] = (df['total_p&l_amount'] / df['buy_amount']) * 100
+
+
+    # Create the result dataframe with the desired columns
+    df = df[
+        ['symbol', 'buy_amount', 'current_price', 'yesterday_close', 'current_amount', 'high', 'low', 'today_p&l', 'today_p&l_amount', 'today_p&l_percent',
+            'total_p&l', 'total_p&l_amount', 'total_p&l_percent','quantity']]
+
+
+    # Assuming you have 'yesterday_close' column in df
+    portfolio_yesterday = (df['yesterday_close'] * df['quantity']).sum()
+    portfolio_high = (df['high'] * df['quantity']).sum()
+    high_percent = ((portfolio_high - portfolio_yesterday) / portfolio_yesterday) * 100
+
+    portfolio_low = (df['low'] * df['quantity']).sum()
+    low_percent = ((portfolio_low - portfolio_yesterday) / portfolio_yesterday) * 100
+
+
+    total_pnl_amount = df['total_p&l_amount'].sum()
+    total_buy_amount = df['buy_amount'].sum()
+    total_pnl_percent = (total_pnl_amount / total_buy_amount) * 100
+
+
+
+    today_pnl_amount = df['today_p&l_amount'].sum()
+    today_pnl_percent = (today_pnl_amount / total_buy_amount) * 100
+
+
+    # Format the values
+    high_percent_str = f'{high_percent:.2f}%'
+    low_percent_str = f'{low_percent:.2f}%'
+    total_pnl_str = format_indian_currency(total_pnl_amount)
+    total_pnl_percent_str = f'{total_pnl_percent:.2f}%'
+    today_pnl_str = format_indian_currency(today_pnl_amount)
+    today_pnl_percent_str = f'{today_pnl_percent:.2f}%'
+
+
+    ## Format df
+    df['buy_amount'] = df['buy_amount'].apply(format_indian_currency)
+    df['current_amount'] = df['current_amount'].apply(format_indian_currency)
+    df['today_p&l_amount'] = df['today_p&l_amount'].apply(format_indian_currency)
+    df['total_p&l_amount'] = df['total_p&l_amount'].apply(format_indian_currency)
+
+
+    df['today_p&l_percent'] = df['today_p&l_percent'].apply(format_percentages)
+    df['total_p&l_percent'] = df['total_p&l_percent'].apply(format_percentages)
+
+
+    ##Sort df by symbol
+    df = df.sort_values(by=['symbol'])
+
+    header_dict = {
+        'Today P&L': today_pnl_str,
+        'Today P&L Percent': today_pnl_percent_str,
+        'Total P&L': total_pnl_str,
+        'Total P&L Percent': total_pnl_percent_str,
+        'High Percent': high_percent_str,
+        'Low Percent': low_percent_str
+    }
+    header_df = pd.DataFrame([header_dict])
+
+
+    # Creating a styled HTML string for the numbers
+    numbers_html = header_df.to_html(index=False)
+
+    # Adding the new HTML to your email body
+    email_body = "<h3>Current Portfolio</h3>"
+    email_body += numbers_html  # Add the numbers above the table
+
+    email_body += "<br><br><hr><br><br>"
+
+    email_body += df.to_html(index=False)
+
+    to = 'kakshil.shah@wavepredict.com'
+    mailer.send_email(to, "Daily stock updates from FinTrek", email_body)
+
+
+    fintrek_alerts = update_alerts(fintrek_alerts)
+
+return fintrek_alerts

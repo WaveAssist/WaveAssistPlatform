@@ -62,6 +62,25 @@ class ProjectManager(object):
             self.start_node(node)
 
 
+    def start_node_for_key(self, input_node_key):
+        ##Setup project] file
+        self.setup_project_file()
+
+        ##Load node array
+        node_array = self.load_node_array()
+
+        ##Create & start nodes
+        for node_dict in node_array:
+            node_key = node_dict['node_key']
+            if node_key == input_node_key:
+                sleep_duration = float(node_dict['sleep_duration'])
+                input_data_array = node_dict['input_data_array']
+                output_data_array = node_dict['output_data_array']
+                input_data_array.append({"key":self.project_key + INTEGRATIONS_SUFFIX_KEY})
+                node = self.create_node(node_key, sleep_duration, input_data_array, output_data_array)
+                self.start_node(node)
+            else:
+                continue
 
     def create_node(self, node_key, sleep_duration, input_data_array, output_data_array):
         if node_key in self.nodes_dict.keys():

@@ -17,8 +17,6 @@ class NodeThread(threading.Thread):
         self.output_data_array = output_data_array
         self.mongo_manager = mongo_manager
 
-
-
     def manage_output(self,output_data, output_dict):
         try:
             if output_data is None:
@@ -34,37 +32,12 @@ class NodeThread(threading.Thread):
 
 
 
-
-    def get_input_old(self):
-        ##Get input data from mongo based on keys in input_data_array
-        print(self.input_data_array)
-        try:
-            input_array = []
-            for input_data in self.input_data_array:
-                input_key = str(input_data['key'])
-                input_data = self.mongo_manager.fetch_data_as_dataframe(input_key)
-                if input_data is None:
-                    utils.logger.error("Input data is None for key: " + str(input_key))
-                    input_data = pd.DataFrame()
-                input_array.append(input_data)
-            print("START")
-            print(input_array)
-            print("LENGTH")
-            print(len(input_array))
-            print("END")
-            return input_array
-        except Exception as e:
-            utils.logger.error("Exception in get_input for: " + str(self.node_key) + " + Error: " + str(e))
-            return []
-
-
-
     def get_input(self):
         ##Get input data from mongo based on keys in input_data_array
         try:
             input_keys_array = [obj['key'] for obj in self.input_data_array]
             input_dict = self.mongo_manager.fetch_data_as_dataframe_for_array(input_keys_array)
-            input_array = [input_dict.get(io_key, None) for io_key in input_keys_array]
+            input_array = [input_dict.get(io_key, pd.DataFrame()) for io_key in input_keys_array]
             return input_array
         except Exception as e:
             utils.logger.error("Exception in get_input for: " + str(self.node_key) + " + Error: " + str(e))
@@ -84,6 +57,8 @@ class NodeThread(threading.Thread):
 
                 input_data = None
                 # Import the module dynamically
+
+
                 project_module = importlib.import_module(f"Projects.{self.project_key}")
 
                 # importlib.reload(project_module) ##Optimise: only load when refreshed!
