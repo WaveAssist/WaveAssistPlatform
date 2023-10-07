@@ -4,11 +4,14 @@ PROJECT_LOGS_PATH = os.path.join(CWD_PATH, 'Logs','project_logs.log')
 BASE_URL = "https://assistapi.wavepredict.com"
 TIMEOUT_DURATION = 300
 LOAD_ALL_PROJECTS_URL = BASE_URL + "/load_all_projects/"
+LOAD_ALL_TEST_NODES_URL = BASE_URL + "/fetch_all_test_nodes/"
 LOAD_NODE_DATA_URL = BASE_URL + "/load_node_data/"
 WORKER_TOKEN = "REMOVED_CREDENTIAL"
 DOWNLOAD_PROJECT_FILE_DATA_URL = BASE_URL + "/download_project_file_data/"
 PROJECTS_FOLDER = os.path.join(CWD_PATH, 'Projects')
 UPDATE_PROJECT_REFRESH_STATUS = BASE_URL + "/update_project_refresh_status/"
+UPDATE_NODE_TEST_RESULTS_URL = BASE_URL + "/update_node_test_results/"
+
 PD_DATA_KEY = 'PDData'
 IO_DATA_KEY = 'IODataKey'
 DATA_KEY = "DATA"

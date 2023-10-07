@@ -16,6 +16,16 @@ def load_all_projects():
     except:
         return False, "Error in loading projects data"
 
+def load_all_test_nodes():
+    try:
+        utils.logger.info("Loading test nodes data")
+        data = {'token': WORKER_TOKEN}
+        success,response_data = network_utils.call_api(LOAD_ALL_TEST_NODES_URL,data)
+        node_array = response_data['data']['node_array']
+        return success,node_array
+    except:
+        return False, "Error in loading test nodes data"
+
 
 def load_project_array_waiting():
     success,response_data = load_all_projects()
@@ -62,6 +72,24 @@ def update_project_refresh(project_key, status='0'):
             return False
     except Exception as e:
         utils.logger.error("Error in project refresh api: " + str(e))
+        return False
+
+
+def update_node_test_results(node_key, test_output='', test_status='0'):
+    try:
+        utils.logger.info("Updating test results")
+        data = {'token': WORKER_TOKEN}
+        data['node_key'] = node_key
+        data['test_status'] = str(test_status)
+        data['test_output'] = str(test_output)
+        success,response_data = network_utils.call_api(UPDATE_NODE_TEST_RESULTS_URL,data)
+        if success:
+            return True
+        else:
+            utils.logger.error("Error in the response of test results api: " + str(response_data))
+            return False
+    except Exception as e:
+        utils.logger.error("Error in test results api: " + str(e))
         return False
 
 

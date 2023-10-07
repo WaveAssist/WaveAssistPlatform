@@ -5,78 +5,59 @@ from Utils.network_connect import *
 import time
 from Utils.constants import *
 import Utils.utils as utils
-def fetch_projects_from_api():
-    project_data_array = load_project_array_waiting()
-    utils.logger.info(f"Fetched {len(project_data_array)} projects.")
-    return project_data_array
 
 
-def get_existing_project_names():
+##ToDo: Upgrade tester to become a custom project manager.
+
+def upload_test_results(node_key, output_string):
+    return update_node_test_results(node_key, output_string, '0')
+
+def fetch_test_nodes():
+    success, node_array = load_all_test_nodes()
+    utils.logger.info(f"Fetched {len(node_array)} test nodes.")
+    return node_array
+
+def run_command(command_array):
+    output_string = ""
+    timeout = 15
     try:
-        with open("existing_projects.txt", "r") as f:
-            return f.read().splitlines()
-    except FileNotFoundError:
-        utils.logger.error("existing_projects.txt file not found. Returning an empty list.")
-        return []
+        # Set timeout to 10 seconds
+        completed_process = subprocess.run(command_array, capture_output=True, text=True, timeout=timeout)
 
-def save_existing_projects(project_names_array):
-    with open("existing_projects.txt", "w") as f:
-        for project_name in project_names_array:
-            f.write(f"{project_name}\n")
-    utils.logger.info(f"Saved {len(project_names_array)} existing projects to existing_projects.txt.")
+        # Access stdout and stderr
+        stdout = completed_process.stdout
+        stderr = completed_process.stderr
 
+        # Print logs or process them further
+        output_string = output_string + "=== STDOUT ===" + '\n'
+        output_string = output_string + stdout + '\n'
+        output_string = output_string + "=== STDERR ===" + '\n'
+        output_string = output_string + stderr + '\n'
 
-def create_service_file(project_name):
-    content = SERVICE_TEMPLATE.format(project_name=project_name)
-    with open(f"{SERVICE_DIRECTORY}WA{project_name}.service", "w") as f:
-        f.write(content)
-    utils.logger.info(f"New Service file for {project_name} created.")
+    except subprocess.TimeoutExpired as e:
+        output_string = output_string + "The function finished within:  " + str(timeout) + ' seconds. ' + '\n'
+        output_string = output_string + "=== STDOUT ===" + '\n'
+        output_string = output_string + (e.stdout.decode('utf-8') if e.stderr else "No STDOUT") + '\n'
+        output_string = output_string + "=== STDERR ===" + '\n'
+        output_string = output_string + (e.stderr.decode('utf-8') if e.stdout else "No STDERR") + '\n'
 
-def delete_service_file(project_name):
-    try:
-        os.remove(f"{SERVICE_DIRECTORY}WA{project_name}.service")
-        utils.logger.info(f"Service file for {project_name} deleted.")
-    except:
-        utils.logger.error(f"Error deleting service file for {project_name}.")
+    except Exception as e:
+        output_string = output_string + "Error in function: " + str(e) + '\n'
 
-
-def manage_service(action, project_name):
-    service_name = project_name + ".service"
-    subprocess.run(["sudo", "systemctl", action, service_name])
-    utils.logger.info(f"Ran {action} service for {service_name}.")
-
+    return output_string
 
 while True:
-    project_data_array = fetch_projects_from_api()
-    api_project_names = {project['project_key'] for project in project_data_array}
-    existing_projects = set(get_existing_project_names())
-
-    new_projects = api_project_names - existing_projects
-    removed_projects = existing_projects - api_project_names
-
-    restart_projects = {project['project_key'] for project in project_data_array if str(project.get('refresh_status')) == "1"}
-
-    for project in new_projects:
-        create_service_file(project)
-
-    for project in removed_projects:
-        delete_service_file(project)
-
-    subprocess.run(["sudo", "systemctl", "daemon-reload"])
-    utils.logger.info("systemctl daemon reloaded.")
-
-    for project_key in new_projects:
-        manage_service("start", "WA"+project_key)
-
-    for project_key in removed_projects:
-        manage_service("stop", "WA"+project_key)
-
-    for project_key in restart_projects:
-        manage_service("restart", "WA"+project_key)
-
-        update_project_refresh(project_key)
-        utils.logger.info(f"Restart status updated for {project_key}.")
-
-    save_existing_projects(api_project_names)
-
-    time.sleep(30)
+    try:
+        test_nodes_array = fetch_test_nodes()
+        for node_dict in test_nodes_array:
+            project_key = node_dict['project_key']
+            node_key = node_dict['node_key']
+            command_array = ["python3", "-u", "run_project.py", project_key, node_key]
+            utils.logger.info(f"Running {command_array} for {node_key}.")
+            output_string = run_command(command_array)
+            upload_test_results(node_key, output_string)
+            utils.logger.info(f"Completed {command_array} for {node_key}.")
+        time.sleep(5)
+    except Exception as e:
+        utils.logger.error(f"Error with tester: {e}")
+        time.sleep(5)

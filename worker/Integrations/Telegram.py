@@ -10,7 +10,7 @@ class Telegram:
     MAX_MESSAGES_TO_STORE = 20
 
     async def send_telegram_message(self,user_id, message):
-        bot = Bot(token='REMOVED_CREDENTIAL')
+        bot = Bot(token='REMOVED_CREDENTIAL') ##Can be put outside?
         await bot.send_message(chat_id=user_id, text=message)
 
     def send_message(self, user_id, message, identifier=""):
@@ -22,11 +22,11 @@ class Telegram:
             'timestamp': timestamp
         }
         self.sent_messages.append(sent_message_dict)
-
         asyncio.run(self.send_telegram_message(user_id,message))
 
     def fetch_recent_messages(self):
         return self.sent_messages
+
 
 # Integration code:
 # from Integrations.Telegram import Telegram

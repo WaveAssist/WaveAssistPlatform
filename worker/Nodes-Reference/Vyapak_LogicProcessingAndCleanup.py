@@ -1,0 +1,198 @@
+import pandas as pd
+import math
+
+
+def cleanup(merged_calls, merged_puts, zerodha_df, ib_df):
+    try:
+        call_put_columns_to_round = ['entry_price', 'exit_price', 'parity', 'delta_hedge', 'current_hedge']
+
+        # Round off the specified columns to two decimals
+        merged_calls[call_put_columns_to_round] = merged_calls[call_put_columns_to_round].round(2)
+        merged_puts[call_put_columns_to_round] = merged_puts[call_put_columns_to_round].round(2)
+
+        call_put_column_mapping = {
+            'zerodha_strike_price': 'Zerodha Strike',
+            'ib_strike_price': 'IB Strike',
+            'zerodha_price': 'Zerodha Price',
+            'ib_price': 'IB Price',
+            'type': 'Type',
+            'entry_price': 'Entry Price',
+            'exit_price': 'Exit Price',
+            'parity': 'Parity',
+            'delta_hedge': 'Delta Hedge',
+            'current_hedge': 'Currency Hedge'
+        }
+
+        # Rename the columns using the dictionary
+        merged_calls.rename(columns=call_put_column_mapping, inplace=True)
+        merged_puts.rename(columns=call_put_column_mapping, inplace=True)
+
+
+        ##Reorder
+        order_list = ['Zerodha Strike', 'IB Strike', 'Entry Price', 'Exit Price', 'Zerodha Price', 'IB Price', 'Parity',
+             'Delta Hedge', 'Currency Hedge']
+        merged_calls = merged_calls[order_list]
+        merged_puts = merged_puts[order_list]
+
+        merged_calls.drop_duplicates(subset=['Zerodha Strike'], keep='first', inplace=True)
+        merged_puts.drop_duplicates(subset=['Zerodha Strike'], keep='first', inplace=True)
+
+
+
+
+        ##Zerodha
+        zerodha_df['Name'] = "CRUDEOIL"
+        column_mapping = {
+            'expiry': 'Expiry',
+            'strike': 'Strike',
+            'option_type': 'Option Type',
+            'price': 'Price',
+            'bid_price': 'Bid Price',
+            'ask_price': 'Ask Price'
+        }
+        # Rename the columns using the dictionary
+        zerodha_df.rename(columns=column_mapping, inplace=True)
+        # Drop the unwanted columns (zerodha_id and connection_type)
+        zerodha_df.drop(
+            columns=['zerodha_id', 'connection_type', 'zerodha_symbol', 'name', 'instrument_type', 'exchange'],
+            inplace=True)
+        zerodha_df = zerodha_df[['Name', 'Expiry', 'Strike', 'Option Type', 'Bid Price', 'Ask Price', 'Price']]
+
+
+        ##IB DF
+        column_mapping = {
+            'ib_symbol': 'Name',
+            'expiry': 'Expiry',
+            'strike': 'Strike',
+            'option_type': 'Option Type',
+            'price': 'Price',
+            'bid_price': 'Bid Price',
+            'ask_price': 'Ask Price'
+        }
+        # Rename the columns using the dictionary
+        ib_df.rename(columns=column_mapping, inplace=True)
+        # Drop the unwanted columns
+        ib_df.drop(columns=['ib_id', 'connection_type', 'instrument_type', 'exchange'], inplace=True)
+
+        ##reorder
+        ib_df = ib_df[['Name', 'Expiry', 'Strike', 'Option Type', 'Bid Price', 'Ask Price', 'Price']]
+        ib_df['Expiry'] = ib_df['Expiry'].str.slice(0, 10)
+
+
+        ##Drop na
+        zerodha_df.dropna(inplace=True)
+        ib_df.dropna(inplace=True)
+        merged_puts.dropna(inplace=True)
+        merged_calls.dropna(inplace=True)
+
+        return merged_calls, merged_puts, zerodha_df, ib_df
+    except:
+        return None, None, None, None
+
+
+
+
+def sort_dict(dictionary_array, key_to_sort, is_ascending):
+    sorted_array = sorted(dictionary_array, key=lambda k: k[key_to_sort], reverse=not is_ascending)
+    return sorted_array
+
+
+##Main code
+
+dollar_rate = float(vyapak_input[vyapak_input['name'] == 'dollar_rate']['value'].values[0])
+
+merged_calls = []
+merged_puts = []
+
+
+##Add values of df WAU359P1D2 into WAU359P1D5 based on zerodha_id of WAU359P1D2  and instrument_token of WAU359P1D5
+zerodha_df = vyapak_zerodha_options.merge(vyapak_zerodha_strikes, on='zerodha_symbol', how='left')
+ib_df = vyapak_IB_options.merge(vyapak_IB_strikes, on='ib_id', how='left')
+
+
+##Drop duplicates from zerodha_df and ib_df based on zerodha_symbol and ib_id respectively
+zerodha_df.drop_duplicates(subset=['zerodha_symbol'], inplace=True)
+ib_df.drop_duplicates(subset=['ib_id'], inplace=True)
+
+
+for _,row in zerodha_df.iterrows():
+    zerodha_strike_price = float(row['strike'])
+    zerodha_price = row['price']
+    zerodha_ask_price = row['ask_price']
+    zerodha_bid_price = row['bid_price']
+    converted_strike_price = zerodha_strike_price / dollar_rate
+    zerodha_option_type = row['option_type']
+    zerodha_instrument_type = row['instrument_type']
+
+    if zerodha_instrument_type != 'Options': ##Handle futures here
+        continue
+
+    final_zerodha_price = converted_strike_price
+    if zerodha_option_type == 'CE':
+        ##converted_strike_price be rounded down to the nearest 0.5 value - floor
+        final_zerodha_price = math.floor(converted_strike_price)
+        if converted_strike_price - final_zerodha_price >= 0.5:
+            final_zerodha_price += 0.5
+    elif zerodha_option_type == 'PE':
+        ##converted_strike_price be rounded up to the nearest 0.5 value - ceil
+        final_zerodha_price = math.ceil(converted_strike_price)
+        if final_zerodha_price - converted_strike_price >= 0.5:
+            final_zerodha_price -= 0.5
+
+    for _,row in ib_df.iterrows():
+        ib_strike_price = float(row['strike'])
+        ib_price = float(row['price'])
+        ib_option_type = row['option_type']
+        instrument_type = row['instrument_type']
+        ib_bid_price = float(row['bid_price'])
+        ib_ask_price = float(row['ask_price'])
+
+        if instrument_type != 'Options': ##Handle futures here
+            continue
+
+
+        # print("IB Price: " + str(ib_strike_price) + " Zerodha Price: " + str(final_zerodha_price) + " IB Option Type: " + str(ib_option_type) + " Zerodha Option Type: " + str(zerodha_option_type))
+        if ib_strike_price == final_zerodha_price and ib_option_type == zerodha_option_type:
+
+            entry_price = zerodha_bid_price - ib_ask_price * dollar_rate
+            exit_price = zerodha_ask_price - ib_bid_price * dollar_rate
+
+            ##Parity = dollar_rate * ib_price – zerodha_price
+            parity = (zerodha_bid_price + zerodha_ask_price) / 2 - (
+                        ib_bid_price + ib_ask_price) / 2 * dollar_rate
+
+            # Delta hedge = (IB_strike – mcx_strike/dollar) * implied_fx_rate
+            delta_hedge = abs(ib_strike_price - zerodha_strike_price / dollar_rate) * dollar_rate
+
+            # Curr hedge = (zerodha strike / IB strike) - dollar_rate
+            current_hedge = 100 * (zerodha_strike_price / ib_strike_price - dollar_rate)
+
+
+
+            output_dict = {
+                'zerodha_strike_price': zerodha_strike_price,
+                'ib_strike_price': ib_strike_price,
+                'zerodha_price': zerodha_price,
+                'ib_price': ib_price,
+                'type': zerodha_option_type,
+                'entry_price': entry_price,
+                'exit_price': exit_price,
+                'parity': parity,
+                'delta_hedge': delta_hedge,
+                'current_hedge': current_hedge
+            }
+            if zerodha_option_type == 'CE':
+                merged_calls.append(output_dict)
+            elif zerodha_option_type == 'PE':
+                merged_puts.append(output_dict)
+
+merged_calls = sort_dict(merged_calls, 'zerodha_strike_price', True)
+merged_puts = sort_dict(merged_puts, 'zerodha_strike_price', False)
+
+merged_calls_df = pd.DataFrame(merged_calls)
+merged_puts_df = pd.DataFrame(merged_puts)
+
+
+merged_calls_df, merged_puts_df, zerodha_df, ib_df = cleanup(merged_calls_df, merged_puts_df, zerodha_df, ib_df)
+
+return ib_df, merged_calls_df, merged_puts_df, zerodha_df

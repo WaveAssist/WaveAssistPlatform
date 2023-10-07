@@ -1,6 +1,6 @@
 
 [Unit]
-Description=WaveAssist Engine Service
+Description=WaveAssist Tester Service
 After=network.target
 StartLimitIntervalSec=0
 
@@ -9,7 +9,7 @@ Type=simple
 Restart=always
 RestartSec=1
 WorkingDirectory=/home/ubuntu/WaveAssistEngine/WavePredictEngine/
-ExecStart=/bin/bash -c 'cd /home/ubuntu/WaveAssistEngine/WavePredictEngine/ && /home/ubuntu/WaveAssistEngine/waveenv/bin/python3 run_system_manager.py'
+ExecStart=/bin/bash -c 'cd /home/ubuntu/WaveAssistEngine/WavePredictEngine/ && /home/ubuntu/WaveAssistEngine/waveenv/bin/python3 run_tester.py'
 
 [Install]
 WantedBy=multi-user.target
