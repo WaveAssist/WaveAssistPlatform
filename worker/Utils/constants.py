@@ -38,7 +38,7 @@ RestartSec=1
 User=ubuntu
 WorkingDirectory=/home/ubuntu/WaveAssistEngine/WavePredictEngine/
 ExecStart=/bin/bash -c 'cd /home/ubuntu/WaveAssistEngine/WavePredictEngine/ && /home/ubuntu/WaveAssistEngine/waveenv/bin/python3 run_project.py {project_name}'
-MemoryMax=256M
+MemoryMax=512M
 CPUQuota=10%
 
 [Install]
