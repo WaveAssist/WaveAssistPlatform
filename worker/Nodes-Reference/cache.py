@@ -1,126 +1,139 @@
-import pytz
-from datetime import datetime
 import pandas as pd
+import boto3
+import numpy as np
+import tensorflow as tf
+MAX_INDUSTRY_CODE = 156
+BUCKET_NAME = 'wavepredictmodels'
+from sklearn.preprocessing import MinMaxScaler
+import datetime
 from datetime import timedelta
-ist = pytz.timezone('Asia/Kolkata')
-PARITY_TYPE = 'parity'
-EXIT_TYPE = 'exit'
-
-def fetch_message_count(alerts_df, parity_call_price_greater):
-    if len(alerts_df) == 0:
-        return 0, 0
-
-    now_timestamp = datetime.now(ist)
-    # Filter for parity alerts within the last 4 hours and with the specific alert_value
-    four_hours_ago_timestamp = now_timestamp - timedelta(hours=4)
-    parity_alerts = alerts_df[
-        (pd.to_datetime(alerts_df['timestamp']).dt.tz_localize(ist) > four_hours_ago_timestamp) &
-        (alerts_df['alert_type'] == PARITY_TYPE) &
-        (alerts_df['alert_value'] == str(parity_call_price_greater))
-        ]
-
-    ## Filter for exit alerts
-    two_hours_ago_timestamp = now_timestamp - timedelta(hours=2)
-    exit_alerts = alerts_df[
-        (pd.to_datetime(alerts_df['timestamp']).dt.tz_localize(ist) > two_hours_ago_timestamp) &
-        (alerts_df['alert_type'] == EXIT_TYPE)
-        ]
-
-    ##Return
-    return len(parity_alerts), len(exit_alerts)
-
-
-def update_alerts(alerts_df, type, parity):
-    alert_dict = {
-        'alert_type': str(type),
-        'alert_name': 'vyapak_alerts',
-        'alert_value': str(parity),
-        'timestamp': datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S"),
-    }
-    alerts_df = pd.concat([alerts_df, pd.DataFrame([alert_dict])], ignore_index=True)
-    alerts_df = alerts_df.tail(20) ##Capping to only last 20 in storage
-    return alerts_df
+from pymongo import MongoClient
+CONNECTION_STRING = "REMOVED_CREDENTIAL"
+ACCESS_KEY = 'REMOVED_CREDENTIAL'
+SECRET_KEY = 'REMOVED_CREDENTIAL'
 
 
 
+client = MongoClient(CONNECTION_STRING, 27017)
+db = client.WavePredict
+collection = db.DailyStockData
 
 
-def is_realtime(vyapak_bottom_numbers):
-    zerodha_updated_str = str(vyapak_bottom_numbers['Zerodha Updated'][0])
-    ib_updated_str = str(vyapak_bottom_numbers['IB Updated'][0])
-    # Parse the string representations into datetime objects
-    zerodha_updated = datetime.strptime(zerodha_updated_str, "%Y-%m-%d %H:%M:%S")
-    ib_updated = datetime.strptime(ib_updated_str, "%Y-%m-%d %H:%M:%S")
-
-    # Calculate the time difference
-    time_difference = ib_updated - zerodha_updated
-
-    # Extract the total time difference in seconds
-    time_difference_seconds = abs(time_difference.total_seconds())
-    if time_difference_seconds < 200:
-        return True
+def generate_predictions(y_value, last_element, percentage=50):
+    if y_value == 1:
+        forecast_element = last_element + (percentage/100) * last_element
+    elif y_value == -1:
+        forecast_element = last_element - (percentage/100) * last_element
     else:
-        return False
+        forecast_element = last_element + y_value/100 * percentage * last_element
+    return forecast_element
 
-##Inputs
-parity_call_price_greater = int(vyapak_input[vyapak_input['name'] == 'parity_call_price_greater']['value'].values[0])
-parity_call_first_strike = int(vyapak_input[vyapak_input['name'] == 'parity_call_first_strike']['value'].values[0])
-
-
-##Data required
-filtered_df = vyapak_merged_calls[(vyapak_merged_calls["Zerodha Strike"] >= parity_call_first_strike) & (
-            vyapak_merged_calls["Parity"] >= parity_call_price_greater)]
-filtered_df = filtered_df[['Zerodha Strike', 'Parity', 'IB Price', 'Currency Hedge']]
-
-##Formatting
-formatted_rows = []
-for index, row in filtered_df.iterrows():
-    formatted_row = f"{row['Zerodha Strike']} = {row['Parity']} - ({row['IB Price']}) : {row['Currency Hedge']}"
-    formatted_rows.append(formatted_row)
-main_content = '\n'.join(formatted_rows)
-subject = "WaveAssist Alert: Parity greater than -  " + str(parity_call_price_greater)
-to_array = ["1163933846","6250108283","6446747579"]
-
-##Top numbers content
-zerodha_spot = str(vyapak_top_numbers['Zerodha Spot'][0])
-selected_dollar_rate = str(vyapak_top_numbers['Selected Dollar Rate'][0])
-live_dollar_rate = str(vyapak_top_numbers['Live Dollar Rate'][0])
-main_content = main_content + '\n\n'+ 'Spot: ' + zerodha_spot + ', $/INR: ' + live_dollar_rate + '\n\n' + 'Set rate: ' + selected_dollar_rate
-
-##Check if realtime
-is_live = is_realtime(vyapak_bottom_numbers)
-if not is_live:
-    return None
+## Fetch models from s3
+# wavepredict_models
 
 
-##Fetch counts
-parity_messages, exit_messages = fetch_message_count(vyapak_alerts, str(parity_call_price_greater))
+models_dictionary = {}
 
-##Send parity messages
-if parity_messages < 8 and len(filtered_df) > 0 and is_live:
-    vyapak_alerts = update_alerts(vyapak_alerts, PARITY_TYPE, str(parity_call_price_greater))
-    for to in to_array:
-        telegram.send_message(to, subject + "\n\n" + main_content)
+s3 = boto3.client('s3', aws_access_key_id=ACCESS_KEY, aws_secret_access_key=SECRET_KEY)
+##Iterate through wavepredict_models df
+for index, row in wavepredict_models.iterrows():
+    model_key = row['ModelKey']
+    model_name = model_key + '.keras'
+    local_path = 'tmp/' + model_name
+    # Download the model from S3 to the local machine
+    s3.download_file(BUCKET_NAME, model_name, local_path)
+    # Load the model using TensorFlow/Keras
+    print("Loading model: " + model_key)
+    model = tf.keras.models.load_model(local_path)
+    print("Model loaded: " + model_key)
+    ##Store all other details in row also to the models_dictionary
+    row_dictionary = row.to_dict()
+    value_dict = {
+        'model': model,
+        'row': row_dictionary
+    }
+    models_dictionary[model_key] = value_dict
 
-##Send exit messages
-selected_rows = []
-for index, row in vyapak_mytrades.iterrows():
-    try:
-        target = row['target']
-        notification = row['notiifcation']
-        parity = row['Parity']
-        if int(notification) == 1:
-            if float(parity) <= float(target):
-                selected_rows.append(row)
-    except Exception as e:
-        print(e)
 
-subject = "Exit target crossed - WaveAssist Alert"
-body = str(selected_rows)
+## Fetch all stocks
 
-if exit_messages < 4 and len(selected_rows) > 0 and is_live:
-    vyapak_alerts = update_alerts(vyapak_alerts, EXIT_TYPE, "0")
-    for to in to_array:
-        telegram.send_message(to, subject + "\n\n" + body)
+## iterate through wavepredict_stockmetadata df
+for index, row in wavepredict_stockmetadata.iterrows():
+    ##Iterate through models_dictionary
+    for key, value in models_dictionary.items():
+        cutoff_date = value['row']['cutoff']
+        try:
+            processed_till_timestamp = datetime.strptime(row[key], '%Y-%m-%d %H:%M:%S')
+        except:
+            processed_till_timestamp = datetime.strptime(cutoff_date, '%Y-%m-%d') ##Figure out how to keep cutoff date to recent.
 
-return vyapak_alerts
+
+        ##fetched_till_timestamp with time as 00:00:00 in datetime format
+        from_date = datetime.combine(processed_till_timestamp.date(), datetime.min.time()) ##This is not processed.
+        to_date = datetime.combine(datetime.now().date(), datetime.min.time()) ##This will not be processed. it will be -1 day.
+
+        if from_date >= to_date:
+            continue
+
+        ##Loop from from_date to to_date adding 1 day each time
+
+        while(from_date < to_date):
+
+            try:
+                from_date = from_date + timedelta(days=1)
+
+                ##Process from_date data with from_date as the last_date of data
+                n_previous = int(value['row']['Previous'])
+
+                ##Including from_date, fetch n_previous rows of data from mongo collection collection
+                stock_history_data = collection.find({'metadata.symbol': row['symbol'], 'timestamp': {'$lt': from_date}}).sort('timestamp', -1).limit(n_previous)
+                stock_history_df = pd.DataFrame(stock_history_data)
+
+                ##Sort the dataframe by timestamp in ascending order
+                stock_history_df = stock_history_df.sort_values(by=['timestamp'])
+
+                ##Prepare input data for model
+
+                selected_columns = ['close','open','high','low','volume']
+                stock_history_df = stock_history_df.sort_values(by=['timestamp'])
+                select_df = stock_history_df[selected_columns]
+                select_df.reset_index(inplace=True)
+                select_df = select_df.drop(columns=['index'])
+
+                dataset = np.array([select_df.values])
+                ##Additional Individual Scaling of x
+                x_scaled = []
+                for data in dataset:
+                    scaler = MinMaxScaler(feature_range=(0, 1))
+                    scaled_data = scaler.fit_transform(data)
+                    x_scaled.append(scaled_data)
+
+                x_scaled = np.array(x_scaled)
+                industry_code = row['industry_code']
+                x = np.concatenate((x_scaled, np.full((x_scaled.shape[0], x_scaled.shape[1], 1), industry_code)), axis=2)
+
+                percent_capped = int(value['row']['PercentCapped'])
+                ## Run model
+                model = value['model']
+
+                print("Input Shape: " + str(x.shape))
+                y_pred = model.predict(x)
+                y_value = y_pred[0][0]  ##ToDo - needs error handing and dynamic values
+                prediction = generate_predictions(y_value, stock_history_df['close'].iloc[-1], percent_capped)
+
+                ##Prediction Date
+                n_next = int(value['row']['Next'])
+                from_date_str = from_date.strftime('%Y-%m-%d')
+                prediction_date_np = np.busday_offset(from_date_str, n_next, roll='forward')
+                prediction_date = prediction_date_np.astype(datetime)
+
+                print("Prediction Date: " + prediction_date.strftime('%Y-%m-%d') + " and Prediction: " + str(prediction) + " and symbol: " + row['symbol'] + " and model: " + key + " and date: " + from_date.strftime('%Y-%m-%d'))
+                ## Save output to mongo
+                break
+
+            except Exception as e:
+                print("Error with symbol: " + row['symbol'] + " and model: " + key + " and date: " + from_date.strftime('%Y-%m-%d') + " and error: " + str(e))
+                continue
+
+##Return stock data with new last processed
+

@@ -21,7 +21,7 @@ def run_command(command_array):
     output_string = ""
     timeout = 15
     try:
-        # Set timeout to 10 seconds
+        # Set timeout to 15 seconds
         completed_process = subprocess.run(command_array, capture_output=True, text=True, timeout=timeout)
 
         # Access stdout and stderr
@@ -37,10 +37,18 @@ def run_command(command_array):
     except subprocess.TimeoutExpired as e:
         output_string = output_string + "The function finished within:  " + str(timeout) + ' seconds. ' + '\n'
         output_string = output_string + "=== STDOUT ===" + '\n'
-        output_string = output_string + (e.stdout.decode('utf-8') if e.stderr else "No STDOUT") + '\n'
-        output_string = output_string + "=== STDERR ===" + '\n'
-        output_string = output_string + (e.stderr.decode('utf-8') if e.stdout else "No STDERR") + '\n'
+        try:
+            output_string = output_string + (e.stdout.decode('utf-8') if e.stderr else "No STDOUT") + '\n'
+        except:
+            output_string = output_string + "No STDOUT" + '\n'
 
+        output_string = output_string + "=== STDERR ===" + '\n'
+
+        try:
+            output_string = output_string + (e.stderr.decode('utf-8') if e.stdout else "No STDERR") + '\n'
+        except:
+            output_string = output_string + "No STDERR" + '\n'
+        
     except Exception as e:
         output_string = output_string + "Error in function: " + str(e) + '\n'
 
@@ -52,7 +60,7 @@ while True:
         for node_dict in test_nodes_array:
             project_key = node_dict['project_key']
             node_key = node_dict['node_key']
-            command_array = ["python3", "-u", "run_project.py", project_key, node_key]
+            command_array = ["/home/ubuntu/WaveAssistEngine/waveenv/bin/python3", "-u", "run_project.py", project_key, node_key]
             utils.logger.info(f"Running {command_array} for {node_key}.")
             output_string = run_command(command_array)
             upload_test_results(node_key, output_string)
