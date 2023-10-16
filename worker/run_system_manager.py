@@ -51,21 +51,21 @@ while True:
     project_data_array = fetch_projects_from_api()
     api_project_names = {project['project_key'] for project in project_data_array}
     existing_projects = set(get_existing_project_names())
-
     new_projects = api_project_names - existing_projects
     removed_projects = existing_projects - api_project_names
 
     restart_projects = {project['project_key'] for project in project_data_array if str(project.get('refresh_status')) == "1"}
 
-    for project in new_projects:
+    for project_name in new_projects:
         ##get project_dict from project_data_array
         try:
-            project_dict = [project for project in project_data_array if project['project_key'] == project][0]
+            project_dict = [project for project in project_data_array if project['project_key'] == project_name][0]
             memory_allocation = project_dict.get('memory_allocated_in_mb')
             cpu_allocation = project_dict.get('cpu_allocated_in_vcpu')
-            create_service_file(project, memory_allocation, cpu_allocation)
-        except:
-            create_service_file(project)
+            create_service_file(project_name, memory_allocation, cpu_allocation)
+        except Exception as e:
+            print("Error creating service file for project: " + str(e))
+            create_service_file(project_name)
 
     for project in removed_projects:
         delete_service_file(project)
