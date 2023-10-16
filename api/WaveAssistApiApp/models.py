@@ -95,6 +95,10 @@ class Project(models.Model):
 
     refresh_status = models.IntegerField(default=0) ##0 is no, 1 is yes
 
+    memory_allocated_in_mb = models.IntegerField(default=512)
+    cpu_allocated_in_vcpu = models.FloatField(default=0.5)
+
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -108,6 +112,9 @@ class Project(models.Model):
         project_dict['running_status'] = self.running_status
         project_dict['payment_status'] = self.payment_status
         project_dict['refresh_status'] = self.refresh_status
+        project_dict['memory_allocated_in_mb'] = self.memory_allocated_in_mb
+        project_dict['cpu_allocated_in_vcpu'] = self.cpu_allocated_in_vcpu
+        
         return project_dict
 
     class Meta:
@@ -136,8 +143,6 @@ class Nodes(models.Model):
 
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
 
-    memory_allocated_in_mb = models.IntegerField(default=512)
-    cpu_allocated_in_vcpu = models.FloatField(default=0.25)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -156,8 +161,7 @@ class Nodes(models.Model):
         node_dict['python_code'] = self.python_code
         node_dict['test_status'] = self.test_status
         node_dict['test_output'] = self.test_output
-        node_dict['memory_allocated_in_mb'] = self.memory_allocated_in_mb
-        node_dict['cpu_allocated_in_vcpu'] = self.cpu_allocated_in_vcpu
+
 
         ##Also optimially load and pass the input and output data list
         input_data_array = []
