@@ -19,8 +19,7 @@ DB_NAME = "WaveAssist"
 CONNECTION_STRING = "REMOVED_CREDENTIAL"
 INTEGRATIONS_SUFFIX_KEY = "_integrations"
 
-
-
+CURRENT_SERVER_VCPU = 4
 
 
 ##Service Constants
@@ -38,8 +37,10 @@ RestartSec=1
 User=ubuntu
 WorkingDirectory=/home/ubuntu/WaveAssistEngine/WavePredictEngine/
 ExecStart=/bin/bash -c 'cd /home/ubuntu/WaveAssistEngine/WavePredictEngine/ && /home/ubuntu/WaveAssistEngine/waveenv/bin/python3 run_project.py {project_name}'
-MemoryMax=512M
-CPUQuota=10%
+MemoryMax={memory_limit}M
+CPUQuota={cpu_percent}%
+MemoryAccounting=yes
+CPUAccounting=yes
 
 [Install]
 WantedBy=multi-user.target

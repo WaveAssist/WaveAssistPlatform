@@ -120,7 +120,7 @@ for index, row in wavepredict_stockmetadata.iterrows():
                 ## Run model
                 model = value['model']
 
-                print("Input Shape: " + str(x.shape))
+                # print("Input Shape: " + str(x.shape))
                 y_pred = model.predict(x)
                 y_value = y_pred[0][0]  ##ToDo - needs error handing and dynamic values
                 prediction = generate_predictions(y_value, stock_history_df['close'].iloc[-1], percent_capped)

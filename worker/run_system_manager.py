@@ -26,8 +26,9 @@ def save_existing_projects(project_names_array):
     utils.logger.info(f"Saved {len(project_names_array)} existing projects to existing_projects.txt.")
 
 
-def create_service_file(project_name):
-    content = SERVICE_TEMPLATE.format(project_name=project_name)
+def create_service_file(project_name, memory_limit=512, vcpu_allocation=0.5):
+    cpu_percent = int(vcpu_allocation * 100 / CURRENT_SERVER_VCPU)
+    content = SERVICE_TEMPLATE.format(project_name=project_name, memory_limit=memory_limit, cpu_percent=cpu_percent)
     with open(f"{SERVICE_DIRECTORY}WA{project_name}.service", "w") as f:
         f.write(content)
     utils.logger.info(f"New Service file for {project_name} created.")
@@ -57,7 +58,14 @@ while True:
     restart_projects = {project['project_key'] for project in project_data_array if str(project.get('refresh_status')) == "1"}
 
     for project in new_projects:
-        create_service_file(project)
+        ##get project_dict from project_data_array
+        try:
+            project_dict = [project for project in project_data_array if project['project_key'] == project][0]
+            memory_allocation = project_dict.get('memory_allocated_in_mb')
+            cpu_allocation = project_dict.get('cpu_allocated_in_vcpu')
+            create_service_file(project, memory_allocation, cpu_allocation)
+        except:
+            create_service_file(project)
 
     for project in removed_projects:
         delete_service_file(project)
