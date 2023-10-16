@@ -5,19 +5,17 @@ import tensorflow as tf
 MAX_INDUSTRY_CODE = 156
 BUCKET_NAME = 'wavepredictmodels'
 from sklearn.preprocessing import MinMaxScaler
-import datetime
+from datetime import datetime
 from datetime import timedelta
 from pymongo import MongoClient
 CONNECTION_STRING = "REMOVED_CREDENTIAL"
 ACCESS_KEY = 'REMOVED_CREDENTIAL'
 SECRET_KEY = 'REMOVED_CREDENTIAL'
 
-
-
 client = MongoClient(CONNECTION_STRING, 27017)
 db = client.WavePredict
 collection = db.DailyStockData
-
+prediction_collection = db.PredictedDailyStockData
 
 def generate_predictions(y_value, last_element, percentage=50):
     if y_value == 1:
@@ -29,8 +27,6 @@ def generate_predictions(y_value, last_element, percentage=50):
     return forecast_element
 
 ## Fetch models from s3
-# wavepredict_models
-
 
 models_dictionary = {}
 
@@ -57,11 +53,19 @@ for index, row in wavepredict_models.iterrows():
 
 ## Fetch all stocks
 
+wavepredict_stockmetadata = wavepredict_stockmetadata.sort_values(by='M1', ascending=True)
+
+batch_size = 10
 ## iterate through wavepredict_stockmetadata df
 for index, row in wavepredict_stockmetadata.iterrows():
+    batch_size = batch_size - 1
+    if batch_size <= 0:
+        continue
+
     ##Iterate through models_dictionary
     for key, value in models_dictionary.items():
-        cutoff_date = value['row']['cutoff']
+        predictions_array = []
+        cutoff_date = value['row']['Cutoff']
         try:
             processed_till_timestamp = datetime.strptime(row[key], '%Y-%m-%d %H:%M:%S')
         except:
@@ -70,7 +74,8 @@ for index, row in wavepredict_stockmetadata.iterrows():
 
         ##fetched_till_timestamp with time as 00:00:00 in datetime format
         from_date = datetime.combine(processed_till_timestamp.date(), datetime.min.time()) ##This is not processed.
-        to_date = datetime.combine(datetime.now().date(), datetime.min.time()) ##This will not be processed. it will be -1 day.
+        yesterday_date = datetime.now() - timedelta(days=1)
+        to_date = datetime.combine(yesterday_date.date(), datetime.min.time()) ##This will not be processed. it will be -1 day.
 
         if from_date >= to_date:
             continue
@@ -78,7 +83,6 @@ for index, row in wavepredict_stockmetadata.iterrows():
         ##Loop from from_date to to_date adding 1 day each time
 
         while(from_date < to_date):
-
             try:
                 from_date = from_date + timedelta(days=1)
 
@@ -86,7 +90,7 @@ for index, row in wavepredict_stockmetadata.iterrows():
                 n_previous = int(value['row']['Previous'])
 
                 ##Including from_date, fetch n_previous rows of data from mongo collection collection
-                stock_history_data = collection.find({'metadata.symbol': row['symbol'], 'timestamp': {'$lt': from_date}}).sort('timestamp', -1).limit(n_previous)
+                stock_history_data = collection.find({'metadata.symbol': row['symbol'], 'timestamp': {'$lte': from_date}}).sort('timestamp', -1).limit(n_previous)
                 stock_history_df = pd.DataFrame(stock_history_data)
 
                 ##Sort the dataframe by timestamp in ascending order
@@ -126,14 +130,34 @@ for index, row in wavepredict_stockmetadata.iterrows():
                 from_date_str = from_date.strftime('%Y-%m-%d')
                 prediction_date_np = np.busday_offset(from_date_str, n_next, roll='forward')
                 prediction_date = prediction_date_np.astype(datetime)
-
-                print("Prediction Date: " + prediction_date.strftime('%Y-%m-%d') + " and Prediction: " + str(prediction) + " and symbol: " + row['symbol'] + " and model: " + key + " and date: " + from_date.strftime('%Y-%m-%d'))
+                prediction_date = datetime.combine(prediction_date, datetime.min.time())
+                # print("Prediction Date: " + prediction_date.strftime('%Y-%m-%d') + " and Prediction: " + str(prediction) + " and symbol: " + row['symbol'] + " and model: " + key + " and date: " + from_date.strftime('%Y-%m-%d'))
                 ## Save output to mongo
-                break
+
+                meta_data = {
+                    "symbol": row['symbol'],
+                    "model": key,
+                    "exchange": row['exchange'],
+                    "start_date": from_date.strftime('%Y-%m-%d')
+                }
+
+                predictions_data = {
+                    "timestamp": datetime.utcfromtimestamp(prediction_date.timestamp()),
+                    "metadata": meta_data,
+                    "predicted_close": float(prediction),
+
+                }
+                predictions_array.append(predictions_data)
 
             except Exception as e:
                 print("Error with symbol: " + row['symbol'] + " and model: " + key + " and date: " + from_date.strftime('%Y-%m-%d') + " and error: " + str(e))
                 continue
 
-##Return stock data with new last processed
+        prediction_collection.insert_many(predictions_array)
+        print(f"Inserted {len(predictions_array)} records for symbol: " + row['symbol'] + " and model: " + key )
+
+        ##Update last processed date in wavepredict_stockmetadata
+        wavepredict_stockmetadata.loc[index, key] = to_date.strftime('%Y-%m-%d %H:%M:%S')
+
+return wavepredict_stockmetadata
 

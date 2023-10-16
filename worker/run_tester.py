@@ -48,7 +48,7 @@ def run_command(command_array):
             output_string = output_string + (e.stderr.decode('utf-8') if e.stdout else "No STDERR") + '\n'
         except:
             output_string = output_string + "No STDERR" + '\n'
-        
+
     except Exception as e:
         output_string = output_string + "Error in function: " + str(e) + '\n'
 
