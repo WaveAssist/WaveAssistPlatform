@@ -136,6 +136,9 @@ class Nodes(models.Model):
 
     running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
 
+    memory_allocated_in_mb = models.IntegerField(default=512)
+    cpu_allocated_in_vcpu = models.FloatField(default=0.25)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -153,6 +156,8 @@ class Nodes(models.Model):
         node_dict['python_code'] = self.python_code
         node_dict['test_status'] = self.test_status
         node_dict['test_output'] = self.test_output
+        node_dict['memory_allocated_in_mb'] = self.memory_allocated_in_mb
+        node_dict['cpu_allocated_in_vcpu'] = self.cpu_allocated_in_vcpu
 
         ##Also optimially load and pass the input and output data list
         input_data_array = []

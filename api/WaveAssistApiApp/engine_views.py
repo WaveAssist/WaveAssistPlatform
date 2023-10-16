@@ -180,7 +180,7 @@ def fetch_all_test_nodes(request):
             project_key = project_array.first().project_key
             node_dict['project_key'] = project_key
 
-            
+
             node_dict_array.append(node_dict)
         output_dictionary = {'node_array': node_dict_array}
         return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Node details loaded successfully.')
