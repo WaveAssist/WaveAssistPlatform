@@ -18,8 +18,8 @@ class AWSS3(object):
 
     def get_s3_based_on_integrations(self, integrations_df):
         try:
-            access_key = str(integrations_df[integrations_df['name'] == 'S3_ACCESS_KEY']['value'].values[0])
-            secret = str(integrations_df[integrations_df['name'] == 'S3_SECRET']['value'].values[0])
+            access_key = str(integrations_df[integrations_df['name'] == 'AWSS3_ACCESS_KEY']['value'].values[0])
+            secret = str(integrations_df[integrations_df['name'] == 'AWSS3_SECRET']['value'].values[0])
             return self.set_keys(access_key,secret)
         except:
             return self.s3
