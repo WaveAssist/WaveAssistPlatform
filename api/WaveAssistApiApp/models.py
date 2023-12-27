@@ -114,7 +114,7 @@ class Project(models.Model):
         project_dict['refresh_status'] = self.refresh_status
         project_dict['memory_allocated_in_mb'] = self.memory_allocated_in_mb
         project_dict['cpu_allocated_in_vcpu'] = self.cpu_allocated_in_vcpu
-        
+
         return project_dict
 
     class Meta:
