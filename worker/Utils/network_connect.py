@@ -27,6 +27,8 @@ def load_all_test_nodes():
         return False, "Error in loading test nodes data"
 
 
+
+
 def load_project_array_waiting():
     success,response_data = load_all_projects()
     if not success:
@@ -96,7 +98,7 @@ def update_node_test_results(node_key, test_output='', test_status='0'):
 
 def load_node_array(project_key):
     try:
-        utils.logger.info("Loading projects data")
+        utils.logger.info("Loading Node data")
         data = {'token': WORKER_TOKEN}
         data['project_key'] = project_key
         success,response_data = network_utils.call_api(LOAD_NODE_DATA_URL,data)
@@ -109,4 +111,22 @@ def load_node_array(project_key):
 
     except Exception as e:
         utils.logger.error("Error in loading nodes data: " + str(e))
+        return []
+
+
+def load_flows_array(project_key):
+    try:
+        utils.logger.info("Loading Flows data")
+        data = {'token': WORKER_TOKEN}
+        data['project_key'] = project_key
+        success,response_data = network_utils.call_api(LOAD_FLOWS_DATA_URL,data)
+        if success:
+            flow_array = response_data['data']['flows_array']
+            return flow_array
+        else:
+            utils.logger.error("Error in response of flows data: " + str(response_data))
+            return []
+
+    except Exception as e:
+        utils.logger.error("Error in loading flows data: " + str(e))
         return []

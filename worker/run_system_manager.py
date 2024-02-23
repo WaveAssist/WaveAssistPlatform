@@ -5,6 +5,8 @@ from Utils.network_connect import *
 import time
 from Utils.constants import *
 import Utils.utils as utils
+
+
 def fetch_projects_from_api():
     project_data_array = load_project_array_waiting()
     utils.logger.info(f"Fetched {len(project_data_array)} projects.")
@@ -50,6 +52,7 @@ def manage_service(action, project_name):
 while True:
     project_data_array = fetch_projects_from_api()
     api_project_names = {project['project_key'] for project in project_data_array}
+
     existing_projects = set(get_existing_project_names())
     new_projects = api_project_names - existing_projects
     removed_projects = existing_projects - api_project_names

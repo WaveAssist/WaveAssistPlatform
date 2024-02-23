@@ -6,6 +6,7 @@ TIMEOUT_DURATION = 300
 LOAD_ALL_PROJECTS_URL = BASE_URL + "/load_all_projects/"
 LOAD_ALL_TEST_NODES_URL = BASE_URL + "/fetch_all_test_nodes/"
 LOAD_NODE_DATA_URL = BASE_URL + "/load_node_data/"
+LOAD_FLOWS_DATA_URL = BASE_URL + "/load_flows_data/"
 WORKER_TOKEN = "REMOVED_CREDENTIAL"
 DOWNLOAD_PROJECT_FILE_DATA_URL = BASE_URL + "/download_project_file_data/"
 PROJECTS_FOLDER = os.path.join(CWD_PATH, 'Projects')

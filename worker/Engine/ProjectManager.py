@@ -2,7 +2,6 @@ import time
 from Engine.NodeThread import NodeThread
 import Utils.utils as utils
 import Utils.network_connect as network_connect
-from Engine.MongoManager import MongoManager
 from Utils.constants import *
 
 # Thread Manager class
@@ -11,37 +10,19 @@ class ProjectManager(object):
     def __init__(self, project_key):
         self.project_key = project_key
         self.nodes_dict = {}
-        self.mongo_manager = MongoManager(project_key)
 
     def load_node_array(self):
         node_array = network_connect.load_node_array(self.project_key)
         return node_array
 
+    def load_flows_array(self):
+        flows_array = network_connect.load_flows_array(self.project_key)
+        return flows_array
 
     def setup_project_file(self):
         project_file_content = network_connect.download_project_file_data(self.project_key)
         utils.write_to_file(self.project_key, project_file_content)
         return
-
-
-
-    def refresh_project(self):
-        ##Refresh project
-
-        self.delete_project()
-
-        self.get_started()
-
-        ##Update backend
-        network_connect.update_project_refresh(self.project_key)
-
-
-    def delete_project(self):
-        ##Delete project
-        self.stop_and_remove_all_nodes()
-        utils.delete_file(self.project_key)
-
-
 
     def get_started(self):
         ##Setup project] file
@@ -49,6 +30,9 @@ class ProjectManager(object):
 
         ##Load node array
         node_array = self.load_node_array()
+
+        ##Load flows array
+        flows_array = self.load_flows_array()
 
         ##Create & start nodes
         for node_dict in node_array:
@@ -58,7 +42,7 @@ class ProjectManager(object):
             output_data_array = node_dict['output_data_array']
             input_data_array.append({"key":self.project_key + INTEGRATIONS_SUFFIX_KEY})
 
-            node = self.create_node(node_key, sleep_duration, input_data_array, output_data_array)
+            node = self.create_node(node_key, sleep_duration, input_data_array, output_data_array,flows_array)
             self.start_node(node)
 
 
@@ -69,6 +53,9 @@ class ProjectManager(object):
         ##Load node array
         node_array = self.load_node_array()
 
+        ##Load flows array
+        flows_array = self.load_flows_array()
+
         ##Create & start nodes
         for node_dict in node_array:
             node_key = node_dict['node_key']
@@ -77,18 +64,14 @@ class ProjectManager(object):
                 input_data_array = node_dict['input_data_array']
                 output_data_array = node_dict['output_data_array']
                 input_data_array.append({"key":self.project_key + INTEGRATIONS_SUFFIX_KEY})
-                node = self.create_node(node_key, sleep_duration, input_data_array, output_data_array)
+                node = self.create_node(node_key, sleep_duration, input_data_array, output_data_array, flows_array)
                 self.start_node(node)
             else:
                 continue
 
-    def create_node(self, node_key, sleep_duration, input_data_array, output_data_array):
-        if node_key in self.nodes_dict.keys():
-            utils.logger.warning(f'Node "{node_key}" already exists')
-            self.stop_and_remove_node(node_key)
-
+    def create_node(self, node_key, sleep_duration, input_data_array, output_data_array, flows_array):
         utils.logger.info(f'Creating node "{node_key}"')
-        node = NodeThread(self.project_key, node_key, sleep_duration, input_data_array, output_data_array, self.mongo_manager)
+        node = NodeThread(self.project_key, node_key, sleep_duration, input_data_array, output_data_array, flows_array)
         self.nodes_dict[node_key] = node
         utils.logger.info(f'Node "{node_key}" created')
         return node
@@ -119,42 +102,6 @@ class ProjectManager(object):
         else:
             utils.logger.warning('Node does not exist')
             return False
-
-
-    def stop_node(self, node_key):
-        thread = self.nodes_dict.get(node_key)
-        if thread:
-            if thread.is_alive():
-                thread.stop()
-                thread.join()
-                utils.logger.info(f'Node "{node_key}" stopped')
-            else:
-                utils.logger.warning(f'Node "{node_key}" is not running')
-        else:
-            utils.logger.warning(f'Node "{node_key}" does not exist')
-
-
-
-    def stop_and_remove_node(self, node_key):
-        thread = self.nodes_dict.get(node_key)
-        if thread:
-            if thread.is_alive():
-                thread.stop()
-                thread.join()
-                del self.nodes_dict[node_key]
-                utils.logger.info(f'Node "{node_key}" stopped')
-            else:
-                utils.logger.warning(f'Node "{node_key}" is not running')
-        else:
-            utils.logger.warning(f'Node "{node_key}" does not exist')
-
-
-    def stop_and_remove_all_nodes(self):
-        all_keys = list(self.nodes_dict.keys())
-        for node_key in all_keys:
-            self.stop_and_remove_node(node_key)
-        utils.logger.info('All nodes stopped')
-
 
     def print_node_status(self, node_key):
         thread = self.nodes_dict.get(node_key)
