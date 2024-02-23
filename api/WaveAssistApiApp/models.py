@@ -82,11 +82,11 @@ class IOData(models.Model):
         verbose_name = 'IOData'
         verbose_name_plural = 'IOData'
 
+
 class Project(models.Model):
     id = models.BigAutoField(primary_key=True)
     project_key = models.CharField(unique=True, max_length=255)
 
-    client_array = models.ManyToManyField('Client', blank=True)
     node_array = models.ManyToManyField('Nodes', blank=True)
     integration_array = models.ManyToManyField('Integrations', blank=True)
 
@@ -98,8 +98,10 @@ class Project(models.Model):
     memory_allocated_in_mb = models.IntegerField(default=512)
     cpu_allocated_in_vcpu = models.FloatField(default=0.5)
 
-
     created_at = models.DateTimeField(auto_now_add=True)
+
+    ##To be removed
+    client_array = models.ManyToManyField('Client', blank=True)
 
     def __str__(self):
         ##Add all the fields
@@ -121,6 +123,32 @@ class Project(models.Model):
         db_table = "WaveAssist_Project"
         verbose_name = 'Project'
         verbose_name_plural = 'Projects'
+
+
+
+class Flows(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE)
+    running_status = models.IntegerField(default=0) ##0 is not running, 1 is running
+    refresh_status = models.IntegerField(default=0) ##0 is no, 1 is yes
+
+    ##Access control here.
+    client_array = models.ManyToManyField('Client', blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Flows: {self.id}"
+
+    def get_flow_dict(self):
+        flows_dict = {}
+        flows_dict['id'] = self.id
+        return flows_dict
+
+    class Meta:
+        db_table = "WaveAssist_Flows"
+        verbose_name = 'Flows'
+        verbose_name_plural = 'Flows'
 
 
 class Nodes(models.Model):

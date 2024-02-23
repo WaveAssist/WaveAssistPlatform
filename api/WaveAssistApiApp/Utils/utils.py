@@ -25,6 +25,19 @@ def has_access(client_object, project_key):
     else:
         return False
 
+
+def get_collection_key(flow_object, project_object):
+    return project_object.project_key + "_" + str(flow_object.flow_id)
+
+
+def does_user_have_access_to_flow(client_object, flow_object):
+    flows_list = client_object.flows_set.filter(id=flow_object.id)
+    if flows_list.count() > 0:
+        return True
+    else:
+        return False
+
+
 def does_user_have_node_access(client_object, node_object):
     # project object has node_array
     node_array = client_object.project_set.all().values_list('node_array', flat=True)

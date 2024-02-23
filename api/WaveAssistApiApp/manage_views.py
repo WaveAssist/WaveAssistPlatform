@@ -57,6 +57,12 @@ def create_project(request):
         project_object = Project.objects.create(project_key=project_key, running_status=0, payment_status=0, refresh_status=0)
         project_object.client_array.add(client_object)
         project_object.save()
+
+        ##Add flow to project
+        flow_object = Flows.objects.create(project=project_object)
+        flow_object.client_array.add(client_object)
+        flow_object.save()
+
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project creation failed: ' + str(e))
 
@@ -121,8 +127,8 @@ def fetch_project_data(request):
         client_dict_array.append(client_object.get_dict())
     project_dict['client_array'] = client_dict_array
 
-    ##Get Dashboard data from Mongo
 
+    ##Get Dashboard data from Mongo
     mongo_manager.collection = mongo_manager.database[project_key]
     dashboard_data_array = mongo_manager.fetch_data_for_key(dashboard_data_key)
     project_dict['dashboard_data_array'] = dashboard_data_array
@@ -158,31 +164,39 @@ def update_code(request):
 
 
 def upload_io_data_file(request):
+
+    project_key = request.POST.get('project_key', '')
     try:
-        uploaded_file = request.FILES['file']
+        project_object = Project.objects.get(project_key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
 
-        post_data = request.POST.copy()
-        # Determine the file type by checking the file extension
-        data_type = uploaded_file.name.split('.')[-1].lower()
-        content = uploaded_file.read().decode('utf-8')
-        post_data['data_type'] = data_type
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
 
-        if data_type == 'csv':
-            post_data['csv_data'] = content
-        elif data_type == 'json':
-            post_data['json_data'] = content
-        else:
-            return ResponseParser.getParsedErrorMessage('Invalid file type')
+    if not utils.has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
-        new_request = HttpRequest()
-        new_request.method = 'POST'
-        new_request.POST = post_data
-        return views.set_data_for_key(new_request)
+    uploaded_file = request.FILES['file']
+    io_data_key = request.POST.get('io_data_key', '')
 
-    except Exception as e:
-        print("Error with file upload: " + str(e))
-        return ResponseParser.getParsedErrorMessage('Something went wrong with file extraction')
 
+    data_type = uploaded_file.name.split('.')[-1].lower()
+    csv_data = uploaded_file.read().decode('utf-8')
+    if data_type != 'csv':
+        return ResponseParser.getParsedErrorMessage('Invalid file type. Only CSV files are allowed.')
+
+    pd_data = pd.read_csv(StringIO(csv_data))
+
+    success = set_pd_data_for_key_for_all(io_data_key, pd_data, is_master_key=False)
+
+    if success:
+        return ResponseParser.getParsedSuccessMessage({}, '200', 'IO data updated successfully for all flows.')
+    else:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while updating io data')
 
 
 def update_io_data(request):
@@ -293,6 +307,9 @@ def delete_io_data(request):
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'IO Data deleted successfully.')
 
+
+
+##MONGOCHANGE
 def download_io_data(request):
     uid = request.GET.get('uid', '')
     try:
@@ -309,22 +326,24 @@ def download_io_data(request):
     if not utils.does_user_have_io_data_access(client_object, io_data_object):
         return ResponseParser.getParsedErrorMessage('You do not have access to this IO Data')
 
-    project_key = io_data_object.project.project_key
 
-    mongo_manager.collection = mongo_manager.database[project_key]
+    project_object = io_data_object.project
+
+    ##Fetch the first flow for this project
+    try:
+        flow_object = project_object.flows_set.all()[0]
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('No flows found.')
+
+    collection_key = utils.get_collection_key(flow_object, project_object)
+    mongo_manager.collection = mongo_manager.database[collection_key]
     data_df = mongo_manager.fetch_data_as_dataframe(key)
     csv_string = data_df.to_csv(index=False)
     file_name = 'download_' + key
 
     return ResponseParser.getHTTPResponseForCSV(csv_string, file_name)
 
-
-
-
-
 ###Node
-
-
 def update_node(request):
     uid = request.POST.get('uid', '')
     try:
@@ -523,8 +542,6 @@ def delete_node(request):
 
 
 
-
-
 def update_integrations(request):
     active_integrations_csv = request.POST.get('active_integrations_csv', '')
     project_key = request.POST.get('project_key', '')
@@ -557,7 +574,6 @@ def update_integrations(request):
         return ResponseParser.getParsedErrorMessage('Something went wrong while updating integrations')
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Integrations updated successfully.')
-
 
 
 def remove_integrations(request):
@@ -661,6 +677,25 @@ def update_dashboard_data(request):
     except:
         return ResponseParser.getParsedErrorMessage('Project not found')
 
+
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+
+    if not utils.has_access(client_object, project_key):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+
+    try:
+        json_string_data = str(request.POST.get('json_data', ''))
+        pd_data = pd.read_json(json_string_data)
+    except:
+        return ResponseParser.getParsedErrorMessage('Invalid json data')
+
+
     ##Find the IOData with type 2 for this project and get io_data_key
     try:
         io_data_object = IOData.objects.get(project=project_object, output_type=2)
@@ -680,17 +715,42 @@ def update_dashboard_data(request):
             print("Error with IOData Create: " + str(e))
             return ResponseParser.getParsedErrorMessage('Something went wrong while creating IOData object')
 
+    success = set_pd_data_for_key_for_all(io_data_key, pd_data, is_master_key=True)
 
-    post_data = request.POST.copy()
-    post_data['io_data_key'] = io_data_key
-    post_data['data_type'] = 'json'
+    if success:
+        return ResponseParser.getParsedSuccessMessage({}, '200', 'Dashboard data updated successfully.')
+    else:
+        return ResponseParser.getParsedErrorMessage('Something went wrong while updating dashboard data')
+
+
+
+def set_pd_data_for_key_for_all(io_data_key, pd_data, is_master_key=False):
+    try:
+        io_data_object = IOData.objects.get(key=io_data_key)
+        project_object = io_data_object.project
+        project_key = project_object.project_key
+    except Exception as e:
+        return False
 
     try:
-        new_request = HttpRequest()
-        new_request.method = 'POST'
-        new_request.POST = post_data
-        return views.set_data_for_key(new_request)
+        ##Remove row_number column in pd_data if it exists
+        pd_data = pd_data.drop('row_number', axis=1, errors='ignore')
+
+        ##Save in mongo db
+        if is_master_key:
+            mongo_manager.collection = mongo_manager.database[project_key]
+            success = mongo_manager.replace_data_as_dataframe(io_data_key, pd_data)
+            if not success:
+                return False
+        else:
+            flows_array = project_object.flows_set.all()
+            for flow_object in flows_array:
+                collection_key = utils.get_collection_key(flow_object, project_object)
+                mongo_manager.collection = mongo_manager.database[collection_key]
+                success = mongo_manager.replace_data_as_dataframe(io_data_key, pd_data)
+                if not success:
+                    return False
+        return True
 
     except Exception as e:
-        print("Error with file upload: " + str(e))
-        return ResponseParser.getParsedErrorMessage('Something went wrong with file extraction')
+        return False

@@ -47,3 +47,13 @@ class IntegrationsAdmin(admin.ModelAdmin):
     search_fields = ['name']
     readonly_fields = ('id', 'created_at')
     optional_fields = ('import_code',)
+
+
+
+@admin.register(Flows)
+class FlowsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project', 'running_status', 'refresh_status', 'created_at')
+    search_fields = ('project__project_key',)
+    list_filter = ('running_status', 'refresh_status', 'created_at')
+    readonly_fields = ('id', 'created_at')
+    optional_fields = ('client_array',)
