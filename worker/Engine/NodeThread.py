@@ -88,7 +88,6 @@ class NodeThread(threading.Thread):
                         mongo_manager = MongoManager(collection)
 
                         input_array = self.get_input(mongo_manager)
-                        print(input_array)
                         output = project_function(*input_array)
 
                         output_array = []
