@@ -65,7 +65,7 @@ class NodeThread(threading.Thread):
             try:
                 ##Run this function for each flow
                 for flow_dict in self.flows_array:
-                    flow_id = flow_dict['flow_id']
+                    flow_id = flow_dict['id']
                     try:
                         collection = utils.get_collection_key(flow_id, self.project_key)
                         mongo_manager = MongoManager(collection)
