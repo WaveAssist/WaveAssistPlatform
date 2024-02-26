@@ -27,7 +27,7 @@ def has_access(client_object, project_key):
 
 
 def get_collection_key(flow_object, project_object):
-    return project_object.project_key + "_" + str(flow_object.flow_id)
+    return project_object.project_key + "-" + str(flow_object.id)
 
 
 def does_user_have_access_to_flow(client_object, flow_object):

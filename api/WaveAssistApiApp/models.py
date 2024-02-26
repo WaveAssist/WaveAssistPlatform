@@ -140,7 +140,7 @@ class Flows(models.Model):
     def __str__(self):
         return f"Flows: {self.id}"
 
-    def get_flow_dict(self):
+    def get_dict(self):
         flows_dict = {}
         flows_dict['id'] = self.id
         return flows_dict

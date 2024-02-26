@@ -63,7 +63,6 @@ def load_flows_data(request):
         return ResponseParser.getParsedErrorMessage('No access')
 
     project_key = request.POST.get('project_key', '')
-    project_object = None
     try:
         project_object = Project.objects.get(project_key=project_key)
     except Exception as e:

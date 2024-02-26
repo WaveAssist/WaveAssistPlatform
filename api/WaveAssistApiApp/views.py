@@ -36,7 +36,7 @@ def login(request):
     for flow_object in flow_array:
         project_dict = flow_object.project.get_dict()
         project_dict['flow_id'] = flow_object.id
-        project_dict_array.append(flow_object.get_flow_dict())
+        project_dict_array.append(flow_object.get_dict())
 
     output_dictionary = {'project_array': project_dict_array}
     output_dictionary['client_data'] = client_object.get_dict()
