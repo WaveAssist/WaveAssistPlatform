@@ -45,7 +45,6 @@ def login(request):
 
 ## API to get formatted data of the project
 def load_project_data(request):
-
     ##Fetch user
     uid = request.POST.get('uid', '')
     try:
@@ -56,7 +55,7 @@ def load_project_data(request):
     ##Fetch flow and project
     try:
         flow_id = request.POST.get('flow_id', '')
-        flow_object = Flows.objects.get(id=flow_id)
+        flow_object = Flows.objects.get(id=flow_id).select_related('project')
         project_object = flow_object.project
         project_key = project_object.project_key
     except Exception as e:
@@ -72,7 +71,6 @@ def load_project_data(request):
     dashboard_key = next((obj.key for obj in io_data_objects if obj.output_type == 2), None)
     if dashboard_key is None:
         return ResponseParser.getParsedErrorMessage('Dashboard data not found')
-
 
     ##Fetch data for io_data_keys
     output_dict = {}
@@ -123,11 +121,22 @@ def set_data_for_key(request):
     if not utils.does_user_have_access_to_flow(client_object, flow_object):
         return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
-    try:
-        json_data = str(request.POST.get('json_data', ''))
-        pd_data = pd.read_json(json_data)
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Invalid json data')
+    data_type = request.POST.get('data_type', 'json')
+    if data_type not in ['json', 'csv']:
+        return ResponseParser.getParsedErrorMessage('Invalid data type')
+
+    if data_type == 'csv':
+        try:
+            csv_data = request.FILES['csv_data']
+            pd_data = pd.read_csv(csv_data)
+        except Exception as e:
+            return ResponseParser.getParsedErrorMessage('Invalid csv data')
+    else:
+        try:
+            json_data = str(request.POST.get('json_data', ''))
+            pd_data = pd.read_json(json_data)
+        except Exception as e:
+            return ResponseParser.getParsedErrorMessage('Invalid json data')
 
     try:
         ##Remove row_number column in pd_data if it exists
