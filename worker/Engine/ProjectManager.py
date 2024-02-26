@@ -24,6 +24,9 @@ class ProjectManager(object):
         utils.write_to_file(self.project_key, project_file_content)
         return
 
+
+
+
     def get_started(self):
         ##Setup project] file
         self.setup_project_file()
@@ -40,7 +43,6 @@ class ProjectManager(object):
             sleep_duration = float(node_dict['sleep_duration'])
             input_data_array = node_dict['input_data_array']
             output_data_array = node_dict['output_data_array']
-            input_data_array.append({"key":self.project_key + INTEGRATIONS_SUFFIX_KEY})
 
             node = self.create_node(node_key, sleep_duration, input_data_array, output_data_array,flows_array)
             self.start_node(node)

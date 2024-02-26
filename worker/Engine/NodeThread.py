@@ -7,6 +7,8 @@ from Engine.MongoManager import MongoManager
 # Custom Thread class
 import pandas as pd
 from Utils.Timer import Timer
+from Utils.constants import *
+
 
 
 class NodeThread(threading.Thread):
@@ -18,6 +20,8 @@ class NodeThread(threading.Thread):
         self.input_data_array = input_data_array
         self.output_data_array = output_data_array
         self.flows_array = flows_array
+        self.integrations_key = self.project_key + INTEGRATIONS_SUFFIX_KEY
+
 
 
     def manage_output(self, output_data, output_dict, mongo_manager):
@@ -35,11 +39,23 @@ class NodeThread(threading.Thread):
             return False
 
 
+    def fetch_integrations(self):
+        try:
+            mongo_manager = MongoManager(self.project_key)
+            integrations = mongo_manager.fetch_data_as_dataframe(self.integrations_key)
+            return integrations
+        except Exception as e:
+            utils.logger.error("Exception in fetch_integrations for: " + str(self.node_key) + " + Error: " + str(e))
+            return None
+
+
     def get_input(self, mongo_manager):
         ##Get input data from mongo based on keys in input_data_array
         try:
             input_keys_array = [obj['key'] for obj in self.input_data_array]
             input_dict = mongo_manager.fetch_data_as_dataframe_for_array(input_keys_array)
+            integrations_df = self.fetch_integrations()
+            input_dict[self.integrations_key] = integrations_df
             input_array = [input_dict.get(io_key, pd.DataFrame()) for io_key in input_keys_array]
             return input_array
         except Exception as e:
