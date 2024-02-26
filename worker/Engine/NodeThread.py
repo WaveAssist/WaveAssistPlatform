@@ -79,11 +79,13 @@ class NodeThread(threading.Thread):
         while True:
             utils.logger.info(str(self.node_key) + " is running")
             timer.start()
+            start_time = time.time()
             try:
                 ##Run this function for each flow
                 for flow_dict in self.flows_array:
                     flow_id = flow_dict['id']
                     try:
+                        print("Running for flow: " + str(flow_id) + " and node: " + str(self.node_key))
                         collection = utils.get_collection_key(flow_id, self.project_key)
                         mongo_manager = MongoManager(collection)
 
@@ -102,16 +104,18 @@ class NodeThread(threading.Thread):
                             output_data = self.output_data_array[i]
                             self.manage_output(actual_output, output_data, mongo_manager)
 
-                        utils.logger.info("Code run completed for node: " + str(self.node_key))
+                        utils.logger.info("Code run completed for node: " + str(self.node_key) + " for flow: " + str(flow_id))
                         timer.print_elapsed()
                     except Exception as e:
                         utils.logger.error("Error occured in flow: " + str(flow_id) + " for node: " + str(self.node_key) + ". Error: " + str(e))
 
             except Exception as e:
                 utils.logger.error("Error occured in thread: " + str(self.node_key) + ". Error: " + str(e))
-
-            utils.logger.info("Node: " + str(self.node_key) + " sleeping for: " + str(self.sleep_duration))
-            time.sleep(self.sleep_duration) ##ToDo: Adjust to remove the time it took to run all flows.
+            end_time = time.time()
+            difference_time = end_time - start_time
+            sleep_time = max(0,(self.sleep_duration - difference_time))
+            utils.logger.info("Node: " + str(self.node_key) + " sleeping for: " + str(sleep_time))
+            time.sleep(sleep_time)
             utils.logger.info("Node: " + str(self.node_key) + " back on")
 
 
