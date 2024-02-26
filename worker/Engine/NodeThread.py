@@ -21,10 +21,10 @@ class NodeThread(threading.Thread):
         self.output_data_array = output_data_array
         self.flows_array = flows_array
         self.integrations_key = self.project_key + INTEGRATIONS_SUFFIX_KEY
+        self.mongo_manager = MongoManager()
 
 
-
-    def manage_output(self, output_data, output_dict, mongo_manager):
+    def manage_output(self, output_data, output_dict, collection_name):
         try:
             if output_data is None:
                 return True
@@ -32,7 +32,8 @@ class NodeThread(threading.Thread):
             action_type = int(output_dict['action_type'])
 
             if action_type == 0: ##Replace
-                return mongo_manager.replace_data_as_dataframe(output_key, output_data)
+                self.mongo_manager.collection = self.mongo_manager.database[collection_name]
+                return self.mongo_manager.replace_data_as_dataframe(output_key, output_data)
             return True
         except Exception as e:
             utils.logger.error("Exception in manage_output for: " + str(self.node_key) + " + Error: " + str(e))
@@ -41,19 +42,20 @@ class NodeThread(threading.Thread):
 
     def fetch_integrations(self):
         try:
-            mongo_manager = MongoManager(self.project_key)
-            integrations = mongo_manager.fetch_data_as_dataframe(self.integrations_key)
+            self.mongo_manager.collection = self.mongo_manager.database[self.project_key]
+            integrations = self.mongo_manager.fetch_data_as_dataframe(self.integrations_key)
             return integrations
         except Exception as e:
             utils.logger.error("Exception in fetch_integrations for: " + str(self.node_key) + " + Error: " + str(e))
             return None
 
 
-    def get_input(self, mongo_manager, integrations_df):
+    def get_input(self, integrations_df, collection_name):
         ##Get input data from mongo based on keys in input_data_array
         try:
+            self.mongo_manager.collection = self.mongo_manager.database[collection_name]
             input_keys_array = [obj['key'] for obj in self.input_data_array]
-            input_dict = mongo_manager.fetch_data_as_dataframe_for_array(input_keys_array)
+            input_dict = self.mongo_manager.fetch_data_as_dataframe_for_array(input_keys_array)
             input_dict[self.integrations_key] = integrations_df
             input_keys_array.append(self.integrations_key)
             input_array = [input_dict.get(io_key, pd.DataFrame()) for io_key in input_keys_array]
@@ -83,9 +85,7 @@ class NodeThread(threading.Thread):
                     try:
                         print("Running for flow: " + str(flow_id) + " and node: " + str(self.node_key))
                         collection = utils.get_collection_key(flow_id, self.project_key)
-                        mongo_manager = MongoManager(collection)
-
-                        input_array = self.get_input(mongo_manager, integrations_df)
+                        input_array = self.get_input(integrations_df, collection)
                         output = project_function(*input_array)
 
                         output_array = []
@@ -98,7 +98,7 @@ class NodeThread(threading.Thread):
                         for i in range(0,len(output_array)):
                             actual_output = output_array[i]
                             output_data = self.output_data_array[i]
-                            self.manage_output(actual_output, output_data, mongo_manager)
+                            self.manage_output(actual_output, output_data, collection)
 
                         utils.logger.info("Code run completed for node: " + str(self.node_key) + " for flow: " + str(flow_id))
                         timer.print_elapsed()
