@@ -36,7 +36,7 @@ def get_project_file_path(project_key):
     return os.path.join(PROJECTS_FOLDER, project_key + ".py")
 
 def get_collection_key(flow_id, project_key):
-    return project_key + "_" + str(flow_id)
+    return project_key + "-" + str(flow_id)
 
 def delete_file(project_key):
     try:
