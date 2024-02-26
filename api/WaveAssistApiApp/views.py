@@ -55,7 +55,7 @@ def load_project_data(request):
     ##Fetch flow and project
     try:
         flow_id = request.POST.get('flow_id', '')
-        flow_object = Flows.objects.get(id=flow_id).select_related('project')
+        flow_object = Flows.objects.get(id=flow_id)
         project_object = flow_object.project
         project_key = project_object.project_key
     except Exception as e:
