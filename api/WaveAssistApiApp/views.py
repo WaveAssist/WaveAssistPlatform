@@ -124,10 +124,10 @@ def set_data_for_key(request):
         return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
     try:
-        csv_data = str(request.POST.get('csv_data', ''))
-        pd_data = pd.read_csv(StringIO(csv_data))
+        json_data = str(request.POST.get('json_data', ''))
+        pd_data = pd.read_json(json_data)
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Invalid csv data')
+        return ResponseParser.getParsedErrorMessage('Invalid json data')
 
     try:
         ##Remove row_number column in pd_data if it exists
