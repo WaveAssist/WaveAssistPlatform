@@ -56,6 +56,7 @@ class NodeThread(threading.Thread):
             input_dict = mongo_manager.fetch_data_as_dataframe_for_array(input_keys_array)
             integrations_df = self.fetch_integrations()
             input_dict[self.integrations_key] = integrations_df
+            input_keys_array.append(self.integrations_key)
             input_array = [input_dict.get(io_key, pd.DataFrame()) for io_key in input_keys_array]
             return input_array
         except Exception as e:
@@ -87,6 +88,7 @@ class NodeThread(threading.Thread):
                         mongo_manager = MongoManager(collection)
 
                         input_array = self.get_input(mongo_manager)
+                        print(input_array)
                         output = project_function(*input_array)
 
                         output_array = []
