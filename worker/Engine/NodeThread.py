@@ -49,12 +49,11 @@ class NodeThread(threading.Thread):
             return None
 
 
-    def get_input(self, mongo_manager):
+    def get_input(self, mongo_manager, integrations_df):
         ##Get input data from mongo based on keys in input_data_array
         try:
             input_keys_array = [obj['key'] for obj in self.input_data_array]
             input_dict = mongo_manager.fetch_data_as_dataframe_for_array(input_keys_array)
-            integrations_df = self.fetch_integrations()
             input_dict[self.integrations_key] = integrations_df
             input_keys_array.append(self.integrations_key)
             input_array = [input_dict.get(io_key, pd.DataFrame()) for io_key in input_keys_array]
@@ -62,10 +61,6 @@ class NodeThread(threading.Thread):
         except Exception as e:
             utils.logger.error("Exception in get_input for: " + str(self.node_key) + " + Error: " + str(e))
             return []
-
-
-
-
 
 
     def run(self):
@@ -80,6 +75,7 @@ class NodeThread(threading.Thread):
             utils.logger.info(str(self.node_key) + " is running")
             timer.start()
             start_time = time.time()
+            integrations_df = self.fetch_integrations()
             try:
                 ##Run this function for each flow
                 for flow_dict in self.flows_array:
@@ -89,7 +85,7 @@ class NodeThread(threading.Thread):
                         collection = utils.get_collection_key(flow_id, self.project_key)
                         mongo_manager = MongoManager(collection)
 
-                        input_array = self.get_input(mongo_manager)
+                        input_array = self.get_input(mongo_manager, integrations_df)
                         output = project_function(*input_array)
 
                         output_array = []
