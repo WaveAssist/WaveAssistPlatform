@@ -259,7 +259,7 @@ def create_flow(request):
     except:
         return ResponseParser.getParsedErrorMessage('Project not found')
 
-    if not utils.has_access(client_object, project_object):
+    if not utils.has_access(client_object, project_key):
         return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
     try:
@@ -287,7 +287,7 @@ def fetch_all_flows(request):
     except:
         return ResponseParser.getParsedErrorMessage('Project not found')
 
-    if not utils.has_access(client_object, project_object):
+    if not utils.has_access(client_object, project_key):
         return ResponseParser.getParsedErrorMessage('You do not have access to this project')
 
     flow_objects = Flows.objects.filter(project=project_object)
