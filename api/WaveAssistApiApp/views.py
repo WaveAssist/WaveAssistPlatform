@@ -255,7 +255,7 @@ def create_flow(request):
 
     project_key = request.POST.get('project_key', '')
     try:
-        project_object = Project.objects.get(key=project_key)
+        project_object = Project.objects.get(project_key=project_key)
     except:
         return ResponseParser.getParsedErrorMessage('Project not found')
 
@@ -283,7 +283,7 @@ def fetch_all_flows(request):
 
     project_key = request.GET.get('project_key', '')
     try:
-        project_object = Project.objects.get(key=project_key)
+        project_object = Project.objects.get(project_key=project_key)
     except:
         return ResponseParser.getParsedErrorMessage('Project not found')
 
