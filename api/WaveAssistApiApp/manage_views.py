@@ -133,6 +133,14 @@ def fetch_project_data(request):
     dashboard_data_array = mongo_manager.fetch_data_for_key(dashboard_data_key)
     project_dict['dashboard_data_array'] = dashboard_data_array
 
+
+    ##Get Flows data array
+    flow_data_array = project_object.flows_set.all()
+    flow_data_dict_array = []
+    for flow_data_object in flow_data_array:
+        flow_data_dict_array.append(flow_data_object.get_dict())
+    project_dict['flow_data_array'] = flow_data_dict_array
+    
     return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project data fetched successfully.')
 
 
