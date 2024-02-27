@@ -184,5 +184,11 @@ class MongoManager:
             return False
 
 
-
+    def delete_collection(self, collection_key):
+        try:
+            self.database[collection_key].drop()
+            return True
+        except Exception as e:
+            utils.logger.error("Error in delete_collection: " + str(e))
+            return False
 

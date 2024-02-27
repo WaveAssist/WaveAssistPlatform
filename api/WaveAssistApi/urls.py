@@ -32,12 +32,21 @@ urlpatterns = [
     path("load_flows_data/", csrf_exempt(engine_views.load_flows_data), name="load_flows_data"),
     path("download_project_file_data/", csrf_exempt(engine_views.download_project_file_data), name="download_project_file_data"),
     path("update_project_refresh_status/", csrf_exempt(engine_views.update_project_refresh_status), name="update_project_refresh_status"),
+    path("fetch_all_test_nodes/", csrf_exempt(engine_views.fetch_all_test_nodes), name="fetch_all_test_nodes"),
+    path("update_node_test_results/", csrf_exempt(engine_views.update_node_test_results),
+         name="update_node_test_results"),
+
+    ##Dashboard URL's / User URL's
+    path("login/", csrf_exempt(views.login), name="login"),
     path("set_data_for_key/", csrf_exempt(views.set_data_for_key), name="set_data_for_key"),
     path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
-    path("login/", csrf_exempt(views.login), name="login"),
     path("zerodha_redirect/", csrf_exempt(views.zerodha_redirect), name="zerodha_redirect"),
-    path("fetch_all_test_nodes/", csrf_exempt(engine_views.fetch_all_test_nodes), name="fetch_all_test_nodes"),
-    path("update_node_test_results/", csrf_exempt(engine_views.update_node_test_results), name="update_node_test_results"),
+
+    ##Flow URL's
+    path("create_flow/", csrf_exempt(views.create_flow), name="create_flow"),
+    path("fetch_all_flows/", csrf_exempt(views.fetch_all_flows), name="fetch_all_flows"),
+    path("delete_flow/", csrf_exempt(views.delete_flow), name="delete_flow"),
+    path("update_flow_running_status/", csrf_exempt(views.update_flow_running_status), name="update_flow_running_status"),
 
     ##Admin URL's
     path("manage/fetch_all_project/", csrf_exempt(manage_views.fetch_all_project), name="fetch_all_project"),

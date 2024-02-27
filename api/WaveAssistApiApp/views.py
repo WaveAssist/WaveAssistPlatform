@@ -242,3 +242,111 @@ def zerodha_redirect(request):
     return ResponseParser.getParsedSuccessMessage(response_dict, '200', 'Zerodha access workflow complete')
 
 
+
+
+
+##Flows CRUD - Create, Read, Delete, Running_Status_Update
+def create_flow(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    project_key = request.POST.get('project_key', '')
+    try:
+        project_object = Project.objects.get(key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    if not utils.has_access(client_object, project_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+    try:
+        flow_object = Flows.objects.create(project=project_object)
+        flow_object.client_array.append(client_object)
+        flow_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with flow creation')
+
+    flow_dict = flow_object.get_dict()
+    data_dict = {'flow': flow_dict}
+
+    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Flow created successfully')
+
+def fetch_all_flows(request):
+    uid = request.GET.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    project_key = request.GET.get('project_key', '')
+    try:
+        project_object = Project.objects.get(key=project_key)
+    except:
+        return ResponseParser.getParsedErrorMessage('Project not found')
+
+    if not utils.has_access(client_object, project_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this project')
+
+    flow_objects = Flows.objects.filter(project=project_object)
+    flow_array = []
+    for flow_object in flow_objects:
+        flow_array.append(flow_object.get_dict())
+
+    data_dict = {'flows': flow_array}
+    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Flows fetched successfully')
+
+def delete_flow(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    flow_id = request.POST.get('flow_id', '')
+    try:
+        flow_object = Flows.objects.get(id=flow_id)
+    except:
+        return ResponseParser.getParsedErrorMessage('Flow not found')
+
+    if not utils.does_user_have_access_to_flow(client_object, flow_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this flow')
+
+    flow_object.delete()
+
+    ##Cleanup the flow data from mongo
+    project_object = flow_object.project
+    collection_key = utils.get_collection_key(flow_object, project_object)
+    success = mongo_manager.delete_collection(collection_key)
+    if not success:
+        return ResponseParser.getParsedErrorMessage('Something went wrong with flow deletion')
+
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Flow deleted successfully')
+
+
+def update_flow_running_status(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    flow_id = request.POST.get('flow_id', '')
+    running_status = request.POST.get('running_status', '')
+
+    try:
+        flow_object = Flows.objects.get(id=flow_id)
+    except:
+        return ResponseParser.getParsedErrorMessage('Flow not found')
+
+    if not utils.does_user_have_access_to_flow(client_object, flow_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this flow')
+
+    flow_object.running_status = running_status
+    flow_object.save()
+
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Flow running status updated successfully')
+
+
