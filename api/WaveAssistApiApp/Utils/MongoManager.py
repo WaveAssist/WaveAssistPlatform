@@ -186,6 +186,7 @@ class MongoManager:
 
     def delete_collection(self, collection_key):
         try:
+            print("Deleting collection: " + collection_key)
             self.database[collection_key].drop()
             return True
         except Exception as e:

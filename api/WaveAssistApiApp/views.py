@@ -264,9 +264,11 @@ def create_flow(request):
 
     try:
         flow_object = Flows.objects.create(project=project_object)
-        flow_object.client_array.append(client_object)
         flow_object.save()
-    except:
+        flow_object.client_array.add(client_object)
+        flow_object.save()
+    except Exception as e:
+        print('Error creating flow: ' + str(e))
         return ResponseParser.getParsedErrorMessage('Something went wrong with flow creation')
 
     flow_dict = flow_object.get_dict()
@@ -275,13 +277,13 @@ def create_flow(request):
     return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Flow created successfully')
 
 def fetch_all_flows(request):
-    uid = request.GET.get('uid', '')
+    uid = request.POST.get('uid', '')
     try:
         client_object = Client.objects.get(firebase_uid=uid)
     except:
         return ResponseParser.getParsedErrorMessage('User not found')
 
-    project_key = request.GET.get('project_key', '')
+    project_key = request.POST.get('project_key', '')
     try:
         project_object = Project.objects.get(project_key=project_key)
     except:
@@ -314,7 +316,6 @@ def delete_flow(request):
     if not utils.does_user_have_access_to_flow(client_object, flow_object):
         return ResponseParser.getParsedErrorMessage('You do not have access to this flow')
 
-    flow_object.delete()
 
     ##Cleanup the flow data from mongo
     project_object = flow_object.project
@@ -322,6 +323,10 @@ def delete_flow(request):
     success = mongo_manager.delete_collection(collection_key)
     if not success:
         return ResponseParser.getParsedErrorMessage('Something went wrong with flow deletion')
+
+
+    ##Delete flow
+    flow_object.delete()
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Flow deleted successfully')
 

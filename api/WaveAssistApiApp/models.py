@@ -143,6 +143,9 @@ class Flows(models.Model):
     def get_dict(self):
         flows_dict = {}
         flows_dict['id'] = self.id
+        flows_dict['project'] = self.project.get_dict()
+        flows_dict['running_status'] = self.running_status
+        flows_dict['refresh_status'] = self.refresh_status
         return flows_dict
 
     class Meta:
