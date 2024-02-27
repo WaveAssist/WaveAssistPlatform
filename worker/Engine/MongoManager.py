@@ -5,7 +5,10 @@ import Utils.utils as utils
 
 
 class MongoManager:
-
+    ##Init Function
+    def __init__(self, connection_string=CONNECTION_STRING, database_name=DB_NAME):
+        self.client = MongoClient(connection_string)
+        self.database = self.client[database_name]
 
     ##Class Functions
     @classmethod
@@ -45,30 +48,26 @@ class MongoManager:
             updated_data_array.append(data)
         return updated_data_array
 
-        ##Init Function
 
-    def __init__(self, collection_name=None, connection_string=CONNECTION_STRING, database_name=DB_NAME):
-        self.client = MongoClient(connection_string)
-        self.database = self.client[database_name]
-        if collection_name is not None:
-            self.collection = self.database[collection_name]
 
     ##Instance Functions
-    def insert_or_replace_data_for_key(self, io_key, data_array):
+    def insert_or_replace_data_for_key(self, io_key, data_array, collection_name):
         try:
+            collection = self.database[collection_name]
             new_data_dict = {}
             new_data_dict[IO_DATA_KEY] = io_key
             new_data_dict[DATA_KEY] = data_array
-            self.collection.replace_one({IO_DATA_KEY: io_key}, new_data_dict, upsert=True)
+            collection.replace_one({IO_DATA_KEY: io_key}, new_data_dict, upsert=True)
             return True
         except Exception as e:
             utils.logger.error("Error in insert_or_replace_data_for_key: " + io_key + ": " + str(e))
             return False
 
     ##Fetch data, return None if no data exists.
-    def fetch_data_for_key(self, io_key):
+    def fetch_data_for_key(self, io_key, collection_name):
         try:
-            full_data = self.collection.find_one({IO_DATA_KEY: io_key})
+            collection = self.database[collection_name]
+            full_data = collection.find_one({IO_DATA_KEY: io_key})
             if full_data is None or len(full_data) == 0 or DATA_KEY not in full_data:
                 return None
 
@@ -80,11 +79,12 @@ class MongoManager:
             return None
 
     ## Fetch data for multiple keys, return an empty list if no data exists.
-    def fetch_data_for_keys_array(self, io_keys_array):
+    def fetch_data_for_keys_array(self, io_keys_array, collection_name):
         try:
             output_dict = {}
+            collection = self.database[collection_name]
             # Fetch documents that have IO_DATA_KEY in io_keys_array
-            cursor = self.collection.find({IO_DATA_KEY: {"$in": io_keys_array}})
+            cursor = collection.find({IO_DATA_KEY: {"$in": io_keys_array}})
 
             # Convert the cursor to a list of documents
             documents_array = list(cursor)
@@ -111,12 +111,10 @@ class MongoManager:
         self.client.close()
 
 
-
-
     ##Helper functions
-    def fetch_data_as_dataframe_for_array(self, io_key_array):
+    def fetch_data_as_dataframe_for_array(self, io_key_array, collection_name):
         output_dict = {}
-        data_fetched = self.fetch_data_for_keys_array(io_key_array)
+        data_fetched = self.fetch_data_for_keys_array(io_key_array, collection_name)
         for key, data_array in data_fetched.items():
             ##Check if data can be converted to proper PD dataframe
             try:
@@ -129,8 +127,8 @@ class MongoManager:
 
 
     ##Helper functions
-    def fetch_data_as_dataframe(self, io_key):
-        data_fetched = self.fetch_data_for_key(io_key)
+    def fetch_data_as_dataframe(self, io_key, collection_name):
+        data_fetched = self.fetch_data_for_key(io_key, collection_name)
         if data_fetched is None:
             return None
         ##Check if data can be converted to proper PD dataframe
@@ -141,12 +139,12 @@ class MongoManager:
             utils.logger.error("Error in get_data_as_dataframe: " + str(e))
             return None
 
-    def replace_data_as_dataframe(self,io_key,df):
+    def replace_data_as_dataframe(self,io_key,df, collection_name):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
         try:
             df = pd.DataFrame(df)
             data_df = df.to_dict(orient='records')
-            return self.insert_or_replace_data_for_key(io_key,data_df)
+            return self.insert_or_replace_data_for_key(io_key,data_df, collection_name)
         except Exception as e:
             utils.logger.error("Error in replace_data_as_dataframe: " + str(e))
             return False
