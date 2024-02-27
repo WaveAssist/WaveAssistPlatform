@@ -7,7 +7,7 @@ import Utils.utils as utils
 import pandas as pd
 from Utils.Timer import Timer
 from Utils.constants import *
-
+import Utils.network_connect as network_connect
 
 
 class NodeThread(threading.Thread):
@@ -61,6 +61,11 @@ class NodeThread(threading.Thread):
             return []
 
 
+    def refresh_flows(self):
+        flows_array = network_connect.load_flows_array(self.project_key)
+        return flows_array
+
+
     def run(self):
         utils.logger.info("Starting Node: " + str(self.node_key))
         timer = Timer(str(self.node_key))
@@ -73,7 +78,8 @@ class NodeThread(threading.Thread):
             utils.logger.info(str(self.node_key) + " is running")
             timer.start()
             start_time = time.time()
-            integrations_df = self.fetch_integrations()
+            integrations_df = self.fetch_integrations() ##ToDo: To be optimised, updated rarely and project wide
+            self.flows_array = self.refresh_flows() ##ToDo: To be optimised, updated rarely and project wide
             try:
                 ##Run this function for each flow
                 for flow_dict in self.flows_array:
