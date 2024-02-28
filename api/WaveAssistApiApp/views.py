@@ -43,6 +43,8 @@ def login(request):
     return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
 
 
+
+
 ## API to get formatted data of the project
 def load_project_data(request):
     ##Fetch user

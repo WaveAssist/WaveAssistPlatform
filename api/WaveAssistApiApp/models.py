@@ -3,7 +3,6 @@ from django.db.models.functions import Lower
 
 class Client(models.Model):
     id = models.AutoField(primary_key=True)
-    client_key = models.CharField(unique=True, max_length=255)
     name = models.CharField(max_length=255, default="", null=True)
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
@@ -13,12 +12,11 @@ class Client(models.Model):
 
 
     def __str__(self):
-        return f"Client: {self.name} ({self.client_key})"
+        return f"Client: {self.name} ({self.username})"
 
     def get_dict(self):
         client_dict = {}
         client_dict['id'] = self.id
-        client_dict['client_key'] = self.client_key
         client_dict['name'] = self.name
         client_dict['username'] = self.username
         client_dict['company_name'] = self.company_name

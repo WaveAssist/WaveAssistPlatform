@@ -35,6 +35,21 @@ def fetch_all_project(request):
     return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
 
 
+
+def create_user(request):
+    ##Login
+    name = models.CharField(max_length=255, default="", null=True)
+    username = models.CharField(max_length=255, unique=True)
+    password = models.CharField(max_length=255)
+    company_name = models.CharField(max_length=255)
+    firebase_uid = models.CharField(max_length=100, unique=True)
+
+
+
+
+
+
+
 def create_project(request):
     uid = request.POST.get('uid', '')
     try:
@@ -140,7 +155,7 @@ def fetch_project_data(request):
     for flow_data_object in flow_data_array:
         flow_data_dict_array.append(flow_data_object.get_dict())
     project_dict['flow_data_array'] = flow_data_dict_array
-    
+
     return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project data fetched successfully.')
 
 

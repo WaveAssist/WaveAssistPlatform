@@ -7,7 +7,7 @@ from django.contrib import admin
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'client_key', 'name', 'username', 'company_name', 'firebase_uid', 'created_at')
+    list_display = ('id', 'name', 'username', 'company_name', 'firebase_uid', 'created_at')
     search_fields = ('name', 'username', 'company_name', 'firebase_uid')
     list_filter = ('created_at',)
     readonly_fields = ('id', 'created_at')
