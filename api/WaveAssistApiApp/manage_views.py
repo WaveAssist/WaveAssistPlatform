@@ -1,4 +1,6 @@
 import json
+import uuid
+
 from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
@@ -37,18 +39,55 @@ def fetch_all_project(request):
 
 
 def create_user(request):
-    ##Login
-    name = models.CharField(max_length=255, default="", null=True)
-    username = models.CharField(max_length=255, unique=True)
-    password = models.CharField(max_length=255)
-    company_name = models.CharField(max_length=255)
-    firebase_uid = models.CharField(max_length=100, unique=True)
+
+    temporary_create_user_key = request.POST.get('temporary_create_user_key', '')
+    if temporary_create_user_key != TEMPORARY_CREATE_USER_KEY:
+        return ResponseParser.getParsedErrorMessage('You do not have access to create a new user')
 
 
+    user_default_uuid = str(uuid.uuid4())
+    name = request.POST.get('name', user_default_uuid)
+    username = request.POST.get('username', user_default_uuid)
+    password = request.POST.get('password', user_default_uuid)
+    company_name = request.POST.get('company_name', user_default_uuid)
+    firebase_uid = request.POST.get('firebase_uid', user_default_uuid)
 
+    try:
+        client_object = Client.objects.create(name=name, username=username, password=password, company_name=company_name, firebase_uid=firebase_uid)
+        client_object.save()
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('User creation failed: ' + str(e))
 
+    data_dict = {
+        "client": client_object.get_dict()
+    }
 
+    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'User created successfully.')
 
+def fetch_data_for_key(request):
+    io_data_key = request.POST.get('io_data_key', '')
+    uid = request.POST.get('uid', '')
+    flow_id = request.POST.get('flow_id', '')
+
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    try:
+        flow_object = Flows.objects.get(id=flow_id)
+    except:
+        return ResponseParser.getParsedErrorMessage('Flow not found')
+
+    if not utils.does_user_have_access_to_flow(client_object, flow_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this flow')
+
+    project_object = flow_object.project
+    collection_key = utils.get_collection_key(flow_object, project_object)
+    mongo_manager.collection = mongo_manager.database[collection_key]
+    data_array = mongo_manager.fetch_data_for_key(io_data_key)
+    output_dictionary = {io_data_key: data_array}
+    return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Data fetched successfully.')
 
 def create_project(request):
     uid = request.POST.get('uid', '')

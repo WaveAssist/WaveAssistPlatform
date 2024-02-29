@@ -52,7 +52,7 @@ urlpatterns = [
     path("manage/fetch_all_project/", csrf_exempt(manage_views.fetch_all_project), name="fetch_all_project"),
     path("manage/create_project/", csrf_exempt(manage_views.create_project), name="create_project"),
     path("manage/fetch_project_data/", csrf_exempt(manage_views.fetch_project_data), name="fetch_project_data"),
-
+    path("manage/create_user/", csrf_exempt(manage_views.create_user), name="create_user"),
 
     ##CRUD io_data
     path("manage/create_io_data/", csrf_exempt(manage_views.create_io_data), name="create_io_data"),
@@ -60,6 +60,7 @@ urlpatterns = [
     path("manage/delete_io_data/", csrf_exempt(manage_views.delete_io_data), name="delete_io_data"),
     path("manage/download_io_data/", csrf_exempt(manage_views.download_io_data), name="download_io_data"),
     path("manage/upload_io_data_file/", csrf_exempt(manage_views.upload_io_data_file), name="upload_io_data_file"),
+    path("manage/fetch_data_for_key/", csrf_exempt(manage_views.fetch_data_for_key), name="fetch_data_for_key"),
 
     ##CRUD node
     path("manage/update_node/", csrf_exempt(manage_views.update_node), name="update_node"),
