@@ -53,6 +53,7 @@ urlpatterns = [
     path("manage/create_project/", csrf_exempt(manage_views.create_project), name="create_project"),
     path("manage/fetch_project_data/", csrf_exempt(manage_views.fetch_project_data), name="fetch_project_data"),
     path("manage/create_user/", csrf_exempt(manage_views.create_user), name="create_user"),
+    path("manage/upload_file_to_s3/", csrf_exempt(manage_views.upload_file_to_s3), name="upload_file_to_s3"),
 
     ##CRUD io_data
     path("manage/create_io_data/", csrf_exempt(manage_views.create_io_data), name="create_io_data"),

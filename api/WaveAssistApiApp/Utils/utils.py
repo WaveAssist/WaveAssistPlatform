@@ -3,6 +3,8 @@ import glob
 import struct
 import collections
 import datetime
+import boto3
+
 from multiprocessing import Queue, Pool
 ##Custom
 from WaveAssistApiApp.Utils.constants import *
@@ -112,3 +114,12 @@ def manage_integration_details(mongo_manager, integration_object, project_object
     mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
 
     return
+
+def upload_file_to_s3(file, s3_file_name):
+    try:
+        s3 = boto3.client('s3', aws_access_key_id=AWSS3_ACCESS_KEY_VALUE, aws_secret_access_key=AWSS3_SECRET_KEY_VALUE)
+        s3.upload_fileobj(file, 'waveassistapps', s3_file_name)
+        return True
+    except:
+        print("Error in upload_file_to_s3")
+        return False

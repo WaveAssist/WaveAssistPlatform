@@ -89,6 +89,45 @@ def fetch_data_for_key(request):
     output_dictionary = {io_data_key: data_array}
     return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Data fetched successfully.')
 
+
+
+def upload_file_to_s3(request):
+    uid = request.POST.get('uid', '')
+    try:
+        client_object = Client.objects.get(firebase_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found')
+
+    flow_id = request.POST.get('flow_id', '')
+    try:
+        flow_object = Flows.objects.get(id=flow_id)
+    except:
+        return ResponseParser.getParsedErrorMessage('Flow not found')
+
+    if not utils.does_user_have_access_to_flow(client_object, flow_object):
+        return ResponseParser.getParsedErrorMessage('You do not have access to this flow')
+
+    project_object = flow_object.project
+
+    try:
+        file = request.FILES['file']
+        file_name = file.name
+    except:
+        return ResponseParser.getParsedErrorMessage('File not found')
+
+
+    ##Upload to s3
+    s3_file_name = project_object.project_key + '/' + str(flow_object.id) + '/' + file_name
+    success = utils.upload_file_to_s3(file, s3_file_name)
+    if not success:
+        return ResponseParser.getParsedErrorMessage('File upload failed.')
+    output_data = {
+        's3_file_path': s3_file_name,
+    }
+    return ResponseParser.getParsedSuccessMessage(output_data, '200', 'File uploaded successfully.')
+
+
+
 def create_project(request):
     uid = request.POST.get('uid', '')
     try:

@@ -21,7 +21,7 @@ class MongoManager:
 
     @classmethod
     def add_row_number(cls,data_array):
-        ##Add a row_number column to each element in data_array starting with 1..
+        ##Add a row_number column to each element in data_array starting with 1.
         updated_data_array = []
         for data in data_array:
             data['row_number'] = data_array.index(data) + 1
