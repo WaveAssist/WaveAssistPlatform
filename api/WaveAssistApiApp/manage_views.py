@@ -128,6 +128,7 @@ def upload_file_to_s3(request):
 
 
 
+
 def create_project(request):
     uid = request.POST.get('uid', '')
     try:
