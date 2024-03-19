@@ -15,7 +15,10 @@ from zipfile import ZipFile
 import shutil
 import os
 import json
+import numpy as np
+import cv2
 from WaveAssistApiApp.Utils.Logger import Logger
+from io import BytesIO
 ##Logger
 
 logger = Logger()
@@ -114,6 +117,34 @@ def manage_integration_details(mongo_manager, integration_object, project_object
     mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
 
     return
+
+
+def resize_image(file, max_dimension=800):
+    try:
+        file_bytes = file.read()
+        nparr = np.fromstring(file_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        # Step 3: Resize the image to max width of max_dimension
+        if img.shape[1] > max_dimension:
+            scale_factor = max_dimension / img.shape[1]
+            img = cv2.resize(img, (max_dimension, int(img.shape[0] * scale_factor)))
+        ##Same for height
+        if img.shape[0] > max_dimension:
+            scale_factor = max_dimension / img.shape[0]
+            img = cv2.resize(img, (int(img.shape[1] * scale_factor), max_dimension))
+
+
+        # Step 4 (Optional): Convert the resized image back to a file-like object if necessary
+        is_success, buffer = cv2.imencode(".jpg", img)
+        if not is_success:
+            raise ValueError("Could not encode resized image to JPEG format")
+
+        resized_file = BytesIO(buffer)
+        return resized_file
+    except Exception as e:
+        print("Error in resize_image: " + str(e))
+        return file
 
 def upload_file_to_s3(file, s3_file_name, is_public=0):
     try:

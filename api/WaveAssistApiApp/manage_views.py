@@ -117,6 +117,11 @@ def upload_file_to_s3(request):
         return ResponseParser.getParsedErrorMessage('File not found')
 
 
+    should_resize = int(request.POST.get('should_resize', '0'))
+    max_dimension = int(request.POST.get('max_dimension', '800'))
+    if should_resize == 1:
+        file = utils.resize_image(file, max_dimension)
+
     ##Upload to s3
     s3_file_name = project_object.project_key + '/' + str(flow_object.id) + '/' + file_name
     success, s3_file_name  = utils.upload_file_to_s3(file, s3_file_name, is_public)
