@@ -107,6 +107,7 @@ def upload_file_to_s3(request):
     if not utils.does_user_have_access_to_flow(client_object, flow_object):
         return ResponseParser.getParsedErrorMessage('You do not have access to this flow')
 
+    is_public = int(request.POST.get('is_public', '0'))
     project_object = flow_object.project
 
     try:
@@ -118,7 +119,7 @@ def upload_file_to_s3(request):
 
     ##Upload to s3
     s3_file_name = project_object.project_key + '/' + str(flow_object.id) + '/' + file_name
-    success = utils.upload_file_to_s3(file, s3_file_name)
+    success, s3_file_name  = utils.upload_file_to_s3(file, s3_file_name, is_public)
     if not success:
         return ResponseParser.getParsedErrorMessage('File upload failed.')
     output_data = {

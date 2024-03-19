@@ -115,11 +115,15 @@ def manage_integration_details(mongo_manager, integration_object, project_object
 
     return
 
-def upload_file_to_s3(file, s3_file_name):
+def upload_file_to_s3(file, s3_file_name, is_public=0):
     try:
         s3 = boto3.client('s3', aws_access_key_id=AWSS3_ACCESS_KEY_VALUE, aws_secret_access_key=AWSS3_SECRET_KEY_VALUE)
+        if is_public == 1:
+            ##Add /public/ to the file name
+            s3_file_name = "public/" + s3_file_name
+
         s3.upload_fileobj(file, 'waveassistapps', s3_file_name)
-        return True
-    except:
-        print("Error in upload_file_to_s3")
-        return False
+        return True, s3_file_name
+    except Exception as e:
+        print("Error in upload_file_to_s3:" + str(e))
+        return False, None
