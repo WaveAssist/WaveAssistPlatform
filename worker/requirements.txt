@@ -12,3 +12,5 @@ opencv-python==4.8.1
 ultralytics==8.0.196
 openai==1.13.3
 reportlab==4.1.0
+plotly==5.20.0
+kaleido==0.2.1
