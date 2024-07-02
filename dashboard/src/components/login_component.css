@@ -1,0 +1,32 @@
+body {
+	background-color: #141721 !important;
+	margin: 0;
+	padding: 0;
+}
+
+
+
+img {
+	max-width: 170px !important;
+	height: auto !important;
+}
+
+@media screen and (max-width: 768px) {
+	img {
+		max-width: 200px;
+	}
+}
+
+.title-message{
+    padding-bottom: 30px !important;
+    font-size: 18px;
+    justify-content: center;
+    font-family: 'Roboto', sans-serif;
+    color: rgba(230,230,230,0.5);
+  }
+  
+
+
+.logo-section{
+	margin-top: -40vh !important;
+}

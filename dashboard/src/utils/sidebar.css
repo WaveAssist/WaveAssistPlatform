@@ -1,0 +1,19 @@
+/* src/sidebar.css */
+
+.bi {
+    vertical-align: -.125em;
+    font-size: 1rem; /* Default size for icons */
+  }
+  
+  .bi-bootstrap {
+    font-size: 1.5rem; /* Size for the brand icon */
+  }
+  
+  main {
+    height: 100vh;
+    height: -webkit-fill-available;
+    max-height: 100vh;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
