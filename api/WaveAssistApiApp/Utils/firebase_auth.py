@@ -9,7 +9,6 @@ cred = credentials.Certificate('firebase_key.json')
 firebase_admin.initialize_app(cred)
 
 def verify_token(jwt_token):
-    print(jwt_token)
     decoded_token = auth.verify_id_token(str(jwt_token))
     uid = decoded_token['uid']
     return uid

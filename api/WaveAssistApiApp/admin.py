@@ -1,59 +1,72 @@
 from django.contrib import admin
+from .models import User, AccessProvided, Integrations, DataKey, Project, DataRuns, Nodes, DashboardSection, DAG, DAGRun
 
-# Register your models here.
-from .models import *
-from django.contrib import admin
-
-
-@admin.register(Client)
-class ClientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'username', 'company_name', 'firebase_uid', 'created_at')
-    search_fields = ('name', 'username', 'company_name', 'firebase_uid')
-    list_filter = ('created_at',)
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'username', 'company_name', 'uid', 'created_at')
+    search_fields = ('name', 'username', 'company_name')
+    list_filter = ('created_at', 'company_name')
     readonly_fields = ('id', 'created_at')
 
-
-@admin.register(IOData)
-class IODataAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'key', 'action_type', 'output_type', 'project', 'created_at', 'description')
-    search_fields = ('key', 'project__project_key', 'description', 'name')
-    list_filter = ('output_type', 'project__project_key')
+@admin.register(AccessProvided)
+class AccessProvidedAdmin(admin.ModelAdmin):
+    list_display = ('id', 'type', 'user_object', 'project_object', 'data_run_object', 'project_access_type', 'data_run_access_type', 'created_at')
+    search_fields = ('user_object__username', 'project_object__project_key', 'data_run_object__data_run_key')
+    list_filter = ('type', 'project_access_type', 'data_run_access_type', 'created_at')
     readonly_fields = ('id', 'created_at')
-    list_per_page = 25
-
-
-@admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project_key', 'running_status','refresh_status', 'payment_status', 'created_at')
-    search_fields = ['project_key']
-    list_filter = ('running_status', 'payment_status', 'created_at')
-    readonly_fields = ('id', 'created_at')
-    ##Make client field optional
-    optional_fields = ('node_array','client_array')
-
-@admin.register(Nodes)
-class NodesAdmin(admin.ModelAdmin):
-    list_display = ('id', 'node_key', 'name', 'description', 'start_frequency_in_seconds',
-                    'running_status', 'created_at')
-    search_fields = ('node_key', 'name', 'description')
-    list_filter = ('running_status', 'created_at')
-    autocomplete_fields = ('input_data_array', 'output_data_array')
-    readonly_fields = ('id', 'created_at')
-    optional_fields = ('python_code','input_data_array', 'output_data_array')
 
 @admin.register(Integrations)
 class IntegrationsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'created_at')
-    search_fields = ['name']
+    list_display = ('id', 'integration_key', 'name', 'created_at')
+    search_fields = ('integration_key', 'name')
+    list_filter = ('created_at',)
     readonly_fields = ('id', 'created_at')
-    optional_fields = ('import_code',)
 
-
-
-@admin.register(Flows)
-class FlowsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'running_status', 'refresh_status', 'created_at')
-    search_fields = ('project__project_key',)
-    list_filter = ('running_status', 'refresh_status', 'created_at')
+@admin.register(DataKey)
+class DataKeyAdmin(admin.ModelAdmin):
+    list_display = ('id', 'key', 'project_object', 'created_at')
+    search_fields = ('key',)
+    list_filter = ( 'created_at',)
     readonly_fields = ('id', 'created_at')
-    optional_fields = ('client_array',)
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project_key', 'created_at')
+    search_fields = ('project_key',)
+    list_filter = ('created_at',)
+    readonly_fields = ('id', 'created_at')
+
+@admin.register(DataRuns)
+class DataRunsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'data_run_key', 'name', 'project_object', 'is_enabled', 'created_at')
+    search_fields = ('data_run_key', 'name', 'project_object__project_key')
+    list_filter = ('is_enabled', 'created_at')
+    readonly_fields = ('id', 'created_at')
+
+@admin.register(Nodes)
+class NodesAdmin(admin.ModelAdmin):
+    list_display = ('id', 'node_key', 'project_object', 'is_enabled', 'is_starting_node', 'schedule_type', 'test_status', 'created_at')
+    search_fields = ('node_key', 'project_object__project_key')
+    list_filter = ('is_enabled', 'is_starting_node', 'schedule_type', 'test_status', 'created_at')
+    readonly_fields = ('id', 'created_at')
+
+@admin.register(DashboardSection)
+class DashboardSectionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'dashboard_section_key', 'project_object', 'row', 'column', 'display_type', 'title', 'should_display_title', 'is_editable', 'created_at')
+    search_fields = ('dashboard_section_key', 'title', 'project_object__project_key')
+    list_filter = ('display_type', 'should_display_title', 'is_editable', 'created_at')
+    readonly_fields = ('id', 'created_at')
+
+@admin.register(DAG)
+class DAGAdmin(admin.ModelAdmin):
+    list_display = ('id', 'dag_key', 'is_enabled', 'project_object', 'start_node', 'interval_schedule', 'created_at')
+    search_fields = ('dag_key', 'project_object__project_key', 'start_node__node_key')
+    list_filter = ('is_enabled', 'created_at')
+    readonly_fields = ('id', 'created_at')
+
+@admin.register(DAGRun)
+class DAGRunAdmin(admin.ModelAdmin):
+    list_display = ('id', 'dag_run_key', 'is_enabled', 'dag_object', 'data_run_object', 'periodic_task', 'is_running', 'created_at')
+    search_fields = ('dag_run_key', 'dag_object__dag_key', 'data_run_object__data_run_key')
+    list_filter = ('is_enabled', 'is_running', 'created_at')
+    readonly_fields = ('id', 'created_at')

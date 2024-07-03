@@ -26,6 +26,8 @@ SECRET_KEY = 'REMOVED_CREDENTIAL'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+IS_DOCKER=False
+
 
 ALLOWED_HOSTS = ['wavepredictbackend.us-east-1.elasticbeanstalk.com','*','api.wavepredict.com']
 CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:4200','https://dashboard.wavepredict.com','http://localhost:4200']
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'WaveAssistApiApp',
+    'django_celery_beat',
     'corsheaders',
 ]
 
@@ -80,15 +83,40 @@ WSGI_APPLICATION = 'WaveAssistApi.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# #Temporary postgres connect
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         'NAME': 'test_db',
+#         'USER': 'odoo',
+#         'PASSWORD': 'odoo',
+#     }
+# }
+
+
+host_name = '0.0.0.0'
+if IS_DOCKER:
+    host_name = 'mysql'
+##Connect to MYSQL on local host
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'waveassistdatabase.chjtszq6llmw.us-east-1.rds.amazonaws.com',  # WaveAssist DB
         'NAME': 'waveassistdb',
-        'USER': 'admin',
-        'PASSWORD': 'waveassistdbpassword',
-        }
+        'USER':'waveassist',
+        'PASSWORD': 'REMOVED_CREDENTIAL',
+        'HOST': host_name, ##Change to mysql for docker run
+        'PORT': '3306',
+    }
 }
+
+
+
+MONGO_CONNECTION_STRING = "REMOVED_CREDENTIAL"
+if IS_DOCKER:
+    MONGO_CONNECTION_STRING = "REMOVED_CREDENTIAL"
+
 
 
 

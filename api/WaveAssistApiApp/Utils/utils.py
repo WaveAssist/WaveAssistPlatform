@@ -1,35 +1,23 @@
 ##PYTHON IMPORTS
-import glob
-import struct
-import collections
-import datetime
 import boto3
-
-from multiprocessing import Queue, Pool
+from ..models import *
 ##Custom
 from WaveAssistApiApp.Utils.constants import *
-
-from time import sleep
-from zipfile import ZipFile
-
-import shutil
-import os
-import json
-import numpy as np
 from WaveAssistApiApp.Utils.Logger import Logger
-from io import BytesIO
-# import cv2
-##Logger
+from collections import deque
+import re
+import pytz
 
+##Packages
 logger = Logger()
 
-def has_access(client_object, project_key):
-    project_list = client_object.project_set.filter(project_key=project_key)
-    if project_list.count() > 0:
+
+def does_user_have_access_to_project(client_object, project_object, access_gte=1):
+    access_count = AccessProvided.objects.filter(user_object=client_object, project_object=project_object, type=0, project_access_type__gte=access_gte).count()
+    if access_count > 0:
         return True
     else:
         return False
-
 
 def get_collection_key(flow_object, project_object):
     return project_object.project_key + "-" + str(flow_object.id)
@@ -42,110 +30,21 @@ def does_user_have_access_to_flow(client_object, flow_object):
     else:
         return False
 
+def does_user_have_access_to_data_run(user_object, data_run_object, access_type = READ_GTE):
+    # Directly querying DataRuns model with conditions that relate to AccessProvided
+    data_run_array = DataRuns.objects.filter(
+        accessprovided__type=1,
+        accessprovided__data_run_access_type__gte=access_type,
+        accessprovided__user_object=user_object
+    ).distinct()
 
-def does_user_have_node_access(client_object, node_object):
-    # project object has node_array
-    node_array = client_object.project_set.all().values_list('node_array', flat=True)
-    return node_object.id in node_array
-
-def does_user_have_io_data_access(client_object, io_data_object):
-    # project object has node_array
-    project_array = client_object.project_set.all()
-    return io_data_object.project in project_array
-
-
-def manage_integration_details(mongo_manager, integration_object, project_object):
-    project_key = project_object.project_key
-    project_integrations_key = project_key + INTEGRATIONS_SUFFIX_KEY
-    mongo_manager.collection = mongo_manager.database[project_key]
-    integrations_data_array = mongo_manager.fetch_data_for_key(project_integrations_key)
-
-    if integration_object.name == "Zerodha":
-        ##Create a mongo collection for this project
-
-        did_find_api_key = False
-        did_find_secret_key = False
-        for data_dict in integrations_data_array:
-            if data_dict['name'] == ZERODHA_API_KEY:
-                did_find_api_key = True
-                data_dict['value'] = ZERODHA_API_KEY_VALUE ##ToDo: Should come from dashboard
-
-            if data_dict['name'] == ZERODHA_API_SECRET_KEY:
-                did_find_secret_key = True
-                data_dict['value'] = ZERODHA_API_SECRET_KEY_VALUE
-
-        if not did_find_api_key:
-            zerodha_key_dict = {}
-            zerodha_key_dict['name'] = ZERODHA_API_KEY
-            zerodha_key_dict['value'] = ZERODHA_API_KEY_VALUE
-            integrations_data_array.append(zerodha_key_dict)
-
-        if not did_find_secret_key:
-            zerodha_secret_dict = {}
-            zerodha_secret_dict['name'] = ZERODHA_API_SECRET_KEY
-            zerodha_secret_dict['value'] = ZERODHA_API_SECRET_KEY_VALUE
-            integrations_data_array.append(zerodha_secret_dict)
-
-
-
-    if integration_object.name == "AWSS3":
-        did_find_access_key = False
-        did_find_secret = False
-
-        for data_dict in integrations_data_array:
-            if data_dict['name'] == AWSS3_ACCESS_KEY:
-                did_find_access_key = True
-                data_dict['value'] = AWSS3_ACCESS_KEY_VALUE
-
-            if data_dict['name'] == AWSS3_SECRET:
-                did_find_secret = True
-                data_dict['value'] = AWSS3_SECRET_KEY_VALUE
-
-        if not did_find_access_key:
-            access_key_dict = {}
-            access_key_dict['name'] = AWSS3_ACCESS_KEY
-            access_key_dict['value'] = AWSS3_ACCESS_KEY_VALUE
-            integrations_data_array.append(access_key_dict)
-
-        if not did_find_secret:
-            secret_dict = {}
-            secret_dict['name'] = AWSS3_SECRET
-            secret_dict['value'] = AWSS3_SECRET_KEY_VALUE
-            integrations_data_array.append(secret_dict)
-
-
-    mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
-
-    return
+    if data_run_object in data_run_array:
+        return True
+    return False
 
 
 def resize_image(file, max_dimension=800):
     return file
-    # try:
-    #     file_bytes = file.read()
-    #     nparr = np.fromstring(file_bytes, np.uint8)
-    #     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    #
-    #     # Step 3: Resize the image to max width of max_dimension
-    #     if img.shape[1] > max_dimension:
-    #         scale_factor = max_dimension / img.shape[1]
-    #         img = cv2.resize(img, (max_dimension, int(img.shape[0] * scale_factor)))
-    #     ##Same for height
-    #     if img.shape[0] > max_dimension:
-    #         scale_factor = max_dimension / img.shape[0]
-    #         img = cv2.resize(img, (int(img.shape[1] * scale_factor), max_dimension))
-    #
-    #
-    #     # Step 4 (Optional): Convert the resized image back to a file-like object if necessary
-    #     is_success, buffer = cv2.imencode(".jpg", img)
-    #     if not is_success:
-    #         raise ValueError("Could not encode resized image to JPEG format")
-    #
-    #     resized_file = BytesIO(buffer)
-    #     return resized_file
-    # except Exception as e:
-    #     print("Error in resize_image: " + str(e))
-    #     return file
 
 def upload_file_to_s3(file, s3_file_name, is_public=0):
     try:
@@ -159,3 +58,144 @@ def upload_file_to_s3(file, s3_file_name, is_public=0):
     except Exception as e:
         print("Error in upload_file_to_s3:" + str(e))
         return False, None
+def get_connected_subgraph_set(start_node, all_nodes):
+    visited_nodes = set()
+
+    def explore(node):
+        if node in visited_nodes:
+            return
+        visited_nodes.add(node)
+
+        # Explore all nodes that this node depends on (downstream)
+        for dependent in node.run_after_nodes_array.filter(is_enabled=True):
+            explore(dependent)
+
+        # Explore all nodes that depend on this node (upstream)
+        for potential_upstream in all_nodes:
+            if node in potential_upstream.run_after_nodes_array.filter(is_enabled=True):
+                explore(potential_upstream)
+
+    explore(start_node)
+    return visited_nodes
+
+def detect_cycle_in_node_set(start_node, all_nodes_set):
+    node_dependencies = {node: set(node.run_after_nodes_array.all()) for node in all_nodes_set}
+    visited = set()
+    recursion_stack = set()
+
+    def dfs(node):
+        if node in recursion_stack:
+            return True  # Cycle detected
+        if node in visited:
+            return False  # Node has been fully processed
+
+        visited.add(node)
+        recursion_stack.add(node)
+
+        # Explore all nodes that consider the current node as a prerequisite
+        for potential_dependent in all_nodes_set:
+            if node in node_dependencies[potential_dependent]:
+                if dfs(potential_dependent):
+                    return True  # Cycle detected in the subgraph
+
+        recursion_stack.remove(node)
+        return False
+
+
+    # Start the DFS from the start node
+    return dfs(start_node)
+
+def fetch_start_node_in_node_set(all_nodes_set):
+    ##Check if there is only one is_starting_node assuming the input is of type set()
+    starting_nodes = {node for node in all_nodes_set if node.is_starting_node}
+    if len(starting_nodes) == 0:
+        return False, None
+    if len(starting_nodes) > 1:
+        return False, None
+    return True, starting_nodes.pop()
+
+def check_dag(start_node, all_nodes):
+    all_nodes = all_nodes.prefetch_related('run_after_nodes_array')
+    sub_nodes_set = get_connected_subgraph_set(start_node, all_nodes)
+    success, start_node = fetch_start_node_in_node_set(sub_nodes_set)
+    if not success:
+        return False, [], "Issue with starting node. There needs to be exactly one enabled starting node in each DAG"
+    is_cycle =  detect_cycle_in_node_set(start_node, sub_nodes_set)
+    if is_cycle:
+        return False, [] , "Invalid DAG: Cycle detected in the graph"
+    else:
+        return True, list(sub_nodes_set), "DAG is valid"
+
+
+
+
+def generate_integrations_code_text(project_object):
+    python_code_text = ''
+    integration_array = project_object.integration_array.all()
+    for integration_object in integration_array:
+        python_code_text += integration_object.import_code + '\n'
+    return python_code_text
+
+
+def generate_integrations_function_prefix(project_object):
+    python_code_text = ''
+    integration_array = project_object.integration_array.all()
+    for integration_object in integration_array:
+        python_code_text += integration_object.function_code + '\n'
+    return python_code_text
+
+
+def get_code_for_node(node_object, top_code, function_code, project_key):
+
+    node_python_code = node_object.python_code
+    node_python_code = function_code + node_python_code
+
+
+    python_code = top_code
+    ##Input parameters
+    input_data_array = node_object.input_data_key_array.all().order_by(Lower('key'))
+    parameters_string = ""
+    for input_data_object in input_data_array:
+        parameters_string += str(input_data_object.key) + ", "
+    parameters_string += 'integrations_df=None, '
+    parameters_string += 'project_key="' + str(project_key) + '",'
+
+
+    python_code += "def run_task(" + parameters_string + "):\n"
+    python_code += "    " + node_python_code.replace("\n", "\n    ") + "\n\n"
+
+    ##Output check for return statement.
+    output_data_array = node_object.output_data_key_array.all()
+    if len(output_data_array) > 0 and python_code.find("return") == -1:
+        return False, "Python code does not have a return statement for node: " + node_object.node_key
+
+    return python_code
+
+def get_task_dict_for_node(node_object):
+    task_dict = {
+        "node_key": node_object.node_key,
+        "project_key": node_object.project_object.project_key,
+        "input_keys_array": [data_key_object.key for data_key_object in node_object.input_data_key_array.all()],
+        "output_keys_array": [data_key_object.key for data_key_object in node_object.output_data_key_array.all()]
+    }
+    return task_dict
+
+def get_data_and_dependencies_for_dag(dag_object):
+
+    ##Project Specific things
+    project_object = dag_object.project_object
+    function_integration_code = generate_integrations_code_text(project_object)
+    function_integration_prefix_code = generate_integrations_function_prefix(project_object)
+
+    dependency_dict = {}
+    data_dict = {}
+    # for each node in dag_object
+    for node_object in dag_object.node_array.all():
+        node_code = get_code_for_node(node_object, function_integration_code, function_integration_prefix_code, project_object.project_key)
+        node_task_dict = get_task_dict_for_node(node_object)
+        node_task_dict["code_to_run"] = node_code
+        data_dict[node_object.node_key] =  node_task_dict
+        dependency_dict[node_object.node_key] = [node.node_key for node in node_object.run_after_nodes_array.all()]
+    return data_dict, dependency_dict
+
+

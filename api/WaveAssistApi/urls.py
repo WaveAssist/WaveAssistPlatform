@@ -16,69 +16,59 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from WaveAssistApiApp import views
-from WaveAssistApiApp import engine_views
+from WaveAssistApiApp import dashboard_views, manage_views, data_views, integration_views, build_views
+
 from django.views.decorators.csrf import csrf_exempt
 from WaveAssistApiApp import manage_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", csrf_exempt(views.index), name="index"),
+
+    ##Dashboard URL's
+    path("", csrf_exempt(dashboard_views.index), name="index"),
+    path("login/", csrf_exempt(dashboard_views.login), name="login"),
+    path("fetch_data_for_data_run/", csrf_exempt(dashboard_views.fetch_data_for_data_run), name="fetch_data_for_data_run"),
 
 
-    ##Engine URL's
-    path("load_all_projects/", csrf_exempt(engine_views.load_all_projects), name="load_all_projects"),
-    path("load_node_data/", csrf_exempt(engine_views.load_node_data), name="load_node_data"),
-    path("load_flows_data/", csrf_exempt(engine_views.load_flows_data), name="load_flows_data"),
-    path("download_project_file_data/", csrf_exempt(engine_views.download_project_file_data), name="download_project_file_data"),
-    path("update_project_refresh_status/", csrf_exempt(engine_views.update_project_refresh_status), name="update_project_refresh_status"),
-    path("fetch_all_test_nodes/", csrf_exempt(engine_views.fetch_all_test_nodes), name="fetch_all_test_nodes"),
-    path("update_node_test_results/", csrf_exempt(engine_views.update_node_test_results),
-         name="update_node_test_results"),
-
-    ##Dashboard URL's / User URL's
-    path("login/", csrf_exempt(views.login), name="login"),
-    path("set_data_for_key/", csrf_exempt(views.set_data_for_key), name="set_data_for_key"),
-    path("load_project_data/", csrf_exempt(views.load_project_data), name="load_project_data"),
-    path("zerodha_redirect/", csrf_exempt(views.zerodha_redirect), name="zerodha_redirect"),
-
-    ##Flow URL's
-    path("create_flow/", csrf_exempt(views.create_flow), name="create_flow"),
-    path("fetch_all_flows/", csrf_exempt(views.fetch_all_flows), name="fetch_all_flows"),
-    path("delete_flow/", csrf_exempt(views.delete_flow), name="delete_flow"),
-    path("update_flow_running_status/", csrf_exempt(views.update_flow_running_status), name="update_flow_running_status"),
-
-    ##Admin URL's
-    path("manage/fetch_all_project/", csrf_exempt(manage_views.fetch_all_project), name="fetch_all_project"),
+    ##Manage URL's
+    path("manage/create_user/", csrf_exempt(manage_views.create_user), name="create_user"),
+    path("manage/fetch_all_projects/", csrf_exempt(manage_views.fetch_all_projects), name="fetch_all_projects"),
     path("manage/create_project/", csrf_exempt(manage_views.create_project), name="create_project"),
     path("manage/fetch_project_data/", csrf_exempt(manage_views.fetch_project_data), name="fetch_project_data"),
-    path("manage/create_user/", csrf_exempt(manage_views.create_user), name="create_user"),
-    path("manage/upload_file_to_s3/", csrf_exempt(manage_views.upload_file_to_s3), name="upload_file_to_s3"),
-
-    ##CRUD io_data
-    path("manage/create_io_data/", csrf_exempt(manage_views.create_io_data), name="create_io_data"),
-    path("manage/update_io_data/", csrf_exempt(manage_views.update_io_data), name="update_io_data"),
-    path("manage/delete_io_data/", csrf_exempt(manage_views.delete_io_data), name="delete_io_data"),
-    path("manage/download_io_data/", csrf_exempt(manage_views.download_io_data), name="download_io_data"),
-    path("manage/upload_io_data_file/", csrf_exempt(manage_views.upload_io_data_file), name="upload_io_data_file"),
-    path("manage/fetch_data_for_key/", csrf_exempt(manage_views.fetch_data_for_key), name="fetch_data_for_key"),
-
-    ##CRUD node
+    path("manage/delete_project/", csrf_exempt(manage_views.delete_project), name="delete_project"),
+    path("manage/create_data_key/", csrf_exempt(manage_views.create_data_key), name="create_data_key"),
+    path("manage/delete_data_key/", csrf_exempt(manage_views.delete_data_key), name="delete_io_data"),
+    path("manage/create_node/", csrf_exempt(manage_views.create_node), name="create_node"),
     path("manage/update_node/", csrf_exempt(manage_views.update_node), name="update_node"),
     path("manage/delete_node/", csrf_exempt(manage_views.delete_node), name="delete_node"),
-    path("manage/create_node/", csrf_exempt(manage_views.create_node), name="create_node"),
     path("manage/update_code/", csrf_exempt(manage_views.update_code), name="update_code"),
+    path("manage/activate_integration/", csrf_exempt(manage_views.activate_integration), name="activate_integration"),
+    path("manage/deactivate_integration/", csrf_exempt(manage_views.deactivate_integration), name="deactivate_integration"),
+    path("manage/create_dashboard_section/", csrf_exempt(manage_views.create_dashboard_section), name="create_dashboard_section"),
+    path("manage/update_dashboard_section/", csrf_exempt(manage_views.update_dashboard_section), name="update_dashboard_section"),
+    path("manage/delete_dashboard_section/", csrf_exempt(manage_views.delete_dashboard_section), name="delete_dashboard_section"),
+    path("manage/create_data_run/", csrf_exempt(manage_views.create_data_run), name="create_data_run"),
+    path("manage/update_data_run/", csrf_exempt(manage_views.update_data_run), name="update_data_run"),
+    path("manage/delete_data_run/", csrf_exempt(manage_views.delete_data_run), name="delete_data_run"),
 
-    ##CRUD Integrations
-    path("manage/update_integrations/", csrf_exempt(manage_views.update_integrations), name="update_integrations"),
-    path("manage/remove_integrations/", csrf_exempt(manage_views.remove_integrations), name="remove_integrations"),
+    ##Data URL's
+    path("data/upload_data_file/", csrf_exempt(data_views.upload_data_file), name="upload_data_file"),
+    path("data/download_data_file/", csrf_exempt(data_views.download_data_file), name="download_data_file"),
+    path("data/fetch_data_for_key/", csrf_exempt(data_views.fetch_data_for_key), name="fetch_data_for_key"),
+    path("data/set_data_for_key/", csrf_exempt(data_views.set_data_for_key), name="set_data_for_key"),
 
-    ##CRUD Dashboard Data
-    path("manage/update_dashboard_data/", csrf_exempt(manage_views.update_dashboard_data), name="update_dashboard_data"),
+    ##Integration URL's
+    path("integration/upload_file_to_s3/", csrf_exempt(integration_views.upload_file_to_s3), name="upload_file_to_s3"),
+    path("integration/zerodha_redirect/", csrf_exempt(integration_views.zerodha_redirect), name="zerodha_redirect"),
 
-    ##Manage Project
-    path("manage/set_restart_status/", csrf_exempt(manage_views.set_restart_status), name="set_restart_status"),
-    path("manage/set_node_test_status/", csrf_exempt(manage_views.set_node_test_status), name="set_node_test_status"),
+
+    ##Build URL's
+    path("build/build_project/", csrf_exempt(build_views.build_project), name="build_project"),
+    path("build/start_project_for_data_run/", csrf_exempt(build_views.start_project_for_data_run), name="start_project_for_data_run"),
+    path("build/stop_project_for_data_run/", csrf_exempt(build_views.stop_project_for_data_run), name="stop_project_for_data_run"),
+
+
+
 ]
 
 

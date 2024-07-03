@@ -12,3 +12,6 @@ pymongo==4.4.1
 kiteconnect==4.2.0
 pyotp==2.9.0
 boto3==1.28.58
+celery==5.4.0
+django-celery-beat==2.6.0
+django-redis==5.2.0

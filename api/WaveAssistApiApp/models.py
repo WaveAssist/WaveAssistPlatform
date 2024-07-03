@@ -1,36 +1,90 @@
 from django.db import models
 from django.db.models.functions import Lower
+from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
+from django.core.exceptions import ValidationError
+import uuid
+from django.contrib.auth.hashers import make_password, is_password_usable
 
-class Client(models.Model):
+SCHEDULE_TYPE_CHOICES = [
+        ('none', 'none'),
+        ('interval', 'interval'),
+        ('crontab', 'crontab')
+]
+
+class User(models.Model):
     id = models.AutoField(primary_key=True)
+    uid = models.UUIDField(default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, default="", null=True)
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
-    company_name = models.CharField(max_length=255)
-    firebase_uid = models.CharField(max_length=100, unique=True)
+    company_name = models.CharField(max_length=255, default="", null=True)
+    can_create_projects = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-
     def __str__(self):
-        return f"Client: {self.name} ({self.username})"
+        return f"User: {self.name} ({self.username})"
 
     def get_dict(self):
-        client_dict = {}
-        client_dict['id'] = self.id
-        client_dict['name'] = self.name
-        client_dict['username'] = self.username
-        client_dict['company_name'] = self.company_name
-        client_dict['firebase_uid'] = self.firebase_uid
-        return client_dict
+        user_dict = {}
+        user_dict['id'] = self.id
+        user_dict['name'] = self.name
+        user_dict['username'] = self.username
+        user_dict['company_name'] = self.company_name
+        user_dict['uid'] = self.uid
+        user_dict['can_create_projects'] = self.can_create_projects
+        return user_dict
+
+    def save(self, *args, **kwargs):
+        if not self.pk:  # if creating a new instance
+            self.password = make_password(self.password)
+        elif not is_password_usable(self.password):  # if password needs to be hashed
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
 
     class Meta:
-        db_table = "WaveAssist_Client"
-        verbose_name = 'Client'
-        verbose_name_plural = 'Clients'
+        db_table = "WaveAssist_User"
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
 
+
+class AccessProvided(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    type = models.IntegerField(default=0) ##0 is project, 1 is dataRun, 2 is dashboard
+    user_object = models.ForeignKey('User', on_delete=models.CASCADE)
+    project_object = models.ForeignKey('Project', on_delete=models.CASCADE, null=True)
+    data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE, null=True)
+    project_access_type = models.IntegerField(default=0) ##0 is nothing, 1 is read, 2 is write, 3 is admin  --> This is manage project from admin panel.
+    data_run_access_type = models.IntegerField(default=0) ##0 is nothing, 1 is read, 2 is write, 3 is admin  --> This is manage dataRun from admin panel.
+    dashboard_access_type = models.IntegerField(default=0) ##0 is nothing, 1 is read, 2 is edit  --> This is to view & edit dashboard
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"AccessProvided: {self.id}"
+
+    def get_dict(self):
+        access_provided_dict = {}
+        access_provided_dict['id'] = self.id
+        access_provided_dict['type'] = self.type
+        access_provided_dict['user_dict'] = self.user_object.get_dict()
+        if self.type == 0:
+            access_provided_dict['access_type'] = self.project_access_type
+            access_provided_dict['project_id'] = self.project_object.id
+        elif self.type == 1:
+            access_provided_dict['access_type'] = self.data_run_access_type
+            access_provided_dict['data_run_id'] = self.data_run_object.id
+        elif self.type == 2:
+            access_provided_dict['access_type'] = self.dashboard_access_type
+            access_provided_dict['project_id'] = self.project_object.id
+        return access_provided_dict
+
+    class Meta:
+        db_table = "WaveAssist_AccessProvided"
+        verbose_name = 'AccessProvided'
+        verbose_name_plural = 'AccessProvided'
 
 class Integrations(models.Model):
     id = models.BigAutoField(primary_key=True)
+    integration_key = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255, default="", null=True)
     import_code = models.TextField(default="")
     function_code = models.TextField(default="")
@@ -42,64 +96,44 @@ class Integrations(models.Model):
     def get_dict(self):
         integrations_dict = {}
         integrations_dict['id'] = self.id
+        integrations_dict['integration_key'] = self.integration_key
         integrations_dict['name'] = self.name
-
+        integrations_dict['import_code'] = self.import_code
+        integrations_dict['function_code'] = self.function_code
         return integrations_dict
-
     class Meta:
         db_table = "WaveAssist_Integrations"
-        verbose_name = 'Integrations'
+        verbose_name = 'Integration'
         verbose_name_plural = 'Integrations'
 
-
-class IOData(models.Model):
+class DataKey(models.Model):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True)
-    output_type = models.IntegerField(default=0) ## 0 is default, 1 is needed for output, 2 is final_output_format, 3 is Integrations
-    action_type = models.IntegerField(default=0) ## 0 is replace, 1 is add
-    description = models.CharField(max_length=255, default="", null=True)
-    name = models.CharField(max_length=255, default="", null=True)
-
-    project = models.ForeignKey('Project', on_delete=models.CASCADE) ##ToDo: Might have to remove this.
-
+    project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"IOData: {self.id} ({self.key}) ({self.name})"
+        return f"DataKey: {self.key}"
 
     def get_dict(self):
-        iodata_dict = {}
-        iodata_dict['id'] = self.id
-        iodata_dict['key'] = self.key
-        iodata_dict['output_type'] = self.output_type
-        iodata_dict['action_type'] = self.action_type
-        return iodata_dict
+        data_key_dict = {}
+        data_key_dict['id'] = self.id
+        data_key_dict['key'] = self.key
+        return data_key_dict
 
     class Meta:
-        db_table = "WaveAssist_IOData"
-        verbose_name = 'IOData'
-        verbose_name_plural = 'IOData'
+        db_table = "WaveAssist_DataKey"
+        verbose_name = 'DataKey'
+        verbose_name_plural = 'DataKeys'
 
 
 class Project(models.Model):
     id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255, default="", null=True)
     project_key = models.CharField(unique=True, max_length=255)
-
-    node_array = models.ManyToManyField('Nodes', blank=True)
     integration_array = models.ManyToManyField('Integrations', blank=True)
-
-    running_status = models.IntegerField(default=0) ##0 is not running, 1 is running
-    payment_status = models.IntegerField(default=0) ##0 is unpaid, 1 is paid
-
-    refresh_status = models.IntegerField(default=0) ##0 is no, 1 is yes
-
-    memory_allocated_in_mb = models.IntegerField(default=512)
-    cpu_allocated_in_vcpu = models.FloatField(default=0.5)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
-    ##To be removed
-    client_array = models.ManyToManyField('Client', blank=True)
 
     def __str__(self):
         ##Add all the fields
@@ -108,12 +142,11 @@ class Project(models.Model):
     def get_dict(self):
         project_dict = {}
         project_dict['id'] = self.id
+        project_dict['name'] = self.name
         project_dict['project_key'] = self.project_key
-        project_dict['running_status'] = self.running_status
-        project_dict['payment_status'] = self.payment_status
-        project_dict['refresh_status'] = self.refresh_status
-        project_dict['memory_allocated_in_mb'] = self.memory_allocated_in_mb
-        project_dict['cpu_allocated_in_vcpu'] = self.cpu_allocated_in_vcpu
+
+        for integration_object in self.integration_array.all():
+            project_dict['integration_array'] = integration_object.get_dict()
 
         return project_dict
 
@@ -123,89 +156,214 @@ class Project(models.Model):
         verbose_name_plural = 'Projects'
 
 
-
-class Flows(models.Model):
+class DataRuns(models.Model):
     id = models.BigAutoField(primary_key=True)
-    project = models.ForeignKey('Project', on_delete=models.CASCADE)
-    running_status = models.IntegerField(default=0) ##0 is not running, 1 is running
-    refresh_status = models.IntegerField(default=0) ##0 is no, 1 is yes
-
-    ##Access control here.
-    client_array = models.ManyToManyField('Client', blank=True)
-
+    data_run_key = models.CharField(max_length=255, unique=True, null=True)
+    name = models.CharField(max_length=255)
+    project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
+    is_enabled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+    ##Create data run key on save as project_key + "-" + id
+    def save(self, *args, **kwargs):
+        if not self.data_run_key:
+            self.data_run_key = self.project_object.project_key + "-" + str(self.id)
+        super(DataRuns, self).save(*args, **kwargs)
+
     def __str__(self):
-        return f"Flows: {self.id}"
+        return f"DataRuns: {self.id}"
 
     def get_dict(self):
-        flows_dict = {}
-        flows_dict['id'] = self.id
-        flows_dict['project'] = self.project.get_dict()
-        flows_dict['running_status'] = self.running_status
-        flows_dict['refresh_status'] = self.refresh_status
-        return flows_dict
+        data_run_dict = {}
+        data_run_dict['id'] = self.id
+        data_run_dict['name'] = self.name
+        data_run_dict['data_run_key'] = self.data_run_key
+        data_run_dict['project_id'] = self.project_object.id
+        data_run_dict['is_enabled'] = self.is_enabled
+        return data_run_dict
 
     class Meta:
-        db_table = "WaveAssist_Flows"
-        verbose_name = 'Flows'
-        verbose_name_plural = 'Flows'
+        db_table = "WaveAssist_DataRuns"
+        verbose_name = 'DataRun'
+        verbose_name_plural = 'DataRuns'
 
 
 class Nodes(models.Model):
     id = models.BigAutoField(primary_key=True)
-
     node_key = models.CharField(unique=True, max_length=255)
+    project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
+    is_enabled = models.BooleanField(default=False)
 
-    name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255)
-
-    start_frequency_in_seconds = models.IntegerField(default=0)
-
-    input_data_array = models.ManyToManyField("IOData", related_name="input_data_array", blank=True)
-    output_data_array = models.ManyToManyField("IOData", related_name="output_data_array", blank=True)
-
+    ##Params
     python_code = models.TextField(default="")
+    input_data_key_array = models.ManyToManyField("DataKey", related_name="input_data_array", blank=True)
+    output_data_key_array = models.ManyToManyField("DataKey", related_name="output_data_array", blank=True)
 
-    test_status = models.IntegerField(default=0) ##0 is dont test, 1 is start test
+
+    ##RunType
+    is_starting_node = models.BooleanField(default=False)
+    schedule_type = models.CharField(max_length=10, choices=SCHEDULE_TYPE_CHOICES, default='interval')
+    interval_schedule = models.ForeignKey(IntervalSchedule, null=True, blank=True, on_delete=models.CASCADE)
+    crontab_schedule = models.ForeignKey(CrontabSchedule, null=True, blank=True, on_delete=models.CASCADE)
+
+    run_after_nodes_array = models.ManyToManyField("Nodes", blank=True)
+
+    ##Test
+    test_status = models.IntegerField(default=0) ##0 is don't test, 1 is start test, 2 is test completed
     test_output = models.TextField(default="")
-
-    running_status = models.IntegerField(default=0) ##0 is not running, 1 is running, 2 is restart
-
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Node: {self.id} ({self.name})"
+        return f"Node: {self.id} ({self.node_key})"
 
     def get_dict(self):
         node_dict = {}
         node_dict['id'] = self.id
         node_dict['node_key'] = self.node_key
-        node_dict['name'] = self.name
-        node_dict['description'] = self.description
-        node_dict['start_frequency_in_seconds'] = self.start_frequency_in_seconds
-        node_dict['sleep_duration'] = self.start_frequency_in_seconds
-        node_dict['running_status'] = self.running_status
         node_dict['python_code'] = self.python_code
-        node_dict['test_status'] = self.test_status
-        node_dict['test_output'] = self.test_output
-
+        node_dict['is_starting_node'] = self.is_starting_node
+        node_dict['is_enabled'] = self.is_enabled
 
         ##Also optimially load and pass the input and output data list
-        input_data_array = []
-        for input_data in self.input_data_array.all().order_by(Lower('key')):
-            input_data_array.append(input_data.get_dict())
-        node_dict['input_data_array'] = input_data_array
+        input_data_key_array = []
+        for input_data in self.input_data_key_array.all().order_by(Lower('key')):
+            input_data_key_array.append(input_data.get_dict())
+        node_dict['input_data_key_array'] = input_data_key_array
 
-        output_data_array = []
-        for output_data in self.output_data_array.all().order_by(Lower('key')):
-            output_data_array.append(output_data.get_dict())
-        node_dict['output_data_array'] = output_data_array
+        output_data_key_array = []
+        for output_data in self.output_data_key_array.all().order_by(Lower('key')):
+            output_data_key_array.append(output_data.get_dict())
+        node_dict['output_data_key_array'] = output_data_key_array
+
+        run_after_nodes_array = []
+        for run_after_node in self.run_after_nodes_array.all().order_by(Lower('node_key')):
+            run_after_nodes_array.append(run_after_node.node_key)
+        node_dict['run_after_nodes_array'] = run_after_nodes_array
 
         return node_dict
+
 
     class Meta:
         db_table = "WaveAssist_Nodes"
         verbose_name = 'Nodes'
         verbose_name_plural = 'Nodes'
+
+class DashboardSection(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    dashboard_section_key = models.CharField(max_length=255, unique=True, null=True)
+    project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
+    row = models.IntegerField(default=0)
+    column = models.IntegerField(default=0)
+    display_type = models.IntegerField(default=0) ##0 is Table, 1 is Numbers, 2 is Graph, 3 is HTML
+    data_key_object = models.ForeignKey('DataKey', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255, default="", null=True)
+    should_display_title = models.BooleanField(default=True)
+    is_editable = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.dashboard_section_key:
+            self.dashboard_section_key = self.project_object.project_key + "-" + str(self.id)
+        super(DashboardSection, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f"DashboardSection: {self.id} ({self.title})"
+
+    def get_dict(self):
+        dashboard_section_dict = {}
+        dashboard_section_dict['id'] = self.id
+        dashboard_section_dict['dashboard_section_key'] = self.dashboard_section_key
+        dashboard_section_dict['row'] = self.row
+        dashboard_section_dict['column'] = self.column
+        dashboard_section_dict['display_type'] = self.display_type
+        dashboard_section_dict['data_key'] = self.data_key_object.get_dict()
+        dashboard_section_dict['title'] = self.title
+        dashboard_section_dict['should_display_title'] = self.should_display_title
+        dashboard_section_dict['is_editable'] = self.is_editable
+        dashboard_section_dict['project_id'] = self.project_object.id
+        return dashboard_section_dict
+
+    class Meta:
+        db_table = "WaveAssist_DashboardSection"
+        verbose_name = 'DashboardSection'
+        verbose_name_plural = 'DashboardSection'
+
+
+
+class DAG(models.Model):
+    id = models.AutoField(primary_key=True)
+    dag_key = models.CharField(max_length=255)
+    is_enabled = models.BooleanField(default=False)
+    project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
+    start_node = models.ForeignKey('Nodes', on_delete=models.CASCADE, related_name='start_node')
+    node_array = models.ManyToManyField('Nodes', blank=True)
+    interval_schedule = models.ForeignKey('django_celery_beat.IntervalSchedule', on_delete=models.PROTECT, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"DAG: {self.dag_key} ({self.id})"
+
+    def get_dict(self):
+        dag_dict = {}
+        dag_dict['id'] = self.id
+        dag_dict['dag_key'] = self.dag_key
+        dag_dict['is_enabled'] = self.is_enabled
+        return dag_dict
+    class Meta:
+        db_table = "WaveAssist_DAG"
+        verbose_name = 'DAG'
+        verbose_name_plural = 'DAGs'
+
+
+class DAGRun(models.Model):
+    id = models.AutoField(primary_key=True)
+    dag_run_key = models.CharField(max_length=255)
+    is_enabled = models.BooleanField(default=False)
+    dag_object = models.ForeignKey('DAG', on_delete=models.CASCADE)
+    data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE)
+    periodic_task = models.ForeignKey('django_celery_beat.PeriodicTask', on_delete=models.CASCADE, null=True)
+    is_running = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    ##ToDo: Add status and logs.
+    def __str__(self):
+        return f"DAGRun: {self.dag_run_key} ({self.id})"
+
+    def get_dict(self):
+        dag_run_dict = {}
+        dag_run_dict['id'] = self.id
+        dag_run_dict['dag_run_key'] = self.dag_run_key
+        dag_run_dict['is_enabled'] = self.is_enabled
+        return dag_run_dict
+
+    class Meta:
+        db_table = "WaveAssist_DAGRun"
+        verbose_name = 'DAGRun'
+        verbose_name_plural = 'DAGRuns'
+
+
+
+
+##Functions
+def is_valid_dag(node_array): ##ToDo can be prefetched to optimise queries.
+    def can_visit(node, visited, stack):
+        if node in stack:
+            return False  # Cycle detected
+        if node in visited:
+            return True  # Already validated
+        stack.add(node)
+        for next_node in node.run_after_nodes_array.all():
+            if not can_visit(next_node, visited, stack):
+                return False
+        stack.remove(node)
+        visited.add(node)
+        return True
+
+    visited = set()
+    stack = set()
+    for node in node_array:
+        if node not in visited:
+            if not can_visit(node, visited, stack):
+                return False
+    return True

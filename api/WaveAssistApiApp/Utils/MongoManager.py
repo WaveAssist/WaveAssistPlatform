@@ -4,7 +4,7 @@ from pymongo import MongoClient
 import WaveAssistApiApp.Utils.utils as utils
 import numpy as np
 from datetime import datetime
-
+from WaveAssistApi.settings import MONGO_CONNECTION_STRING
 class MongoManager:
 
 
@@ -77,7 +77,7 @@ class MongoManager:
         return updated_data_array
 
     ##Init Function
-    def __init__(self, collection_name=None, connection_string=CONNECTION_STRING, database_name=DB_NAME):
+    def __init__(self, collection_name=None, connection_string=MONGO_CONNECTION_STRING, database_name=DB_NAME):
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
         if collection_name is not None:
@@ -186,7 +186,6 @@ class MongoManager:
 
     def delete_collection(self, collection_key):
         try:
-            print("Deleting collection: " + collection_key)
             self.database[collection_key].drop()
             return True
         except Exception as e:
