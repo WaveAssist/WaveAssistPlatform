@@ -49,6 +49,13 @@
   color: rgba(255,255,255,0.80) !important;
 }
 
+.translucent_white_more{
+  color: rgba(255,255,255,0.50) !important;
+}
+
+.translucent_blue{
+  color: rgba(134,171,242,1) !important;
+}
 
 .admin-title {
   margin: 0;
@@ -68,7 +75,7 @@
 
 .project-card .card {
   width: 100%;
-  aspect-ratio: 1.5; /* Aspect ratio to make height 90% of width */
+  aspect-ratio: 2; /* Aspect ratio to make height 90% of width */
   position: relative;
   transition: transform 0.2s;;
   margin-top:10px;
@@ -113,12 +120,12 @@
 
 /* Modal CSS */
 .modal-body {
-  background-color: rgba(34,37,41,1);
+  background-color: #1d2733;
   color: white;
 }
 
 .modal-header {
-  background-color: rgba(34,37,41,1);
+  background-color: #1d2733;
   border-bottom: 1px solid #454d55;
 }
 
@@ -132,9 +139,10 @@
 
 .model-text {
   color: white !important;
+  
 }
 
 .modal-footer {
-  background-color: rgba(34,37,41,1) !important;
+  background-color: #1d2733 !important;
   border-top: 1px solid #454d55 !important;
 }

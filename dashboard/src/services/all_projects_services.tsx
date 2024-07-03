@@ -32,12 +32,13 @@ export const fetchAllProjectsAPI = async (): Promise<any> => {
 
 
 
-export const createProjectAPI = async (projectKey: string): Promise<any> => {
+export const createProjectAPI = async (projectName: string, projectKey: string ): Promise<any> => {
   const url = `${BASE_URL}/create_project/`;
   const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
   const body = new URLSearchParams({
     uid: localStorage.getItem('uid') || '',
     project_key: projectKey,
+    project_name: projectName,
   });
   try {
     const response = await axios.post(url, body, { headers });

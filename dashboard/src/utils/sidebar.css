@@ -16,4 +16,19 @@
     overflow-x: auto;
     overflow-y: hidden;
   }
+
+  .side-div{
+    background-color: #1A2430 !important;
+    width: 280px;
+  }
   
+  .nav-pills .nav-link.active {
+    --bs-nav-pills-link-active-bg: #2d3b52; 
+  }
+  
+  .wp_logo {
+    height: 25px;
+    width: auto;
+    margin-top: 15px;
+    margin-bottom: 30px;
+  }
