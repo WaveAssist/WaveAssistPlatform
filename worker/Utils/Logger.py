@@ -1,8 +1,6 @@
 # import the necessary packages
 import Utils.utils
-from Utils.config import *
 from Utils.constants import *
-
 
 import logging
 import logging.handlers

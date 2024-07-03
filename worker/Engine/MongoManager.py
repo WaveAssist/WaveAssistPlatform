@@ -139,7 +139,7 @@ class MongoManager:
             utils.logger.error("Error in get_data_as_dataframe: " + str(e))
             return None
 
-    def replace_data_as_dataframe(self,io_key,df, collection_name):
+    def replace_data_as_dataframe(self,io_key, df, collection_name):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
         try:
             df = pd.DataFrame(df)

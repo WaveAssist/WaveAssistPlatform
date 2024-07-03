@@ -1,6 +1,6 @@
 import datetime
 import statistics
-from Utils.config import *
+from Utils.constants import *
 import Utils.utils as utils
 
 
