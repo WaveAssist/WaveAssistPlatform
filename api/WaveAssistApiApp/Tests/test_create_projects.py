@@ -24,7 +24,8 @@ class CreateProjectTestCase(TestCase):
     def test_01_create_project_success(self):
         request = self.factory.post('/create_project', {
             'uid': self.admin_uid,
-            'project_key': self.project_key
+            'project_key': self.project_key,
+            'project_name': self.project_key
         })
 
         response = create_project(request)
