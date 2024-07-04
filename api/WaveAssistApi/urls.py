@@ -35,6 +35,14 @@ urlpatterns = [
     path("manage/fetch_all_projects/", csrf_exempt(manage_views.fetch_all_projects), name="fetch_all_projects"),
     path("manage/create_project/", csrf_exempt(manage_views.create_project), name="create_project"),
     path("manage/fetch_project_data/", csrf_exempt(manage_views.fetch_project_data), name="fetch_project_data"),
+
+    path("manage/fetch_project_variables/", csrf_exempt(manage_views.fetch_project_variables), name="fetch_project_variables"),
+    path("manage/fetch_nodes/", csrf_exempt(manage_views.fetch_nodes), name="fetch_nodes"),
+    path("manage/fetch_project_environments/", csrf_exempt(manage_views.fetch_project_environments), name="fetch_project_environments"),
+    path("manage/fetch_dashboard_sections/", csrf_exempt(manage_views.fetch_dashboard_sections), name="fetch_dashboard_sections"),
+    path("manage/get_build_details/", csrf_exempt(manage_views.get_build_details), name="get_build_details"),
+    path("manage/get_run_status/", csrf_exempt(manage_views.get_run_status), name="get_run_status"),
+
     path("manage/delete_project/", csrf_exempt(manage_views.delete_project), name="delete_project"),
     path("manage/create_data_key/", csrf_exempt(manage_views.create_data_key), name="create_data_key"),
     path("manage/delete_data_key/", csrf_exempt(manage_views.delete_data_key), name="delete_io_data"),

@@ -140,6 +140,25 @@ def validate_user_and_data_run(request, access_level_gte=1):
 
     return True, '', user_object, data_run_object
 
+
+def validate_user_and_dag_run(request, access_level_gte=1):
+    uid = request.POST.get('uid', '')
+    try:
+        user_object = User.objects.get(uid=uid)
+    except:
+        return False, 'User not found', None, None
+
+    dag_run_key = request.POST.get('dag_run_key', '')
+    try:
+        dag_run_object = DAGRun.objects.get(dag_run_key=dag_run_key)
+    except:
+        return False, 'Dag Run not found', None, None
+
+    if not utils.does_user_have_access_to_project(user_object, dag_run_object.dag_object.project_object, access_gte=access_level_gte):
+        return False, 'You do not have access to this dag run', None, None
+
+    return True, '', dag_run_object
+
 def does_user_have_access_to_data_run_key(user_object, data_run_key, access_level_gte=1):
     if data_run_key == "":
         return False, 'Data Run Key not found', None

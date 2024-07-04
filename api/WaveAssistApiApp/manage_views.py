@@ -173,6 +173,148 @@ def fetch_project_data(request): #TCW
     return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project data fetched successfully.')
 
 
+def fetch_project_variables(request): #TCW
+    ##Validate Request
+    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=READ_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    ##Get data for project
+    project_dict = project_object.get_dict()
+
+    ##DataKeys
+    data_key_array = project_object.datakey_set.all().order_by(Lower('key'))
+    data_key_dict_array = []
+    for data_key_object in data_key_array:
+        data_key_dict_array.append(data_key_object.get_dict())
+    project_dict['variables_array'] = data_key_dict_array
+
+    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project Variables fetched successfully.')
+
+
+def fetch_nodes(request):  # TCW
+    ##Validate Request
+    success, message, user_object, project_object = validator.validate_user_and_project(request,
+                                                                                        access_level_gte=READ_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    ##Get data for project
+    project_dict = project_object.get_dict()
+
+    ##Nodes
+    node_array = project_object.nodes_set.filter(is_enabled=True).order_by(Lower('node_key'))
+    node_dict_array = []
+    for node_object in node_array:
+        node_dict_array.append(node_object.get_dict())
+    project_dict['node_array'] = node_dict_array
+
+    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Nodes fetched successfully.')
+
+
+def fetch_dashboard_sections(request):  # TCW
+    ##Validate Request
+    success, message, user_object, project_object = validator.validate_user_and_project(request,
+                                                                                        access_level_gte=READ_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    ##Get data for project
+    project_dict = project_object.get_dict()
+
+    ##Dashboard Sections
+    dashboard_section_array = project_object.dashboardsection_set.all().order_by('row', 'column')
+    dashboard_section_dict_array = []
+    for dashboard_section_object in dashboard_section_array:
+        dashboard_section_dict_array.append(dashboard_section_object.get_dict())
+    project_dict['dashboard_section_array'] = dashboard_section_dict_array
+
+    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Dashboard Sections fetched successfully.')
+
+
+def fetch_project_environments(request):  # TCW
+    ##Validate Request
+    success, message, user_object, project_object = validator.validate_user_and_project(request,
+                                                                                        access_level_gte=READ_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    ##Get data for project
+    project_dict = project_object.get_dict()
+
+    ##Provide data runs which user has access to, and belong to this project.
+    data_run_array = DataRuns.objects.filter(accessprovided__type=1,
+        accessprovided__data_run_access_type__gte=READ_GTE,
+        accessprovided__user_object=user_object,
+        project_object=project_object
+    ).distinct()
+    data_run_dict_array = []
+    for data_run_object in data_run_array:
+        data_run_dict_array.append(data_run_object.get_dict())
+    project_dict['environment_array'] = data_run_dict_array
+
+    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project Environment fetched successfully.')
+
+
+def get_build_details(request):  # TCW
+    ##Validate Request
+    success, message, user_object, project_object = validator.validate_user_and_project(request,
+                                                                                        access_level_gte=READ_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    ##Get data for project
+    project_dict = project_object.get_dict()
+
+    #get details for data runs and dag runs of dag object of this prohect
+    dag_object_array = DAG.objects.filter(project_object=project_object)
+    dag_run_dict_array = []
+    for dag_object in dag_object_array:
+        dag_run_object_array = DAGRun.objects.filter(dag_object=dag_object)
+        for dag_run_object in dag_run_object_array:
+            dag_run_dict_array.append(dag_run_object.get_dict())
+    project_dict['build_array'] = dag_run_dict_array
+
+
+    ##Provide data runs which user has access to, and belong to this project.
+    data_run_array = DataRuns.objects.filter(accessprovided__type=1,
+        accessprovided__data_run_access_type__gte=READ_GTE,
+        accessprovided__user_object=user_object,
+        project_object=project_object
+    ).distinct()
+    data_run_dict_array = []
+    for data_run_object in data_run_array:
+        data_run_dict_array.append(data_run_object.get_dict())
+    project_dict['environment_array'] = data_run_dict_array
+
+    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project Build Details fetched successfully.')
+
+
+def get_run_status(request):  # TCW
+    ##Validate Request
+    success, message, user_object, data_run_object = validator.validate_user_and_data_run(request,
+                                                                                        access_level_gte=READ_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    success, message, dag_run_object = validator.validate_user_and_dag_run(request, access_level_gte=READ_GTE)
+
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    # get status for both dag run and data run
+    dag_run_status = dag_run_object.is_enabled
+    data_run_status = data_run_object.is_enabled
+
+    if dag_run_status and data_run_status:
+        return ResponseParser.getParsedSuccessMessage({'status': 'running'}, '200', 'Project is running.')
+    else:
+        return ResponseParser.getParsedSuccessMessage({'status': 'not running'}, '200', 'Project is not running.')
+
+
+
+
+
 def delete_project(request): ##ToDo: Write test cases. Check related deleted. Check if DAG Runs are gone.
     ##Validate Request
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
