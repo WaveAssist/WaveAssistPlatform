@@ -324,7 +324,7 @@ class DAGRun(models.Model):
     dag_object = models.ForeignKey('DAG', on_delete=models.CASCADE)
     data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE)
     periodic_task = models.ForeignKey('django_celery_beat.PeriodicTask', on_delete=models.CASCADE, null=True)
-    is_running = models.BooleanField(default=False)
+    is_running = models.BooleanField(default=False) ##ToDo: CHECK & remove this. Checking first is important.
     created_at = models.DateTimeField(auto_now_add=True)
     ##ToDo: Add status and logs.
     def __str__(self):

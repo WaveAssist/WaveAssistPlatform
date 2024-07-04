@@ -70,7 +70,6 @@ def build_project(request): ##TCW
     except:
         return ResponseParser.getParsedErrorMessage('Error in Building: Unused DAG deletion failed.')
 
-
     build_dict = {'build_status': 'build successful'}
     return ResponseParser.getParsedSuccessMessage(build_dict, '200', 'Project built successfully.')
 
