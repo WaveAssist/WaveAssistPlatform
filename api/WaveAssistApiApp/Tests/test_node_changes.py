@@ -151,7 +151,7 @@ class NodeTestCase(TestCase):
         request = self.factory.post('/create_node', {
             'uid': self.admin_uid,
             'project_key': 'test_project_key',
-            'node_key': 'test_project_key_node_e',
+            'name': 'node_e',
             'is_enabled': '1',
             'is_starting_node': '1',
             'schedule_type': 'interval',
@@ -166,10 +166,11 @@ class NodeTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
         self.assertEqual(response_data['message'], 'Node updated successfully.')
+        node_key = response_data['data']['node_key']
 
         # Assert if node is actually created in the DB
-        node = Nodes.objects.get(node_key='test_project_key_node_e')
-        self.assertEqual(node.node_key, 'test_project_key_node_e')
+        node = Nodes.objects.get(node_key=node_key)
+        self.assertEqual(node.node_key, node_key)
         self.assertEqual(node.is_enabled, True)
         self.assertEqual(node.is_starting_node, True)
         self.assertEqual(node.schedule_type, 'interval')
@@ -178,7 +179,7 @@ class NodeTestCase(TestCase):
         request = self.factory.post('/create_node', {
             'uid': self.admin_uid,
             'project_key': 'test_project_key',
-            'node_key': 'test_project_key_node_f',
+            'name': 'node_f',
             'is_enabled': '1',
             'is_starting_node': '0',
             'schedule_type': 'none',
@@ -191,34 +192,16 @@ class NodeTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
         self.assertEqual(response_data['message'], 'Node updated successfully.')
+        node_key = response_data['data']['node_key']
+
 
         # Assert if node is actually created in the DB
-        node = Nodes.objects.get(node_key='test_project_key_node_f')
-        self.assertEqual(node.node_key, 'test_project_key_node_f')
+        node = Nodes.objects.get(node_key=node_key)
+        self.assertEqual(node.node_key, node_key)
         self.assertEqual(node.is_enabled, True)
         self.assertEqual(node.is_starting_node, False)
         self.assertEqual(node.schedule_type, 'none')
         self.assertIn(self.node_a, node.run_after_nodes_array.all())
-
-    def test_create_node_key_validation_failure(self):
-        request = self.factory.post('/create_node', {
-            'uid': self.admin_uid,
-            'project_key': 'test_project_key',
-            'node_key': 'invalid_node_key',
-            'is_enabled': '1',
-            'is_starting_node': '1',
-            'schedule_type': 'interval',
-            'interval_every': '10',
-            'interval_type': 'seconds',
-            'input_data_key_csv': '',
-            'output_data_key_csv': '',
-            'run_after_nodes_csv': ''
-        })
-        response = create_node(request)
-
-        self.assertEqual(response.status_code, 200)
-        response_data = json.loads(response.content)
-        self.assertEqual(response_data['message'], 'Key should start with project key + _')
 
 
     def test_create_node_missing_run_after_nodes(self):
@@ -270,7 +253,7 @@ class NodeTestCase(TestCase):
         request = self.factory.post('/create_node', {
             'uid': self.admin_uid,
             'project_key': 'test_project_key',
-            'node_key': 'test_project_key_valid_keys',
+            'name': 'valid_key',
             'is_enabled': '1',
             'is_starting_node': '1',
             'schedule_type': 'interval',
@@ -285,10 +268,12 @@ class NodeTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
         self.assertEqual(response_data['message'], 'Node updated successfully.')
+        node_key = response_data['data']['node_key']
+
 
         # Assert if node is actually created in the DB
-        node = Nodes.objects.get(node_key='test_project_key_valid_keys')
-        self.assertEqual(node.node_key, 'test_project_key_valid_keys')
+        node = Nodes.objects.get(node_key=node_key)
+        self.assertEqual(node.node_key, node_key)
         self.assertEqual(node.is_enabled, True)
         self.assertEqual(node.is_starting_node, True)
         self.assertEqual(node.schedule_type, 'interval')

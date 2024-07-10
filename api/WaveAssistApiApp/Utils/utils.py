@@ -180,17 +180,16 @@ def get_task_dict_for_node(node_object):
     }
     return task_dict
 
-def get_data_and_dependencies_for_dag(dag_object):
+def get_data_and_dependencies_for_dag(project_object, node_array):
 
     ##Project Specific things
-    project_object = dag_object.project_object
     function_integration_code = generate_integrations_code_text(project_object)
     function_integration_prefix_code = generate_integrations_function_prefix(project_object)
 
     dependency_dict = {}
     data_dict = {}
     # for each node in dag_object
-    for node_object in dag_object.node_array.all():
+    for node_object in node_array:
         node_code = get_code_for_node(node_object, function_integration_code, function_integration_prefix_code, project_object.project_key)
         node_task_dict = get_task_dict_for_node(node_object)
         node_task_dict["code_to_run"] = node_code
@@ -198,4 +197,19 @@ def get_data_and_dependencies_for_dag(dag_object):
         dependency_dict[node_object.node_key] = [node.node_key for node in node_object.run_after_nodes_array.all()]
     return data_dict, dependency_dict
 
+
+
+def stop_published_run(published_run):
+    try:
+        with transaction.atomic():
+            published_run.is_running = False
+            for dag in published_run.dag_set.all():
+                dag.periodic_task.enabled = False
+                dag.periodic_task.save()
+                dag.is_running = False
+                dag.save()
+            published_run.save()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise Exception("Could not stop the PublishedRun: " + str(e))
 

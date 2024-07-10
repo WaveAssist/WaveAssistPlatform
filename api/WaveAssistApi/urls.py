@@ -38,7 +38,7 @@ urlpatterns = [
 
     path("manage/fetch_project_variables/", csrf_exempt(manage_views.fetch_project_variables), name="fetch_project_variables"),
     path("manage/fetch_nodes/", csrf_exempt(manage_views.fetch_nodes), name="fetch_nodes"),
-    path("manage/fetch_project_environments/", csrf_exempt(manage_views.fetch_project_environments), name="fetch_project_environments"),
+    path("manage/fetch_environments/", csrf_exempt(manage_views.fetch_environments), name="fetch_environments"),
     path("manage/fetch_dashboard_sections/", csrf_exempt(manage_views.fetch_dashboard_sections), name="fetch_dashboard_sections"),
     path("manage/get_build_details/", csrf_exempt(manage_views.get_build_details), name="get_build_details"),
     path("manage/get_run_status/", csrf_exempt(manage_views.get_run_status), name="get_run_status"),
@@ -71,11 +71,8 @@ urlpatterns = [
 
 
     ##Build URL's
-    path("build/build_project/", csrf_exempt(build_views.build_project), name="build_project"),
-    path("build/start_project_for_data_run/", csrf_exempt(build_views.start_project_for_data_run), name="start_project_for_data_run"),
-    path("build/stop_project_for_data_run/", csrf_exempt(build_views.stop_project_for_data_run), name="stop_project_for_data_run"),
-
-
+    path("build/deploy_project/", csrf_exempt(build_views.deploy_project), name="deploy_project"),
+    path("build/stop_published_run/", csrf_exempt(build_views.stop_published_run), name="stop_published_run"),
 
 ]
 

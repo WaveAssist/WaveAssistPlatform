@@ -4,6 +4,7 @@ from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSch
 from django.core.exceptions import ValidationError
 import uuid
 from django.contrib.auth.hashers import make_password, is_password_usable
+from django.db import transaction
 
 SCHEDULE_TYPE_CHOICES = [
         ('none', 'none'),
@@ -178,7 +179,7 @@ class DataRuns(models.Model):
         data_run_dict = {}
         data_run_dict['id'] = self.id
         data_run_dict['name'] = self.name
-        data_run_dict['data_run_key'] = self.data_run_key
+        data_run_dict['key'] = self.data_run_key
         data_run_dict['project_id'] = self.project_object.id
         data_run_dict['is_enabled'] = self.is_enabled
         return data_run_dict
@@ -191,6 +192,7 @@ class DataRuns(models.Model):
 
 class Nodes(models.Model):
     id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255, default="", null=True)
     node_key = models.CharField(unique=True, max_length=255)
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
     is_enabled = models.BooleanField(default=False)
@@ -218,15 +220,24 @@ class Nodes(models.Model):
     def __str__(self):
         return f"Node: {self.id} ({self.node_key})"
 
-    def get_dict(self):
+    def get_dict_info(self):
         node_dict = {}
         node_dict['id'] = self.id
+        node_dict['name'] = self.name
         node_dict['node_key'] = self.node_key
         node_dict['python_code'] = self.python_code
         node_dict['is_starting_node'] = self.is_starting_node
         node_dict['is_enabled'] = self.is_enabled
+        node_dict['schedule_type'] = self.schedule_type
+        node_dict['interval_schedule'] = str(self.interval_schedule)
+        node_dict['crontab_schedule'] = str(self.crontab_schedule)
 
-        ##Also optimially load and pass the input and output data list
+        return node_dict
+
+
+    def get_dict(self):
+        node_dict = self.get_dict_info()
+
         input_data_key_array = []
         for input_data in self.input_data_key_array.all().order_by(Lower('key')):
             input_data_key_array.append(input_data.get_dict())
@@ -239,11 +250,10 @@ class Nodes(models.Model):
 
         run_after_nodes_array = []
         for run_after_node in self.run_after_nodes_array.all().order_by(Lower('node_key')):
-            run_after_nodes_array.append(run_after_node.node_key)
+            run_after_nodes_array.append(run_after_node.get_dict_info())
         node_dict['run_after_nodes_array'] = run_after_nodes_array
 
         return node_dict
-
 
     class Meta:
         db_table = "WaveAssist_Nodes"
@@ -291,79 +301,46 @@ class DashboardSection(models.Model):
         verbose_name_plural = 'DashboardSection'
 
 
-
-class DAG(models.Model):
+class PublishedRuns(models.Model):
     id = models.AutoField(primary_key=True)
-    dag_key = models.CharField(max_length=255)
-    is_enabled = models.BooleanField(default=False)
+    key = models.CharField(max_length=255, unique=True, null=True)
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
-    start_node = models.ForeignKey('Nodes', on_delete=models.CASCADE, related_name='start_node')
-    node_array = models.ManyToManyField('Nodes', blank=True)
-    interval_schedule = models.ForeignKey('django_celery_beat.IntervalSchedule', on_delete=models.PROTECT, null=True)
+    data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE)
+    version = models.CharField(max_length=100, default="1.0.0")
+    is_running = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"DAG: {self.dag_key} ({self.id})"
+        return f"PublishedRuns: {self.id} ({self.key}))"
 
     def get_dict(self):
-        dag_dict = {}
-        dag_dict['id'] = self.id
-        dag_dict['dag_key'] = self.dag_key
-        dag_dict['is_enabled'] = self.is_enabled
-        return dag_dict
+        published_run_dict = {}
+        published_run_dict['key'] = self.key
+        published_run_dict['version'] = self.version
+        published_run_dict['is_running'] = self.is_running
+        return published_run_dict
+
+
+class DAG(models.Model):
+    id = models.AutoField(primary_key=True)
+    key = models.CharField(max_length=255, unique=True, null=True)
+    parent_run = models.ForeignKey('PublishedRuns', on_delete=models.CASCADE)
+    periodic_task = models.ForeignKey('django_celery_beat.PeriodicTask', on_delete=models.CASCADE, null=True)
+    is_running = models.BooleanField(default=True)
+    start_node = models.ForeignKey('Nodes', on_delete=models.SET_NULL, related_name='start_node', null=True, blank=True)
+    node_array = models.ManyToManyField('Nodes', blank=True)
+    interval_schedule = models.ForeignKey('django_celery_beat.IntervalSchedule', on_delete=models.PROTECT, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"DAG: ({self.id})"
+
     class Meta:
         db_table = "WaveAssist_DAG"
         verbose_name = 'DAG'
         verbose_name_plural = 'DAGs'
 
-
-class DAGRun(models.Model):
-    id = models.AutoField(primary_key=True)
-    dag_run_key = models.CharField(max_length=255)
-    is_enabled = models.BooleanField(default=False)
-    dag_object = models.ForeignKey('DAG', on_delete=models.CASCADE)
-    data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE)
-    periodic_task = models.ForeignKey('django_celery_beat.PeriodicTask', on_delete=models.CASCADE, null=True)
-    is_running = models.BooleanField(default=False) ##ToDo: CHECK & remove this. Checking first is important.
-    created_at = models.DateTimeField(auto_now_add=True)
-    ##ToDo: Add status and logs.
-    def __str__(self):
-        return f"DAGRun: {self.dag_run_key} ({self.id})"
-
     def get_dict(self):
-        dag_run_dict = {}
-        dag_run_dict['id'] = self.id
-        dag_run_dict['dag_run_key'] = self.dag_run_key
-        dag_run_dict['is_enabled'] = self.is_enabled
-        return dag_run_dict
-
-    class Meta:
-        db_table = "WaveAssist_DAGRun"
-        verbose_name = 'DAGRun'
-        verbose_name_plural = 'DAGRuns'
-
-
-
-
-##Functions
-def is_valid_dag(node_array): ##ToDo can be prefetched to optimise queries.
-    def can_visit(node, visited, stack):
-        if node in stack:
-            return False  # Cycle detected
-        if node in visited:
-            return True  # Already validated
-        stack.add(node)
-        for next_node in node.run_after_nodes_array.all():
-            if not can_visit(next_node, visited, stack):
-                return False
-        stack.remove(node)
-        visited.add(node)
-        return True
-
-    visited = set()
-    stack = set()
-    for node in node_array:
-        if node not in visited:
-            if not can_visit(node, visited, stack):
-                return False
-    return True
+        dag_dict = {}
+        dag_dict['key'] = self.key
+        dag_dict['is_running'] = self.is_running
+        return dag_dict

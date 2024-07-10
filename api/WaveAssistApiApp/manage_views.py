@@ -110,6 +110,13 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
         data_run_object = DataRuns.objects.create(project_object=project_object, data_run_key = data_run_key, name=data_run_name, is_enabled=True)
         data_run_object.save()
 
+        ##Add a test datarun to project
+        data_run_name_test = 'Test'
+        data_run_key_test = project_key + '_' + data_run_name_test.lower()
+        data_run_test_object = DataRuns.objects.create(project_object=project_object, data_run_key = data_run_key_test, name=data_run_name_test, is_enabled=True)
+        data_run_test_object.save()
+
+
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project creation failed: ' + str(e))
 
@@ -119,13 +126,18 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
 
         data_run_access_object = AccessProvided.objects.create(type=1, data_run_object=data_run_object, user_object = user_object, data_run_access_type=ADMIN_GTE)
         data_run_access_object.save()
+
+        ##Same for test
+        data_run_access_object_test = AccessProvided.objects.create(type=1, data_run_object=data_run_test_object, user_object = user_object, data_run_access_type=ADMIN_GTE)
+        data_run_access_object_test.save()
+
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project access creation failed: ' + str(e))
 
     return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
 
 
-
+##ToDo: This API needs to be deprecated.
 def fetch_project_data(request): #TCW
     ##Validate Request
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=READ_GTE)
@@ -199,17 +211,15 @@ def fetch_nodes(request):  # TCW
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    ##Get data for project
-    project_dict = project_object.get_dict()
+
 
     ##Nodes
-    node_array = project_object.nodes_set.filter(is_enabled=True).order_by(Lower('node_key'))
+    node_array = project_object.nodes_set.all().order_by(Lower('node_key'))
     node_dict_array = []
     for node_object in node_array:
         node_dict_array.append(node_object.get_dict())
-    project_dict['node_array'] = node_dict_array
-
-    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Nodes fetched successfully.')
+    data_dict = {'node_array': node_dict_array}
+    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Nodes fetched successfully.')
 
 
 def fetch_dashboard_sections(request):  # TCW
@@ -232,7 +242,7 @@ def fetch_dashboard_sections(request):  # TCW
     return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Dashboard Sections fetched successfully.')
 
 
-def fetch_project_environments(request):  # TCW
+def fetch_environments(request):  # TCW
     ##Validate Request
     success, message, user_object, project_object = validator.validate_user_and_project(request,
                                                                                         access_level_gte=READ_GTE)
@@ -240,7 +250,6 @@ def fetch_project_environments(request):  # TCW
         return ResponseParser.getParsedErrorMessage(message)
 
     ##Get data for project
-    project_dict = project_object.get_dict()
 
     ##Provide data runs which user has access to, and belong to this project.
     data_run_array = DataRuns.objects.filter(accessprovided__type=1,
@@ -251,9 +260,9 @@ def fetch_project_environments(request):  # TCW
     data_run_dict_array = []
     for data_run_object in data_run_array:
         data_run_dict_array.append(data_run_object.get_dict())
-    project_dict['environment_array'] = data_run_dict_array
 
-    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project Environment fetched successfully.')
+    data_dict = {'environment_array': data_run_dict_array}
+    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Project Environment fetched successfully.')
 
 
 def get_build_details(request):  # TCW
@@ -385,12 +394,9 @@ def create_node(request): ##TCW
     if not success:
         return ResponseParser.getParsedErrorMessage('Output data keys should belong to this project: ' + message)
 
-    node_key = request.POST.get('node_key', '')
+    node_name = request.POST.get('name', '')
+    node_key = "node_" + project_object.project_key + "_" + node_name.lower().replace(' ', '_')
     is_enabled = bool(int(request.POST.get('is_enabled', '0')))
-
-    ## Validate Key
-    if not node_key.lower().startswith(project_object.project_key.lower() + '_'):
-        return ResponseParser.getParsedErrorMessage('Key should start with project key + _')
 
     is_starting_node = bool(int(request.POST.get('is_starting_node', '0')))
     schedule_type = request.POST.get('schedule_type', 'none').lower()
@@ -400,7 +406,6 @@ def create_node(request): ##TCW
 
     try:
         with transaction.atomic():
-
             node_object = Nodes(
                 project_object=project_object,
                 node_key=node_key,
@@ -466,6 +471,10 @@ def update_node(request): ## TCW
 
             is_enabled = bool(int(request.POST.get('is_enabled', node_object.is_enabled)))
             node_object.is_enabled = is_enabled
+
+            name = request.POST.get('name', node_object.name)
+            node_object.name = name
+
 
             ##Interval & Schedules
             if 'schedule_type' in request.POST or 'run_after_nodes_csv' in request.POST:

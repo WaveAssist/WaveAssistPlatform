@@ -63,8 +63,6 @@ class LoginTestCase(TestCase):
         })
 
 
-
-
         response = login(request)
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
@@ -87,10 +85,10 @@ class LoginTestCase(TestCase):
         for project in project_array:
             if project['project_key'] == 'Project 1':
                 self.assertEqual(len(project['data_run_array']), 1)
-                self.assertEqual(project['data_run_array'][0]['data_run_key'], 'Data Run 1')
+                self.assertEqual(project['data_run_array'][0]['key'], 'Data Run 1')
             elif project['project_key'] == 'Project 2':
                 self.assertEqual(len(project['data_run_array']), 1)
-                self.assertEqual(project['data_run_array'][0]['data_run_key'], 'Data Run 2')
+                self.assertEqual(project['data_run_array'][0]['key'], 'Data Run 2')
 
     def test_login_invalid_password(self):
         request = self.factory.post('/login', {
