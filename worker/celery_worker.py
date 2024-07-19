@@ -4,11 +4,17 @@ from Engine.TaskRunner import TaskRunner
 from Engine.MongoManager import MongoManager
 import Utils.utils as utils
 from celery import chain, group, signature, chord
+import os
+from celery_singleton import Singleton
+##ToDo: Test singleton
+
+BROKER_URL = os.getenv('BROKER_URL', 'redis://redis:6379/0')
+BACKEND_URL = os.getenv('BACKEND_URL', BROKER_URL)
 
 # Setup Celery
 app = Celery('waveassist',
-             broker='amqp://waveassist:REMOVED_CREDENTIAL@rabbitmq:5672/',
-             backend='redis://redis:6379/0')
+             broker=BROKER_URL,
+             backend=BACKEND_URL)
 
 # Setup MongoManager
 mongo_manager = MongoManager()
@@ -24,8 +30,8 @@ def run_task(*args, task_dict=None, collection_key=None, **kwargs):
         raise e
 
 
-@app.task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
-def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, **kwargs):
+@app.task(base=Singleton, unique_on=['dag_key', ], lock_expiry=600, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
+def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, dag_key=None, **kwargs):
         try:
             ##ToDo: This function can be optimised by using a DFS or similar approach to generate the workflow for the DAG
             ##ToDo: Figure out a way to have celery beat run after previous completion. or limit queue length
