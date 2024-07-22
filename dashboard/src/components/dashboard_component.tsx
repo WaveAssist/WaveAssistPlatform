@@ -11,9 +11,8 @@ import { AgGridReact } from "ag-grid-react";
 import { ColDef, GridOptions, GridReadyEvent } from "ag-grid-community";
 import "firebase/compat/auth";
 import axios from "axios";
-import "./project/ag-grid-theme-builder.css";
 import "./dashboard_component.css";
-
+import "../utils/ag-grid-theme-builder.css";
 interface DashboardProps {}
 
 const Dashboard: React.FC<DashboardProps> = () => {
