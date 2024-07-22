@@ -1,0 +1,32 @@
+
+.custom-dropdown .dropdown-toggle {
+    padding: 0.25rem 1.25rem;
+    line-height: 1.25;
+  }
+  
+
+  /* Custom styles for dark theme dropdown */
+.custom-dropdown-menu {
+  background-color: #1A2430 !important; /* Card color */
+  border: none;
+}
+
+.custom-dropdown-menu .dropdown-item {
+  color: #ffffff; /* Text color */
+}
+
+.custom-dropdown-menu .dropdown-item:hover {
+  background-color: #232F42; /* Card hover color */
+  color: #ffffff; /* Text color on hover */
+}
+
+.text-header-dropdown{
+  color: #646c7a;
+  font-size: 0.775rem; /* or any other desired size */
+  padding-left: 10px;
+}
+
+
+.dropdown-item.active {
+    background-color: #428d4f !important;
+  }

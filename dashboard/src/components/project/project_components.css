@@ -1,0 +1,58 @@
+
+.translucent_white{
+    color: rgba(255,255,255,0.80) !important;
+  }
+  html, body, #root, .main-container {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.mt-3 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.grid-container {
+    flex-grow: 1;
+    width: 100%;
+}
+
+
+.badge-primary {
+    background-color: #428d4f;
+    color: white;
+  }
+  
+  .badge-danger {
+    background-color: #d9534f;
+    color: white;
+  }
+  .badge-container {
+    display: inline-flex;
+    flex-direction: column;
+  }
+  
+  .badge-secondary{
+    background-color: #232F42;
+    color: white;
+  }
+
+  .ag-cell {
+    padding-left: 15px !important; /* Adjust the padding value as needed */
+    padding-right: 5px !important; /* Adjust the padding value as needed */
+    padding-top: 10px !important; /* Adjust the padding value as needed */
+    padding-bottom: 10px !important; /* Adjust the padding value as needed */
+    line-height: 1.3 !important; /* Adjust the line-height as needed */
+
+}
+
+

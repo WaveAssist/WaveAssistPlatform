@@ -1,0 +1,124 @@
+.base_component {
+    background-color: #141721;
+    height: 100vh;
+    overflow: auto; /* Add overflow property for scrolling */
+  }
+  
+  .add_button {
+    padding: 3px 10px !important;
+    float: right;
+  }
+  
+  .modal-dark .modal-content {
+    background-color: #141721;
+    color: #fff;
+  }
+  
+  .modal-dark .close {
+    color: #fff;
+  }
+  
+  .form-group-inline {
+    align-items: center;
+  }
+  
+  .form-group-inline label {
+    margin-right: 10px;
+    color: #999;
+  }
+  
+  .form-group-inline input {
+    border: none;
+    background-color: transparent;
+    color: #fff;
+    border-bottom: 1px solid #fff;
+  }
+  
+  /* Table */
+  .stock-table {
+    color: #fff;
+    margin-top: 10px;
+    margin-bottom: 50px;
+    background-color: inherit;
+    width: 100%;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 12px;
+  }
+  
+  .table-header-row {
+    text-align: center;
+    border-bottom: 0.5px solid #ddd;
+    background-color: #222;
+  }
+  
+  .table-row:nth-child(even) {
+    background-color: #151720;
+  }
+  
+  .table-row:nth-child(odd) {
+    background-color: #1b1d26;
+  }
+  
+  .stock-table th,
+  .stock-table td {
+    padding: 4px;
+    text-align: center;
+    border-bottom: 0.5px solid #ddd;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: auto;
+  }
+  
+  .stock-table th {
+    background-color: #222;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  
+  /* Title section */
+  .data-row {
+    margin-top: 20px;
+    display: flex;
+  }
+  
+  .data-col {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+  }
+  
+  .data-title {
+    font-weight: bold;
+    color: #fff;
+  }
+  
+  .data-value {
+    margin-top: 5px;
+    color: #fff;
+  }
+  
+  .separator {
+    border-top: 1px solid #fff; /* Set the desired line properties */
+    margin-top: 25px;
+    margin-bottom: 25px;
+    width: 100%;
+  }
+  
+  .data-title {
+    font-weight: bold;
+    color: #fff;
+    font-size: 20px;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .col-class {
+    max-width: 100%;
+    padding: 20px;
+    overflow: auto;
+  }
+  
+  .col-class-first {
+    padding-left: 20px !important;
+  }
