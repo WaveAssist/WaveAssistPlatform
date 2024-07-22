@@ -1,0 +1,35 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "deploy" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Log in to Amazon ECR
+      env:
+        AWS_REGION: us-east-1
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 713358430452.dkr.ecr.us-east-1.amazonaws.com
+
+    - name: Build the Docker image
+      run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_django_backend:latest
+
+    - name: Tag the Docker image
+      run: docker tag waveassist_django_backend:latest 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_django_backend:latest
+
+    - name: Push the Docker image to ECR
+      run: docker push 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_django_backend:latest
+
+
+
+
+
+      
