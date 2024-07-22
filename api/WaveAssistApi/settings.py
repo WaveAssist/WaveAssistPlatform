@@ -34,6 +34,7 @@ CSRF_TRUSTED_ORIGINS = ['https://*.waveassist.io', 'https://*.127.0.0.1', 'http:
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
+
 # Application definition
 
 INSTALLED_APPS = [
