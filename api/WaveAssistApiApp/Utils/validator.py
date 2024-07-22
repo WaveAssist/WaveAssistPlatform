@@ -143,7 +143,7 @@ def validate_user_and_data_run(request, access_level_gte=1):
 
 
 
-def validate_user_and_published_run(request, access_level_gte=1):
+def validate_user_and_deployment(request, access_level_gte=1):
     uid = request.POST.get('uid', '')
     try:
         user_object = User.objects.get(uid=uid)
@@ -151,18 +151,18 @@ def validate_user_and_published_run(request, access_level_gte=1):
         return False, 'User not found', None, None
 
 
-    published_run_key = request.POST.get('published_run_key', '')
+    deployment_key = request.POST.get('deployment_key', '')
     try:
-        published_run_object = PublishedRuns.objects.get(key=published_run_key)
+        deployment_object = Deployments.objects.get(key=deployment_key)
     except:
-        return False, 'Published Run not found', None, None
+        return False, 'Deployment not found', None, None
 
-    data_run_object = published_run_object.data_run_object
+    data_run_object = deployment_object.data_run_object
 
     if not utils.does_user_have_access_to_data_run(user_object, data_run_object, access_type=access_level_gte):
-        return False, 'You do not have access to this published run as you do not have access to the data run', None, None
+        return False, 'You do not have access to this deployment as you do not have access to the data run', None, None
 
-    return True, '', user_object, published_run_object
+    return True, '', user_object, deployment_object
 
 
 

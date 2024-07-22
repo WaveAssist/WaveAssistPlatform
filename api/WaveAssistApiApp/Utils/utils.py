@@ -199,17 +199,17 @@ def get_data_and_dependencies_for_dag(project_object, node_array):
 
 
 
-def stop_published_run(published_run):
+def stop_deployment(deployment_object):
     try:
         with transaction.atomic():
-            published_run.is_running = False
-            for dag in published_run.dag_set.all():
+            deployment_object.is_running = False
+            for dag in deployment_object.dag_set.all():
                 dag.periodic_task.enabled = False
                 dag.periodic_task.save()
                 dag.is_running = False
                 dag.save()
-            published_run.save()
+            deployment_object.save()
     except Exception as e:
         print(f"An error occurred: {e}")
-        raise Exception("Could not stop the PublishedRun: " + str(e))
+        raise Exception("Could not stop the Deployment: " + str(e))
 

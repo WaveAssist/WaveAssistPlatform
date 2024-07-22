@@ -11,12 +11,11 @@ RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
-
 # Copy the requirements file into the container
 COPY requirements.txt ./
 
 # Install any necessary dependencies
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the entire Django project into the container
 COPY . .
@@ -24,8 +23,5 @@ COPY . .
 # Expose port 8000 to the host
 EXPOSE 8000
 
-# Collect static files (if needed)
-RUN python manage.py collectstatic --noinput
-
-# Start the Django development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Start the Gunicorn server to serve the Django application ##ToDo: Shift to supervisor
+CMD ["sh", "-c", "celery -A WaveAssistApi beat --loglevel=info & gunicorn --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application"]

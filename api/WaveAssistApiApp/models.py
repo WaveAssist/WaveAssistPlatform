@@ -301,7 +301,7 @@ class DashboardSection(models.Model):
         verbose_name_plural = 'DashboardSection'
 
 
-class PublishedRuns(models.Model):
+class Deployments(models.Model):
     id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True, null=True)
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
@@ -310,21 +310,26 @@ class PublishedRuns(models.Model):
     is_running = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = "WaveAssist_Deployments"
+        verbose_name = 'Deployment'
+        verbose_name_plural = 'Deployments'
+
     def __str__(self):
-        return f"PublishedRuns: {self.id} ({self.key}))"
+        return f"Deployments: {self.id} ({self.key}))"
 
     def get_dict(self):
-        published_run_dict = {}
-        published_run_dict['key'] = self.key
-        published_run_dict['version'] = self.version
-        published_run_dict['is_running'] = self.is_running
-        return published_run_dict
+        deployments_dict = {}
+        deployments_dict['key'] = self.key
+        deployments_dict['version'] = self.version
+        deployments_dict['is_running'] = self.is_running
+        return deployments_dict
 
 
 class DAG(models.Model):
     id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True, null=True)
-    parent_run = models.ForeignKey('PublishedRuns', on_delete=models.CASCADE)
+    parent_deployment = models.ForeignKey('Deployments', on_delete=models.CASCADE)
     periodic_task = models.ForeignKey('django_celery_beat.PeriodicTask', on_delete=models.CASCADE, null=True)
     is_running = models.BooleanField(default=True)
     start_node = models.ForeignKey('Nodes', on_delete=models.SET_NULL, related_name='start_node', null=True, blank=True)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, AccessProvided, Integrations, DataKey, Project, DataRuns, Nodes, DashboardSection, DAG, PublishedRuns
+from .models import User, AccessProvided, Integrations, DataKey, Project, DataRuns, Nodes, DashboardSection, DAG, Deployments
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -58,8 +58,8 @@ class DashboardSectionAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'created_at')
 
 
-@admin.register(PublishedRuns)
-class PublishedRunsAdmin(admin.ModelAdmin):
+@admin.register(Deployments)
+class DeploymentsAdmin(admin.ModelAdmin):
     list_display = ('id', 'key', 'project_object', 'data_run_object', 'version', 'is_running', 'created_at')
     search_fields = ('key', 'version', 'project_object__name', 'data_run_object__name')
     list_filter = ('is_running', 'created_at')
@@ -72,12 +72,12 @@ class PublishedRunsAdmin(admin.ModelAdmin):
 
 @admin.register(DAG)
 class DAGAdmin(admin.ModelAdmin):
-    list_display = ('id', 'key', 'parent_run', 'periodic_task', 'is_running', 'start_node', 'created_at')
-    search_fields = ('key', 'parent_run__key', 'periodic_task__name', 'start_node__name')
+    list_display = ('id', 'key', 'parent_deployment', 'periodic_task', 'is_running', 'start_node', 'created_at')
+    search_fields = ('key', 'periodic_task__name', 'start_node__name')
     list_filter = ('is_running', 'created_at')
     readonly_fields = ('id', 'created_at')
 
     def get_readonly_fields(self, request, obj=None):
         if obj:  # editing an existing object
-            return self.readonly_fields + ('parent_run', 'key')
+            return self.readonly_fields + ('parent_deployment', 'key')
         return self.readonly_fields

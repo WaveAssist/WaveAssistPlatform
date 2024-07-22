@@ -24,13 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'REMOVED_CREDENTIAL'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-IS_DOCKER=False
+IS_DOCKER=True
 
-
-ALLOWED_HOSTS = ['wavepredictbackend.us-east-1.elasticbeanstalk.com','*','api.wavepredict.com']
-CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:4200','https://dashboard.wavepredict.com','http://localhost:4200']
+ALLOWED_HOSTS = ['wavepredictbackend.us-east-1.elasticbeanstalk.com','*','api.wavepredict.com', 'https://app.waveassist.io', 'https://api.waveassist.io']
+CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:4200','https://dashboard.wavepredict.com','http://localhost:4200','https://app.waveassist.io', 'https://api.waveassist.io']
+CSRF_TRUSTED_ORIGINS = ['https://*.waveassist.io', 'https://*.127.0.0.1', 'http://*.127.0.0.1', 'https://*.wavepredict.com']
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -83,40 +84,20 @@ WSGI_APPLICATION = 'WaveAssistApi.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# #Temporary postgres connect
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#         'NAME': 'test_db',
-#         'USER': 'odoo',
-#         'PASSWORD': 'odoo',
-#     }
-# }
 
 
-host_name = '0.0.0.0'
-if IS_DOCKER:
-    host_name = 'mysql'
-##Connect to MYSQL on local host
+default_sqlite_path = os.path.join(BASE_DIR, 'mysqlite3.db')
+SQLITE_PATH = os.getenv('SQLITE_PATH',default_sqlite_path )
+
+## Connect to SQLite on local host
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'waveassistdb',
-        'USER':'waveassist',
-        'PASSWORD': 'REMOVED_CREDENTIAL',
-        'HOST': host_name, ##Change to mysql for docker run
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': SQLITE_PATH,
     }
 }
 
-
-
-MONGO_CONNECTION_STRING = "REMOVED_CREDENTIAL"
-if IS_DOCKER:
-    MONGO_CONNECTION_STRING = "REMOVED_CREDENTIAL"
-
+MONGO_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING', 'REMOVED_CREDENTIAL')
 
 
 
@@ -163,3 +144,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

@@ -111,7 +111,6 @@ class MongoManager:
             return []
 
 
-
     ## Fetch data for multiple keys, return an empty list if no data exists.
     def fetch_data_for_keys_array(self, io_keys_array):
         try:

@@ -5,11 +5,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'WaveAssistApi.settings')
 from celery import Celery
 from django.conf import settings
 
+BROKER_URL = os.getenv('BROKER_URL', 'redis://redis:6379/0')
+BACKEND_URL = os.getenv('BACKEND_URL', BROKER_URL)
 
 # Configure the Django version of the Celery app to use the same broker and backend
 app = Celery('WaveAssistApi',
-             broker='amqp://waveassist:REMOVED_CREDENTIAL@rabbitmq:5672/',
-             backend='redis://redis:6379/0')
+             broker=BROKER_URL,
+             backend=BACKEND_URL)
+
 
 # Load Celery settings from Django settings, the namespace 'CELERY' means all celery-related configuration keys
 # should have a `CELERY_` prefix in your Django settings file
