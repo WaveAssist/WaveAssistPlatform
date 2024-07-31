@@ -4,7 +4,6 @@ from Utils.Logger import Logger
 ##Logger
 logger = Logger()
 
-
 ##ToDo: Check if this function handles all cases.
 def generate_flow_layers(dependencies_dict):
     try:
