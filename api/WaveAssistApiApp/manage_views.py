@@ -410,6 +410,7 @@ def create_node(request): ##TCW
                 project_object=project_object,
                 node_key=node_key,
                 is_enabled=is_enabled,
+                name = node_name,
                 is_starting_node=is_starting_node,
                 schedule_type=schedule_type,
                 interval_schedule=interval_object,

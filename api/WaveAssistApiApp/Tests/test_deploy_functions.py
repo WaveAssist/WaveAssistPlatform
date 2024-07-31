@@ -84,11 +84,15 @@ class BuildTestCase(TestCase):
         self.node_a.interval_schedule = self.interval_object
         self.node_a.save()
 
-
-        self.node_e.interval_schedule = self.interval_object
+        self.cron_object = CrontabSchedule.objects.create(
+            minute='0',
+            hour='0',
+            day_of_week='*',
+            day_of_month='*',
+            month_of_year='*'
+        )
+        self.node_e.crontab_schedule = self.cron_object
         self.node_e.save()
-
-
 
         self.input_data_key = DataKey.objects.create(key='valid_input_key', project_object=self.project)
         self.output_data_key = DataKey.objects.create(key='valid_output_key', project_object=self.project)
@@ -132,6 +136,13 @@ class BuildTestCase(TestCase):
         periodic_task = dags[0].periodic_task
         self.assertEqual(periodic_task.interval, self.interval_object)
         self.assertEqual(periodic_task.task, 'celery_worker.run_dag')
+
+
+        ##Assert that the PeriodicTask is created properly for the second DAG
+        periodic_task2 = dags[1].periodic_task
+        self.assertEqual(periodic_task2.crontab, self.cron_object)
+        self.assertEqual(periodic_task2.task, 'celery_worker.run_dag')
+
 
         ##Assert kwargs has collection_key as data_run_1
         kwargs_json = json.loads(periodic_task.kwargs)
@@ -441,4 +452,15 @@ class BuildTestCase(TestCase):
         self.assertFalse(dags[0].periodic_task.enabled)
         self.assertFalse(dags[1].periodic_task.enabled)
 
+    def test_run_dag_function(self):
+        request = self.factory.post('/run_dag', {
+            'uid': self.admin_uid,
+            'project_key': 'test_project_key',
+            'data_run_key': 'data_run_1',
+            'start_node_key':'node_a'
+        })
+        response = run_dag(request)
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.content)
+        self.assertEqual(response_data['message'], 'Successfully started the DAG')
 

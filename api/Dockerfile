@@ -23,5 +23,8 @@ COPY . .
 # Expose port 8000 to the host
 EXPOSE 8000
 
-# Start the Gunicorn server to serve the Django application ##ToDo: Shift to supervisor
-CMD ["sh", "-c", "celery -A WaveAssistApi beat --loglevel=info & gunicorn --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application"]
+# Expose port 5555 for Celery Flower
+EXPOSE 5555
+
+# Start the Gunicorn server to serve the Django application ##ToDo: Shift to supervisor if needed.
+CMD ["./start.sh"]
