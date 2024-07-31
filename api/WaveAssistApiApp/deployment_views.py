@@ -11,7 +11,7 @@ from WaveAssistApi.celery import app
 from celery import chain, group
 from kombu.serialization import dumps
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
-import datetime
+from datetime import datetime
 
 ##ToDo: Runs API pending.
 ##ToDo: Logs pending.
@@ -74,15 +74,14 @@ def deploy_project(request): ##TCW
 
             ##Create DAGs for the run, iterate through dag_dict
             for start_node, node_list in dag_dict.items():
-                interval_schedule = start_node.interval_schedule
-
                 ##Create DAG object
                 dag_key = "DAG_" + start_node.node_key + '_' + deployment_key
                 dag_object = DAG.objects.create(
                     key = dag_key,
                     start_node = start_node,
                     is_running = True,
-                    interval_schedule = interval_schedule,
+                    interval_schedule = start_node.interval_schedule,
+                    crontab_schedule = start_node.crontab_schedule,
                     parent_deployment = deployment_object
                 )
                 dag_object.save()
@@ -98,7 +97,8 @@ def deploy_project(request): ##TCW
                 })
 
                 periodic_task = PeriodicTask.objects.create(
-                    interval= interval_schedule,  # Link the schedule
+                    interval= start_node.interval_schedule,  # Link the schedule
+                    crontab= start_node.crontab_schedule,  # Link the schedule
                     name=dag_key,  # Name of the periodic task
                     task='celery_worker.run_dag',  # Use 'celery.chain' for chaining tasks
                     kwargs=dag_kwargs,  # Serialize the workflow
@@ -129,3 +129,61 @@ def stop_deployment(request): ##TCW
     output_dict = {'deployment': deployment_object.get_dict()}
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully stopped the deployment.')
+
+
+
+def run_dag(request): ##TCW
+    ##Inputs are uid, project_key, data_run_key & start_node_key
+    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    success, message, user_object, data_run_object = validator.validate_user_and_data_run(request, ADMIN_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    start_node_key = request.POST.get('start_node_key', None)
+    try:
+        start_node = Nodes.objects.get(node_key=start_node_key, project_object=project_object, is_enabled=True, is_starting_node=True)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Error in fetching the start node, or invalid start node: ' + str(e))
+
+    all_nodes = project_object.nodes_set.filter(is_enabled=True)
+    success, node_list, message = utils.check_dag(start_node, all_nodes)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    #### ------ Validations End -------- ####
+
+    ##Create DAG object
+    dag_key = "DAG_" + start_node.node_key + '_test_run_' + data_run_object.data_run_key + '_' + str(datetime.now())
+    dag_object = DAG.objects.create(
+        key = dag_key,
+        start_node = start_node,
+        is_running = True,
+    )
+    dag_object.save()
+    dag_object.node_array.set(node_list)
+    dag_object.save()
+
+    data_dict, dependency_dict = utils.get_data_and_dependencies_for_dag(project_object, node_list)
+    dag_kwargs = {
+        'dependencies_dict': dependency_dict,
+        'data_dict': data_dict,
+        'collection_key': data_run_object.data_run_key,
+        'dag_key': dag_key,
+    }
+    result = app.send_task(DAG_TASK, kwargs=dag_kwargs)
+
+    output_dict = {'dag': dag_object.get_dict()}
+    output_dict['run_id'] = result.id
+
+
+    should_wait = bool(int(request.POST.get('should_wait', '0')))
+    if should_wait:
+        try:
+            output_dict['result'] = result.get(timeout=300)
+        except:
+            output_dict['result'] = 'Task is still running, check the status after some time.'
+
+    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully started the DAG')

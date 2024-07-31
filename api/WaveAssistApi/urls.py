@@ -73,6 +73,8 @@ urlpatterns = [
     ##Build URL's
     path("deploy/deploy_project/", csrf_exempt(deployment_views.deploy_project), name="deploy_project"),
     path("deploy/stop_deployment/", csrf_exempt(deployment_views.stop_deployment), name="stop_deployment"),
+    path("deploy/run_dag/", csrf_exempt(deployment_views.run_dag), name="run_dag"),
+
 
 ]
 

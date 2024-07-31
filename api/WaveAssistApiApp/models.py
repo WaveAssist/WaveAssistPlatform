@@ -209,12 +209,8 @@ class Nodes(models.Model):
     interval_schedule = models.ForeignKey(IntervalSchedule, null=True, blank=True, on_delete=models.CASCADE)
     crontab_schedule = models.ForeignKey(CrontabSchedule, null=True, blank=True, on_delete=models.CASCADE)
 
+
     run_after_nodes_array = models.ManyToManyField("Nodes", blank=True)
-
-    ##Test
-    test_status = models.IntegerField(default=0) ##0 is don't test, 1 is start test, 2 is test completed
-    test_output = models.TextField(default="")
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -329,12 +325,13 @@ class Deployments(models.Model):
 class DAG(models.Model):
     id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True, null=True)
-    parent_deployment = models.ForeignKey('Deployments', on_delete=models.CASCADE)
+    parent_deployment = models.ForeignKey('Deployments', on_delete=models.CASCADE, null=True)
     periodic_task = models.ForeignKey('django_celery_beat.PeriodicTask', on_delete=models.CASCADE, null=True)
     is_running = models.BooleanField(default=True)
     start_node = models.ForeignKey('Nodes', on_delete=models.SET_NULL, related_name='start_node', null=True, blank=True)
     node_array = models.ManyToManyField('Nodes', blank=True)
     interval_schedule = models.ForeignKey('django_celery_beat.IntervalSchedule', on_delete=models.PROTECT, null=True)
+    crontab_schedule = models.ForeignKey(CrontabSchedule, null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f"DAG: ({self.id})"

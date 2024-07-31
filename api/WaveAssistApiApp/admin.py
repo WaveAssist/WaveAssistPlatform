@@ -45,9 +45,9 @@ class DataRunsAdmin(admin.ModelAdmin):
 
 @admin.register(Nodes)
 class NodesAdmin(admin.ModelAdmin):
-    list_display = ('id', 'node_key', 'project_object', 'is_enabled', 'is_starting_node', 'schedule_type', 'test_status', 'created_at')
+    list_display = ('id', 'node_key', 'project_object', 'is_enabled', 'is_starting_node', 'schedule_type', 'created_at')
     search_fields = ('node_key', 'project_object__project_key')
-    list_filter = ('is_enabled', 'is_starting_node', 'schedule_type', 'test_status', 'created_at')
+    list_filter = ('is_enabled', 'is_starting_node', 'schedule_type', 'created_at')
     readonly_fields = ('id', 'created_at')
 
 @admin.register(DashboardSection)
