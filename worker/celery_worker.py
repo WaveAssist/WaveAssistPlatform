@@ -8,7 +8,7 @@ import os
 from celery_singleton import Singleton
 ##ToDo: Test singleton
 
-BROKER_URL = os.getenv('BROKER_URL', 'redis://redis:6379/0')
+BROKER_URL = os.getenv('BROKER_URL', 'redis://localhost:6379/0')
 BACKEND_URL = os.getenv('BACKEND_URL', BROKER_URL)
 
 # Setup Celery
@@ -53,7 +53,8 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
                 workflow_array.append(current_layer_group)
 
             workflow = chain(*workflow_array)
-            workflow.apply_async()
+            result = workflow.apply_async()
+            output = result.get()  # This will wait indefinitely until the task is done
             return True
         except Exception as e:
             utils.logger.error(f"Error in processing DAG: {e}")
