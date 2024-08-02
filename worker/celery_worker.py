@@ -6,6 +6,8 @@ import Utils.utils as utils
 from celery import chain, group, signature, chord
 import os
 from celery_singleton import Singleton
+import time
+
 ##ToDo: Test singleton
 
 BROKER_URL = os.getenv('BROKER_URL', 'redis://localhost:6379/0')
@@ -54,7 +56,15 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
 
             workflow = chain(*workflow_array)
             result = workflow.apply_async()
-            output = result.get()  # This will wait indefinitely until the task is done
+
+            interval = 0.1
+            max_interval = 5
+            growth_factor = 1.2
+            while not result.ready():
+                time.sleep(interval)
+                interval = min(interval * growth_factor, max_interval)
+
+
             return True
         except Exception as e:
             utils.logger.error(f"Error in processing DAG: {e}")
