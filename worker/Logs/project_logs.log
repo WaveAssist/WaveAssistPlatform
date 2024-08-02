@@ -1,0 +1,182 @@
+Starting Node: Predictions_GenerateOutput
+Node "Predictions_GenerateOutput" started
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Starting Node: node_a
+Code run completed for node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_b
+Starting Node: node_c
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_b
+Code run completed for node: node_c
+Code run completed for node: node_c
+Starting Node: node_d
+Starting Node: node_d
+Code run completed for node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Starting Node: node_a
+Code run completed for node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_b
+Starting Node: node_c
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_b
+Code run completed for node: node_c
+Code run completed for node: node_c
+Starting Node: node_d
+Starting Node: node_d
+Code run completed for node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_c
+Code run completed for node: node_b
+Starting Node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Error in processing DAG: Never call result.get() within a task!
+See https://docs.celeryq.dev/en/latest/userguide/tasks.html#avoid-launching-synchronous-subtasks
+
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_c
+Code run completed for node: node_b
+Starting Node: node_d
+Code run completed for node: node_d
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Starting Node: node_e
+Code run completed for node: node_e
+Starting Node: node_f
+Code run completed for node: node_f
+Starting Node: node_a
+Code run completed for node: node_a
+Starting Node: node_b
+Starting Node: node_c
+Code run completed for node: node_b
+Code run completed for node: node_c
+Starting Node: node_d
+Code run completed for node: node_d
+Starting Node: node_e
+Code run completed for node: node_e
+Starting Node: node_f
+Code run completed for node: node_f
