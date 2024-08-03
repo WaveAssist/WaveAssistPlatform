@@ -1,16 +1,11 @@
 asgiref==3.6.0
 backports.zoneinfo==0.2.1
-Django==4.1.13
-sqlparse==0.4.4
-mysqlclient==2.0.3
+Django==4.2
 django-cors-headers==3.14.0
-firebase-admin==6.1.0
 django-redis==5.2.0
 numpy==1.21.5
 pandas==2.0.3
 pymongo==3.12.1
-kiteconnect==4.2.0
-pyotp==2.9.0
 boto3==1.28.58
 celery==5.4.0
 django-celery-beat==2.6.0
@@ -18,4 +13,3 @@ django-redis==5.2.0
 flower==2.0.1
 whitenoise==6.0.0
 gunicorn==22.0.0
-

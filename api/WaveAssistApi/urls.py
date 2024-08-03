@@ -65,10 +65,6 @@ urlpatterns = [
     path("data/fetch_data_for_key/", csrf_exempt(data_views.fetch_data_for_key), name="fetch_data_for_key"),
     path("data/set_data_for_key/", csrf_exempt(data_views.set_data_for_key), name="set_data_for_key"),
 
-    ##Integration URL's
-    path("integration/upload_file_to_s3/", csrf_exempt(integration_views.upload_file_to_s3), name="upload_file_to_s3"),
-    path("integration/zerodha_redirect/", csrf_exempt(integration_views.zerodha_redirect), name="zerodha_redirect"),
-
 
     ##Build URL's
     path("deploy/deploy_project/", csrf_exempt(deployment_views.deploy_project), name="deploy_project"),

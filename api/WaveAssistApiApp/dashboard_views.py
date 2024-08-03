@@ -8,8 +8,6 @@ from WaveAssistApiApp.Utils.MongoManager import MongoManager
 import pandas as pd
 from io import StringIO as StringIO
 from .Utils.constants import *
-from .Utils.firebase_auth import verify_token
-from kiteconnect import KiteConnect
 import WaveAssistApiApp.Utils.utils as utils
 import WaveAssistApiApp.Utils.validator as validator
 from WaveAssistApi.celery import app
