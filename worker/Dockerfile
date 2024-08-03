@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM --platform=linux/amd64 python:3.8-slim
+FROM --platform=linux/amd64 python:3.10-slim
 
 # Set the working directory in the container
 WORKDIR /app
