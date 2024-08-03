@@ -4,7 +4,10 @@ FROM --platform=linux/amd64 python:3.10-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Install required system packages
+# Install required system packages and Chrome
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY=:99
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     python3-dev \
@@ -33,16 +36,12 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon0 \
     libgbm-dev \
     xvfb \
+    && wget -O /tmp/google-chrome-stable_current_amd64.deb https://waveassistapps.s3.amazonaws.com/public/ZerodhaAutoLogin/google-chrome-stable_current_amd64.deb \
+    && apt-get install -y /tmp/google-chrome-stable_current_amd64.deb \
+    && apt-get install -f -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /tmp/google-chrome-stable_current_amd64.deb
 
-
-# install google chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-RUN apt-get -y update
-RUN apt-get install -y google-chrome-stable
-ENV DISPLAY=:99
 
 # Copy the requirements file into the container
 COPY requirements.txt ./
