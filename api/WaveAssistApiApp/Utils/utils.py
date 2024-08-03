@@ -11,6 +11,8 @@ import json
 ##Packages
 logger = Logger()
 
+from django.db.models.functions import Lower
+
 
 def does_user_have_access_to_project(client_object, project_object, access_gte=1):
     access_count = AccessProvided.objects.filter(user_object=client_object, project_object=project_object, type=0, project_access_type__gte=access_gte).count()
@@ -175,8 +177,10 @@ def get_task_dict_for_node(node_object):
     task_dict = {
         "node_key": node_object.node_key,
         "project_key": node_object.project_object.project_key,
-        "input_keys_array": [data_key_object.key for data_key_object in node_object.input_data_key_array.all()],
-        "output_keys_array": [data_key_object.key for data_key_object in node_object.output_data_key_array.all()]
+        "input_keys_array": [data_key_object.key for data_key_object in
+                             node_object.input_data_key_array.all().order_by(Lower('key'))],
+        "output_keys_array": [data_key_object.key for data_key_object in
+                              node_object.output_data_key_array.all().order_by(Lower('key'))]
     }
     return task_dict
 
