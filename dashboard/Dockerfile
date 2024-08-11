@@ -1,5 +1,5 @@
 # Stage 1: Build the React app
-FROM node:alpine AS build
+FROM --platform=linux/amd64 node:alpine AS build
 
 # Set the working directory
 WORKDIR /app
@@ -13,20 +13,23 @@ RUN npm install
 # Copy the app files
 COPY . .
 
-# Build the app
+# Build the app using Vite
 RUN npm run build
 
-# Stage 2: Serve the React app using http-server
-FROM node:alpine
+# Stage 2: Serve the React app using NGINX
+FROM --platform=linux/amd64 nginx:alpine
 
-# Install http-server
-RUN npm install -g http-server
+# Copy the build output to the NGINX directory
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy the build output to the http-server directory
-COPY --from=build /app/dist /usr/src/app
+# Remove default NGINX configuration file
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy custom NGINX configuration file
+COPY nginx.conf /etc/nginx/conf.d
 
 # Expose port 3000
 EXPOSE 3000
 
-# Start http-server
-CMD ["http-server", "/usr/src/app", "-p", "3000"]
+# Start NGINX
+CMD ["nginx", "-g", "daemon off;"]

@@ -8,6 +8,7 @@ import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 import { useNavigate } from "react-router-dom";
 import { fetchAllProjectsAPI, createProjectAPI, deleteProjectApi } from "../services/all_projects_services";
 import { useToast } from "../utils/toast_context";
+import "./all_projects_component.css";
 
 const AllProjectsComponent: React.FC = () => {
 	const [newProjectName, setNewProjectName] = useState("");
@@ -119,7 +120,7 @@ const AllProjectsComponent: React.FC = () => {
 
 					<div className="row ">
 						<div className="col-sm-4 project-card  " onClick={handleOpenModal}>
-							<div className="card text-white bg-dark mb-3 add-project-card">
+							<div className="card text-white bg-dark mb-3 ml-5 mr-5 add-project-card">
 								<div className="card-body d-flex align-items-center justify-content-center">
 									<div className="text-center">
 										<i className="bi bi-plus-lg add-icon translucent_blue fs-3"></i>
