@@ -3,13 +3,14 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
 import pytz
+from Utils.constants import *
 ist = pytz.timezone('Asia/Kolkata')
 
 class Mailer:
-    def __init__(self, from_email_address="support@waveassist.io", login_password='REMOVED_CREDENTIAL'):
+    def __init__(self, from_email_address=MAILER_FROM_EMAIL_ADDRESS, login_password=MAILER_LOGIN_EMAIL_PASSWORD):
         self.smtp_server = 'smtp.gmail.com'
         self.smtp_port = 587
-        self.login_email_address = 'kakshil.shah@waveassist.io'
+        self.login_email_address = MAILER_LOGIN_EMAIL
         self.login_password = login_password
         self.from_email_address = from_email_address
         self.sent_emails = []
