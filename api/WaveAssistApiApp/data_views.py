@@ -26,7 +26,7 @@ def upload_data_file(request):
     return set_data_for_key(request)
 
 
-def download_data_file(request):
+def download_data_file(request): ##ToDo: Remove this API
     ##Call fetch_data_for_key api with output_data_type as csv
     data_key = request.POST.get('data_key', '')
     request.POST = request.POST.copy()

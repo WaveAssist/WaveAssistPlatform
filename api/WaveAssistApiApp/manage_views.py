@@ -265,6 +265,29 @@ def fetch_environments(request):  # TCW
     return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Project Environment fetched successfully.')
 
 
+
+def fetch_deployments(request):  # Test cases pending
+    ##Validate Request
+    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=READ_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    ##Validate Request
+    success, message, user_object, data_run_object = validator.validate_user_and_data_run(request,
+                                                                                        access_level_gte=READ_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    deployment_array = Deployments.objects.filter(project_object=project_object, data_run_object=data_run_object).order_by('-version')
+
+    deployment_dict_array = []
+    for deployment_object in deployment_array:
+        deployment_dict_array.append(deployment_object.get_dict())
+    data_dict = {'deployment_array': deployment_dict_array}
+    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Deployments fetched successfully.')
+
+
+
 def get_build_details(request):  # TCW
     ##Validate Request
     success, message, user_object, project_object = validator.validate_user_and_project(request,
