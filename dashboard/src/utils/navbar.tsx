@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Navbar, Nav, Button } from "react-bootstrap";
+import { Navbar, Nav, Button, Modal } from "react-bootstrap";
 import "./navbar.css";
 import DarkDropdown from "./dark_dropdown";
-import { fetchEnvironmentsApi } from "../services/navbar_services";
+import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
 import { useToast } from "./toast_context";
 
 const NavbarComponent: React.FC = () => {
@@ -11,12 +11,14 @@ const NavbarComponent: React.FC = () => {
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
 	const envKeys = environmentArray.map((env) => env.key);
+	const [showModal, setShowModal] = useState(false);
 
 	const selectedProjectKey = localStorage.getItem("selected_project_key");
 	const projectsArray = JSON.parse(localStorage.getItem("projects_array") || "[]");
 	const projectKeys = projectsArray.map((project: any) => project.project_key);
 	const projectNames = projectsArray.map((project: any) => project.name + " - " + project.project_key);
 	const [selectedEnvName, setSelectedEnvName] = useState("Default");
+	const [versionCode, setVersionCode] = useState("");
 
 	useEffect(() => {
 		fetchEnvironments();
@@ -71,6 +73,29 @@ const NavbarComponent: React.FC = () => {
 	// 	return selectedEnv ? selectedEnv.name : "Select Environment";
 	// };
 
+	const handleOpenModal = () => {
+		setVersionCode("");
+		setShowModal(true);
+	};
+
+	const handleCloseModal = () => {
+		setVersionCode("");
+		setShowModal(false);
+	};
+
+	const handleDeployProject = async () => {
+		try {
+			// Add your deploy project logic here
+			console.log("Deploying project with version code:", versionCode);
+			await deployProjectApi(versionCode);
+			showToast("Project deployed successfully", "success");
+			handleCloseModal();
+		} catch (error) {
+			console.error("Deploy Project Failed:", error);
+			showToast("" + error, "danger");
+		}
+	};
+
 	return (
 		<Navbar variant="dark" expand="lg" className="px-3 navbar-main">
 			<Navbar.Toggle aria-controls="navbar-nav" />
@@ -92,16 +117,41 @@ const NavbarComponent: React.FC = () => {
 					/>
 				</Nav>
 				<Nav className="ms-auto">
-					<Button variant="dark" className="px-3 me-4 text-white">
+					{/* <Button variant="dark" className="px-3 me-4 text-white">
 						<i className="bi bi-play-fill me-2"></i>
 						Run
-					</Button>
-					<Button variant="dark" className="px-3 text-white">
+					</Button> */}
+					<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
 						<i className="bi bi-cloud-arrow-up-fill me-2"></i>
 						Deploy
 					</Button>
 				</Nav>
 			</Navbar.Collapse>
+
+			<Modal show={showModal} onHide={handleCloseModal}>
+				<Modal.Header closeButton>
+					<Modal.Title className="modal-title">Deploy Project - {selectedEnvName} Environment</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					<div className="mb-3">
+						<label htmlFor="projectNameInput" className="form-label">
+							Version Code
+						</label>
+						<input type="text" className="form-control" id="projectNameInput" value={versionCode} onChange={(e) => setVersionCode(e.target.value)} />
+						<div id="projectNameHelp" className="form-text model-text">
+							Deploying this project will stop existing deployments and replace them with this version.
+						</div>
+					</div>
+				</Modal.Body>
+				<Modal.Footer>
+					<Button variant="secondary" onClick={handleCloseModal}>
+						Close
+					</Button>
+					<Button variant="primary" onClick={handleDeployProject}>
+						Deploy
+					</Button>
+				</Modal.Footer>
+			</Modal>
 		</Navbar>
 	);
 };

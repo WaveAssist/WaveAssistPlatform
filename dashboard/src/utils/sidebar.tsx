@@ -24,7 +24,9 @@ const Sidebar = () => {
 	return (
 		<div className="side-div d-flex flex-column flex-shrink-0 p-3 vh-100">
 			<div className="d-flex flex-column align-items-center mb-4 me-md-auto text-white text-decoration-none w-100">
-				<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
+				<a href="/">
+					<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
+				</a>
 			</div>
 
 			<ul className="nav nav-pills flex-column mb-auto">
@@ -48,13 +50,20 @@ const Sidebar = () => {
 				</li>
 
 				<li className="nav-item">
+					<Link to="/manage/deployments" className={`nav-link ${location.pathname === "/manage/deployments" ? "active" : "text-white"} mb-1`}>
+						<i className="bi bi-cloud-arrow-up-fill me-2"></i>
+						Deployments
+					</Link>
+				</li>
+
+				{/* <li className="nav-item">
 					<Link
 						to="/manage/dashboard-layout"
 						className={`nav-link ${location.pathname === "/manage/dashboard-layout" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-grid-1x2-fill me-2"></i>
 						Dashboard Layout
 					</Link>
-				</li>
+				</li> */}
 			</ul>
 			<div>
 				<button className="btn btn-outline-light w-100" type="button" onClick={handleLogout}>

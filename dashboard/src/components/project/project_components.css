@@ -46,6 +46,11 @@
     color: white;
   }
 
+  .badge-important{
+    background-color: #709b27;
+    color: white;
+  }
+
   .ag-cell {
     padding-left: 15px !important; /* Adjust the padding value as needed */
     padding-right: 5px !important; /* Adjust the padding value as needed */

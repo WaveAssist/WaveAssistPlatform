@@ -1,0 +1,31 @@
+/* Modal CSS properties */
+
+/* Modal CSS */
+.modal-body {
+    background-color: #1d2733;
+    color: white;
+  }
+  
+  .modal-header {
+    background-color: #1d2733;
+    border-bottom: 1px solid #454d55;
+  }
+  
+  .modal-title {
+    color: white !important;
+  }
+  
+  .modal-close-button button.btn-close {
+    color: white !important;
+  }
+  
+  .model-text {
+    color: white !important;
+    
+  }
+  
+  .modal-footer {
+    background-color: #1d2733 !important;
+    border-top: 1px solid #454d55 !important;
+  }
+  

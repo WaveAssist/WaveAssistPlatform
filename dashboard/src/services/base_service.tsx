@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "https://api.waveassist.io";
+const BASE_URL = import.meta.env.VITE_DASHBOARD_BASE_URL || "https://api.waveassist.io";
 
 export const callApi = async (path: string, body: URLSearchParams): Promise<any> => {
 	const url = `${BASE_URL}/${path}`;
@@ -18,6 +18,18 @@ export const callApi = async (path: string, body: URLSearchParams): Promise<any>
 			var error_message = responseDict.message;
 			throw new Error(error_message);
 		}
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+};
+
+export const callApiRaw = async (path: string, body: URLSearchParams): Promise<any> => {
+	const url = `${BASE_URL}/${path}`;
+	const headers = { "Content-Type": "application/x-www-form-urlencoded" };
+	try {
+		const response = await axios.post(url, body, { headers });
+		return response;
 	} catch (error) {
 		console.error(error);
 		throw error;

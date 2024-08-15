@@ -1,15 +1,153 @@
 import React, { useEffect, useState } from "react";
-import { fetchNodesApi } from "../../services/project_services";
+import {
+	fetchNodesApi,
+	fetchVariablesApi,
+	updateCodeApi,
+	createNodeApi,
+	updateNodeApi,
+	deleteNodeApi,
+	runDAGApi,
+} from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
-import { Button } from "react-bootstrap";
+import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap";
 import { AgGridReact } from "ag-grid-react";
 import "./project_components.css";
 import type { GridOptions } from "ag-grid-community";
 import "../../utils/ag-grid-theme-builder.css";
+import Modal from "react-bootstrap/Modal";
+import Editor from "@monaco-editor/react";
+import { useForm, Controller } from "react-hook-form";
+import timezones from "../../utils/timezones.json";
+import { NodeType } from "../../utils/types";
 
 const NodesComponent: React.FC = () => {
+	// Setup react-hook-form
+	const defaultValuesDict: NodeType = {
+		name: "",
+		is_enabled: false,
+		is_starting_node: false,
+		schedule_type: "",
+		crontab_minutes: "*",
+		crontab_hours: "*",
+		crontab_days_of_month: "*",
+		crontab_months_of_year: "*",
+		crontab_days_of_week: "*",
+		crontab_timezone: "UTC",
+
+		interval_every: "",
+		interval_type: "",
+
+		input_data_key_array: [],
+		output_data_key_array: [],
+		run_after_nodes_array: [],
+	};
+
+	const {
+		register,
+		handleSubmit,
+		watch,
+		setValue,
+		reset,
+		control,
+		formState: { errors },
+	} = useForm({
+		defaultValues: defaultValuesDict,
+	});
+
+	const onSubmit = async (data: any) => {
+		console.log("Form Data:", data);
+
+		try {
+			if (selected_node_key === "") {
+				await createNodeApi(data);
+				showToast("Node created successfully.", "success");
+			} else {
+				await updateNodeApi(selected_node_key, data);
+				showToast("Node updated successfully.", "success");
+			}
+		} catch (error) {
+			console.error("FetchNodesApi failed:", error);
+			showToast("" + error, "danger");
+		}
+
+		setSelectedNodeKey("");
+		reset(defaultValuesDict);
+
+		handleClose();
+		fetchNodes();
+		setShowNodeEditor(false);
+	};
+
 	const [nodesArray, setNodesArray] = useState<any[]>([]);
+	const [variablesArray, setVariablesArray] = useState<any[]>([]);
+	const [loading, setLoading] = useState(false);
+
 	const { showToast } = useToast();
+	const [showCodeModal, setShowCodeModal] = useState(false);
+	const [selected_node_key, setSelectedNodeKey] = useState("");
+	const [modalCode, setModalCode] = useState('print("Hello, world!")');
+	const [showNodeEditor, setShowNodeEditor] = useState(false);
+
+	const handleClose = () => {
+		setSelectedNodeKey("");
+		setShowCodeModal(false);
+	};
+
+	const handleSave = async () => {
+		await updateCodeApi(selected_node_key, modalCode);
+		showToast("Code updated successfully.", "success");
+		setSelectedNodeKey("");
+		handleClose();
+		fetchNodes();
+	};
+
+	const handleCreateNode = () => {
+		reset(defaultValuesDict);
+		setSelectedNodeKey("");
+		setShowNodeEditor(true);
+	};
+
+	const handleCloseNodeEditor = () => {
+		setSelectedNodeKey("");
+		setShowNodeEditor(false);
+	};
+
+	const handleEdit = (node: any) => {
+		if (node.crontab_schedule && node.crontab_schedule.includes("m/h/dM/MY/d")) {
+			const [minute, hour, dayOfMonth, month, dayOfWeek, , timezone] = node.crontab_schedule.split(" ");
+			Object.assign(node, {
+				crontab_minutes: minute,
+				crontab_hours: hour,
+				crontab_days_of_month: dayOfMonth,
+				crontab_months_of_year: month,
+				crontab_days_of_week: dayOfWeek,
+				crontab_timezone: timezone,
+			});
+		}
+
+		if (node.interval_schedule) {
+			const [, interval_every, interval_type] = node.interval_schedule.split(" ");
+			Object.assign(node, {
+				interval_every: interval_every,
+				interval_type: interval_type,
+			});
+		}
+
+		reset(node);
+		setSelectedNodeKey(node.node_key);
+		setShowNodeEditor(true);
+	};
+
+	const editorOptions = {
+		selectOnLineNumbers: true,
+		roundedSelection: false,
+		readOnly: false,
+		automaticLayout: true,
+		language: "python", // Set the language to Python for syntax highlighting
+		theme: "vs-dark", // Use a dark theme
+		mode: "python",
+		quickSuggestions: true, // Enable quick suggestions
+	};
 
 	const fetchNodes = async () => {
 		try {
@@ -20,28 +158,70 @@ const NodesComponent: React.FC = () => {
 			showToast("Something went wrong with loading Nodes, please try again.", "danger");
 		}
 	};
+
+	const fetchVariables = async () => {
+		try {
+			const data = await fetchVariablesApi();
+			setVariablesArray(data.variables_array);
+		} catch (error) {
+			console.error("fetchVariablesApi failed:", error);
+			showToast("Something went wrong with loading data, please try again.", "danger");
+		}
+	};
+
 	const gridOptions: GridOptions = {
 		suppressCellFocus: true,
 	};
 
 	useEffect(() => {
 		fetchNodes();
+		fetchVariables();
 	}, []);
 
 	const handleViewCode = (node: any) => {
-		console.log("View Code:", node);
+		setModalCode(node.python_code);
+		setSelectedNodeKey(node.node_key);
+		setShowCodeModal(true);
 	};
 
-	const handleEdit = (node: any) => {
-		console.log("Edit:", node);
+	const handleDelete = async (node: any) => {
+		//ask for confirmation
+		const confirmDelete = window.confirm("Are you sure you want to delete this node? This action cannot be undone.");
+		if (!confirmDelete) {
+			return;
+		}
+		try {
+			await deleteNodeApi(node.node_key);
+			showToast("Node deleted successfully.", "success");
+		} catch (error) {
+			console.error("DeleteNodeAPI failed:", error);
+			showToast("" + error, "danger");
+		}
+		fetchNodes();
 	};
 
-	const handleDelete = (node: any) => {
-		console.log("Delete:", node);
-	};
-
-	const handleRun = (node: any) => {
-		console.log("Run:", node);
+	const handleRun = async (node: any) => {
+		const current_env = localStorage.getItem("selected_env_key");
+		if (!current_env) {
+			showToast("Please select an environment to run the node.", "danger");
+			return;
+		}
+		var confirm_message = "Do you want to run this and all connected nodes in the " + current_env + " environment?";
+		const confirmRun = window.confirm(confirm_message);
+		if (!confirmRun) {
+			return;
+		}
+		try {
+			setLoading(true);
+			await runDAGApi(node.node_key, current_env);
+			showToast("Node & connected nodes started running successfully.", "success");
+		} catch (error) {
+			console.error("Running nodes failed:", error);
+			showToast("" + error, "danger");
+		} finally {
+			setLoading(false);
+		}
+		fetchNodes();
 	};
 
 	const ViewCodeButton = (params: any) => (
@@ -56,12 +236,19 @@ const NodesComponent: React.FC = () => {
 				<Button variant="dark" size="sm" onClick={() => handleEdit(params.data)}>
 					<i className="bi bi-pencil"></i>
 				</Button>{" "}
-				<Button variant="primary" size="sm" onClick={() => handleRun(params.data)}>
-					<i className="bi bi-play"></i>
-				</Button>{" "}
 				<Button variant="danger" size="sm" onClick={() => handleDelete(params.data)}>
 					<i className="bi bi-trash"></i>
-				</Button>
+				</Button>{" "}
+				{params.data.is_starting_node && (
+					<Button variant="success" size="sm" onClick={() => handleRun(params.data)}>
+						<i className="bi bi-play"></i>
+					</Button>
+				)}
+				{!params.data.is_starting_node && (
+					<Button variant="secondary" size="sm" disabled>
+						<i className="bi bi-play"></i>
+					</Button>
+				)}
 			</div>
 		);
 	};
@@ -71,16 +258,18 @@ const NodesComponent: React.FC = () => {
 			const cleanedCrontabSchedule = data.crontab_schedule.replace(/\(.*?\)/g, "");
 			return (
 				<div>
-					<span className="badge badge-primary">Cron</span> <span className="badge badge-secondary">{cleanedCrontabSchedule}</span>
+					<span className="badge badge-important">Starting Node</span> <span className="badge badge-primary">Cron</span>{" "}
+					<span className="badge badge-secondary">{cleanedCrontabSchedule}</span>
 				</div>
 			);
 		} else if (data.schedule_type === "interval") {
 			return (
 				<div>
-					<span className="badge badge-primary">Interval</span> <span className="badge badge-secondary">{data.interval_schedule}</span>
+					<span className="badge badge-important">Starting Node</span> <span className="badge badge-primary">Interval</span>{" "}
+					<span className="badge badge-secondary">{data.interval_schedule}</span>
 				</div>
 			);
-		} else if (data.schedule_type === "none") {
+		} else if (data.schedule_type === "none" || data.schedule_type === "") {
 			return (
 				<div>
 					<span className="badge badge-primary">Runs After</span>{" "}
@@ -150,12 +339,23 @@ const NodesComponent: React.FC = () => {
 		{ headerName: "Actions", cellRenderer: ActionButtons, width: 140 },
 	];
 
+	const isStartingNode = watch("is_starting_node");
+	const scheduleType = watch("schedule_type");
+
 	return (
 		<div className="main-container">
+			{loading && (
+				<div className="my-3">
+					<Spinner animation="border" role="status" variant="success">
+						<span className="visually-hidden">Loading...</span>
+					</Spinner>
+				</div>
+			)}
+
 			<div className="mt-3">
 				<div className="d-flex justify-content-between align-items-center mb-3 ">
 					<h3 className="translucent_white">Nodes</h3>
-					<Button variant="dark">
+					<Button variant="dark" onClick={handleCreateNode}>
 						<span className="bi bi-plus-lg"></span>
 					</Button>
 				</div>
@@ -170,6 +370,233 @@ const NodesComponent: React.FC = () => {
 					/>
 				</div>
 			</div>
+			<Modal show={showCodeModal} onHide={handleClose} size="lg" centered>
+				<Modal.Header>
+					<Modal.Title>Edit Code</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					<Editor
+						width="100%"
+						height="500px"
+						theme="vs-dark"
+						defaultLanguage="python"
+						value={modalCode}
+						options={editorOptions}
+						onChange={(newValue: any) => setModalCode(newValue)}
+					/>
+				</Modal.Body>
+				<Modal.Footer>
+					<Button variant="secondary" onClick={handleClose}>
+						Close
+					</Button>
+					<Button variant="primary" onClick={handleSave}>
+						Save
+					</Button>
+				</Modal.Footer>
+			</Modal>
+
+			<Modal show={showNodeEditor} onHide={handleCloseNodeEditor} size="lg" centered>
+				<Modal.Header closeButton>
+					<Modal.Title>{selected_node_key === "" ? "Create Node" : "Edit Node"}</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					<Form onSubmit={handleSubmit(onSubmit)}>
+						<Form.Group controlId="name">
+							<Form.Label>Node Name</Form.Label>
+							<Form.Control type="text" {...register("name", { required: "Node name is required" })} />
+						</Form.Group>
+						{errors.name && <p className="text-danger">{errors.name.message}</p>}
+						<hr />
+						<Form.Group controlId="is_enabled">
+							<Form.Label>Status</Form.Label>
+							<DropdownButton
+								title={watch("is_enabled") ? "Enabled" : "Disabled"}
+								id="statusDropdown"
+								onSelect={(selected) => setValue("is_enabled", selected === "enabled")}>
+								<Dropdown.Item eventKey="enabled">Enabled</Dropdown.Item>
+								<Dropdown.Item eventKey="disabled">Disabled</Dropdown.Item>
+							</DropdownButton>
+						</Form.Group>
+						<hr />
+						<Form.Group controlId="is_starting_node">
+							<Form.Check type="checkbox" label="Starting Node" {...register("is_starting_node")} />
+						</Form.Group>
+						{isStartingNode ? (
+							<>
+								<hr />
+								<Form.Group controlId="schedule_type">
+									<Form.Label>Schedule Type</Form.Label>
+									<DropdownButton
+										title={scheduleType === "interval" ? "Interval" : "Cron"}
+										id="scheduleTypeDropdown"
+										onSelect={(selected) => setValue("schedule_type", selected!)}>
+										<Dropdown.Item eventKey="interval">Interval</Dropdown.Item>
+										<Dropdown.Item eventKey="crontab">Cron</Dropdown.Item>
+									</DropdownButton>
+								</Form.Group>
+
+								{scheduleType === "interval" && (
+									<div>
+										<Form.Group controlId="interval">
+											<Form.Label>Every</Form.Label>
+											<Form.Control type="text" {...register("interval_every")} />
+										</Form.Group>
+
+										<Form.Group controlId="interval">
+											<Form.Label>Interval Type</Form.Label>
+											<DropdownButton
+												title={watch("interval_type") || "Select Interval Type"}
+												id="intervalTypeDropdown"
+												onSelect={(selected) => setValue("interval_type", selected!)}>
+												<Dropdown.Item eventKey="days">days</Dropdown.Item>
+												<Dropdown.Item eventKey="hours">hours</Dropdown.Item>
+												<Dropdown.Item eventKey="minutes">minutes</Dropdown.Item>
+												<Dropdown.Item eventKey="seconds">seconds</Dropdown.Item>
+												<Dropdown.Item eventKey="microseconds">microseconds</Dropdown.Item>
+											</DropdownButton>
+										</Form.Group>
+									</div>
+								)}
+
+								{scheduleType === "crontab" && (
+									<div>
+										<Form.Group controlId="crontab_minutes">
+											<Form.Label>Minute (m)</Form.Label>
+											<Form.Control type="text" {...register("crontab_minutes")} />
+										</Form.Group>
+
+										<Form.Group controlId="crontab_hours">
+											<Form.Label>Hour (h)</Form.Label>
+											<Form.Control type="text" {...register("crontab_hours")} />
+										</Form.Group>
+
+										<Form.Group controlId="crontab_days_of_month">
+											<Form.Label>Day of Month (dM)</Form.Label>
+											<Form.Control type="text" {...register("crontab_days_of_month")} />
+										</Form.Group>
+
+										<Form.Group controlId="crontab_months_of_year">
+											<Form.Label>Month of Year (MY)</Form.Label>
+											<Form.Control type="text" {...register("crontab_months_of_year")} />
+										</Form.Group>
+
+										<Form.Group controlId="crontab_days_of_week">
+											<Form.Label>Day of Week (d)</Form.Label>
+											<Form.Control type="text" {...register("crontab_days_of_week")} />
+										</Form.Group>
+
+										<Form.Group controlId="crontab_timezone">
+											<Form.Label>Timezone</Form.Label>
+											<DropdownButton
+												title={watch("crontab_timezone") || "Select Timezone"}
+												id="timezoneDropdown"
+												onSelect={(selected) => setValue("crontab_timezone", selected!)}>
+												{timezones.map((timezone, index) => (
+													<Dropdown.Item key={index} eventKey={timezone}>
+														{timezone}
+													</Dropdown.Item>
+												))}
+											</DropdownButton>
+										</Form.Group>
+									</div>
+								)}
+							</>
+						) : (
+							<>
+								<hr />
+								Run After Nodes:
+								{nodesArray.map((node) => (
+									<Form.Group controlId={`node-${node.node_key}`} key={node.node_key}>
+										<Controller
+											control={control}
+											name="run_after_nodes_array"
+											render={({ field }) => {
+												const isChecked = field.value.some((item: any) => item.node_key === node.node_key);
+
+												return (
+													<Form.Check
+														type="checkbox"
+														label={node.name}
+														checked={isChecked}
+														onChange={(e) => {
+															const newValue = e.target.checked
+																? [...field.value, node]
+																: field.value.filter((item: any) => item.node_key !== node.node_key);
+															field.onChange(newValue);
+														}}
+													/>
+												);
+											}}
+										/>
+									</Form.Group>
+								))}
+							</>
+						)}
+						<hr />
+						Input Variables Array:
+						{variablesArray.map((variable) => (
+							<Form.Group controlId={`variable-${variable.id}`} key={variable.id}>
+								<Controller
+									control={control}
+									name="input_data_key_array"
+									render={({ field }) => {
+										const isChecked = field.value.some((item: any) => item.key === variable.key);
+
+										return (
+											<Form.Check
+												type="checkbox"
+												label={variable.key}
+												checked={isChecked}
+												onChange={(e) => {
+													const newValue = e.target.checked
+														? [...field.value, variable]
+														: field.value.filter((item: any) => item.key !== variable.key);
+													field.onChange(newValue);
+												}}
+											/>
+										);
+									}}
+								/>
+							</Form.Group>
+						))}
+						<hr />
+						Output Variables Array:
+						{variablesArray.map((variable) => (
+							<Form.Group controlId={`variable-${variable.id}`} key={variable.id}>
+								<Controller
+									control={control}
+									name="output_data_key_array"
+									render={({ field }) => {
+										const isChecked = field.value.some((item: any) => item.key === variable.key);
+
+										return (
+											<Form.Check
+												type="checkbox"
+												label={variable.key}
+												checked={isChecked}
+												onChange={(e) => {
+													const newValue = e.target.checked
+														? [...field.value, variable]
+														: field.value.filter((item: any) => item.key !== variable.key);
+													field.onChange(newValue);
+												}}
+											/>
+										);
+									}}
+								/>
+							</Form.Group>
+						))}
+						<Modal.Footer>
+							<Button variant="secondary" onClick={handleCloseNodeEditor}>
+								Close
+							</Button>
+							<Button variant="primary" type="submit">
+								Save
+							</Button>
+						</Modal.Footer>
+					</Form>
+				</Modal.Body>
+			</Modal>
 		</div>
 	);
 };
