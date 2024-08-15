@@ -40,6 +40,8 @@ urlpatterns = [
     path("manage/fetch_nodes/", csrf_exempt(manage_views.fetch_nodes), name="fetch_nodes"),
     path("manage/fetch_environments/", csrf_exempt(manage_views.fetch_environments), name="fetch_environments"),
     path("manage/fetch_dashboard_sections/", csrf_exempt(manage_views.fetch_dashboard_sections), name="fetch_dashboard_sections"),
+    path("manage/fetch_deployments/", csrf_exempt(manage_views.fetch_deployments), name="fetch_deployments"),
+
     path("manage/get_build_details/", csrf_exempt(manage_views.get_build_details), name="get_build_details"),
     path("manage/get_run_status/", csrf_exempt(manage_views.get_run_status), name="get_run_status"),
 

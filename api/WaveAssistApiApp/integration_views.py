@@ -29,7 +29,7 @@ def manage_integration_details(integration_object, project_object):
         for data_dict in integrations_data_array:
             if data_dict['name'] == ZERODHA_API_KEY:
                 did_find_api_key = True
-                data_dict['value'] = ZERODHA_API_KEY_VALUE ##ToDo: Should come from dashboard
+                data_dict['value'] = ZERODHA_API_KEY_VALUE
 
             if data_dict['name'] == ZERODHA_API_SECRET_KEY:
                 did_find_secret_key = True

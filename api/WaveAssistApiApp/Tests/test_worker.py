@@ -53,6 +53,8 @@ class BuildTestCase(TestCase):
         node_c_python_code = """
         # Add a new column to the DataFrame
         df['Bonus'] = [5000, 6000, 7000, 8000, 9000]
+        import time
+        time.sleep(2)
         return df
         """
 
@@ -151,6 +153,7 @@ class BuildTestCase(TestCase):
         data_run = DataRuns.objects.create(data_run_key='test_data_run_django', project_object=self.project, is_enabled=True)
         data_run.save()
         self.mongo_manager.collection = self.mongo_manager.database['test_data_run_django']
+        self.mongo_manager.collection.drop()
 
         ##Provide access to user
         access_provided_object = AccessProvided.objects.create(
@@ -235,6 +238,70 @@ class BuildTestCase(TestCase):
         self.assertEqual(df['E'].tolist(), ['Alice', 'Bob', 'Charlie', 'David', 'Eve'])
         self.assertEqual(df['Age'].tolist(), [25, 30, 35, 40, 45])
         self.assertEqual('Email' in df.columns, True)
+
+
+    def test_selenium(self):
+
+        self.node_e.python_code = """
+            from selenium import webdriver
+            from selenium import webdriver
+            from selenium.webdriver.common.by import By
+            from selenium.webdriver.support.ui import WebDriverWait
+            from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.support import expected_conditions as EC
+            from selenium.webdriver.chrome.service import Service as ChromeService
+            from webdriver_manager.chrome import ChromeDriverManager
+            
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("--window-size=1920,1080")
+            chrome_options.add_argument("--disable-setuid-sandbox")
+            chrome_options.add_argument("--disable-extensions")
+            
+            service = ChromeService(executable_path=ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            
+            driver.get("https://google.com")
+            ##Print to confirm
+            print('hello e: ' + str(driver.title))
+            driver_title = str(driver.title)
+            driver.quit()
+
+            import pandas as pd
+            # Create a sample DataFrame
+            data = {
+                'E': ['Alice', 'Bob', 'Charlie', 'David', 'Eve'],
+                'Age': [25, 30, 35, 40, 45],
+                'Title': [driver_title, driver_title, driver_title, driver_title, driver_title]
+            }
+            df_e = pd.DataFrame(data)
+            return df_e
+        """
+
+        self.node_f.is_enabled= False
+        self.node_e.save()
+        self.node_f.save()
+
+
+        request = self.factory.post('/run_dag', {
+            'uid': self.admin_uid,
+            'project_key': 'test_project_key',
+            'data_run_key': 'test_data_run_django',
+            'start_node_key': 'node_e',
+            'should_wait': '1'
+        })
+        response = run_dag(request)
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.content)
+        self.assertEqual(response_data['message'], 'Successfully started the DAG')
+        df = self.mongo_manager.fetch_data_as_dataframe('df_e')
+        ##assert df has column Title with all values being Google
+        self.assertEqual(df.shape, (5, 3))
+        self.assertEqual(df['Title'].tolist(), ['Google','Google','Google','Google','Google'])
+
 
     def tearDown(self):
         ##Delete the mongo collection called test_data_run_django
