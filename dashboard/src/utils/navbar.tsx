@@ -4,9 +4,11 @@ import "./navbar.css";
 import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
 import { useToast } from "./toast_context";
+import { useRefresh } from "./RefreshContext"; // Import the custom hook
 
 const NavbarComponent: React.FC = () => {
 	const { showToast } = useToast();
+	const { triggerRefresh } = useRefresh();
 
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
@@ -51,14 +53,16 @@ const NavbarComponent: React.FC = () => {
 		}
 	};
 
-	const handleProjectChange = (_project_name: string, project_key: string) => {
+	const handleProjectChange = async (_project_name: string, project_key: string) => {
 		localStorage.setItem("selected_project_key", project_key);
-		fetchEnvironments();
+		await fetchEnvironments();
+		triggerRefresh(); // Trigger a refresh
 	};
 
 	const handleEnvChange = (env_name: string, env_key: string) => {
 		localStorage.setItem("selected_env_key", env_key);
 		setSelectedEnvName(env_name);
+		triggerRefresh(); // Trigger a refresh
 	};
 
 	const getDefaultProjectName = (): string => {

@@ -7,6 +7,7 @@ import "./project_components.css";
 import "../../utils/ag-grid-theme-builder.css";
 import Modal from "react-bootstrap/Modal";
 import { downloadFile } from "../../utils/shared_functions";
+import { useRefresh } from "../../utils/RefreshContext";
 
 const VariablesComponent: React.FC = () => {
 	const [variablesArray, setVariablesArray] = useState<any[]>([]);
@@ -14,6 +15,7 @@ const VariablesComponent: React.FC = () => {
 	const [showVariableEditor, setShowVariableEditor] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [variableKey, setVariableKey] = useState("");
+	const { shouldRefresh } = useRefresh();
 
 	const handleCloseVariableEditor = () => {
 		setShowVariableEditor(false);
@@ -132,7 +134,7 @@ const VariablesComponent: React.FC = () => {
 
 	useEffect(() => {
 		fetchVariables();
-	}, []);
+	}, [shouldRefresh]);
 
 	const ActionButtons = (params: any) => {
 		return (

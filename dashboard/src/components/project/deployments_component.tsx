@@ -5,10 +5,12 @@ import { Button } from "react-bootstrap";
 import { AgGridReact } from "ag-grid-react";
 import "./project_components.css";
 import "../../utils/ag-grid-theme-builder.css";
+import { useRefresh } from "../../utils/RefreshContext";
 
 const DeploymentsComponent: React.FC = () => {
 	const [deploymentsArray, setDeploymentsArray] = useState<any[]>([]);
 	const { showToast } = useToast();
+	const { shouldRefresh } = useRefresh();
 
 	const fetchDeployments = async () => {
 		try {
@@ -41,13 +43,24 @@ const DeploymentsComponent: React.FC = () => {
 
 	useEffect(() => {
 		fetchDeployments();
-	}, []);
+	}, [shouldRefresh]);
 
 	const ActionButtons = (params: any) => {
 		return (
-			<Button variant="danger" size="sm" onClick={() => handleStopDeployment(params.data)}>
-				<i className="bi bi-stop"></i> Stop
-			</Button>
+			//Keep an active button if deployment is running
+
+			<div>
+				{params.data.is_running && (
+					<Button variant="danger" size="sm" onClick={() => handleStopDeployment(params.data)}>
+						<i className="bi bi-stop-fill"></i> Stop
+					</Button>
+				)}
+				{!params.data.is_running && (
+					<Button variant="secondary" size="sm" disabled>
+						<i className="bi bi-stop-fill"></i> Stop
+					</Button>
+				)}
+			</div>
 		);
 	};
 
@@ -76,7 +89,7 @@ const DeploymentsComponent: React.FC = () => {
 			headerName: "Running Status",
 			field: "is_running",
 			cellRenderer: (params: any) => (
-				<span className={`badge ${params.value ? "badge-success" : "badge-secondary"}`}>{params.value ? "Running" : "Stopped"}</span>
+				<span className={`badge ${params.value ? "badge-primary" : "badge-secondary"}`}>{params.value ? "Running" : "Stopped"}</span>
 			),
 			flex: 2,
 			cellStyle: { display: "flex", alignItems: "center" },

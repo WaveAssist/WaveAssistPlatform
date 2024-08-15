@@ -19,8 +19,11 @@ import Editor from "@monaco-editor/react";
 import { useForm, Controller } from "react-hook-form";
 import timezones from "../../utils/timezones.json";
 import { NodeType } from "../../utils/types";
+import { useRefresh } from "../../utils/RefreshContext";
 
 const NodesComponent: React.FC = () => {
+	const { shouldRefresh } = useRefresh();
+
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
 		name: "",
@@ -176,7 +179,7 @@ const NodesComponent: React.FC = () => {
 	useEffect(() => {
 		fetchNodes();
 		fetchVariables();
-	}, []);
+	}, [shouldRefresh]);
 
 	const handleViewCode = (node: any) => {
 		setModalCode(node.python_code);

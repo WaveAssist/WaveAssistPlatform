@@ -6,6 +6,7 @@ import { AgGridReact } from "ag-grid-react";
 import "./project_components.css";
 import "../../utils/ag-grid-theme-builder.css";
 import Modal from "react-bootstrap/Modal";
+import { useRefresh } from "../../utils/RefreshContext";
 
 const EnvironmentsComponent: React.FC = () => {
 	const [environmentsArray, setEnvironmentsArray] = useState<any[]>([]);
@@ -13,6 +14,7 @@ const EnvironmentsComponent: React.FC = () => {
 	const [showEnvironmentEditor, setShowEnvironmentEditor] = useState(false);
 	const [environmentData, setEnvironmentData] = useState({ name: "", is_enabled: false });
 	const [editingEnvironmentKey, setEditingEnvironmentKey] = useState("");
+	const { shouldRefresh } = useRefresh();
 
 	const handleCloseEnvironmentEditor = () => {
 		setShowEnvironmentEditor(false);
@@ -78,7 +80,7 @@ const EnvironmentsComponent: React.FC = () => {
 
 	useEffect(() => {
 		fetchEnvironments();
-	}, []);
+	}, [shouldRefresh]);
 
 	const ActionButtons = (params: any) => {
 		return (
