@@ -22,7 +22,7 @@ jobs:
     - name: Build the Local Docker image
       env:
         VITE_DASHBOARD_BASE_URL: http://localhost:8000/
-      run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_dashboard:local
+      run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_dashboard:local --build-arg VITE_DASHBOARD_BASE_URL=$VITE_DASHBOARD_BASE_URL
 
     - name: Tag the Local Docker image
       run: docker tag waveassist_dashboard:local 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_dashboard:local
@@ -33,7 +33,7 @@ jobs:
     - name: Build the Cloud Docker image
       env:
         VITE_DASHBOARD_BASE_URL: https://api.waveassist.io/
-      run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_dashboard:cloud
+      run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_dashboard:cloud --build-arg VITE_DASHBOARD_BASE_URL=$VITE_DASHBOARD_BASE_URL
 
     - name: Tag the Cloud Docker image
       run: docker tag waveassist_dashboard:cloud 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_dashboard:cloud
