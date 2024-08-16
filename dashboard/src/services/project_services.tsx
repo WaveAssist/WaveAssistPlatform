@@ -55,6 +55,19 @@ export const downloadVariablesApi = async (variableKey: string): Promise<any> =>
 	return callApiRaw(path, body);
 };
 
+// fetchDataForKeyAPI
+export const fetchDataForKeyAPI = async (variableKey: string): Promise<any> => {
+	const body = new URLSearchParams({
+		uid: localStorage.getItem("uid") || "",
+		project_key: localStorage.getItem("selected_project_key") || "",
+		data_key: variableKey,
+		data_run_key: localStorage.getItem("selected_env_key") || "",
+		output_data_type: "json",
+	});
+	var path = "data/fetch_data_for_key/";
+	return callApi(path, body);
+};
+
 // uploadVariablesApi
 export const uploadVariablesApi = async (csv_data: string, variableKey: string): Promise<any> => {
 	const body = new URLSearchParams({

@@ -1,0 +1,31 @@
+.ag-theme-balham-dark .ag-root-wrapper {
+  background-color: #141720; /* Main grid background */
+}
+
+.ag-theme-balham-dark .ag-header, 
+.ag-theme-balham-dark .ag-header-cell {
+  background-color: #1c242f; /* Header background color */
+  color: #ffffff; /* Header text color */
+}
+
+.ag-theme-balham-dark .ag-row {
+  background-color: #141720; /* Row background color */
+}
+
+.ag-theme-balham-dark .ag-row-odd {
+  background-color: #1a1d26; /* Odd row background color, slightly different */
+}
+
+.ag-theme-balham-dark .ag-row-hover {
+  background-color: #2a3a2f9f; /* Hover color with a mild tint of #428d4f */
+}
+
+.ag-theme-balham-dark .ag-cell {
+  background-color: inherit; /* Cells inherit row background */
+  color: #ffffff; /* Text color */
+}
+
+.ag-theme-balham-dark .ag-cell-focus {
+  border: 1px solid #428d4f !important; /* Border color on cell click/focus */
+  outline: none; /* Remove any default outline */
+}

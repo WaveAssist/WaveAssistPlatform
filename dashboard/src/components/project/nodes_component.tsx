@@ -13,7 +13,7 @@ import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap
 import { AgGridReact } from "ag-grid-react";
 import "./project_components.css";
 import type { GridOptions } from "ag-grid-community";
-import "../../utils/ag-grid-theme-builder.css";
+import "../../utils/ag-theme-project.css";
 import Modal from "react-bootstrap/Modal";
 import Editor from "@monaco-editor/react";
 import { useForm, Controller } from "react-hook-form";

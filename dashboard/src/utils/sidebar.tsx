@@ -56,14 +56,12 @@ const Sidebar = () => {
 					</Link>
 				</li>
 
-				{/* <li className="nav-item">
-					<Link
-						to="/manage/dashboard-layout"
-						className={`nav-link ${location.pathname === "/manage/dashboard-layout" ? "active" : "text-white"} mb-1`}>
+				<li className="nav-item">
+					<Link to="/manage/data-view" className={`nav-link ${location.pathname === "/manage/data-view" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-grid-1x2-fill me-2"></i>
-						Dashboard Layout
+						Data Viewer
 					</Link>
-				</li> */}
+				</li>
 			</ul>
 			<div>
 				<button className="btn btn-outline-light w-100" type="button" onClick={handleLogout}>

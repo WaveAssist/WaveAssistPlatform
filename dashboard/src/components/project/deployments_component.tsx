@@ -4,7 +4,7 @@ import { useToast } from "../../utils/toast_context";
 import { Button } from "react-bootstrap";
 import { AgGridReact } from "ag-grid-react";
 import "./project_components.css";
-import "../../utils/ag-grid-theme-builder.css";
+import "../../utils/ag-theme-project.css";
 import { useRefresh } from "../../utils/RefreshContext";
 
 const DeploymentsComponent: React.FC = () => {
