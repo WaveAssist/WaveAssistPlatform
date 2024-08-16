@@ -404,32 +404,48 @@ const NodesComponent: React.FC = () => {
 				</Modal.Header>
 				<Modal.Body>
 					<Form onSubmit={handleSubmit(onSubmit)}>
-						<Form.Group controlId="name">
-							<Form.Label>Node Name</Form.Label>
-							<Form.Control type="text" {...register("name", { required: "Node name is required" })} />
-						</Form.Group>
-						{errors.name && <p className="text-danger">{errors.name.message}</p>}
+						<div className="d-flex align-items-center mb-3">
+							{/* Node Name */}
+							<Form.Group controlId="name" className="flex-grow-1 me-4">
+								<Form.Label>Node Name</Form.Label>
+								<Form.Control
+									type="text"
+									className="w-100"
+									style={{ flexBasis: "50%" }}
+									{...register("name", { required: "Node name is required" })}
+								/>
+								{errors.name && <p className="text-danger">{errors.name.message}</p>}
+							</Form.Group>
+
+							{/* Status */}
+							<Form.Group controlId="is_enabled" className="me-2">
+								<Form.Label>Status</Form.Label>
+								<DropdownButton
+									variant="secondary"
+									title={watch("is_enabled") ? "Enabled" : "Disabled"}
+									id="statusDropdown"
+									onSelect={(selected) => setValue("is_enabled", selected === "enabled")}>
+									<Dropdown.Item eventKey="enabled">Enabled</Dropdown.Item>
+									<Dropdown.Item eventKey="disabled">Disabled</Dropdown.Item>
+								</DropdownButton>
+							</Form.Group>
+						</div>
 						<hr />
-						<Form.Group controlId="is_enabled">
-							<Form.Label>Status</Form.Label>
-							<DropdownButton
-								title={watch("is_enabled") ? "Enabled" : "Disabled"}
-								id="statusDropdown"
-								onSelect={(selected) => setValue("is_enabled", selected === "enabled")}>
-								<Dropdown.Item eventKey="enabled">Enabled</Dropdown.Item>
-								<Dropdown.Item eventKey="disabled">Disabled</Dropdown.Item>
-							</DropdownButton>
-						</Form.Group>
-						<hr />
+
+						{/* Starting Node */}
 						<Form.Group controlId="is_starting_node">
 							<Form.Check type="checkbox" label="Starting Node" {...register("is_starting_node")} />
 						</Form.Group>
+
+						{/* Conditional Rendering Based on Starting Node */}
 						{isStartingNode ? (
 							<>
 								<hr />
+								{/* Schedule Type */}
+								<Form.Label>Schedule Type: </Form.Label>
 								<Form.Group controlId="schedule_type">
-									<Form.Label>Schedule Type</Form.Label>
 									<DropdownButton
+										variant="secondary"
 										title={scheduleType === "interval" ? "Interval" : "Cron"}
 										id="scheduleTypeDropdown"
 										onSelect={(selected) => setValue("schedule_type", selected!)}>
@@ -437,17 +453,16 @@ const NodesComponent: React.FC = () => {
 										<Dropdown.Item eventKey="crontab">Cron</Dropdown.Item>
 									</DropdownButton>
 								</Form.Group>
+								<hr />
 
+								{/* Interval Schedule */}
 								{scheduleType === "interval" && (
 									<div>
-										<Form.Group controlId="interval">
-											<Form.Label>Every</Form.Label>
-											<Form.Control type="text" {...register("interval_every")} />
-										</Form.Group>
-
-										<Form.Group controlId="interval">
-											<Form.Label>Interval Type</Form.Label>
+										<Form.Group controlId="interval_every" className="d-flex align-items-center">
+											<Form.Label className="me-2">Every</Form.Label>
+											<Form.Control type="text" className="w-25 me-2" {...register("interval_every")} />
 											<DropdownButton
+												variant="secondary"
 												title={watch("interval_type") || "Select Interval Type"}
 												id="intervalTypeDropdown"
 												onSelect={(selected) => setValue("interval_type", selected!)}>
@@ -461,70 +476,126 @@ const NodesComponent: React.FC = () => {
 									</div>
 								)}
 
+								{/* Cron Schedule */}
 								{scheduleType === "crontab" && (
-									<div>
-										<Form.Group controlId="crontab_minutes">
-											<Form.Label>Minute (m)</Form.Label>
-											<Form.Control type="text" {...register("crontab_minutes")} />
-										</Form.Group>
+									<div className="row">
+										{/* Minute (m) */}
+										<div className="col-md-6">
+											<Form.Group controlId="crontab_minutes">
+												<Form.Label>Minute (m)</Form.Label>
+												<Form.Control type="text" className="w-100" {...register("crontab_minutes")} />
+											</Form.Group>
+										</div>
 
-										<Form.Group controlId="crontab_hours">
-											<Form.Label>Hour (h)</Form.Label>
-											<Form.Control type="text" {...register("crontab_hours")} />
-										</Form.Group>
+										{/* Hour (h) */}
+										<div className="col-md-6">
+											<Form.Group controlId="crontab_hours">
+												<Form.Label>Hour (h)</Form.Label>
+												<Form.Control type="text" className="w-100" {...register("crontab_hours")} />
+											</Form.Group>
+										</div>
 
-										<Form.Group controlId="crontab_days_of_month">
-											<Form.Label>Day of Month (dM)</Form.Label>
-											<Form.Control type="text" {...register("crontab_days_of_month")} />
-										</Form.Group>
+										{/* Day of Month (dM) */}
+										<div className="col-md-6">
+											<Form.Group controlId="crontab_days_of_month">
+												<Form.Label>Day of Month (dM)</Form.Label>
+												<Form.Control type="text" className="w-100" {...register("crontab_days_of_month")} />
+											</Form.Group>
+										</div>
 
-										<Form.Group controlId="crontab_months_of_year">
-											<Form.Label>Month of Year (MY)</Form.Label>
-											<Form.Control type="text" {...register("crontab_months_of_year")} />
-										</Form.Group>
+										{/* Month of Year (MY) */}
+										<div className="col-md-6">
+											<Form.Group controlId="crontab_months_of_year">
+												<Form.Label>Month of Year (MY)</Form.Label>
+												<Form.Control type="text" className="w-100" {...register("crontab_months_of_year")} />
+											</Form.Group>
+										</div>
 
-										<Form.Group controlId="crontab_days_of_week">
-											<Form.Label>Day of Week (d)</Form.Label>
-											<Form.Control type="text" {...register("crontab_days_of_week")} />
-										</Form.Group>
+										{/* Day of Week (d) */}
+										<div className="col-md-6">
+											<Form.Group controlId="crontab_days_of_week">
+												<Form.Label>Day of Week (d)</Form.Label>
+												<Form.Control type="text" className="w-100" {...register("crontab_days_of_week")} />
+											</Form.Group>
+										</div>
 
-										<Form.Group controlId="crontab_timezone">
-											<Form.Label>Timezone</Form.Label>
-											<DropdownButton
-												title={watch("crontab_timezone") || "Select Timezone"}
-												id="timezoneDropdown"
-												onSelect={(selected) => setValue("crontab_timezone", selected!)}>
-												{timezones.map((timezone, index) => (
-													<Dropdown.Item key={index} eventKey={timezone}>
-														{timezone}
-													</Dropdown.Item>
-												))}
-											</DropdownButton>
-										</Form.Group>
+										{/* Timezone */}
+										<div className="col-md-6">
+											<Form.Group controlId="crontab_timezone">
+												<Form.Label>Timezone</Form.Label>
+												<DropdownButton
+													variant="secondary"
+													title={watch("crontab_timezone") || "Select Timezone"}
+													id="timezoneDropdown"
+													onSelect={(selected) => setValue("crontab_timezone", selected!)}>
+													{timezones.map((timezone, index) => (
+														<Dropdown.Item key={index} eventKey={timezone}>
+															{timezone}
+														</Dropdown.Item>
+													))}
+												</DropdownButton>
+											</Form.Group>
+										</div>
 									</div>
 								)}
 							</>
 						) : (
 							<>
 								<hr />
-								Run After Nodes:
-								{nodesArray.map((node) => (
-									<Form.Group controlId={`node-${node.node_key}`} key={node.node_key}>
+								{/* Run After Nodes */}
+								<Form.Label>Run After Nodes:</Form.Label>
+								<div className="row">
+									{nodesArray.map((node) => (
+										<div className="col-6" key={node.node_key}>
+											<Form.Group controlId={`node-${node.node_key}`}>
+												<Controller
+													control={control}
+													name="run_after_nodes_array"
+													render={({ field }) => {
+														const isChecked = field.value.some((item: any) => item.node_key === node.node_key);
+														return (
+															<Form.Check
+																type="checkbox"
+																label={node.name}
+																checked={isChecked}
+																onChange={(e) => {
+																	const newValue = e.target.checked
+																		? [...field.value, node]
+																		: field.value.filter((item: any) => item.node_key !== node.node_key);
+																	field.onChange(newValue);
+																}}
+															/>
+														);
+													}}
+												/>
+											</Form.Group>
+										</div>
+									))}
+								</div>
+							</>
+						)}
+						<hr />
+
+						{/* Input Variables Array */}
+						<Form.Label>Input Variables:</Form.Label>
+						<div className="row">
+							{variablesArray.map((variable) => (
+								<div className="col-6" key={variable.id}>
+									<Form.Group controlId={`variable-${variable.id}`}>
 										<Controller
 											control={control}
-											name="run_after_nodes_array"
+											name="input_data_key_array"
 											render={({ field }) => {
-												const isChecked = field.value.some((item: any) => item.node_key === node.node_key);
-
+												const isChecked = field.value.some((item: any) => item.key === variable.key);
 												return (
 													<Form.Check
 														type="checkbox"
-														label={node.name}
+														label={variable.key}
 														checked={isChecked}
 														onChange={(e) => {
 															const newValue = e.target.checked
-																? [...field.value, node]
-																: field.value.filter((item: any) => item.node_key !== node.node_key);
+																? [...field.value, variable]
+																: field.value.filter((item: any) => item.key !== variable.key);
 															field.onChange(newValue);
 														}}
 													/>
@@ -532,63 +603,44 @@ const NodesComponent: React.FC = () => {
 											}}
 										/>
 									</Form.Group>
-								))}
-							</>
-						)}
+								</div>
+							))}
+						</div>
 						<hr />
-						Input Variables Array:
-						{variablesArray.map((variable) => (
-							<Form.Group controlId={`variable-${variable.id}`} key={variable.id}>
-								<Controller
-									control={control}
-									name="input_data_key_array"
-									render={({ field }) => {
-										const isChecked = field.value.some((item: any) => item.key === variable.key);
 
-										return (
-											<Form.Check
-												type="checkbox"
-												label={variable.key}
-												checked={isChecked}
-												onChange={(e) => {
-													const newValue = e.target.checked
-														? [...field.value, variable]
-														: field.value.filter((item: any) => item.key !== variable.key);
-													field.onChange(newValue);
-												}}
-											/>
-										);
-									}}
-								/>
-							</Form.Group>
-						))}
+						{/* Output Variables Array */}
+						<Form.Label>Output Variables:</Form.Label>
+						<div className="row">
+							{variablesArray.map((variable) => (
+								<div className="col-6" key={variable.id}>
+									<Form.Group controlId={`variable-${variable.id}`}>
+										<Controller
+											control={control}
+											name="output_data_key_array"
+											render={({ field }) => {
+												const isChecked = field.value.some((item: any) => item.key === variable.key);
+												return (
+													<Form.Check
+														type="checkbox"
+														label={variable.key}
+														checked={isChecked}
+														onChange={(e) => {
+															const newValue = e.target.checked
+																? [...field.value, variable]
+																: field.value.filter((item: any) => item.key !== variable.key);
+															field.onChange(newValue);
+														}}
+													/>
+												);
+											}}
+										/>
+									</Form.Group>
+								</div>
+							))}
+						</div>
 						<hr />
-						Output Variables Array:
-						{variablesArray.map((variable) => (
-							<Form.Group controlId={`variable-${variable.id}`} key={variable.id}>
-								<Controller
-									control={control}
-									name="output_data_key_array"
-									render={({ field }) => {
-										const isChecked = field.value.some((item: any) => item.key === variable.key);
 
-										return (
-											<Form.Check
-												type="checkbox"
-												label={variable.key}
-												checked={isChecked}
-												onChange={(e) => {
-													const newValue = e.target.checked
-														? [...field.value, variable]
-														: field.value.filter((item: any) => item.key !== variable.key);
-													field.onChange(newValue);
-												}}
-											/>
-										);
-									}}
-								/>
-							</Form.Group>
-						))}
+						{/* Modal Footer */}
 						<Modal.Footer>
 							<Button variant="secondary" onClick={handleCloseNodeEditor}>
 								Close
