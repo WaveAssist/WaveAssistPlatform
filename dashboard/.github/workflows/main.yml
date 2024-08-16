@@ -19,11 +19,24 @@ jobs:
       run: |
         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 713358430452.dkr.ecr.us-east-1.amazonaws.com
 
-    - name: Build the Docker image
-      run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_dashboard:latest
+    - name: Build the Local Docker image
+      env:
+        VITE_DASHBOARD_BASE_URL: http://localhost:8000/
+      run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_dashboard:local
 
-    - name: Tag the Docker image
-      run: docker tag waveassist_dashboard:latest 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_dashboard:latest
+    - name: Tag the Local Docker image
+      run: docker tag waveassist_dashboard:local 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_dashboard:local
 
-    - name: Push the Docker image to ECR
-      run: docker push 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_dashboard:latest
+    - name: Push the Local Docker image to ECR
+      run: docker push 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_dashboard:local
+
+    - name: Build the Cloud Docker image
+      env:
+        VITE_DASHBOARD_BASE_URL: https://api.waveassist.io/
+      run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_dashboard:cloud
+
+    - name: Tag the Cloud Docker image
+      run: docker tag waveassist_dashboard:cloud 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_dashboard:cloud
+
+    - name: Push the Cloud Docker image to ECR
+      run: docker push 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_dashboard:cloud
