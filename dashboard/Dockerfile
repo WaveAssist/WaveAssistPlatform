@@ -1,6 +1,8 @@
 # Stage 1: Build the React app
 FROM --platform=linux/amd64 node:alpine AS build
 
+ENV VITE_DASHBOARD_BASE_URL=$VITE_DASHBOARD_BASE_URL
+
 # Set the working directory
 WORKDIR /app
 
