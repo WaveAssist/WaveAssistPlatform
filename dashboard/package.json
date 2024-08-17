@@ -19,8 +19,10 @@
     "axios": "^1.6.8",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "file-saver": "^2.0.5",
     "firebase": "^10.12.0",
     "firebaseui": "^6.1.0",
+    "jszip": "^3.10.1",
     "monaco-editor": "^0.50.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.2",
@@ -29,6 +31,7 @@
     "react-router-dom": "^6.23.1"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",

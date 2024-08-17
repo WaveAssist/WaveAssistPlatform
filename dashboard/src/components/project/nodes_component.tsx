@@ -20,6 +20,8 @@ import { useForm, Controller } from "react-hook-form";
 import timezones from "../../utils/timezones.json";
 import { NodeType } from "../../utils/types";
 import { useRefresh } from "../../utils/RefreshContext";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
@@ -108,6 +110,26 @@ const NodesComponent: React.FC = () => {
 		reset(defaultValuesDict);
 		setSelectedNodeKey("");
 		setShowNodeEditor(true);
+	};
+
+	const handleDownloadCode = () => {
+		const zip = new JSZip();
+
+		// Assuming nodeArray is an array of nodes and each node has a python_code property
+		nodesArray.forEach((node, _) => {
+			if (node.python_code) {
+				zip.file(`${node.node_key}.py`, node.python_code);
+			}
+		});
+		// Generate the ZIP file and trigger the download
+		zip
+			.generateAsync({ type: "blob" })
+			.then((content) => {
+				saveAs(content, "WaveAssistCode.zip");
+			})
+			.catch((err) => {
+				console.error("Error generating zip file:", err);
+			});
 	};
 
 	const handleCloseNodeEditor = () => {
@@ -356,12 +378,18 @@ const NodesComponent: React.FC = () => {
 			)}
 
 			<div className="mt-3">
-				<div className="d-flex justify-content-between align-items-center mb-3 ">
+				<div className="d-flex justify-content-start align-items-center mb-3">
 					<h3 className="translucent_white">Nodes</h3>
-					<Button variant="dark" onClick={handleCreateNode}>
-						<span className="bi bi-plus-lg"></span>
-					</Button>
+					<div className="ms-auto d-flex">
+						<Button variant="dark" onClick={handleDownloadCode}>
+							<span className="bi bi-cloud-download"></span>
+						</Button>
+						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
+							<span className="bi bi-plus-lg"></span>
+						</Button>
+					</div>
 				</div>
+
 				<div className="ag-theme-custom grid-container">
 					<AgGridReact
 						rowData={nodesArray}

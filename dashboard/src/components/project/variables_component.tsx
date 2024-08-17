@@ -8,6 +8,7 @@ import "../../utils/ag-theme-project.css";
 import Modal from "react-bootstrap/Modal";
 import { downloadFile } from "../../utils/shared_functions";
 import { useRefresh } from "../../utils/RefreshContext";
+import { useNavigate } from "react-router-dom";
 
 const VariablesComponent: React.FC = () => {
 	const [variablesArray, setVariablesArray] = useState<any[]>([]);
@@ -16,6 +17,7 @@ const VariablesComponent: React.FC = () => {
 	const [loading, setLoading] = useState(false);
 	const [variableKey, setVariableKey] = useState("");
 	const { shouldRefresh } = useRefresh();
+	const navigate = useNavigate();
 
 	const handleCloseVariableEditor = () => {
 		setShowVariableEditor(false);
@@ -160,12 +162,27 @@ const VariablesComponent: React.FC = () => {
 		cellClass: "ag-cell",
 	};
 
+	const viewData = (variable: any) => {
+		const key = variable.key;
+		navigate("/manage/data-view", { state: { variableKey: key } });
+	};
+
 	const columnDefs = [
 		{
 			headerName: "Variable Key",
 			field: "key",
 			cellRenderer: (params: any) => <span className="badge badge-primary">{params.value}</span>,
 			flex: 3,
+			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
+		},
+		{
+			headerName: "Data",
+			cellRenderer: (params: any) => (
+				<Button variant="outline-secondary" size="sm" onClick={() => viewData(params.data)}>
+					View Data
+				</Button>
+			),
+			flex: 1,
 			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
 		},
 

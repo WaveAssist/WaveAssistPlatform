@@ -8,19 +8,18 @@ import { useToast } from "../utils/toast_context";
 import DarkDropdown from "../utils/dark_dropdown";
 import { useRefresh } from "../utils/RefreshContext";
 import { Spinner } from "react-bootstrap"; // Assuming you're using Bootstrap
+import { useLocation } from "react-router-dom";
 
-interface DataViewProps {
-	variableKey?: string;
-}
-
-const DataViewComponent: React.FC<DataViewProps> = ({ variableKey }) => {
+const DataViewComponent: React.FC = () => {
 	const [dataArray, setDataArray] = useState<any[]>([]);
 	const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
-	const [selectedVariableKey, setSelectedVariableKey] = useState<string | undefined>(variableKey);
+	const [selectedVariableKey, setSelectedVariableKey] = useState<string | undefined>(undefined);
 	const [variablesArray, setVariablesArray] = useState<string[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
+	const location = useLocation();
+	const { variableKey } = location.state || {};
 
 	const fetchVariables = async () => {
 		try {
