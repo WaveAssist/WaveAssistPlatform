@@ -65,19 +65,15 @@ def validate_and_get_intervals(request, project_object, is_starting_node='0', sc
             return False, 'All schedule params are required: ' + str(required_params), None, None, None
 
         ##Schedule Params:
-        interval_every = int(request.POST.get('interval_every', '1'))
-        interval_type = request.POST.get('interval_type', 'seconds').lower()
-        crontab_minutes = request.POST.get('crontab_minutes', '*')
-        crontab_hours = request.POST.get('crontab_hours', '*')
-        crontab_days_of_month = request.POST.get('crontab_days_of_month', '*')
-        crontab_months_of_year = request.POST.get('crontab_months_of_year', '*')
-        crontab_days_of_week = request.POST.get('crontab_days_of_week', '*')
-        crontab_timezone = request.POST.get('crontab_timezone', 'UTC')
+
 
         if schedule_type not in dict(SCHEDULE_TYPE_CHOICES):
             return False, 'Schedule type not valid, choose from: ' + str(list(dict(SCHEDULE_TYPE_CHOICES).keys())), None, None, None
 
         if schedule_type == 'interval':
+            interval_every = int(request.POST.get('interval_every', '1'))
+            interval_type = request.POST.get('interval_type', 'seconds').lower()
+
             ##Create django celery beat interval object
             ##Check if interval_type in celery_models.PERIOD_CHOICES
             if interval_type not in dict(celery_models.PERIOD_CHOICES):
@@ -92,6 +88,13 @@ def validate_and_get_intervals(request, project_object, is_starting_node='0', sc
                 return False, 'Something went wrong while creating/fetching interval object: ' + str(e), None, None, None
 
         elif schedule_type == 'crontab':
+            crontab_minutes = request.POST.get('crontab_minutes', '*')
+            crontab_hours = request.POST.get('crontab_hours', '*')
+            crontab_days_of_month = request.POST.get('crontab_days_of_month', '*')
+            crontab_months_of_year = request.POST.get('crontab_months_of_year', '*')
+            crontab_days_of_week = request.POST.get('crontab_days_of_week', '*')
+            crontab_timezone = request.POST.get('crontab_timezone', 'UTC')
+
             ##Create django celery beat crontab object
             is_valid, message = validate_crontab_fields(crontab_minutes, crontab_hours, crontab_days_of_month, crontab_months_of_year, crontab_days_of_week, crontab_timezone)
             if not is_valid:
