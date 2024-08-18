@@ -2,7 +2,7 @@ import pandas as pd
 from pymongo import MongoClient
 from Utils.constants import *
 import Utils.utils as utils
-
+import numpy as np
 
 class MongoManager:
     ##Init Function
@@ -139,17 +139,19 @@ class MongoManager:
             utils.logger.error("Error in get_data_as_dataframe: " + str(e))
             return None
 
-
     def prepare_df_for_bson(self,df):
-        # Fill all NaNs/NaTs with None
-        df = df.where(pd.notnull(df), None)
+        # Replace NaN, NaT, and pd.NA with None
+        df = df.replace(np.nan, None)
+        df = df.replace({pd.NaT: None})
+        df = df.replace({pd.NA: None})
 
-        # Convert datetime columns to Python datetime objects (if necessary)
-        for col in df.select_dtypes(include=[pd.Timestamp]):
-            df[col] = df[col].apply(lambda x: x.to_pydatetime() if pd.notna(x) else None)
+        # Explicitly convert datetime columns to Python datetime objects
+        for col in df.columns:
+            if pd.api.types.is_datetime64_any_dtype(df[col]):
+                df[col] = df[col].apply(
+                    lambda x: x.to_pydatetime() if isinstance(x, pd.Timestamp) and pd.notna(x) else None)
 
         return df
-
 
     def replace_data_as_dataframe(self,io_key, df, collection_name):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
