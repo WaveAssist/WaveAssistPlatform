@@ -139,10 +139,23 @@ class MongoManager:
             utils.logger.error("Error in get_data_as_dataframe: " + str(e))
             return None
 
+
+    def prepare_df_for_bson(self,df):
+        # Fill all NaNs/NaTs with None
+        df = df.where(pd.notnull(df), None)
+
+        # Convert datetime columns to Python datetime objects (if necessary)
+        for col in df.select_dtypes(include=[pd.Timestamp]):
+            df[col] = df[col].apply(lambda x: x.to_pydatetime() if pd.notna(x) else None)
+
+        return df
+
+
     def replace_data_as_dataframe(self,io_key, df, collection_name):
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
         try:
             df = pd.DataFrame(df)
+            df = self.prepare_df_for_bson(df)
             data_df = df.to_dict(orient='records')
             return self.insert_or_replace_data_for_key(io_key,data_df, collection_name)
         except Exception as e:
