@@ -1,6 +1,6 @@
 from .models import *
 from .Utils.responseParser import ResponseParser
-from WaveAssistApiApp.Utils.MongoManager import MongoManager
+from WaveAssistApiApp.Utils.MongoManager import MongoManager, prepare_df_for_bson
 import pandas as pd
 from io import StringIO as StringIO
 from .Utils.constants import *
