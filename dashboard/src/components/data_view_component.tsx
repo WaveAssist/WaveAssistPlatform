@@ -71,7 +71,7 @@ const DataViewComponent: React.FC = () => {
 
 			const intervalId = setInterval(() => {
 				fetchDataForKey(selectedVariableKey);
-			}, 3000);
+			}, 10000);
 
 			// Clean up the interval on component unmount or when selectedVariableKey changes
 			return () => clearInterval(intervalId);

@@ -279,22 +279,24 @@ const NodesComponent: React.FC = () => {
 	};
 
 	const formatSchedule = (data: any) => {
-		if (data.schedule_type === "crontab") {
-			const cleanedCrontabSchedule = data.crontab_schedule.replace(/\(.*?\)/g, "");
-			return (
-				<div>
-					<span className="badge badge-important">Starting Node</span> <span className="badge badge-primary">Cron</span>{" "}
-					<span className="badge badge-secondary">{cleanedCrontabSchedule}</span>
-				</div>
-			);
-		} else if (data.schedule_type === "interval") {
-			return (
-				<div>
-					<span className="badge badge-important">Starting Node</span> <span className="badge badge-primary">Interval</span>{" "}
-					<span className="badge badge-secondary">{data.interval_schedule}</span>
-				</div>
-			);
-		} else if (data.schedule_type === "none" || data.schedule_type === "") {
+		if (data.is_starting_node) {
+			if (data.schedule_type === "crontab") {
+				const cleanedCrontabSchedule = data.crontab_schedule.replace(/\(.*?\)/g, "");
+				return (
+					<div>
+						<span className="badge badge-important">Starting Node</span> <span className="badge badge-primary">Cron</span>{" "}
+						<span className="badge badge-secondary">{cleanedCrontabSchedule}</span>
+					</div>
+				);
+			} else if (data.schedule_type === "interval") {
+				return (
+					<div>
+						<span className="badge badge-important">Starting Node</span>
+						<span className="badge badge-primary">Interval</span> <span className="badge badge-secondary">{data.interval_schedule}</span>
+					</div>
+				);
+			}
+		} else {
 			return (
 				<div>
 					<span className="badge badge-primary">Runs After</span>{" "}
