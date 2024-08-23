@@ -642,6 +642,8 @@ def deactivate_integration(request): #TWC
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration deactivated successfully.')
 
 
+
+
 ##Crud dashboard section
 
 def create_dashboard_section(request): #TCW

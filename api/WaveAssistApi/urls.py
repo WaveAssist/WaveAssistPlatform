@@ -45,6 +45,7 @@ urlpatterns = [
     path("manage/get_build_details/", csrf_exempt(manage_views.get_build_details), name="get_build_details"),
     path("manage/get_run_status/", csrf_exempt(manage_views.get_run_status), name="get_run_status"),
 
+
     path("manage/delete_project/", csrf_exempt(manage_views.delete_project), name="delete_project"),
     path("manage/create_data_key/", csrf_exempt(manage_views.create_data_key), name="create_data_key"),
     path("manage/delete_data_key/", csrf_exempt(manage_views.delete_data_key), name="delete_io_data"),
@@ -66,7 +67,7 @@ urlpatterns = [
     path("data/download_data_file/", csrf_exempt(data_views.download_data_file), name="download_data_file"),
     path("data/fetch_data_for_key/", csrf_exempt(data_views.fetch_data_for_key), name="fetch_data_for_key"),
     path("data/set_data_for_key/", csrf_exempt(data_views.set_data_for_key), name="set_data_for_key"),
-
+    path("data/get_integration_data/", csrf_exempt(data_views.get_integration_data), name="get_integration_data"),
 
     ##Build URL's
     path("deploy/deploy_project/", csrf_exempt(deployment_views.deploy_project), name="deploy_project"),

@@ -6,6 +6,7 @@ from io import StringIO as StringIO
 from .Utils.constants import *
 import WaveAssistApiApp.Utils.utils as utils
 import WaveAssistApiApp.Utils.validator as validator
+from WaveAssistApiApp.integration_views import get_integrations_data
 
 mongo_manager= MongoManager()
 
@@ -109,5 +110,15 @@ def set_data_for_key(request):
         return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
 
 
+def get_integration_data(request):
+    success, message, user_object, project_object = validator.validate_user_and_project(request,
+                                                                                        access_level_gte=ADMIN_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
 
+    integration_data = get_integrations_data(project_object.project_key)
+    if integration_data is None:
+        return ResponseParser.getParsedErrorMessage('Error in fetching integration data, or no integration data found')
 
+    output_dict = {'integration_data': integration_data}
+    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Integration data fetched successfully.')
