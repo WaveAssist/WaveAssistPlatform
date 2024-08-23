@@ -3,9 +3,30 @@ from WaveAssistApiApp.Utils.constants import *
 from pymongo import MongoClient
 import WaveAssistApiApp.Utils.utils as utils
 import numpy as np
-import datetime
-from datetime import datetime
+from datetime import datetime, date
 from WaveAssistApi.settings import MONGO_CONNECTION_STRING
+
+
+def prepare_df_for_bson(df):
+    for col in df.columns:
+        df[col] = df[col].apply(
+            lambda x: datetime.combine(x, datetime.min.time())
+            if isinstance(x, date) and not isinstance(x, datetime) else x)
+
+    # Replace NaN, NaT, and pd.NA with None
+    df = df.replace(np.nan, None)
+    df = df.replace({pd.NaT: None})
+    df = df.replace({pd.NA: None})
+
+    # Explicitly convert datetime columns to Python datetime objects
+    for col in df.columns:
+        if pd.api.types.is_datetime64_any_dtype(df[col]):
+            df[col] = df[col].apply(
+                lambda x: x.to_pydatetime() if isinstance(x, pd.Timestamp) and pd.notna(x) else x)
+
+    return df
+
+
 class MongoManager:
 
     ##Class Functions
@@ -156,27 +177,6 @@ class MongoManager:
             utils.logger.error("Error in get_data_as_dataframe: " + str(e))
             return None
 
-    def prepare_df_for_bson(self,df):
-        # Convert datetime.date to datetime.datetime
-        for col in df.columns:
-            df[col] = df[col].apply(
-                lambda x: datetime.datetime.combine(x, datetime.datetime.min.time()) if isinstance(x,
-                                                                                                   datetime.date) and not isinstance(
-                    x, datetime.datetime) else x)
-
-        # Replace NaN, NaT, and pd.NA with None
-        df = df.replace(np.nan, None)
-        df = df.replace({pd.NaT: None})
-        df = df.replace({pd.NA: None})
-
-        # Explicitly convert datetime columns to Python datetime objects
-        for col in df.columns:
-            if pd.api.types.is_datetime64_any_dtype(df[col]):
-                df[col] = df[col].apply(
-                    lambda x: x.to_pydatetime() if isinstance(x, pd.Timestamp) and pd.notna(x) else x)
-
-        return df
-
     ##Helper functions
     def fetch_data_as_dataframe_for_array(self, io_key_array):
         output_dict = {}
@@ -197,7 +197,7 @@ class MongoManager:
         ##Fetch the data for the key, and replace the PD_DATA_KEY with the new dataframe
         try:
             df = pd.DataFrame(df)
-            df = self.prepare_df_for_bson(df)
+            df = prepare_df_for_bson(df)
             data_df = df.to_dict(orient='records')
             return self.insert_or_replace_data_for_key(io_key,data_df)
         except Exception as e:

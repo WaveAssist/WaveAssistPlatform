@@ -56,7 +56,7 @@ def fetch_data_for_key(request):
     if data_df is None:
         data_df = pd.DataFrame()
 
-    data_df = mongo_manager.prepare_df_for_bson(data_df)
+    data_df = prepare_df_for_bson(data_df)
     if output_data_type == 'csv':
         csv_string = data_df.to_csv(index=False)
         return ResponseParser.getBasicHttpResponse(csv_string)
