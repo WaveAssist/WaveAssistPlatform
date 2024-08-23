@@ -77,3 +77,12 @@ def manage_integration_details(integration_object, project_object):
     mongo_manager.insert_or_replace_data_for_key(project_integrations_key,integrations_data_array)
     mongo_manager.close_connection()
     return
+
+
+
+def get_integrations_data(project_key):
+    mongo_manager = MongoManager()
+    mongo_manager.collection = mongo_manager.database[project_key]
+    project_integrations_key = project_key + INTEGRATIONS_SUFFIX_KEY
+    integration_dict = mongo_manager.fetch_data_for_key(project_integrations_key)
+    return integration_dict
