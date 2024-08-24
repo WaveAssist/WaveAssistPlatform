@@ -1,4 +1,6 @@
 import json
+import uuid
+
 from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
@@ -13,8 +15,37 @@ from kombu.serialization import dumps
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from datetime import datetime
 
+
 ##ToDo: Runs API pending.
 ##ToDo: Logs pending.
+
+
+def generate_dag_image(request):
+    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    all_nodes = project_object.nodes_set.filter(is_enabled=True)
+    starting_nodes = all_nodes.filter(is_starting_node=True, is_enabled=True)
+
+    ##Additional Check. Already done during node save.
+    dag_dict = {}
+    for start_node in starting_nodes:
+        success, node_list, message = utils.check_dag(start_node, all_nodes)
+        dag_dict[start_node] = node_list
+        if not success:
+            return ResponseParser.getParsedErrorMessage(message)
+
+    image_stream = utils.generate_dag_visualization(dag_dict)
+    file_name = 'API/' + str(uuid.uuid4()) + '.png'
+    success, s3_key = utils.upload_file_to_s3(image_stream, file_name, 1)
+
+    if success:
+        output_dict =  {"status": "success", "s3_key": s3_key}
+        return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully uploaded image to S3')
+    else:
+        return ResponseParser.getParsedErrorMessage('Failed to upload image to S3')
+
 
 def deploy_project(request): ##TCW
     #### ------ Validations Start -------- ####

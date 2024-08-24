@@ -1,4 +1,6 @@
 ##PYTHON IMPORTS
+import uuid
+
 import boto3
 from ..models import *
 ##Custom
@@ -8,6 +10,9 @@ from collections import deque
 import re
 import pytz
 import json
+from graphviz import Digraph
+from io import BytesIO
+
 ##Packages
 logger = Logger()
 
@@ -200,6 +205,30 @@ def get_data_and_dependencies_for_dag(project_object, node_array):
         data_dict[node_object.node_key] =  node_task_dict
         dependency_dict[node_object.node_key] = [node.node_key for node in node_object.run_after_nodes_array.all()]
     return data_dict, dependency_dict
+
+
+def generate_dag_visualization(dag_dict):
+    dot = Digraph(comment='DAGs Visualization')
+
+    # Define a consistent color palette
+    base_color = "#428d4f"
+
+    for i, (start_node, node_list) in enumerate(dag_dict.items()):
+        with dot.subgraph(name=f'cluster_{start_node.node_key}') as subgraph:
+            subgraph.attr(color=base_color, fontname="Open Sans")
+            subgraph.node(start_node.node_key, color=base_color, shape="box", style="rounded")
+
+            # Create nodes and edges
+            for node in node_list:
+                subgraph.node(node.node_key, color=base_color, shape="box", style="rounded", fontname="Open Sans")
+                for dep in node.run_after_nodes_array.all():
+                    subgraph.edge(dep.node_key, node.node_key, color=base_color, fontname="Open Sans")
+
+    # Render the graph to a PNG in memory
+    image_stream = BytesIO()
+    image_stream.write(dot.pipe(format='png'))
+    image_stream.seek(0)  # Reset the stream position to the beginning
+    return image_stream
 
 
 
