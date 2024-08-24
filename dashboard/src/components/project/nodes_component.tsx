@@ -114,7 +114,9 @@ const NodesComponent: React.FC = () => {
 	};
 
 	const handleDiagram = async () => {
+		setLoading(true);
 		var data_dict = await generate_dag_image();
+		setLoading(false);
 		var s3_key = data_dict.s3_key;
 		var url = "https://waveassistapps.s3.amazonaws.com/" + s3_key;
 		window.open(url, "_blank");

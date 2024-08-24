@@ -93,7 +93,7 @@ export const updateCodeApi = async (nodeKey: string, nodeCode: string): Promise<
 };
 
 export const generate_dag_image = async (): Promise<any> => {
-	var path = "data/generate_dag_image/";
+	var path = "deploy/generate_dag_image/";
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
