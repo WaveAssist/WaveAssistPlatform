@@ -7,6 +7,7 @@ import {
 	updateNodeApi,
 	deleteNodeApi,
 	runDAGApi,
+	generate_dag_image,
 } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
 import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap";
@@ -112,6 +113,12 @@ const NodesComponent: React.FC = () => {
 		setShowNodeEditor(true);
 	};
 
+	const handleDiagram = async () => {
+		var data_dict = await generate_dag_image();
+		var s3_key = data_dict.s3_key;
+		var url = "https://waveassistapps.s3.amazonaws.com/" + s3_key;
+		window.open(url, "_blank");
+	};
 	const handleDownloadCode = () => {
 		const zip = new JSZip();
 
@@ -383,7 +390,10 @@ const NodesComponent: React.FC = () => {
 				<div className="d-flex justify-content-start align-items-center mb-3">
 					<h3 className="translucent_white">Nodes</h3>
 					<div className="ms-auto d-flex">
-						<Button variant="dark" onClick={handleDownloadCode}>
+						<Button variant="dark" onClick={handleDiagram}>
+							<span className="bi bi-diagram-2"></span>
+						</Button>
+						<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
 							<span className="bi bi-cloud-download"></span>
 						</Button>
 						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
