@@ -37,7 +37,7 @@ def generate_dag_image(request):
             return ResponseParser.getParsedErrorMessage(message)
 
     image_stream = utils.generate_dag_visualization(dag_dict)
-    file_name = 'API/' + str(uuid.uuid4()) + '.png'
+    file_name = 'API/' + str(uuid.uuid4()) + '.png' ##Better name if needed.
     success, s3_key = utils.upload_file_to_s3(image_stream, file_name, 1)
 
     if success:
