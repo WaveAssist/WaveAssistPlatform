@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Start the Worker
-CMD ["celery", "-A", "celery_worker", "worker", "--loglevel=info", "-c", "2"]
+CMD ["celery", "-A", "celery_worker", "worker", "--loglevel=info", "-c", "8"]

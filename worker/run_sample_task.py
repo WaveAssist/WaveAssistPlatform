@@ -15,7 +15,6 @@ def run_task(input_1_df, input_2_df, integrations_df):
     return input_1_df, input_2_df
     """
 
-
 mongo_manager = MongoManager()
 
 collection_key = "test_project"

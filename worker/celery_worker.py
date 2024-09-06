@@ -8,8 +8,6 @@ import os
 from celery_singleton import Singleton
 import time
 
-##ToDo: Test singleton
-
 BROKER_URL = os.getenv('BROKER_URL', 'redis://localhost:6379/0')
 BACKEND_URL = os.getenv('BACKEND_URL', BROKER_URL)
 
@@ -21,6 +19,8 @@ app = Celery('waveassist',
 # Setup MongoManager
 mongo_manager = MongoManager()
 
+
+##ToDo: Add/Plan timeout
 @app.task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
 def run_task(*args, task_dict=None, collection_key=None, **kwargs):
     try:
@@ -63,8 +63,6 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
             while not result.ready():
                 time.sleep(interval)
                 interval = min(interval * growth_factor, max_interval)
-
-
             return True
         except Exception as e:
             utils.logger.error(f"Error in processing DAG: {e}")
