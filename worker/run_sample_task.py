@@ -10,6 +10,7 @@ def get_code():
     return """
 def run_task(input_1_df, input_2_df, integrations_df):
     ##Process the data, modify input_1 df
+    print("RUNNING TASK!!")
     input_1_df['sum'] = input_1_df['a'] + input_1_df['b']
     input_2_df['sum'] = input_2_df['a'] + input_2_df['b']
     return input_1_df, input_2_df

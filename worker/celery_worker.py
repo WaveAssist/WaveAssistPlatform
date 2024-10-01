@@ -21,8 +21,8 @@ mongo_manager = MongoManager()
 
 
 ##ToDo: Add/Plan timeout
-@app.task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
-def run_task(*args, task_dict=None, collection_key=None, **kwargs):
+@app.task(base=Singleton, unique_on=['task_key', ], bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
+def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs):
     try:
         task_runner = TaskRunner(task_dict, collection_key, mongo_manager)
         task_runner.run()
@@ -47,7 +47,7 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
                 current_layer_tasks_signatures = []
                 for task_key in layer:
                     task_dict = data_dict[task_key]
-                    task = run_task.si(task_dict=task_dict, collection_key=collection_key)
+                    task = run_task.si(task_dict=task_dict, collection_key=collection_key, task_key=task_key)
                     current_layer_tasks_signatures.append(task)
 
                 ##Create a group of tasks for the current layer & append
@@ -56,13 +56,6 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
 
             workflow = chain(*workflow_array)
             result = workflow.apply_async()
-
-            interval = 0.1
-            max_interval = 5
-            growth_factor = 1.2
-            while not result.ready():
-                time.sleep(interval)
-                interval = min(interval * growth_factor, max_interval)
             return True
         except Exception as e:
             utils.logger.error(f"Error in processing DAG: {e}")

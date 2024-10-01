@@ -21,9 +21,17 @@ class TaskRunner(object):
             self.collection_key = collection_key
             self.mongo_manager = mongo_manager
 
+        def custom_print(self, *args, **kwargs):
+            # Join all arguments into a single string, and prepend the Node key
+            full_message = " ".join(map(str, args))  # Convert all arguments to a string and join with space
+            print(f"Node: {self.node_key} - {full_message}", **kwargs)
+
         def run_code(self, input_data_array):
             namespace = {}
             try:
+                # Inject the custom print function into the namespace
+                namespace['print'] = self.custom_print
+
                 # Try to compile the provided code to check for syntax errors
                 compiled_code = compile(self.code_to_run, "<string>", "exec")
 
