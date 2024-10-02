@@ -4,11 +4,6 @@ FROM --platform=linux/amd64 public.ecr.aws/y1v1f4v7/waveassistchrome:latest
 # Set the working directory in the container
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    imagemagick \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy the requirements file into the container
 COPY requirements.txt ./
 
