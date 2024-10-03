@@ -21,7 +21,7 @@ mongo_manager = MongoManager()
 
 
 ##ToDo: Add/Plan timeout
-@app.task(base=Singleton, unique_on=['task_key', ], bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
+@app.task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
 def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs):
     try:
         task_runner = TaskRunner(task_dict, collection_key, mongo_manager)
