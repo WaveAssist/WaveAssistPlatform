@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'REMOVED_CREDENTIAL'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 IS_DOCKER=True
 
@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'WaveAssistApi.wsgi.application'
 
 default_sqlite_path = os.path.join(BASE_DIR, 'sqlite_data/mysqlite3.db')
 SQLITE_PATH = os.getenv('SQLITE_PATH',default_sqlite_path )
-
+print("SQLITE_PATH: ", SQLITE_PATH)
 ## Connect to SQLite on local host
 DATABASES = {
     'default': {

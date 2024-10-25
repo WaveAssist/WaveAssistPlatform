@@ -471,7 +471,7 @@ def update_node(request): ## TCW
 
     node_key = request.POST.get('node_key', '')
     try:
-        node_object = Nodes.objects.get(node_key=node_key)
+        node_object = Nodes.objects.get(node_key=node_key, project_object=project_object)
     except:
         return ResponseParser.getParsedErrorMessage('Node not found.')
 
