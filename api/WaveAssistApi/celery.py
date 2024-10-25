@@ -7,8 +7,8 @@ from django.conf import settings
 
 
 ##ToDo: Change back
-# BROKER_URL = os.getenv('BROKER_URL', 'redis://localhost:6379/0')
-BROKER_URL = 'redis://34.196.124.60:6379/0'
+BROKER_URL = os.getenv('BROKER_URL', 'redis://localhost:6379/0')
+# BROKER_URL = 'redis://34.196.124.60:6379/0'
 
 BACKEND_URL = os.getenv('BACKEND_URL', BROKER_URL)
 
