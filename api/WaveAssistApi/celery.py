@@ -5,11 +5,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'WaveAssistApi.settings')
 from celery import Celery
 from django.conf import settings
 
-
-##ToDo: Change back
-BROKER_URL = os.getenv('BROKER_URL', 'redis://localhost:6379/0')
-# BROKER_URL = 'redis://34.196.124.60:6379/0'
-
+BROKER_URL = os.getenv('BROKER_URL', 'redis://redis:6379/0')
 BACKEND_URL = os.getenv('BACKEND_URL', BROKER_URL)
 
 # Configure the Django version of the Celery app to use the same broker and backend
@@ -20,7 +16,7 @@ app = Celery('WaveAssistApi',
 
 # Load Celery settings from Django settings, the namespace 'CELERY' means all celery-related configuration keys
 # should have a `CELERY_` prefix in your Django settings file
-# app.config_from_object(settings, namespace='CELERY')
-#
-# # Set Celery to use the DatabaseScheduler from django-celery-beat
-# app.conf.beat_scheduler = 'django_celery_beat.schedulers:DatabaseScheduler'
+app.config_from_object(settings, namespace='CELERY')
+
+# Set Celery to use the DatabaseScheduler from django-celery-beat
+app.conf.beat_scheduler = 'django_celery_beat.schedulers:DatabaseScheduler'
