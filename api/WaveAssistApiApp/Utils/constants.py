@@ -33,4 +33,4 @@ AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY','REMOVED_CREDENTIAL')
 ZERODHA_API_KEY_VALUE = os.getenv('ZERODHA_API_KEY','')
 ZERODHA_API_SECRET_KEY_VALUE = os.getenv('ZERODHA_API_SECRET','')
 
-LOKI_URL = os.getenv('LOKI_URL', 'http://localhost:3100')
+LOKI_URL = os.getenv('LOKI_URL', 'http://loki:3100')
