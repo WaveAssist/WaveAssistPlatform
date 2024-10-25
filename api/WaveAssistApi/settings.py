@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'WaveAssistApi.wsgi.application'
 
 default_sqlite_path = os.path.join(BASE_DIR, 'sqlite_data/mysqlite3.db')
 SQLITE_PATH = os.getenv('SQLITE_PATH',default_sqlite_path )
-
+print("SQLITE_PATH: ", SQLITE_PATH)
 ## Connect to SQLite on local host
 DATABASES = {
     'default': {

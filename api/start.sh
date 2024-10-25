@@ -6,7 +6,7 @@ python manage.py migrate
 celery -A WaveAssistApi beat --loglevel=info &
 
 # Start Celery Flower
-celery -A WaveAssistApi flower --port=5555 --basic_auth=wave:REMOVED_CREDENTIAL &
+celery -A WaveAssistApi flower --port=5555 --basic_auth=admin:admin &
 
 # Start Gunicorn
-gunicorn --timeout 120 --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application
+gunicorn --timeout 120 --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application --workers 1
