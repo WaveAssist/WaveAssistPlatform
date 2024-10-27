@@ -32,7 +32,7 @@ jobs:
 
     - name: Build the Cloud Docker image
       env:
-        VITE_DASHBOARD_BASE_URL: https://api-waveassist.wavepredict.com
+        VITE_DASHBOARD_BASE_URL: https://api.waveassist.io
       run: docker build --platform linux/amd64 . --file Dockerfile --tag waveassist_dashboard:cloud --build-arg VITE_DASHBOARD_BASE_URL=$VITE_DASHBOARD_BASE_URL
 
     - name: Tag the Cloud Docker image
