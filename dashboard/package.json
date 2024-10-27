@@ -38,6 +38,7 @@
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@types/react-lazylog": "^4.5.4",
+    "@types/react-modal-image": "^2.6.3",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react": "^4.2.1",

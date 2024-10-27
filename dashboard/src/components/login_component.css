@@ -5,14 +5,13 @@ body {
 }
 
 
-
-img {
+wp_logo {
 	max-width: 170px !important;
 	height: auto !important;
 }
 
 @media screen and (max-width: 768px) {
-	img {
+	wp_logo {
 		max-width: 200px;
 	}
 }

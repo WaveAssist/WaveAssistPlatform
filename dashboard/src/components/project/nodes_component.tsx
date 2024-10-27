@@ -26,6 +26,8 @@ import { saveAs } from "file-saver";
 
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
+	const [isOpen, setIsOpen] = useState(false);
+	const [url, setUrl] = useState("");
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
@@ -97,6 +99,7 @@ const NodesComponent: React.FC = () => {
 	const handleClose = () => {
 		setSelectedNodeKey("");
 		setShowCodeModal(false);
+		setIsOpen(false);
 	};
 
 	const handleSave = async () => {
@@ -119,7 +122,8 @@ const NodesComponent: React.FC = () => {
 		setLoading(false);
 		var s3_key = data_dict.s3_key;
 		var url = "https://waveassistapps.s3.amazonaws.com/" + s3_key;
-		window.open(url, "_blank");
+		setUrl(url);
+		setIsOpen(true);
 	};
 	const handleDownloadCode = () => {
 		const zip = new JSZip();
@@ -415,6 +419,18 @@ const NodesComponent: React.FC = () => {
 					/>
 				</div>
 			</div>
+
+			<Modal show={isOpen} onHide={handleClose} size="lg" centered>
+				<Modal.Header closeButton>
+					<Modal.Title>Nodes Flow</Modal.Title>
+				</Modal.Header>
+				<Modal.Body style={{ padding: 0 }}>
+					<div style={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
+						<img src={url} alt="Generated" style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto" }} />
+					</div>
+				</Modal.Body>
+			</Modal>
+
 			<Modal show={showCodeModal} onHide={handleClose} size="lg" centered>
 				<Modal.Header>
 					<Modal.Title>Edit Code</Modal.Title>
