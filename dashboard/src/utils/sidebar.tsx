@@ -62,6 +62,13 @@ const Sidebar = () => {
 						Data Viewer
 					</Link>
 				</li>
+
+				<li className="nav-item">
+					<Link to="/manage/logs" className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1`}>
+						<i className="bi bi-file-text-fill me-2"></i>
+						Logs
+					</Link>
+				</li>
 			</ul>
 			<div>
 				<button className="btn btn-outline-light w-100" type="button" onClick={handleLogout}>

@@ -8,6 +8,7 @@ import PrivateRoute from "./utils/private_route";
 import NodesComponent from "./components/project/nodes_component";
 import VariablesComponent from "./components/project/variables_component";
 import EnvironmentsComponent from "./components/project/environments_component";
+import TestComponent from "./components/test_component";
 import Layout from "./utils/layout_sidebar";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -16,6 +17,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import DataViewComponent from "./components/data_view_component";
 import "./App.css";
 import DeploymentsComponent from "./components/project/deployments_component";
+import LogsComponent from "./components/project/logs_component";
 function App() {
 	return (
 		<Router>
@@ -23,6 +25,8 @@ function App() {
 				<section>
 					<Routes>
 						<Route path="/login" element={<LoginComponent />} />
+						<Route path="/test" element={<TestComponent />} />
+
 						<Route path="/" element={<PrivateRoute component={AllProjectsComponent} />} />
 						<Route path="/manage" element={<PrivateRoute component={AllProjectsComponent} />} />
 						<Route path="/manage/projects" element={<PrivateRoute component={AllProjectsComponent} />} />
@@ -31,6 +35,7 @@ function App() {
 						<Route path="/manage/environments" element={<PrivateRoute component={EnvironmentsComponent} layout={Layout} />} />
 						<Route path="/manage/deployments" element={<PrivateRoute component={DeploymentsComponent} layout={Layout} />} />
 						<Route path="/manage/data-view" element={<PrivateRoute component={DataViewComponent} layout={Layout} />} />
+						<Route path="/manage/logs" element={<PrivateRoute component={LogsComponent} layout={Layout} />} />
 					</Routes>
 				</section>
 			</div>

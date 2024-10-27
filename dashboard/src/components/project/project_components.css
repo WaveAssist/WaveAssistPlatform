@@ -61,3 +61,27 @@
 }
 
 
+
+
+.log-container {
+  display: flex;
+  flex-direction: column;
+  height: 72vh; /* Make it take the full viewport height */
+}
+
+.log-viewer {
+  flex-grow: 1; /* Make the log viewer take the remaining space */
+}
+
+
+.log-viewer .ReactVirtualized__Grid__innerScrollContainer {
+  background-color: #101219 !important; /* Apply the darker color */
+}
+
+.bg_color_dark{
+  background-color: #101219 !important;
+}
+
+.log-container .ReactVirtualized__Grid__innerScrollContainer {
+  background-color: #101219 !important;
+}
