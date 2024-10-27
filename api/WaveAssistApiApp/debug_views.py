@@ -30,7 +30,7 @@ def fetch_logs(request): ##Test Case Pending
     node_key_array = node_key_csv.split(',')
     node_key_array = [node_key.strip() for node_key in node_key_array]
 
-    project_node_keys = project_object.nodes_set.filter(is_enabled=True).values_list('node_key', flat=True)
+    project_node_keys = list(project_object.nodes_set.filter(is_enabled=True).values_list('node_key', flat=True))
     for node_key in node_key_array:
         if node_key not in project_node_keys:
             return ResponseParser.getParsedErrorMessage('Node Key not found in project')
