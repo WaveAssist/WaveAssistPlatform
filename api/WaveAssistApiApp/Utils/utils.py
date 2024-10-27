@@ -12,7 +12,8 @@ import pytz
 import json
 from graphviz import Digraph
 from io import BytesIO
-
+import requests
+from datetime import datetime
 ##Packages
 logger = Logger()
 
@@ -246,4 +247,75 @@ def stop_deployment(deployment_object):
         print(f"An error occurred: {e}")
         raise Exception("Could not stop the Deployment: " + str(e))
 
+def get_all_loki_jobs():
+    try:
+        response = requests.get(
+            LOKI_URL + '/loki/api/v1/label/job/values'
+        )
+        response_dict = response.json()
+        options_array = response_dict['data']
+        return options_array
+    except:
+        return []
 
+
+def fetch_loki_logs(query, start_ts, end_ts):
+    logs = []
+    try:
+        response = requests.get(
+            LOKI_URL + '/loki/api/v1/query_range',
+            params={
+                'query': query,
+                'start': start_ts,
+                'end': end_ts,
+                'limit': LOGS_LIMIT,
+                'direction': 'backward'  # Fetch logs in reverse order (latest logs first)
+            }
+        )
+
+        response_dict = response.json()
+        result_array = response_dict['data']['result']
+        for result_dict in result_array:
+            try:
+                all_values = result_dict['values']
+                for values_array in all_values:
+                    try:
+                        log_message = values_array[1]
+                        if log_message != "":
+                            log_message = re.sub(r"\[.*?]", "", log_message).strip()
+                            log_dict = {
+                                'log': log_message,
+                                'timestamp': datetime.fromtimestamp(int(values_array[0]) / 1000000000).strftime(
+                                    '%Y-%m-%d %H:%M:%S')
+                            }
+                            logs.append(log_dict)
+                    except:
+                        pass
+            except:
+                pass
+    except:
+        pass
+
+    return logs
+
+
+# def build_loki_query(selected_jobs, node_key):
+#     jobs_query = " or ".join([f'job="{job}"' for job in selected_jobs])
+#     query = '{'  + jobs_query
+#     if node_key:
+#         query += f', node="{node_key}"'
+#     query += '}'
+#     return query
+
+def build_loki_query(selected_jobs, node_key_array):
+    # Create a regex pattern for the jobs
+    jobs_regex = "|".join([f'{job}' for job in selected_jobs])
+    query = f'{{job=~"{jobs_regex}"'
+
+    if len(node_key_array)>0:
+        # Create a regex pattern for the node keys
+        nodes_regex = "|".join([f'{node}' for node in node_key_array])
+        query += f', node=~"{nodes_regex}"'
+
+    query += '}'
+    return query
