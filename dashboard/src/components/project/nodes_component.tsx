@@ -424,7 +424,7 @@ const NodesComponent: React.FC = () => {
 				<Modal.Header closeButton>
 					<Modal.Title>Nodes Flow</Modal.Title>
 				</Modal.Header>
-				<Modal.Body style={{ padding: 0 }}>
+				<Modal.Body style={{ padding: "30px" }}>
 					<div style={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
 						<img src={url} alt="Generated" style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto" }} />
 					</div>
