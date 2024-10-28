@@ -95,10 +95,11 @@ const LogsComponent: React.FC = () => {
 						/>
 						{selectedSystemKey === "celery-worker" && (
 							<DarkDropdown
-								items={["All Nodes", ...nodesArray.map((node) => node.name)]}
+								items={["All Nodes", ...nodesArray.map((node) => node.name), "Raw Logs"]}
 								keys={[
 									"All", // CSV of all node keys for "All Nodes"
 									...nodesArray.map((node) => node.node_key),
+									"",
 								]}
 								defaultText={getSelectedNodeName()}
 								headerText="Select Node"
