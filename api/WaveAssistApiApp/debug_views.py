@@ -29,6 +29,7 @@ def fetch_logs(request): ##Test Case Pending
     node_key_csv = request.POST.get('node_key_csv', '')
     node_key_array = node_key_csv.split(',')
     node_key_array = [node_key.strip() for node_key in node_key_array]
+    node_key_array = [node_key for node_key in node_key_array if node_key]
 
     project_node_keys = list(project_object.nodes_set.all().values_list('node_key', flat=True))
     for node_key in node_key_array:
