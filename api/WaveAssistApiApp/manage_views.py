@@ -7,8 +7,25 @@ from io import StringIO as StringIO
 from .Utils.constants import *
 import WaveAssistApiApp.Utils.utils as utils
 import WaveAssistApiApp.Utils.validator as validator
-from WaveAssistApiApp.integration_views import manage_integration_details
+# from WaveAssistApiApp.integration_views import manage_integration_details
 from django.db import transaction
+
+
+
+def create_account(request): #TCW
+
+    ##ToDo: API Pending..
+    account_key = request.POST.get('account_key', '')
+    uid = request.POST.get('uid', '')
+
+    ##Authorise -> Verify Firebase Token
+
+    ##Create Account
+    ##Create User
+
+    ##Create User & VHost in RabbitMQ
+    ##Create User & Db in MongoDB
+
 
 
 
@@ -137,55 +154,10 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
     return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
 
 
-##ToDo: This API needs to be deprecated.
-def fetch_project_data(request): #TCW
-    ##Validate Request
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=READ_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-
-    ##Get data for project
-    project_dict = project_object.get_dict()
-
-    ##DataKeys
-    data_key_array = project_object.datakey_set.all().order_by(Lower('key'))
-    data_key_dict_array = []
-    for data_key_object in data_key_array:
-        data_key_dict_array.append(data_key_object.get_dict())
-    project_dict['data_key_array'] = data_key_dict_array
-
-    ##Nodes
-    node_array = project_object.nodes_set.filter(is_enabled=True).order_by(Lower('node_key'))
-    node_dict_array = []
-    for node_object in node_array:
-        node_dict_array.append(node_object.get_dict())
-    project_dict['node_array'] = node_dict_array
-
-
-    ##Dashboard Sections
-    dashboard_section_array = project_object.dashboardsection_set.all().order_by('row', 'column')
-    dashboard_section_dict_array = []
-    for dashboard_section_object in dashboard_section_array:
-        dashboard_section_dict_array.append(dashboard_section_object.get_dict())
-    project_dict['dashboard_section_array'] = dashboard_section_dict_array
-
-
-    ##Provide data runs which user has access to, and belong to this project.
-    data_run_array = DataRuns.objects.filter(accessprovided__type=1,
-        accessprovided__data_run_access_type__gte=READ_GTE,
-        accessprovided__user_object=user_object,
-        project_object=project_object
-    ).distinct()
-    data_run_dict_array = []
-    for data_run_object in data_run_array:
-        data_run_dict_array.append(data_run_object.get_dict())
-    project_dict['data_run_array'] = data_run_dict_array
-
-    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project data fetched successfully.')
-
-
 def fetch_project_variables(request): #TCW
+
+    ##ToDo: Wont this directly come from Mongo? Keep it dynamic or not?
+
     ##Validate Request
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=READ_GTE)
     if not success:
@@ -211,8 +183,6 @@ def fetch_nodes(request):  # TCW
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-
-
     ##Nodes
     node_array = project_object.nodes_set.all().order_by(Lower('node_key'))
     node_dict_array = []
@@ -222,34 +192,12 @@ def fetch_nodes(request):  # TCW
     return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Nodes fetched successfully.')
 
 
-def fetch_dashboard_sections(request):  # TCW
-    ##Validate Request
-    success, message, user_object, project_object = validator.validate_user_and_project(request,
-                                                                                        access_level_gte=READ_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    ##Get data for project
-    project_dict = project_object.get_dict()
-
-    ##Dashboard Sections
-    dashboard_section_array = project_object.dashboardsection_set.all().order_by('row', 'column')
-    dashboard_section_dict_array = []
-    for dashboard_section_object in dashboard_section_array:
-        dashboard_section_dict_array.append(dashboard_section_object.get_dict())
-    project_dict['dashboard_section_array'] = dashboard_section_dict_array
-
-    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Dashboard Sections fetched successfully.')
-
-
 def fetch_environments(request):  # TCW
     ##Validate Request
     success, message, user_object, project_object = validator.validate_user_and_project(request,
                                                                                         access_level_gte=READ_GTE)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
-
-    ##Get data for project
 
     ##Provide data runs which user has access to, and belong to this project.
     data_run_array = DataRuns.objects.filter(accessprovided__type=1,
@@ -285,66 +233,6 @@ def fetch_deployments(request):  # Test cases pending
         deployment_dict_array.append(deployment_object.get_dict())
     data_dict = {'deployment_array': deployment_dict_array}
     return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Deployments fetched successfully.')
-
-
-
-def get_build_details(request):  # TCW
-    ##Validate Request
-    success, message, user_object, project_object = validator.validate_user_and_project(request,
-                                                                                        access_level_gte=READ_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    ##Get data for project
-    project_dict = project_object.get_dict()
-
-    #get details for data runs and dag runs of dag object of this prohect
-    dag_object_array = DAG.objects.filter(project_object=project_object)
-    dag_run_dict_array = []
-    for dag_object in dag_object_array:
-        dag_run_object_array = DAGRun.objects.filter(dag_object=dag_object)
-        for dag_run_object in dag_run_object_array:
-            dag_run_dict_array.append(dag_run_object.get_dict())
-    project_dict['build_array'] = dag_run_dict_array
-
-
-    ##Provide data runs which user has access to, and belong to this project.
-    data_run_array = DataRuns.objects.filter(accessprovided__type=1,
-        accessprovided__data_run_access_type__gte=READ_GTE,
-        accessprovided__user_object=user_object,
-        project_object=project_object
-    ).distinct()
-    data_run_dict_array = []
-    for data_run_object in data_run_array:
-        data_run_dict_array.append(data_run_object.get_dict())
-    project_dict['environment_array'] = data_run_dict_array
-
-    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project Build Details fetched successfully.')
-
-
-def get_run_status(request):  # TCW
-    ##Validate Request
-    success, message, user_object, data_run_object = validator.validate_user_and_data_run(request,
-                                                                                        access_level_gte=READ_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    success, message, dag_run_object = validator.validate_user_and_dag_run(request, access_level_gte=READ_GTE)
-
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    # get status for both dag run and data run
-    dag_run_status = dag_run_object.is_enabled
-    data_run_status = data_run_object.is_enabled
-
-    if dag_run_status and data_run_status:
-        return ResponseParser.getParsedSuccessMessage({'status': 'running'}, '200', 'Project is running.')
-    else:
-        return ResponseParser.getParsedSuccessMessage({'status': 'not running'}, '200', 'Project is not running.')
-
-
-
 
 
 def delete_project(request): ##ToDo: Write test cases. Check related deleted. Check if DAG Runs are gone.
@@ -589,30 +477,30 @@ def update_code(request): #TWC
 
 ##Integrations CRUD
 def activate_integration(request): #TWC without mongo checks(manage_integration_details)
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    integration_key = request.POST.get('integration_key', '')
-    if project_object.integration_array.filter(integration_key=integration_key).count() > 0:
-        return ResponseParser.getParsedErrorMessage('Integration already exist, and is active')
-
-    try:
-        integration_object = Integrations.objects.get(integration_key=integration_key)
-    except:
-        return ResponseParser.getParsedErrorMessage('Integration not found')
-
-    try:
-        project_object.integration_array.add(integration_object)
-        project_object.save()
-    except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while adding integration')
-
-    ##Manage Mongo Data
-    try:
-        manage_integration_details(integration_object, project_object)
-    except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while managing integration details')
+    # success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
+    # if not success:
+    #     return ResponseParser.getParsedErrorMessage(message)
+    #
+    # integration_key = request.POST.get('integration_key', '')
+    # if project_object.integration_array.filter(integration_key=integration_key).count() > 0:
+    #     return ResponseParser.getParsedErrorMessage('Integration already exist, and is active')
+    #
+    # try:
+    #     integration_object = Integrations.objects.get(integration_key=integration_key)
+    # except:
+    #     return ResponseParser.getParsedErrorMessage('Integration not found')
+    #
+    # try:
+    #     project_object.integration_array.add(integration_object)
+    #     project_object.save()
+    # except:
+    #     return ResponseParser.getParsedErrorMessage('Something went wrong while adding integration')
+    #
+    # ##Manage Mongo Data
+    # try:
+    #     manage_integration_details(integration_object, project_object)
+    # except:
+    #     return ResponseParser.getParsedErrorMessage('Something went wrong while managing integration details')
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration activated successfully.')
 
@@ -620,24 +508,24 @@ def activate_integration(request): #TWC without mongo checks(manage_integration_
 
 
 def deactivate_integration(request): #TWC
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    integration_key = request.POST.get('integration_key', '')
-    if project_object.integration_array.filter(integration_key=integration_key).count() == 0:
-        return ResponseParser.getParsedErrorMessage('Integration not active for this project')
-
-    try:
-        integration_object = Integrations.objects.get(integration_key=integration_key)
-    except:
-        return ResponseParser.getParsedErrorMessage('Integration not found')
-
-    try:
-        project_object.integration_array.remove(integration_object)
-        project_object.save()
-    except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while deactivating integration')
+    # success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
+    # if not success:
+    #     return ResponseParser.getParsedErrorMessage(message)
+    #
+    # integration_key = request.POST.get('integration_key', '')
+    # if project_object.integration_array.filter(integration_key=integration_key).count() == 0:
+    #     return ResponseParser.getParsedErrorMessage('Integration not active for this project')
+    #
+    # try:
+    #     integration_object = Integrations.objects.get(integration_key=integration_key)
+    # except:
+    #     return ResponseParser.getParsedErrorMessage('Integration not found')
+    #
+    # try:
+    #     project_object.integration_array.remove(integration_object)
+    #     project_object.save()
+    # except:
+    #     return ResponseParser.getParsedErrorMessage('Something went wrong while deactivating integration')
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration deactivated successfully.')
 
@@ -800,6 +688,10 @@ def delete_data_run(request): #TCW
         data_run_object.delete()
     except:
         return ResponseParser.getParsedErrorMessage('Something went wrong while deleting Data Run')
+
+    ##ToDo: Delete the related periodic task.
+    ##ToDo: Delete mongo data
+    ##ToDo: Same in disable, disable periodic tasks.
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Data Run deleted successfully.')
 

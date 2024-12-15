@@ -86,17 +86,23 @@ WSGI_APPLICATION = 'WaveAssistApi.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 
+DB_NAME = os.getenv('DB_NAME', 'waveassistdb')
+DB_USER = os.getenv('DB_USER', 'waveassist')
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'REMOVED_CREDENTIAL')
+DB_HOST = os.getenv('DB_HOST', 'waveassistdb.chjtszq6llmw.us-east-1.rds.amazonaws.com')
+DB_PORT = os.getenv('DB_PORT', '3306')
 
-default_sqlite_path = os.path.join(BASE_DIR, 'sqlite_data/mysqlite3.db')
-SQLITE_PATH = os.getenv('SQLITE_PATH',default_sqlite_path )
-print("SQLITE_PATH: ", SQLITE_PATH)
-## Connect to SQLite on local host
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': SQLITE_PATH,
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
     }
 }
+
 
 MONGO_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING', 'REMOVED_CREDENTIAL')
 
