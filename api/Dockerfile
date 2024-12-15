@@ -7,7 +7,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
-    libmysqlclient-dev \
+    default-libmysqlclient-dev \
     build-essential \
     graphviz \
     && rm -rf /var/lib/apt/lists/*
