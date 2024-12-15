@@ -3,7 +3,7 @@ django-cors-headers==3.14.0
 django-redis==5.2.0
 numpy==1.21.5
 pandas==2.0.3
-pymongo==3.12.1
+pymongo[srv]==3.12.1
 boto3==1.28.58
 celery==5.4.0
 django-celery-beat==2.6.0
