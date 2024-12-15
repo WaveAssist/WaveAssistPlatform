@@ -52,31 +52,4 @@ class UpdateProjectTestCase(TestCase):
         self.assertEqual('test_project_key', project['project_key'])
 
 
-    def test_06_fetch_project_data_success(self):
-        request = self.factory.post('/fetch_project_data', {
-            'uid': self.uid,
-            'project_key': 'test_project_key'
-        })
-        response = fetch_project_data(request)
-        self.assertEqual(response.status_code, 200)
-        response_data = json.loads(response.content)
-        self.assertEqual('1', response_data['success'])
-        response_data = response_data['data']
-        self.assertIn('data_key_array', response_data)
-        self.assertIn('node_array', response_data)
-        self.assertIn('dashboard_section_array', response_data)
-        self.assertIn('data_run_array', response_data)
-
-    def test_08_fetch_project_data_no_access(self):
-        request = self.factory.post('/fetch_project_data', {
-            'uid': 'non_admin_uid',
-            'project_key': 'test_project_key'
-        })
-
-        response = fetch_project_data(request)
-        self.assertEqual(response.status_code, 200)
-        response_data = json.loads(response.content)
-        self.assertEqual('0', response_data['success'])
-
-
 

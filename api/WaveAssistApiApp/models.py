@@ -12,13 +12,36 @@ SCHEDULE_TYPE_CHOICES = [
         ('crontab', 'crontab')
 ]
 
+
+class Account(models.Model):
+    id = models.AutoField(primary_key=True)
+    account_key = models.CharField(max_length=255, unique=True)
+    account_name = models.CharField(max_length=255, default="", null=True)
+    created_by_user = models.ForeignKey('User', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    plan_name = models.CharField(max_length=255, default="free", null=True)
+    mongo_db_password = models.CharField(max_length=255, default="", null=True)
+    rabbitmq_password = models.CharField(max_length=255, default="", null=True)
+
+    def __str__(self):
+        return f"Account: {self.account_name} ({self.account_key})"
+
+    def get_dict(self):
+        account_dict = {}
+        account_dict['id'] = self.id
+        account_dict['account_key'] = self.account_key
+        account_dict['account_name'] = self.account_name
+        account_dict['plan_name'] = self.plan_name
+        return account_dict
+
+
 class User(models.Model):
     id = models.AutoField(primary_key=True)
     uid = models.UUIDField(default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, default="", null=True)
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
-    company_name = models.CharField(max_length=255, default="", null=True)
+    account_object = models.ForeignKey('Account')
     can_create_projects = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -30,7 +53,6 @@ class User(models.Model):
         user_dict['id'] = self.id
         user_dict['name'] = self.name
         user_dict['username'] = self.username
-        user_dict['company_name'] = self.company_name
         user_dict['uid'] = self.uid
         user_dict['can_create_projects'] = self.can_create_projects
         return user_dict
