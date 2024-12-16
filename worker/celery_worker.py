@@ -6,10 +6,8 @@ import Utils.utils as utils
 from celery import chain, group, signature, chord
 import os
 from celery_singleton import Singleton
+from Utils.constants import *
 import time
-
-BROKER_URL = os.getenv('BROKER_URL', 'redis://localhost:6379/0')
-BACKEND_URL = os.getenv('BACKEND_URL', BROKER_URL)
 
 # Setup Celery
 app = Celery('waveassist',
