@@ -10,6 +10,7 @@ app = Celery('waveassist',
              broker=BROKER_URL,
              backend=BACKEND_URL)
 
+
 # Setup MongoManager
 mongo_manager = MongoManager()
 

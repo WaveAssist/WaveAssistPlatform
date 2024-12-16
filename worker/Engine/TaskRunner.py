@@ -28,9 +28,6 @@ class TaskRunner(object):
         def custom_print(self, *args, sep=" ", end="\n", file=None, flush=False):
             full_message = sep.join(map(str, args))  # Convert all arguments to a string and join with sep
             utils.logger.info(full_message, extra=self.extra_dict_exec)
-            # If file is specified, fallback to original behavior
-            if file:
-                print(full_message, sep=sep, end=end, file=file, flush=flush)
 
         def run_code(self, input_data_array):
             namespace = {}
