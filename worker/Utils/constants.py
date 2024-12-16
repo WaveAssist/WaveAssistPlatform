@@ -4,7 +4,7 @@ S_SYSTEM_VERSION = 'V1.0 - WaveAssistEngineDocker'
 LOG_NUMBER = 10
 CWD_PATH = os.getcwd()
 PROJECT_LOGS_PATH = os.path.join(CWD_PATH, 'Logs','project_logs.log')
-BASE_URL = "https://assistapi.wavepredict.com"
+BASE_URL = "https://api.waveassist.io"
 TIMEOUT_DURATION = 300
 INTEGRATION_SUFFIX = "_integrations"
 
@@ -13,8 +13,12 @@ PD_DATA_KEY = 'PDData'
 IO_DATA_KEY = 'IODataKey'
 DATA_KEY = "DATA"
 DB_NAME = "WaveAssist"
-CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING', 'REMOVED_CREDENTIAL')
-STRING = os.getenv('MONGODB_CONNECTION_STRING', 'REMOVED_CREDENTIAL')
+
+
+MONGO_DB_URL = 'REMOVED_CREDENTIAL'
+CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING', MONGO_DB_URL)
+BROKER_URL = os.getenv('BROKER_URL', 'amqps://waveassist:REMOVED_CREDENTIAL@b-83686e9f-2c14-4878-91eb-96a9c4e00b8e.mq.us-east-1.amazonaws.com:5671')
+BACKEND_URL = os.getenv('BACKEND_URL', MONGO_DB_URL)
 
 
 ##Integrations

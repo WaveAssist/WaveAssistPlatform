@@ -105,7 +105,7 @@ class TaskRunner(object):
             output_data_array = self.run_code(input_data_array)
             self.process_output(output_data_array)
             timer.print_elapsed()
-            utils.logger.info("Code run completed for node: " + str(self.node_key))
+            utils.logger.info("Completed Node: " + str(self.node_key))
 
 
 
