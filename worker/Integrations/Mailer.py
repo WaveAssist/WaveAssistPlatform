@@ -4,6 +4,7 @@ from email.mime.text import MIMEText
 from datetime import datetime
 import pytz
 from Utils.constants import *
+import Utils.utils as utils
 ist = pytz.timezone('Asia/Kolkata')
 
 class Mailer:
@@ -65,12 +66,10 @@ class Mailer:
             server.sendmail(self.from_email_address, to, message.as_string())
 
             self.store_sent_email(to,subject,body,identifier)
-            print("Email sent successfully")
+            utils.logger.info("Email sent successfully")
 
         except Exception as e:
-            print("Error: Unable to send email.")
-            print(e)
-
+            utils.logger.error("Error in sending email: " + str(e))
 
 
 

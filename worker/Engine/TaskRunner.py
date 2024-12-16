@@ -1,6 +1,7 @@
 import time
 import Utils.utils as utils
 from Utils.Timer import Timer
+
 import importlib
 from Engine.MongoManager import MongoManager
 import pandas as pd
@@ -20,11 +21,16 @@ class TaskRunner(object):
             self.integrations_collection_key = self.project_key
             self.collection_key = collection_key
             self.mongo_manager = mongo_manager
+            self.extra_dict = {"node_key": self.node_key, "project_key": self.project_key, "collection_key": self.collection_key, IS_SYSTEM_TASK: True}
+            self.extra_dict_exec = {"node_key": self.node_key, "project_key": self.project_key, "collection_key": self.collection_key, IS_SYSTEM_TASK: False}
 
-        def custom_print(self, *args, **kwargs):
-            # Join all arguments into a single string, and prepend the Node key
-            full_message = " ".join(map(str, args))  # Convert all arguments to a string and join with space
-            print(f"Node: {self.node_key} - {full_message}", **kwargs)
+        # Custom print function to log messages
+        def custom_print(self, *args, sep=" ", end="\n", file=None, flush=False):
+            full_message = sep.join(map(str, args))  # Convert all arguments to a string and join with sep
+            utils.logger.info(full_message, extra=self.extra_dict_exec)
+            # If file is specified, fallback to original behavior
+            if file:
+                print(full_message, sep=sep, end=end, file=file, flush=flush)
 
         def run_code(self, input_data_array):
             namespace = {}
@@ -52,13 +58,13 @@ class TaskRunner(object):
                 elif len(self.output_keys_array) >= 2:
                     return list(result)
             except SyntaxError as e:
-                print("Syntax error in the provided code:", e)
+                utils.logger.info("Syntax error in the provided code: " + str(e), extra=self.extra_dict)
                 return []
             except NameError as e:
-                print("Name error:", e)
+                utils.logger.info("Name error in the provided code: " + str(e), extra=self.extra_dict)
                 return []
             except Exception as e:
-                print("An error occurred:", e)
+                utils.logger.info("An error occurred: " + str(e), extra=self.extra_dict)
                 return []
 
         def save_output(self, output_df, output_key):
@@ -68,7 +74,7 @@ class TaskRunner(object):
                 success = self.mongo_manager.replace_data_as_dataframe(output_key, output_df, self.collection_key)
                 return success
             except Exception as e:
-                utils.logger.error("Exception in manage_output for: " + str(self.node_key) + " + Error: " + str(e))
+                utils.logger.error("Exception in manage_output for: " + str(self.node_key) + " + Error: " + str(e), extra=self.extra_dict)
                 return False
 
         def process_output(self, output_data_array):
@@ -82,7 +88,7 @@ class TaskRunner(object):
                 integrations_df = self.mongo_manager.fetch_data_as_dataframe(self.integration_key, self.integrations_collection_key)
                 return integrations_df
             except Exception as e:
-                utils.logger.error("Exception in fetch_integrations for node")
+                utils.logger.error("Exception in fetch_integrations for node", extra=self.extra_dict)
                 return None
 
 
@@ -94,18 +100,18 @@ class TaskRunner(object):
                 input_array = [input_dict.get(io_key, pd.DataFrame()) for io_key in self.input_keys_array]
                 return input_array
             except Exception as e:
-                utils.logger.error("Exception in get_input for: " + str(self.node_key) + " + Error: " + str(e))
+                utils.logger.error("Exception in get_input for: " + str(self.node_key) + " + Error: " + str(e), extra=self.extra_dict)
                 return []
 
         def run(self):
-            utils.logger.info("Starting Node: " + str(self.node_key))
+            utils.logger.info("Starting Node: " + str(self.node_key), extra=self.extra_dict)
             timer = Timer(str(self.node_key))
             timer.start()
             input_data_array = self.get_input()
             output_data_array = self.run_code(input_data_array)
             self.process_output(output_data_array)
             timer.print_elapsed()
-            utils.logger.info("Completed Node: " + str(self.node_key))
+            utils.logger.info("Completed Node: " + str(self.node_key), extra=self.extra_dict)
 
 
 

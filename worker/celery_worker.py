@@ -1,13 +1,9 @@
 from celery import Celery
-import json
 from Engine.TaskRunner import TaskRunner
 from Engine.MongoManager import MongoManager
 import Utils.utils as utils
-from celery import chain, group, signature, chord
-import os
-from celery_singleton import Singleton
+from celery import chain, group
 from Utils.constants import *
-import time
 
 # Setup Celery
 app = Celery('waveassist',
@@ -26,11 +22,13 @@ def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs
         task_runner.run()
         return True
     except Exception as e:
-        utils.logger.error(f"Error in processing task: {e}")
+        project_key = task_dict['project_key']
+        utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'collection_key': collection_key, project_key:project_key, IS_SYSTEM_TASK: True})
         raise e
 
 
-@app.task(base=Singleton, unique_on=['dag_key', ], lock_expiry=600, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
+##ToDo: Singleton pattern removed.
+@app.task(lock_expiry=600, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
 def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, dag_key=None, **kwargs):
         try:
             ##ToDo: This function can be optimised by using a DFS or similar approach to generate the workflow for the DAG
@@ -56,6 +54,6 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
             result = workflow.apply_async()
             return True
         except Exception as e:
-            utils.logger.error(f"Error in processing DAG: {e}")
+            utils.logger.error(f"Error in processing DAG: {e}", extra={'dag_key': dag_key, 'collection_key': collection_key, IS_SYSTEM_TASK: True})
             raise e
 

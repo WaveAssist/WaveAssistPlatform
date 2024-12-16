@@ -4,6 +4,7 @@ S_SYSTEM_VERSION = 'V1.0 - WaveAssistEngineDocker'
 LOG_NUMBER = 10
 CWD_PATH = os.getcwd()
 PROJECT_LOGS_PATH = os.path.join(CWD_PATH, 'Logs','project_logs.log')
+ACCOUNT_KEY = 'WaveAssist'
 BASE_URL = "https://api.waveassist.io"
 TIMEOUT_DURATION = 300
 INTEGRATION_SUFFIX = "_integrations"
@@ -13,7 +14,7 @@ PD_DATA_KEY = 'PDData'
 IO_DATA_KEY = 'IODataKey'
 DATA_KEY = "DATA"
 DB_NAME = "WaveAssist"
-
+IS_SYSTEM_TASK= "is_system_task"
 
 MONGO_DB_URL = 'REMOVED_CREDENTIAL'
 CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING', MONGO_DB_URL)
