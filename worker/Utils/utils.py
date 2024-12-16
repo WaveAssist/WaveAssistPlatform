@@ -1,8 +1,9 @@
 ##PYTHON IMPORTS
 import os
 from Utils.Logger import Logger
+from Utils.constants import *
 ##Logger
-logger = Logger()
+logger = Logger(account_key=ACCOUNT_KEY)
 
 ##ToDo: Check if this function handles all cases.
 def generate_flow_layers(dependencies_dict):
@@ -25,6 +26,6 @@ def generate_flow_layers(dependencies_dict):
             processed.update(next_layer)
         return layers
     except Exception as e:
-        print("Error in generate_flow_layers: " + str(e))
+        logger.error("Error in generate_flow_layers: " + str(e))
         return []
 

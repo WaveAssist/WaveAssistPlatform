@@ -22,7 +22,8 @@ def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs
         task_runner.run()
         return True
     except Exception as e:
-        utils.logger.error(f"Error in processing task: {e}")
+        project_key = task_dict['project_key']
+        utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'collection_key': collection_key, project_key:project_key, IS_SYSTEM_TASK: True})
         raise e
 
 
@@ -53,6 +54,6 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
             result = workflow.apply_async()
             return True
         except Exception as e:
-            utils.logger.error(f"Error in processing DAG: {e}")
+            utils.logger.error(f"Error in processing DAG: {e}", extra={'dag_key': dag_key, 'collection_key': collection_key, IS_SYSTEM_TASK: True})
             raise e
 
