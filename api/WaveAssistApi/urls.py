@@ -71,7 +71,6 @@ urlpatterns = [
 
     ##Debug URL's
     path("debug/fetch_logs/", csrf_exempt(debug_views.fetch_logs), name="fetch_logs"),
-    path("debug/fetch_log_job_names/", csrf_exempt(debug_views.fetch_log_job_names), name="fetch_log_job_names"),
 
 ]
 
