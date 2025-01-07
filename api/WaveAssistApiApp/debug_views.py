@@ -14,6 +14,10 @@ import re
 
 def fetch_log_job_names(request): ##Test Case Pending
     options_array = utils.get_all_loki_jobs()
+    print(options_array)
+    for i in range(0, len(options_array)):
+        if i%2 == 0:
+            options_array[i] = options_array[i].upper()
     output_data = { 'job_names': options_array  }
     return ResponseParser.getParsedSuccessMessage(output_data, '200', 'Logs fetched successfully')
 
