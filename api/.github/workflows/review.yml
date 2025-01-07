@@ -1,0 +1,19 @@
+on: [pull_request]
+
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v3
+
+      # Run GPT Code Review
+      - uses: sshnaidm/gpt-code-review-action@v2.0
+        with:
+          openai-key: ${{ secrets.OPENAI_API_KEY }}
+          model: 'gpt-4'
+          prompt: 'Summarize the changes in this PR and identify potential bugs or issues. Provide minor suggestions for improvement.'
+          max-length: 8000
