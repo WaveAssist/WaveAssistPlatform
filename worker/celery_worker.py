@@ -18,15 +18,15 @@ app.conf.task_default_queue = QUEUE_NAME
 
 ##ToDo: Add/Plan timeout
 @app.task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
-def run_task(*args, task_dict=None, environment_key=None, task_key=None, **kwargs):
+def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs):
     # Task dict needs node_key, project_key and code_to_run
     try:
-        task_runner = TaskRunner(task_dict, environment_key)
+        task_runner = TaskRunner(task_dict, collection_key)
         task_runner.run()
         return True
     except Exception as e:
         project_key = task_dict['project_key']
-        utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'collection_key': environment_key, project_key:project_key, IS_SYSTEM_TASK: True})
+        utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'environment_key': collection_key, project_key:project_key, IS_SYSTEM_TASK: True})
         raise e
 
 ##ToDo: Add singleton library again
