@@ -6,7 +6,6 @@ from config import *
 UID = os.getenv('UID', UID)
 ACCOUNT_ID = os.getenv('ACCOUNT_ID', ACCOUNT_ID)
 REDIS_URL = os.getenv('REDIS_URL', 'redis://waveassistredis-lqjglu.serverless.use1.cache.amazonaws.com:6379/0')
-# redis://localhost:6379/0'
 # REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 QUEUE_NAME = 'queue_' + ACCOUNT_ID
 
