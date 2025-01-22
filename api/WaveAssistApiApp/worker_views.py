@@ -19,7 +19,7 @@ def fetch_config(request): ##Test Case Pending
     except:
         return ResponseParser.getParsedErrorMessage('User not authorized or found.')
 
-    account_uid = request.GET.get('account_uid', '')
+    account_uid = request.GET.get('account_id', '')
     try:
         account_object = Account.objects.get(account_uid=account_uid, created_by_user=user_object )
     except:

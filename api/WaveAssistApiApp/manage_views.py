@@ -23,16 +23,17 @@ def get_started(request): #TCW
 
     if user_object is None:
         ##Create User
-        user_default_uuid = str(uuid.uuid4())
+        user_default_uuid = str(uid)
         name = request.POST.get('name', user_default_uuid)
         username = request.POST.get('username', user_default_uuid)
         password = request.POST.get('password', user_default_uuid)
         company_name = request.POST.get('company_name', user_default_uuid)
         can_create_projects = True
         try:
-            user_object = User.objects.create(name=name, username=username, password=password, company_name=company_name, can_create_projects=can_create_projects)
+            user_object = User.objects.create(uid=uid, name=name, username=username, password=password, company_name=company_name, can_create_projects=can_create_projects)
             user_object.save()
-        except:
+        except Exception as e:
+            print("User creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage('User creation failed.')
     ##Check for existing Account
     try:
@@ -41,11 +42,12 @@ def get_started(request): #TCW
             ##Create Account
             account_name = request.POST.get('account_name', 'Default')
             account_uid = str(uuid.uuid4())
-            account_object = Account.objects.create(name=account_name, account_uid=account_uid, created_by_user=user_object)
+            account_object = Account.objects.create(account_name=account_name, account_uid=account_uid, created_by_user=user_object)
             account_object.save()
         else:
             account_object = account_object.first()
-    except:
+    except Exception as e:
+        print("Account creation failed: " + str(e))
         return ResponseParser.getParsedErrorMessage('Account creation failed.')
 
     ##Check if account has RabbitMQ url
@@ -58,11 +60,12 @@ def get_started(request): #TCW
         except:
             return ResponseParser.getParsedErrorMessage('RabbitMQ url creation failed.')
 
-    if account_object.mongo_url == '':
+    if account_object.mongo_db_url == '':
         ##Create Mongo url
         try:
-            mongo_url = utils.create_mongo_url(user_object)
-            account_object.mongo_url = mongo_url
+            mongo_url,db_name = utils.create_mongo_url(user_object)
+            account_object.mongo_db_url = mongo_url
+            account_object.db_name = db_name
             account_object.save()
         except:
             return ResponseParser.getParsedErrorMessage('Mongo url creation failed.')

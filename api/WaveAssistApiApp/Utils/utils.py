@@ -419,5 +419,5 @@ def create_mongo_url(user_object):
     url = (
         f"mongodb+srv://{username}:{password}@waveassistcluster.llvjq.mongodb.net/{db_name}"
     )
-    return url
+    return url, db_name
 

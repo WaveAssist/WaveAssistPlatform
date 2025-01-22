@@ -21,7 +21,7 @@ class Account(models.Model):
     plan_name = models.CharField(max_length=255, default="free", null=True)
     mongo_db_url = models.CharField(max_length=255, default="", null=True)
     rabbitmq_url = models.CharField(max_length=255, default="", null=True)
-
+    db_name = models.CharField(max_length=255, default="", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -34,6 +34,7 @@ class Account(models.Model):
         account_dict['account_uid'] = self.account_uid
         account_dict['mongo_db_url'] = self.mongo_db_url
         account_dict['rabbitmq_url'] = self.rabbitmq_url
+        account_dict['db_name'] = self.db_name
         return account_dict
 
 
