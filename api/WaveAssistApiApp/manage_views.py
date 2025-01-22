@@ -12,22 +12,68 @@ from django.db import transaction
 
 
 
-def create_account(request): #TCW
-
-    ##ToDo: API Pending..
-    account_key = request.POST.get('account_key', '')
+def get_started(request): #TCW
     uid = request.POST.get('uid', '')
-
-    ##Authorise -> Verify Firebase Token
-
-    ##Create Account
     ##Create User
+    user_object = None
+    try:
+        user_object = User.objects.get(uid=uid)
+    except:
+        pass
 
-    ##Create User & VHost in RabbitMQ
-    ##Create User & Db in MongoDB
+    if user_object is None:
+        ##Create User
+        user_default_uuid = str(uid)
+        name = request.POST.get('name', user_default_uuid)
+        username = request.POST.get('username', user_default_uuid)
+        password = request.POST.get('password', user_default_uuid)
+        company_name = request.POST.get('company_name', user_default_uuid)
+        can_create_projects = True
+        try:
+            user_object = User.objects.create(uid=uid, name=name, username=username, password=password, company_name=company_name, can_create_projects=can_create_projects)
+            user_object.save()
+        except Exception as e:
+            print("User creation failed: " + str(e))
+            return ResponseParser.getParsedErrorMessage('User creation failed.')
+    ##Check for existing Account
+    try:
+        account_object = Account.objects.filter(created_by_user=user_object)
+        if account_object.count() == 0:
+            ##Create Account
+            account_name = request.POST.get('account_name', 'Default')
+            account_uid = str(uuid.uuid4())
+            account_object = Account.objects.create(account_name=account_name, account_uid=account_uid, created_by_user=user_object)
+            account_object.save()
+        else:
+            account_object = account_object.first()
+    except Exception as e:
+        print("Account creation failed: " + str(e))
+        return ResponseParser.getParsedErrorMessage('Account creation failed.')
 
+    ##Check if account has RabbitMQ url
+    if account_object.rabbitmq_url == '':
+        ##Create RabbitMQ url
+        try:
+            rabbitmq_url = utils.create_rabbitmq_url(user_object)
+            account_object.rabbitmq_url = rabbitmq_url
+            account_object.save()
+        except:
+            return ResponseParser.getParsedErrorMessage('RabbitMQ url creation failed.')
 
+    if account_object.mongo_db_url == '':
+        ##Create Mongo url
+        try:
+            mongo_url,db_name = utils.create_mongo_url(user_object)
+            account_object.mongo_db_url = mongo_url
+            account_object.db_name = db_name
+            account_object.save()
+        except:
+            return ResponseParser.getParsedErrorMessage('Mongo url creation failed.')
 
+    user_dict = user_object.get_dict()
+    account_dict = account_object.get_dict()
+    output_dict = {'user': user_dict, 'account': account_dict}
+    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'User and Account created successfully.')
 
 
 def create_user(request): #TCW
