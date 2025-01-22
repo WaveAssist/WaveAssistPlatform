@@ -41,26 +41,15 @@ def get_started(request): #TCW
         if account_object.count() == 0:
             ##Create Account
             account_name = request.POST.get('account_name', 'Default')
-            account_uid = str(uuid.uuid4())
-            account_object = Account.objects.create(account_name=account_name, account_uid=account_uid, created_by_user=user_object)
+            account_uid = user_object.uid
+            celery_queue = 'queue_' + str(account_uid)
+            account_object = Account.objects.create(account_name=account_name, account_uid=account_uid, created_by_user=user_object, celery_queue=celery_queue)
             account_object.save()
         else:
             account_object = account_object.first()
     except Exception as e:
         print("Account creation failed: " + str(e))
         return ResponseParser.getParsedErrorMessage('Account creation failed.')
-
-    ##Check if account has RabbitMQ url
-    if account_object.rabbitmq_url == '':
-        ##Create RabbitMQ url
-        try:
-            rabbitmq_url, queue_name = utils.create_rabbitmq_url(user_object)
-            account_object.rabbitmq_url = rabbitmq_url
-            account_object.rabbitmq_queue = queue_name
-            account_object.save()
-        except Exception as e:
-            print("RabbitMQ url creation failed: " + str(e))
-            return ResponseParser.getParsedErrorMessage('RabbitMQ url creation failed.')
 
     if account_object.mongo_db_url == '':
         ##Create Mongo url

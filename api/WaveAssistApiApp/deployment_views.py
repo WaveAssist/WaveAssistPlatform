@@ -207,8 +207,8 @@ def run_dag(request): ##TCW
         'collection_key': data_run_object.data_run_key,
         'dag_key': dag_key,
     }
-
     queue_name = 'queue_' + str(user_object.uid)
+    print("Sending task: " + str(dag_kwargs) + ", queue: " + queue_name)
     result = app.send_task(DAG_TASK, kwargs=dag_kwargs, queue=queue_name)
 
     output_dict = {'dag': dag_object.get_dict()}
