@@ -299,13 +299,6 @@ def fetch_loki_logs(query, start_ts, end_ts):
     return logs
 
 
-# def build_loki_query(selected_jobs, node_key):
-#     jobs_query = " or ".join([f'job="{job}"' for job in selected_jobs])
-#     query = '{'  + jobs_query
-#     if node_key:
-#         query += f', node="{node_key}"'
-#     query += '}'
-#     return query
 
 def build_loki_query(selected_jobs, node_key_array):
     # Create a regex pattern for the jobs
@@ -319,3 +312,112 @@ def build_loki_query(selected_jobs, node_key_array):
 
     query += '}'
     return query
+
+
+
+def create_rabbitmq_url(user_object):
+    # RabbitMQ management API credentials
+    rabbitmq_url = "b-83686e9f-2c14-4878-91eb-96a9c4e00b8e.mq.us-east-1.amazonaws.com"
+    rabbitmq_api_url = f"https://{rabbitmq_url}/api"
+    admin_username = "waveassist"
+    admin_password = "REMOVED_CREDENTIAL"
+
+    # Generate vhost name
+    vhost_name = f"waveassist_{str(user_object.uid)}"
+    # Create the vhost
+    vhost_url = f"{rabbitmq_api_url}/vhosts/{vhost_name}"
+    response = requests.put(vhost_url, auth=(admin_username, admin_password))
+    print("Vhost created: " + str(response))
+
+    if response.status_code not in [200, 201]:
+        raise Exception(f"Failed to create vhost: {response.text}")
+
+    # Create a new user with uid as username and password
+    user_url = f"{rabbitmq_api_url}/users/{str(user_object.uid)}"
+    user_payload = {
+        "password": str(user_object.uid),
+        "tags": ""
+    }
+    response = requests.put(user_url, json=user_payload, auth=(admin_username, admin_password))
+
+    if response.status_code not in [200, 201]:
+        raise Exception(f"Failed to create user: {response.text}")
+
+    print("User created: " + str(response))
+
+    # Set permissions for the user on the vhost
+    permissions_url = f"{rabbitmq_api_url}/permissions/{vhost_name}/{str(user_object.uid)}"
+    permissions_payload = {
+        "configure": ".*",
+        "write": ".*",
+        "read": ".*"
+    }
+    response = requests.put(permissions_url, json=permissions_payload, auth=(admin_username, admin_password))
+
+    print("Permissions set: " + str(response))
+    if response.status_code not in [200, 201]:
+        raise Exception(f"Failed to set permissions: {response.text}")
+
+    url = (
+        f"amqp://{str(user_object.uid)}:{str(user_object.uid)}@amqps://{rabbitmq_url}:5672/{vhost_name}"
+    )
+    return url
+
+import pymongo
+import requests
+from requests.auth import HTTPDigestAuth
+mongo_url = "REMOVED_CREDENTIAL"
+public_key = 'ogqhsvvm'
+private_key = 'REMOVED_CREDENTIAL'
+
+def create_mongo_url(user_object):
+
+    # MongoDB admin credentials and connection
+    mongo_client = pymongo.MongoClient(mongo_url)
+
+    # Generate database and user details
+    db_name = f"waveassist_{str(user_object.uid)}"
+    username = str(user_object.uid)
+    password = str(user_object.uid)
+
+    # Create the database
+    new_db = mongo_client[db_name]
+
+    try:
+    # Create a collection to initialize the database
+        new_db.create_collection("initial_collection")
+    except:
+        pass
+
+    group_id = '64b18799a5b08a4788f0ad77'
+    # Use MongoDB Atlas API to create the user
+    url = f"https://cloud.mongodb.com/api/atlas/v1.0/groups/{group_id}/databaseUsers"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    user_data = {
+        "databaseName": 'admin',
+        "username": username,
+        "password": password,
+        "roles": [
+            {"databaseName": db_name, "roleName": "dbAdmin"}
+        ]
+    }
+
+    # Make the POST request with HTTP Digest Authentication
+    response = requests.post(url, json=user_data, headers=headers, auth=HTTPDigestAuth(public_key, private_key))
+
+    if response.status_code == 201:
+        print("User created successfully.")
+        print(response.json())
+    else:
+        print("Failed to create user:", response.json())
+        return None
+
+
+    # Generate and return the connection URL for the new user
+    url = (
+        f"mongodb+srv://{username}:{password}@waveassistcluster.llvjq.mongodb.net/{db_name}"
+    )
+    return url
+
