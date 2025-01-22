@@ -39,6 +39,12 @@ class Account(models.Model):
         account_dict['rabbitmq_queue'] = self.rabbitmq_queue
         return account_dict
 
+    class Meta:
+        db_table = "WaveAssist_Account"
+        verbose_name = 'Account'
+        verbose_name_plural = 'Accounts'
+
+
 
 class User(models.Model):
     id = models.AutoField(primary_key=True)
