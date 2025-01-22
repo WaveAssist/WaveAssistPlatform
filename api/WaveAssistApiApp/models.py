@@ -37,6 +37,12 @@ class Account(models.Model):
         account_dict['db_name'] = self.db_name
         return account_dict
 
+    class Meta:
+        db_table = "WaveAssist_Account"
+        verbose_name = 'Account'
+        verbose_name_plural = 'Accounts'
+
+
 
 class User(models.Model):
     id = models.AutoField(primary_key=True)

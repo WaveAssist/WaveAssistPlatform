@@ -359,7 +359,7 @@ def create_rabbitmq_url(user_object):
         raise Exception(f"Failed to set permissions: {response.text}")
 
     url = (
-        f"amqp://{str(user_object.uid)}:{str(user_object.uid)}@amqps://{rabbitmq_url}:5672/{vhost_name}"
+        f"amqps://{str(user_object.uid)}:{str(user_object.uid)}@{rabbitmq_url}:5672/{vhost_name}"
     )
     return url
 

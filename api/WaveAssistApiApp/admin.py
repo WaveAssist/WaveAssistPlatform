@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import User, AccessProvided, Integrations, DataKey, Project, DataRuns, Nodes, DashboardSection, DAG, Deployments
+from .models import User, AccessProvided, Integrations, DataKey, Project, DataRuns, Nodes, DashboardSection, DAG, \
+    Deployments, Account
+
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -81,3 +83,10 @@ class DAGAdmin(admin.ModelAdmin):
         if obj:  # editing an existing object
             return self.readonly_fields + ('parent_deployment', 'key')
         return self.readonly_fields
+
+@admin.register(Account)
+class AccountAdmin(admin.ModelAdmin):
+    list_display = ('id', 'account_name', 'created_at')
+    search_fields = ('account_name',)
+    list_filter = ('created_at',)
+    readonly_fields = ('id', 'created_at')
