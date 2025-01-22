@@ -328,4 +328,4 @@ def create_mongo_url(user_object):
     return url, db_name
 
 def get_database_name(user_object):
-    return 'waveassist_' + user_object.uid
+    return 'waveassist_' + str(user_object.uid)
