@@ -60,33 +60,3 @@ def login(request): ##TCW
     output_dictionary['user_data'] = user_object.get_dict()
 
     return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
-
-##ToDo: Write tests
-def fetch_data_for_data_run(request):
-    ##Validate Request
-    success, message, user_object , data_run_object = validator.validate_user_and_data_run(request, READ_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-    data_run_key = data_run_object.data_run_key
-
-    ##Get data for project
-    output_dict = {}
-    ##Dashboard Sections
-    dashboard_section_array = data_run_object.project_object.dashboardsection_set.all().order_by('row', 'column')
-    dashboard_section_dict_array = []
-    data_keys_array = []
-    for dashboard_section_object in dashboard_section_array:
-        dashboard_section_dict = dashboard_section_object.get_dict()
-        data_key = dashboard_section_object.data_key_object.key
-        data_keys_array.append(data_key)
-        dashboard_section_dict_array.append(dashboard_section_dict)
-    output_dict['dashboard_section_array'] = dashboard_section_dict_array
-
-    ##Fetch data for data keys
-    mongo_manager.collection = mongo_manager.database[data_run_key]
-    data_dict = mongo_manager.fetch_data_for_keys_array(data_keys_array)
-    data_dict = MongoManager.manage_dict_formatting(data_dict)
-    output_dict['data_dict'] = data_dict
-
-    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Project data fetched successfully.')
-

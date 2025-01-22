@@ -54,10 +54,12 @@ def get_started(request): #TCW
     if account_object.rabbitmq_url == '':
         ##Create RabbitMQ url
         try:
-            rabbitmq_url = utils.create_rabbitmq_url(user_object)
+            rabbitmq_url, queue_name = utils.create_rabbitmq_url(user_object)
             account_object.rabbitmq_url = rabbitmq_url
+            account_object.rabbitmq_queue = queue_name
             account_object.save()
-        except:
+        except Exception as e:
+            print("RabbitMQ url creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage('RabbitMQ url creation failed.')
 
     if account_object.mongo_db_url == '':

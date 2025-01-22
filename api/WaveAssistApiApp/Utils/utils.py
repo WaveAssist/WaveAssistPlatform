@@ -314,7 +314,6 @@ def build_loki_query(selected_jobs, node_key_array):
     return query
 
 
-
 def create_rabbitmq_url(user_object):
     # RabbitMQ management API credentials
     rabbitmq_url = "b-83686e9f-2c14-4878-91eb-96a9c4e00b8e.mq.us-east-1.amazonaws.com"
@@ -322,15 +321,8 @@ def create_rabbitmq_url(user_object):
     admin_username = "waveassist"
     admin_password = "REMOVED_CREDENTIAL"
 
-    # Generate vhost name
-    vhost_name = f"waveassist_{str(user_object.uid)}"
-    # Create the vhost
-    vhost_url = f"{rabbitmq_api_url}/vhosts/{vhost_name}"
-    response = requests.put(vhost_url, auth=(admin_username, admin_password))
-    print("Vhost created: " + str(response))
-
-    if response.status_code not in [200, 201]:
-        raise Exception(f"Failed to create vhost: {response.text}")
+    # Default vhost to be used
+    vhost_name = "%2f"
 
     # Create a new user with uid as username and password
     user_url = f"{rabbitmq_api_url}/users/{str(user_object.uid)}"
@@ -345,23 +337,42 @@ def create_rabbitmq_url(user_object):
 
     print("User created: " + str(response))
 
-    # Set permissions for the user on the vhost
+    # Create a new queue for the user
+    queue_name = f"queue_{str(user_object.uid)}"
+    queue_url = f"{rabbitmq_api_url}/queues/{vhost_name}/{queue_name}"
+    queue_payload = {
+        "auto_delete": False,
+        "durable": True,
+        "arguments": {}
+    }
+    response = requests.put(queue_url, json=queue_payload, auth=(admin_username, admin_password))
+
+    if response.status_code not in [200, 201]:
+        print(response.text)
+        print(response)
+        raise Exception(f"Failed to create queue: {response.text}")
+
+    print("Queue created: " + str(response))
+
+    # Set permissions for the user to only access the specific queue
     permissions_url = f"{rabbitmq_api_url}/permissions/{vhost_name}/{str(user_object.uid)}"
     permissions_payload = {
-        "configure": ".*",
-        "write": ".*",
-        "read": ".*"
+        "configure": f"^{queue_name}$",
+        "write": f"^{queue_name}$",
+        "read": f"^{queue_name}$"
     }
     response = requests.put(permissions_url, json=permissions_payload, auth=(admin_username, admin_password))
 
-    print("Permissions set: " + str(response))
     if response.status_code not in [200, 201]:
         raise Exception(f"Failed to set permissions: {response.text}")
 
-    url = (
-        f"amqps://{str(user_object.uid)}:{str(user_object.uid)}@{rabbitmq_url}:5672/{vhost_name}"
-    )
-    return url
+    print("Permissions set: " + str(response))
+
+    # Return the AMQP URL for the user
+    url = f"amqps://{str(user_object.uid)}:{str(user_object.uid)}@{rabbitmq_url}:5672/"
+    return url, queue_name
+
+
 
 import pymongo
 import requests
@@ -421,3 +432,5 @@ def create_mongo_url(user_object):
     )
     return url, db_name
 
+def get_database_name(user_object):
+    return 'waveassist_' + user_object.uid

@@ -40,6 +40,8 @@ class MongoManager:
             updated_data_array.append(data)
         return updated_data_array
 
+
+
     @classmethod
     def add_row_number(cls,data_array):
         ##Add a row_number column to each element in data_array starting with 1.
