@@ -1,34 +1,35 @@
+import sys
+
 from celery import Celery
 from Engine.TaskRunner import TaskRunner
-from Engine.MongoManager import MongoManager
 import Utils.utils as utils
 from celery import chain, group
 from Utils.constants import *
+##Init worker to fetch details
+##Call API to fetch and store config.json
 
 # Setup Celery
 app = Celery('waveassist',
-             broker=BROKER_URL,
-             backend=BACKEND_URL)
+             broker=REDIS_URL,
+             backend=REDIS_URL)
+app.conf.task_default_queue = QUEUE_NAME
 
-
-# Setup MongoManager
-mongo_manager = MongoManager()
 
 
 ##ToDo: Add/Plan timeout
 @app.task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
-def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs):
+def run_task(*args, task_dict=None, environment_key=None, task_key=None, **kwargs):
+    # Task dict needs node_key, project_key and code_to_run
     try:
-        task_runner = TaskRunner(task_dict, collection_key, mongo_manager)
+        task_runner = TaskRunner(task_dict, environment_key)
         task_runner.run()
         return True
     except Exception as e:
         project_key = task_dict['project_key']
-        utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'collection_key': collection_key, project_key:project_key, IS_SYSTEM_TASK: True})
+        utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'collection_key': environment_key, project_key:project_key, IS_SYSTEM_TASK: True})
         raise e
 
-
-##ToDo: Singleton pattern removed.
+##ToDo: Add singleton library again
 @app.task(lock_expiry=600, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
 def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, dag_key=None, **kwargs):
         try:
@@ -53,7 +54,7 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
 
             workflow = chain(*workflow_array)
             result = workflow.apply_async()
-            return True
+            return result
         except Exception as e:
             utils.logger.error(f"Error in processing DAG: {e}", extra={'dag_key': dag_key, 'collection_key': collection_key, IS_SYSTEM_TASK: True})
             raise e

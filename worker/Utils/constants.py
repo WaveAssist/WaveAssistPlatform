@@ -1,5 +1,16 @@
 import os
 DEBUG = True
+from config import *
+
+##Main constants
+UID = os.getenv('UID', UID)
+ACCOUNT_ID = os.getenv('ACCOUNT_ID', ACCOUNT_ID)
+REDIS_URL = os.getenv('REDIS_URL', 'redis://waveassistredis-lqjglu.serverless.use1.cache.amazonaws.com:6379/0')
+# redis://localhost:6379/0'
+# REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+QUEUE_NAME = 'queue_' + ACCOUNT_ID
+
+##Other logs
 S_SYSTEM_VERSION = 'V1.0 - WaveAssistEngineDocker'
 LOG_NUMBER = 10
 CWD_PATH = os.getcwd()
@@ -13,25 +24,6 @@ INTEGRATION_SUFFIX = "_integrations"
 PD_DATA_KEY = 'PDData'
 IO_DATA_KEY = 'IODataKey'
 DATA_KEY = "DATA"
-DB_NAME = "WaveAssist"
 IS_SYSTEM_TASK= "is_system_task"
 
-MONGO_DB_URL = 'REMOVED_CREDENTIAL'
-CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING', MONGO_DB_URL)
-BROKER_URL = os.getenv('BROKER_URL', 'amqps://waveassist:REMOVED_CREDENTIAL@b-83686e9f-2c14-4878-91eb-96a9c4e00b8e.mq.us-east-1.amazonaws.com:5671')
-BACKEND_URL = os.getenv('BACKEND_URL', MONGO_DB_URL)
 
-
-##Integrations
-INTEGRATIONS_SUFFIX_KEY = "_integrations"
-
-AWSS3_ACCESS_KEY_VALUE = os.getenv('AWS_ACCESS_KEY_ID','')
-AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY','')
-ZERODHA_API_KEY_VALUE = os.getenv('ZERODHA_API_KEY','')
-ZERODHA_API_SECRET_KEY_VALUE = os.getenv('ZERODHA_API_SECRET','')
-
-
-MAILER_FROM_EMAIL_ADDRESS = os.getenv('MAILER_FROM_EMAIL_ADDRESS', '')
-MAILER_LOGIN_EMAIL = os.getenv('MAILER_LOGIN_EMAIL', '')
-MAILER_LOGIN_EMAIL_PASSWORD = os.getenv('MAILER_LOGIN_EMAIL_PASSWORD', '')
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
