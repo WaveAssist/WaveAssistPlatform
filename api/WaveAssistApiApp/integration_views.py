@@ -81,8 +81,10 @@ def manage_integration_details(integration_object, project_object):
 
 
 
-def get_integrations_data(project_key):
+def get_integrations_data(project_key, user_object):
     mongo_manager = MongoManager()
+    db_name = utils.get_database_name(user_object)
+    mongo_manager.database = mongo_manager.client[db_name]
     mongo_manager.collection = mongo_manager.database[project_key]
     project_integrations_key = project_key + INTEGRATIONS_SUFFIX_KEY
     integration_dict = mongo_manager.fetch_data_for_key(project_integrations_key)

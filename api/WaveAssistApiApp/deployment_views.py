@@ -61,6 +61,8 @@ def deploy_project(request): ##TCW
     all_nodes = project_object.nodes_set.filter(is_enabled=True)
     starting_nodes = all_nodes.filter(is_starting_node=True, is_enabled=True)
 
+    queue_name = 'queue_' + str(user_object.uid)
+
     #Check if there are any starting nodes
     if len(starting_nodes) == 0:
         return ResponseParser.getParsedErrorMessage('No enabled starting nodes found in the project to Deploy..')
@@ -134,7 +136,8 @@ def deploy_project(request): ##TCW
                     task='celery_worker.run_dag',  # Use 'celery.chain' for chaining tasks
                     kwargs=dag_kwargs,  # Serialize the workflow
                     one_off=False,  # If True, the task will run only once
-                    enabled=True  # Whether this task is enabled
+                    enabled=True,  # Whether this task is enabled,
+                    queue=queue_name
                 )
                 periodic_task.save()
                 dag_object.periodic_task = periodic_task
@@ -204,17 +207,11 @@ def run_dag(request): ##TCW
         'collection_key': data_run_object.data_run_key,
         'dag_key': dag_key,
     }
-    result = app.send_task(DAG_TASK, kwargs=dag_kwargs)
+
+    queue_name = 'queue_' + str(user_object.uid)
+    result = app.send_task(DAG_TASK, kwargs=dag_kwargs, queue=queue_name)
 
     output_dict = {'dag': dag_object.get_dict()}
     output_dict['run_id'] = result.id
-
-
-    should_wait = bool(int(request.POST.get('should_wait', '0')))
-    if should_wait:
-        try:
-            output_dict['result'] = result.get(timeout=300)
-        except:
-            output_dict['result'] = 'Task is still running, check the status after some time.'
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully started the DAG')

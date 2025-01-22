@@ -27,7 +27,6 @@ urlpatterns = [
     ##Dashboard URL's
     path("", csrf_exempt(dashboard_views.index), name="index"),
     path("login/", csrf_exempt(dashboard_views.login), name="login"),
-    path("fetch_data_for_data_run/", csrf_exempt(dashboard_views.fetch_data_for_data_run), name="fetch_data_for_data_run"),
 
 
     ##Manage URL's

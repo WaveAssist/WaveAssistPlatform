@@ -50,7 +50,8 @@ def fetch_data_for_key(request):
     output_data_type = request.POST.get('output_data_type', 'json')
     if output_data_type not in ['json', 'csv']:
         return ResponseParser.getParsedErrorMessage('Invalid data type')
-
+    db_name = utils.get_database_name(user_object)
+    mongo_manager.database = mongo_manager.client[db_name]
     mongo_manager.collection = mongo_manager.database[data_run_key]
     data_df = mongo_manager.fetch_data_as_dataframe(data_key)
     if data_df is None:
@@ -97,6 +98,8 @@ def set_data_for_key(request):
 
         ##Save in mongo db
 
+        db_name = utils.get_database_name(user_object)
+        mongo_manager.database = mongo_manager.client[db_name]
         mongo_manager.collection = mongo_manager.database[data_run_key]
         success = mongo_manager.replace_data_as_dataframe(data_key, pd_data)
         if not success:
@@ -116,7 +119,7 @@ def get_integration_data(request):
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    integration_data = get_integrations_data(project_object.project_key)
+    integration_data = get_integrations_data(project_object.project_key, user_object)
     if integration_data is None:
         return ResponseParser.getParsedErrorMessage('Error in fetching integration data, or no integration data found')
 

@@ -6,6 +6,8 @@ PD_DATA_KEY = 'PDData'
 IO_DATA_KEY = 'IODataKey'
 DB_NAME = "WaveAssist"
 
+BROKER_DOMAIN = os.getenv('BROKER_DOMAIN', 'b-83686e9f-2c14-4878-91eb-96a9c4e00b8e.mq.us-east-1.amazonaws.com')
+
 DATA_KEY = "DATA"
 INTEGRATIONS_SUFFIX_KEY = "_integrations"
 
@@ -28,8 +30,8 @@ READ_GTE = 1
 
 DAG_TASK = 'celery_worker.run_dag'
 
-AWSS3_ACCESS_KEY_VALUE = os.getenv('AWS_ACCESS_KEY_ID','REMOVED_CREDENTIAL')
-AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY','REMOVED_CREDENTIAL')
+AWSS3_ACCESS_KEY_VALUE = os.getenv('AWS_ACCESS_KEY_ID','')
+AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY','')
 
 LOKI_URL = os.getenv('LOKI_URL', 'http://localhost:3100')
 # LOKI_URL = 'http://34.196.124.60:3100'
