@@ -137,7 +137,7 @@ def deploy_project(request): ##TCW
                     kwargs=dag_kwargs,  # Serialize the workflow
                     one_off=False,  # If True, the task will run only once
                     enabled=True,  # Whether this task is enabled,
-                    queue=queue_name
+                    # queue=queue_name
                 )
                 periodic_task.save()
                 dag_object.periodic_task = periodic_task
@@ -209,7 +209,8 @@ def run_dag(request): ##TCW
     }
     queue_name = 'queue_' + str(user_object.uid)
     print("Sending task: " + str(dag_kwargs) + ", queue: " + queue_name)
-    result = app.send_task(DAG_TASK, kwargs=dag_kwargs, queue=queue_name)
+    # result = app.send_task(DAG_TASK, kwargs=dag_kwargs, queue=queue_name)
+    result = app.send_task(DAG_TASK, kwargs=dag_kwargs)
 
     output_dict = {'dag': dag_object.get_dict()}
     output_dict['run_id'] = result.id
