@@ -12,7 +12,7 @@ from Utils.constants import *
 app = Celery('waveassist',
              broker=REDIS_URL,
              backend=REDIS_URL)
-# app.conf.task_default_queue = QUEUE_NAME
+app.conf.task_default_queue = QUEUE_NAME
 
 ##ToDo: Add/Plan timeout
 @app.task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
