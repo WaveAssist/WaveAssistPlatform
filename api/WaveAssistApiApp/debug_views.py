@@ -53,7 +53,7 @@ def fetch_logs_from_aws(start_datetime, end_datetime, log_group_name, filter_pat
         for event in events:
             log_array.append({
                 'timestamp': event['timestamp'],
-                'message': event['message']
+                'log': event['message']
             })
 
         # Check if there is a nextToken for pagination
@@ -118,7 +118,8 @@ def fetch_logs(request):
         ##sort all_logs_array
         all_logs_array = sorted(all_logs_array, key=lambda x: x['timestamp'], reverse=True)
         all_logs_array = all_logs_array[:500]
-        return ResponseParser.getParsedSuccessMessage(all_logs_array, '200', 'Logs fetched successfully')
+        output_dict = { 'logs': all_logs_array }
+        return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Logs fetched successfully')
 
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f"Failed to fetch logs: {str(e)}")
