@@ -20,9 +20,8 @@ class Account(models.Model):
     created_by_user = models.ForeignKey('User', on_delete=models.CASCADE)
     plan_name = models.CharField(max_length=255, default="free", null=True)
     mongo_db_url = models.CharField(max_length=255, default="", null=True)
-    rabbitmq_url = models.CharField(max_length=255, default="", null=True)
     db_name = models.CharField(max_length=255, default="", null=True)
-    rabbitmq_queue = models.CharField(max_length=255, default="", null=True)
+    celery_queue = models.CharField(max_length=255, default="", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -34,9 +33,8 @@ class Account(models.Model):
         account_dict['account_name'] = self.account_name
         account_dict['account_uid'] = self.account_uid
         account_dict['mongo_db_url'] = self.mongo_db_url
-        account_dict['rabbitmq_url'] = self.rabbitmq_url
         account_dict['db_name'] = self.db_name
-        account_dict['rabbitmq_queue'] = self.rabbitmq_queue
+        account_dict['celery_queue'] = self.celery_queue
         return account_dict
 
     class Meta:

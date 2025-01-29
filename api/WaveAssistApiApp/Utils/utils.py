@@ -135,78 +135,30 @@ def check_dag(start_node, all_nodes):
         return True, list(sub_nodes_set), "DAG is valid"
 
 
-
-
-def generate_integrations_code_text(project_object):
-    python_code_text = ''
-    integration_array = project_object.integration_array.all()
-    for integration_object in integration_array:
-        python_code_text += integration_object.import_code + '\n'
-    return python_code_text
-
-
-def generate_integrations_function_prefix(project_object):
-    python_code_text = ''
-    integration_array = project_object.integration_array.all()
-    for integration_object in integration_array:
-        python_code_text += integration_object.function_code + '\n'
-    return python_code_text
-
-
-def get_code_for_node(node_object, top_code, function_code, project_key):
-
+def get_code_for_node(node_object,project_key):
     node_python_code = node_object.python_code
-    node_python_code = function_code + node_python_code
-
-
-    python_code = top_code
-    ##Input parameters
-    input_data_array = node_object.input_data_key_array.all().order_by(Lower('key'))
-    parameters_string = ""
-    for input_data_object in input_data_array:
-        parameters_string += str(input_data_object.key) + ", "
-    parameters_string += 'integrations_df=None, '
-    parameters_string += 'project_key="' + str(project_key) + '",'
-
-
-    python_code += "def run_task(" + parameters_string + "):\n"
+    python_code = "def run_task():\n"
     python_code += "    " + node_python_code.replace("\n", "\n    ") + "\n\n"
-
-    ##Output check for return statement.
-    output_data_array = node_object.output_data_key_array.all()
-    if len(output_data_array) > 0 and python_code.find("return") == -1:
-        return False, "Python code does not have a return statement for node: " + node_object.node_key
-
     return python_code
 
 def get_task_dict_for_node(node_object):
     task_dict = {
         "node_key": node_object.node_key,
         "project_key": node_object.project_object.project_key,
-        "input_keys_array": [data_key_object.key for data_key_object in
-                             node_object.input_data_key_array.all().order_by(Lower('key'))],
-        "output_keys_array": [data_key_object.key for data_key_object in
-                              node_object.output_data_key_array.all().order_by(Lower('key'))]
     }
     return task_dict
 
 def get_data_and_dependencies_for_dag(project_object, node_array):
-
-    ##Project Specific things
-    function_integration_code = generate_integrations_code_text(project_object)
-    function_integration_prefix_code = generate_integrations_function_prefix(project_object)
-
     dependency_dict = {}
     data_dict = {}
     # for each node in dag_object
     for node_object in node_array:
-        node_code = get_code_for_node(node_object, function_integration_code, function_integration_prefix_code, project_object.project_key)
+        node_code = get_code_for_node(node_object, project_object.project_key)
         node_task_dict = get_task_dict_for_node(node_object)
         node_task_dict["code_to_run"] = node_code
         data_dict[node_object.node_key] =  node_task_dict
         dependency_dict[node_object.node_key] = [node.node_key for node in node_object.run_after_nodes_array.all()]
     return data_dict, dependency_dict
-
 
 def generate_dag_visualization(dag_dict):
     dot = Digraph(comment='DAGs Visualization')
@@ -314,63 +266,6 @@ def build_loki_query(selected_jobs, node_key_array):
     return query
 
 
-def create_rabbitmq_url(user_object):
-    # RabbitMQ management API credentials
-    rabbitmq_url = "b-83686e9f-2c14-4878-91eb-96a9c4e00b8e.mq.us-east-1.amazonaws.com"
-    rabbitmq_api_url = f"https://{rabbitmq_url}/api"
-    admin_username = "waveassist"
-    admin_password = "REMOVED_CREDENTIAL"
-
-    # Default vhost to be used
-    vhost_name = "%2f"
-
-    # Create a new user with uid as username and password
-    user_url = f"{rabbitmq_api_url}/users/{str(user_object.uid)}"
-    user_payload = {
-        "password": str(user_object.uid),
-        "tags": ""
-    }
-    response = requests.put(user_url, json=user_payload, auth=(admin_username, admin_password))
-
-    if response.status_code not in [200, 201]:
-        raise Exception(f"Failed to create user: {response.text}")
-
-    print("User created: " + str(response))
-
-    # Create a new queue for the user
-    queue_name = f"queue_{str(user_object.uid)}"
-    queue_url = f"{rabbitmq_api_url}/queues/{vhost_name}/{queue_name}"
-    queue_payload = {
-        "auto_delete": False,
-        "durable": True,
-        "arguments": {}
-    }
-    response = requests.put(queue_url, json=queue_payload, auth=(admin_username, admin_password))
-
-    if response.status_code not in [200, 201]:
-        print(response.text)
-        print(response)
-        raise Exception(f"Failed to create queue: {response.text}")
-
-    print("Queue created: " + str(response))
-
-    # Set permissions for the user to only access the specific queue
-    permissions_url = f"{rabbitmq_api_url}/permissions/{vhost_name}/{str(user_object.uid)}"
-    permissions_payload = {
-        "configure": f"^{queue_name}$",
-        "write": f"^{queue_name}$",
-        "read": f"^{queue_name}$"
-    }
-    response = requests.put(permissions_url, json=permissions_payload, auth=(admin_username, admin_password))
-
-    if response.status_code not in [200, 201]:
-        raise Exception(f"Failed to set permissions: {response.text}")
-
-    print("Permissions set: " + str(response))
-
-    # Return the AMQP URL for the user
-    url = f"amqps://{str(user_object.uid)}:{str(user_object.uid)}@{rabbitmq_url}:5672/"
-    return url, queue_name
 
 
 
@@ -433,4 +328,4 @@ def create_mongo_url(user_object):
     return url, db_name
 
 def get_database_name(user_object):
-    return 'waveassist_' + user_object.uid
+    return 'waveassist_' + str(user_object.uid)
