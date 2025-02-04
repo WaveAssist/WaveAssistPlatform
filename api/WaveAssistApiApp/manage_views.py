@@ -9,8 +9,8 @@ import WaveAssistApiApp.Utils.utils as utils
 import WaveAssistApiApp.Utils.validator as validator
 # from WaveAssistApiApp.integration_views import manage_integration_details
 from django.db import transaction
-
-
+from WaveAssistApiApp.Utils.MongoManager import MongoManager
+from WaveAssistApiApp.data_views import set_data_for_key
 
 def get_started(request): #TCW
     uid = request.POST.get('uid', '')
@@ -191,26 +191,62 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
     return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
 
 
-def fetch_project_variables(request): #TCW
+def delete_data_key(request): ##TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
 
-    ##ToDo: Wont this directly come from Mongo? Keep it dynamic or not?
+    ##Fetch Values
+    data_key = request.POST.get('data_key', '')
+    data_run_key = request.POST.get('data_run_key', '')
+
+    ##Remove row from Mongo where IODataKey = key
+    try:
+        mongo_db_name = utils.get_database_name(user_object)
+        mongo_manager = MongoManager()
+        mongo_manager.database = mongo_manager.client[mongo_db_name]
+        collection = mongo_manager.database[data_run_key]
+        collection.delete_many({"IODataKey": data_key})
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Data key deletion failed: ' + str(e))
+
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Data key deleted successfully.')
+
+
+def create_data_key(request): ##TCW
+    request.POST = request.POST.copy()
+    request.POST['data_type'] = 'json'
+    request.POST['json_data'] = '[]'
+    return set_data_for_key(request)
+
+
+def fetch_project_variables(request): #TCW
 
     ##Validate Request
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=READ_GTE)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
+    all_data_keys = set()
+
+    ##Fetch all MongoKeys for project.
+    mongo_db_name = utils.get_database_name(user_object)
+    mongo_manager = MongoManager()
+    mongo_manager.database = mongo_manager.client[mongo_db_name]
+
+
+    ##Fetch all environment keys for project
+    data_runs_array = DataRuns.objects.filter(project_object=project_object)
+    for data_run_object in data_runs_array:
+        collection_key = data_run_object.data_run_key
+        collection = mongo_manager.database[collection_key]
+        unique_iodata_keys = set(collection.distinct("IODataKey"))
+        all_data_keys.update(unique_iodata_keys)
+
     ##Get data for project
-    project_dict = project_object.get_dict()
+    output_dict = {'data_keys': list(all_data_keys)}
 
-    ##DataKeys
-    data_key_array = project_object.datakey_set.all().order_by(Lower('key'))
-    data_key_dict_array = []
-    for data_key_object in data_key_array:
-        data_key_dict_array.append(data_key_object.get_dict())
-    project_dict['variables_array'] = data_key_dict_array
-
-    return ResponseParser.getParsedSuccessMessage(project_dict, '200', 'Project Variables fetched successfully.')
+    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Project Variables fetched successfully.')
 
 
 def fetch_nodes(request):  # TCW
@@ -286,42 +322,6 @@ def delete_project(request): ##ToDo: Write test cases. Check related deleted. Ch
 
 
 ######## --- CRUD for DataKeys
-def create_data_key(request): ##TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    ##Fetch Values
-    key = request.POST.get('key', '')
-
-    ##Validate Key
-    if not key.lower().startswith(project_object.project_key.lower() + '_'):
-        return ResponseParser.getParsedErrorMessage('Key should start with project key + _')
-
-    ##Create Data Key
-    try:
-        data_key_object = DataKey.objects.create(key=key, project_object=project_object)
-        data_key_object.save()
-    except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while creating Data Key')
-
-    return ResponseParser.getParsedSuccessMessage(data_key_object.get_dict(), '200', 'Data Key created successfully.')
-
-
-def delete_data_key(request): ##TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    ##Fetch Values
-    key = request.POST.get('key', '')
-    try:
-        data_key_object = DataKey.objects.get(key=key)
-        data_key_object.delete()
-        return ResponseParser.getParsedSuccessMessage({}, '200', 'Data Key deleted successfully.')
-    except:
-        return ResponseParser.getParsedErrorMessage('Data Key not found, or something went wrong..')
-
 
 
 ###Node CRUD
