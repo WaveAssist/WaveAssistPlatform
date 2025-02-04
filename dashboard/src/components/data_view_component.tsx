@@ -24,7 +24,7 @@ const DataViewComponent: React.FC = () => {
 	const fetchVariables = async () => {
 		try {
 			const data = await fetchVariablesApi();
-			const variableKeys = data.variables_array.map((variable: any) => variable.key);
+			const variableKeys = data.data_keys;
 			setVariablesArray(variableKeys);
 
 			const firstVariableKey = variableKeys[0];

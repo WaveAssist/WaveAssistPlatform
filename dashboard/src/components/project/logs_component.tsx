@@ -74,7 +74,7 @@ const LogsComponent: React.FC = () => {
 			fetchLogs();
 			const intervalId = setInterval(() => {
 				fetchLogs();
-			}, 5000); // 5000ms = 5 seconds
+			}, 10000); // 5000ms = 5 seconds
 			// Clean up the interval when the component unmounts
 			return () => clearInterval(intervalId);
 		}

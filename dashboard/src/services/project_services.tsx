@@ -15,6 +15,7 @@ export const fetchVariablesApi = async (): Promise<any> => {
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
+		data_run_key: localStorage.getItem("selected_env_key") || "",
 	});
 	var path = "manage/fetch_project_variables/";
 	return callApi(path, body);
@@ -25,7 +26,8 @@ export const createVariableApi = async (variableKey: string): Promise<any> => {
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-		key: variableKey,
+		data_run_key: localStorage.getItem("selected_env_key") || "",
+		data_key: variableKey,
 	});
 	var path = "manage/create_data_key/";
 	return callApi(path, body);
@@ -36,7 +38,8 @@ export const deleteVariableApi = async (variableKey: string): Promise<any> => {
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-		key: variableKey,
+		data_run_key: localStorage.getItem("selected_env_key") || "",
+		data_key: variableKey,
 	});
 	var path = "manage/delete_data_key/";
 	return callApi(path, body);

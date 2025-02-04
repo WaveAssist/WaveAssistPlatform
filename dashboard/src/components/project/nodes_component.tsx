@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
 	fetchNodesApi,
-	fetchVariablesApi,
 	updateCodeApi,
 	createNodeApi,
 	updateNodeApi,
@@ -87,7 +86,6 @@ const NodesComponent: React.FC = () => {
 	};
 
 	const [nodesArray, setNodesArray] = useState<any[]>([]);
-	const [variablesArray, setVariablesArray] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 
 	const { showToast } = useToast();
@@ -197,23 +195,12 @@ const NodesComponent: React.FC = () => {
 		}
 	};
 
-	const fetchVariables = async () => {
-		try {
-			const data = await fetchVariablesApi();
-			setVariablesArray(data.variables_array);
-		} catch (error) {
-			console.error("fetchVariablesApi failed:", error);
-			showToast("Something went wrong with loading data, please try again.", "danger");
-		}
-	};
-
 	const gridOptions: GridOptions = {
 		suppressCellFocus: true,
 	};
 
 	useEffect(() => {
 		fetchNodes();
-		fetchVariables();
 	}, [shouldRefresh]);
 
 	const handleViewCode = (node: any) => {
@@ -333,50 +320,26 @@ const NodesComponent: React.FC = () => {
 	};
 
 	const columnDefs = [
-		{ headerName: "Name", field: "name", width: 200 },
+		{ headerName: "Name", field: "name", flex: 1, minWidth: 150, resizable: true }, // Expands to fill space
 		{
 			headerName: "Status",
 			field: "is_enabled",
 			cellRenderer: (params: any) => (
 				<span className={`badge ${params.value ? "badge-primary" : "badge-danger"}`}>{params.value ? "Enabled" : "Disabled"}</span>
 			),
-			width: 100,
-		},
-		{
-			headerName: "Input",
-			field: "input_data_key_array",
-			cellRenderer: (params: any) => (
-				<div>
-					{params.value.map((v: any) => (
-						<span className="badge badge-secondary m-1 " key={v.key}>
-							{v.key}
-						</span>
-					))}
-				</div>
-			),
-			width: 200,
-		},
-		{
-			headerName: "Output",
-			field: "output_data_key_array",
-			cellRenderer: (params: any) => (
-				<div>
-					{params.value.map((v: any) => (
-						<span className="badge badge-secondary m-1" key={v.key}>
-							{v.key}
-						</span>
-					))}
-				</div>
-			),
-			width: 200,
+			width: 160,
+			minWidth: 120, // Prevents shrinking too much
+			resizable: true,
 		},
 		{
 			headerName: "Scheduled",
 			width: 200,
+			minWidth: 150,
+			resizable: true,
 			cellRenderer: (params: any) => formatSchedule(params.data),
 		},
-		{ headerName: "Code", cellRenderer: ViewCodeButton, width: 120 },
-		{ headerName: "Actions", cellRenderer: ActionButtons, width: 140 },
+		{ headerName: "Code", cellRenderer: ViewCodeButton, width: 160, minWidth: 120, resizable: true },
+		{ headerName: "Actions", cellRenderer: ActionButtons, width: 160, minWidth: 120, resizable: true },
 	];
 
 	const isStartingNode = watch("is_starting_node");
@@ -632,70 +595,6 @@ const NodesComponent: React.FC = () => {
 								</div>
 							</>
 						)}
-						<hr />
-
-						{/* Input Variables Array */}
-						<Form.Label>Input Variables:</Form.Label>
-						<div className="row">
-							{variablesArray.map((variable) => (
-								<div className="col-6" key={variable.id}>
-									<Form.Group controlId={`variable-${variable.id}`}>
-										<Controller
-											control={control}
-											name="input_data_key_array"
-											render={({ field }) => {
-												const isChecked = field.value.some((item: any) => item.key === variable.key);
-												return (
-													<Form.Check
-														type="checkbox"
-														label={variable.key}
-														checked={isChecked}
-														onChange={(e) => {
-															const newValue = e.target.checked
-																? [...field.value, variable]
-																: field.value.filter((item: any) => item.key !== variable.key);
-															field.onChange(newValue);
-														}}
-													/>
-												);
-											}}
-										/>
-									</Form.Group>
-								</div>
-							))}
-						</div>
-						<hr />
-
-						{/* Output Variables Array */}
-						<Form.Label>Output Variables:</Form.Label>
-						<div className="row">
-							{variablesArray.map((variable) => (
-								<div className="col-6" key={variable.id}>
-									<Form.Group controlId={`variable-${variable.id}`}>
-										<Controller
-											control={control}
-											name="output_data_key_array"
-											render={({ field }) => {
-												const isChecked = field.value.some((item: any) => item.key === variable.key);
-												return (
-													<Form.Check
-														type="checkbox"
-														label={variable.key}
-														checked={isChecked}
-														onChange={(e) => {
-															const newValue = e.target.checked
-																? [...field.value, variable]
-																: field.value.filter((item: any) => item.key !== variable.key);
-															field.onChange(newValue);
-														}}
-													/>
-												);
-											}}
-										/>
-									</Form.Group>
-								</div>
-							))}
-						</div>
 						<hr />
 
 						{/* Modal Footer */}

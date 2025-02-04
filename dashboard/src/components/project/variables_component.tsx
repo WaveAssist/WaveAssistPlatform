@@ -26,7 +26,13 @@ const VariablesComponent: React.FC = () => {
 	const fetchVariables = async () => {
 		try {
 			const data = await fetchVariablesApi();
-			setVariablesArray(data.variables_array);
+			var flatKeys = data.data_keys;
+			const rowData = flatKeys.map((variable: any) => ({
+				key: variable, // Auto-generate a variable key like "Var1", "Var2", etc.
+				value: variable, // Use the actual variable value
+			}));
+
+			setVariablesArray(rowData);
 		} catch (error) {
 			console.error("fetchVariablesApi failed:", error);
 			showToast("Something went wrong with loading variables, please try again.", "danger");
@@ -170,7 +176,7 @@ const VariablesComponent: React.FC = () => {
 	const columnDefs = [
 		{
 			headerName: "Variable Key",
-			field: "key",
+			field: "value",
 			cellRenderer: (params: any) => <span className="badge badge-primary">{params.value}</span>,
 			flex: 3,
 			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically

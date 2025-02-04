@@ -52,7 +52,7 @@ const LoginComponent: React.FC = () => {
 		<div className="container vh-100 d-flex flex-column justify-content-center">
 			<div className="row">
 				<div className="col text-center mb-3" style={{ marginTop: "-20vh" }}>
-					<img src={WALogo} alt="WavePredict Logo" className="img-fluid mb-4 wp_logo" />
+					<img src={WALogo} alt="WavePredict Logo" className="img-fluid mb-4 wp_logo_login" />
 					<h2 className="title-message">WaveAssist Management Console</h2>
 				</div>
 			</div>
