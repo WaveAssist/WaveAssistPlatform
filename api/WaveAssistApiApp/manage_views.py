@@ -58,8 +58,9 @@ def get_started(request): #TCW
             account_object.mongo_db_url = mongo_url
             account_object.db_name = db_name
             account_object.save()
-        except:
-            return ResponseParser.getParsedErrorMessage('Mongo url creation failed.')
+        except Exception as e:
+            print("Mongo url creation failed: " + str(e))
+            return ResponseParser.getParsedErrorMessage('Mongo url creation failed.' + str(e))
 
     user_dict = user_object.get_dict()
     account_dict = account_object.get_dict()

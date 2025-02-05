@@ -318,7 +318,7 @@ def create_mongo_url(user_object):
         print(response.json())
     else:
         print("Failed to create user:", response.json())
-        return None
+        return None, None
 
 
     # Generate and return the connection URL for the new user

@@ -166,6 +166,35 @@ def stop_deployment(request): ##TCW
 
 
 
+
+def run_code(request):
+    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    project_key = project_object.project_key
+    collection_key = project_key + '_default'
+    node_key = uuid.uuid4()
+    code_to_run = request.POST.get('code_to_run', '')
+    task_dict = {
+        'project_key': project_key,
+        'node_key': node_key,
+        'code_to_run': code_to_run
+    }
+
+    task_kwargs = {
+        'task_dict': task_dict,
+        'collection_key': collection_key
+    }
+
+    queue_name = 'queue_' + str(user_object.uid)
+    task_run = app.send_task(TASK_TASK, kwargs=task_kwargs, queue=queue_name)
+
+    timeout = int(request.POST.get('timeout', 10))
+    result = task_run.get(timeout=timeout)
+    output_dict = {'task_id': task_run.id, 'result': result}
+    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully ran the code')
+
 def run_dag(request): ##TCW
     ##Inputs are uid, project_key, data_run_key & start_node_key
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
