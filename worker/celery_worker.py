@@ -20,8 +20,8 @@ def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs
     # Task dict needs node_key, project_key and code_to_run
     try:
         task_runner = TaskRunner(task_dict, collection_key)
-        task_runner.run()
-        return True
+        result = task_runner.run()
+        return result
     except Exception as e:
         project_key = task_dict['project_key']
         utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'environment_key': collection_key, project_key:project_key, IS_SYSTEM_TASK: True})
