@@ -49,9 +49,10 @@ class TaskRunner(object):
             utils.logger.info("Starting Node: " + str(self.node_key), extra=self.extra_dict)
             timer = Timer(str(self.node_key))
             timer.start()
-            self.run_code()
+            result = self.run_code()
             timer.print_elapsed()
             utils.logger.info("Completed Node: " + str(self.node_key), extra=self.extra_dict)
+            return result
 
 
 
