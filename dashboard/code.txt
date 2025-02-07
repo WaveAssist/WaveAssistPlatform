@@ -1,0 +1,24 @@
+def run_task():
+	return "hello world!"
+    import subprocess
+    import sys
+    import pandas as pd
+    import waveassist
+    def list_installed_packages():
+        try:
+            result = subprocess.check_output([sys.executable, "-m", "pip", "freeze"], text=True)
+            return result
+        except subprocess.CalledProcessError:
+            print("Failed to retrieve installed packages.")
+
+    result = list_installed_packages()
+    ##Convert the result to a list
+    list_result = result.split("\n")
+    ##Get the package names and versions, and convert to a dictionary
+    list_output = []
+    for item in list_result:
+        if item:
+            package_name, package_version = item.split("==")
+            if package_version and package_name:
+                list_output.append({"package_name": package_name, "package_version": package_version})
+    return list_output

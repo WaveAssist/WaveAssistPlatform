@@ -85,3 +85,18 @@
 .log-container .ReactVirtualized__Grid__innerScrollContainer {
   background-color: #101219 !important;
 }
+
+.grid-wrapper {
+  display: flex;
+  gap: 16px; /* Adds spacing between grids */
+  justify-content: center; /* Centers the grids */
+  align-items: flex-start;
+  width: 100%;
+  height: 100vh; /* Adjust height as needed */
+}
+
+.grid-container {
+  flex: 1; /* Makes each grid take equal width */
+  min-width: 45%; /* Prevents shrinking too much */
+  height: 90vh; /* Adjust based on requirement */
+}

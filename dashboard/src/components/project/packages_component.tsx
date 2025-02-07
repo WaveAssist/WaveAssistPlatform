@@ -1,0 +1,217 @@
+import React, { useEffect, useState } from "react";
+import { fetchPackagesApi, removePackageApi, reinstallPackageApi, installPackageApi } from "../../services/project_services";
+import { useToast } from "../../utils/toast_context";
+import { Button, Spinner } from "react-bootstrap";
+import { AgGridReact } from "ag-grid-react";
+import "./project_components.css";
+import "../../utils/ag-theme-project.css";
+import Modal from "react-bootstrap/Modal";
+import { useRefresh } from "../../utils/RefreshContext";
+import "ag-grid-community/styles/ag-theme-balham.css";
+
+const PackagesComponent: React.FC = () => {
+	const [packagesArray, setPackagesArray] = useState<any[]>([]);
+	const { showToast } = useToast();
+	const [showPackageEditor, setShowPackageEditor] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const { shouldRefresh } = useRefresh();
+	const [packageName, setPackageName] = useState("");
+	const [packageVersion, setPackageVersion] = useState("");
+
+	const handleCloseVariableEditor = () => {
+		setShowPackageEditor(false);
+	};
+
+	const fetchPackages = async () => {
+		try {
+			setLoading(true);
+			const data = await fetchPackagesApi();
+			var packagesArray = data.result;
+			setPackagesArray(packagesArray);
+			setLoading(false);
+		} catch (error) {
+			console.error("FetchPackages failed:", error);
+			showToast("Something went wrong with loading packages, please try again.", "danger");
+		}
+	};
+
+	const handleShowVariableEditor = () => {
+		setPackageName("");
+		setPackageVersion("");
+		setShowPackageEditor(true);
+	};
+
+	const gridOptions = {
+		suppressCellFocus: true,
+	};
+
+	useEffect(() => {
+		fetchPackages();
+	}, [shouldRefresh]);
+
+	const defaultColDef = {
+		autoHeight: true,
+		wrapText: true,
+		enableCellChangeFlash: true,
+		editable: false,
+		cellClass: "ag-cell",
+		sortable: true,
+		filter: true,
+		resizable: true,
+		cellStyle: { display: "flex", alignItems: "center" }, // Center content vertically
+	};
+
+	const handleDelete = async (packageDict: any) => {
+		//ask for confirmation in alert
+		var package_name = packageDict.package_name;
+		var message = "Are you sure you want to remove this package: " + package_name + "?";
+		const confirmDelete = window.confirm(message);
+		if (!confirmDelete) {
+			return;
+		}
+		try {
+			// Call delete api
+			await removePackageApi(package_name);
+			showToast("Package deleted successfully.", "success");
+			fetchPackages();
+		} catch (error) {
+			console.error("DeletePackage failed:", error);
+			showToast("Could not remove package" + error, "danger");
+		}
+	};
+	const handleReinstall = async (packageDict: any) => {
+		//ask for confirmation in alert to reinstall
+		var package_name = packageDict.package_name;
+		var message = "Are you sure you want to reinstall this package: " + package_name + "?";
+		const confirmReinstall = window.confirm(message);
+		if (!confirmReinstall) {
+			return;
+		}
+		try {
+			// Call reinstall api
+			await reinstallPackageApi(package_name);
+			showToast("Package reinstalled successfully.", "success");
+			fetchPackages();
+		} catch (error) {
+			console.error("ReinstallPackage failed:", error);
+			showToast("Could not reinstall package" + error, "danger");
+		}
+	};
+	const handleAddPackage = async () => {
+		try {
+			if (!packageName) {
+				showToast("Package Name is required.", "danger");
+				return;
+			}
+			handleCloseVariableEditor();
+			setLoading(true);
+			await installPackageApi(packageName, packageVersion);
+			showToast("Package added successfully.", "success");
+			fetchPackages();
+			handleCloseVariableEditor();
+		} catch (error) {
+			console.error("AddPackage failed:", error);
+			showToast("Could not add package" + error, "danger");
+		}
+	};
+
+	const ActionButtons = (params: any) => {
+		return (
+			<div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+				<Button
+					variant="dark"
+					size="sm"
+					style={{ padding: "2px 6px", fontSize: "12px", lineHeight: "1" }}
+					onClick={() => handleReinstall(params.data)}>
+					<i className="bi bi-arrow-clockwise"></i>
+				</Button>
+				<Button
+					variant="danger"
+					size="sm"
+					style={{ padding: "2px 6px", fontSize: "12px", lineHeight: "1" }}
+					onClick={() => handleDelete(params.data)}>
+					<i className="bi bi-trash"></i>
+				</Button>
+			</div>
+		);
+	};
+
+	const columnDefs = [
+		{ headerName: "Package Name", field: "package_name", flex: 3, resizable: true }, // Expands to fill space
+		{
+			headerName: "Package Version",
+			field: "package_version",
+			cellRenderer: (params: any) => <span className="badge badge-primary">{params.value}</span>,
+			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
+		},
+		{ headerName: "Actions", cellRenderer: ActionButtons, width: 160, minWidth: 120, resizable: true },
+	];
+
+	return (
+		<div className="main-container">
+			{loading && (
+				<div className="my-3">
+					<Spinner animation="border" role="status" variant="success">
+						<span className="visually-hidden">Loading...</span>
+					</Spinner>
+				</div>
+			)}
+
+			<div className="mt-3">
+				<div className="d-flex justify-content-between align-items-center mb-3 ">
+					<h3 className="translucent_white">Packages</h3>
+					<div>
+						<Button variant="dark" onClick={handleShowVariableEditor}>
+							<span className="bi bi-plus-lg"></span>
+						</Button>{" "}
+					</div>
+				</div>
+				<div className="ag-theme-balham-dark grid-container full-screen">
+					<AgGridReact
+						rowData={packagesArray}
+						columnDefs={columnDefs}
+						pagination={true}
+						paginationPageSize={10}
+						gridOptions={gridOptions}
+						defaultColDef={defaultColDef}
+					/>
+				</div>
+			</div>
+
+			<Modal show={showPackageEditor} onHide={handleCloseVariableEditor} size="lg" centered>
+				<Modal.Header closeButton>
+					<Modal.Title>Add Package</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					<label htmlFor="variableKey" className="form-label">
+						Package Name
+					</label>
+					<input type="text" className="form-control" id="packageName" value={packageName} onChange={(e) => setPackageName(e.target.value)} />
+					<br></br>
+					<label htmlFor="variableKey" className="form-label">
+						Package Version (Optional)
+					</label>
+					<input
+						type="text"
+						className="form-control"
+						id="packageVersion"
+						value={packageVersion}
+						onChange={(e) => setPackageVersion(e.target.value)}
+					/>
+					<br></br>
+
+					<Modal.Footer>
+						<Button variant="secondary" onClick={handleCloseVariableEditor}>
+							Close
+						</Button>
+						<Button variant="primary" onClick={handleAddPackage}>
+							Add
+						</Button>
+					</Modal.Footer>
+				</Modal.Body>
+			</Modal>
+		</div>
+	);
+};
+
+export default PackagesComponent;

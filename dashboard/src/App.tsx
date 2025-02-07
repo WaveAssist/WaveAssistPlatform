@@ -7,6 +7,7 @@ import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./utils/private_route";
 import NodesComponent from "./components/project/nodes_component";
 import VariablesComponent from "./components/project/variables_component";
+import PackagesComponent from "./components/project/packages_component";
 import EnvironmentsComponent from "./components/project/environments_component";
 import TestComponent from "./components/test_component";
 import Layout from "./utils/layout_sidebar";
@@ -32,6 +33,7 @@ function App() {
 						<Route path="/manage/projects" element={<PrivateRoute component={AllProjectsComponent} />} />
 						<Route path="/manage/nodes" element={<PrivateRoute component={NodesComponent} layout={Layout} />} />
 						<Route path="/manage/variables" element={<PrivateRoute component={VariablesComponent} layout={Layout} />} />
+						<Route path="/manage/packages" element={<PrivateRoute component={PackagesComponent} layout={Layout} />} />
 						<Route path="/manage/environments" element={<PrivateRoute component={EnvironmentsComponent} layout={Layout} />} />
 						<Route path="/manage/deployments" element={<PrivateRoute component={DeploymentsComponent} layout={Layout} />} />
 						<Route path="/manage/data-view" element={<PrivateRoute component={DataViewComponent} layout={Layout} />} />
