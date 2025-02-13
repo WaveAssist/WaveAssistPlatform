@@ -8,6 +8,9 @@ from Utils.constants import *
 ##Init worker to fetch details
 ##Call API to fetch and store config.json
 
+##Test and uncomment
+# utils.start_pre_initialization()
+
 # Setup Celery
 app = Celery('waveassist',
              broker=REDIS_URL,
