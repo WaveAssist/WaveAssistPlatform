@@ -36,7 +36,7 @@ AWS_TASK_DEF_JSON = {
 
 
 # Initialize the ECS client
-ecs_client = boto3.client('ecs', region_name="us-east-1")  # Update region if needed
+ecs_client = boto3.client('ecs', region_name="us-east-1", aws_access_key_id=AWSS3_ACCESS_KEY_VALUE, aws_secret_access_key=AWSS3_SECRET_KEY_VALUE)
 
 def register_task_definition(task_definition_json):
     """
@@ -48,8 +48,6 @@ def register_task_definition(task_definition_json):
     except Exception as e:
         print(f"Error registering task: {e}")
         return None
-
-
 
 
 def create_fargate_service(service_name, task_definition_arn, subnet_ids=AWS_SUBNETS, security_group_ids=AWS_SECURITY_GROUPS, cluster_name=AWS_CLUSTER):
