@@ -318,7 +318,7 @@ def create_mongo_url(user_object):
         print(response.json())
     else:
         print("Failed to create user:", response.json())
-        return None
+        return None, None
 
 
     # Generate and return the connection URL for the new user
@@ -329,3 +329,22 @@ def create_mongo_url(user_object):
 
 def get_database_name(user_object):
     return 'waveassist_' + str(user_object.uid)
+
+
+
+def generate_filter_pattern(node_key_csv, project_object):
+    # Construct filter_pattern
+    if node_key_csv:
+        # Split CSV into a list of node keys
+        node_key_array = node_key_csv.split(',')
+        node_key_array = [node_key.strip() for node_key in node_key_array if node_key]
+
+        # Construct OR conditions for node_key
+        node_key_conditions = " || ".join([f'$.extra.node_key = "{node_key}"' for node_key in node_key_array])
+
+        # Combine project_key with OR conditions
+        filter_pattern = f'{{ $.extra.project_key = "{project_object.project_key}" && ({node_key_conditions}) }}'
+    else:
+        filter_pattern = f'{{ $.extra.project_key = "{project_object.project_key}" }}'
+
+    return filter_pattern

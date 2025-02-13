@@ -29,6 +29,7 @@ READ_GTE = 1
 
 
 DAG_TASK = 'celery_worker.run_dag'
+TASK_TASK = 'celery_worker.run_task'
 
 AWSS3_ACCESS_KEY_VALUE = os.getenv('AWS_ACCESS_KEY_ID','')
 AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY','')
