@@ -36,3 +36,25 @@ AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY','')
 LOKI_URL = os.getenv('LOKI_URL', 'http://localhost:3100')
 # LOKI_URL = 'http://34.196.124.60:3100'
 LOGS_LIMIT = 500
+
+
+
+
+FETCH_INSTALL_PACKAGES_CODE = '''
+    def run_task():
+    import subprocess
+    import sys
+    def list_installed_packages():
+            result = subprocess.check_output([sys.executable, "-m", "pip", "freeze"], text=True)
+            return result
+    result = list_installed_packages()
+    list_result = result.split('\\n')
+    ##Get the package names and versions, and convert to a dictionary
+    list_output = []
+    for item in list_result:
+        if item:
+            package_name, package_version = item.split("==")
+            if package_version and package_name:
+                list_output.append({"package_name": package_name, "package_version": package_version})
+    return list_output
+    '''

@@ -123,4 +123,3 @@ def fetch_logs(request):
 
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f"Failed to fetch logs: {str(e)}")
-
