@@ -111,29 +111,40 @@ def fetch_logs(request):
 
 
 def fetch_installed_packages(request):
-    ##TCW
+    #TCW
     request.POST = request.POST.copy()
     request.POST['code_to_run'] = FETCH_INSTALL_PACKAGES_CODE
     response = deployment_views.run_code(request)
-    packages_array = json.loads(response['data']['result'])
-    print(packages_array)
+    try:
+        packages_array = json.loads(response['data']['result'])
+        print(packages_array)
+    except:
+        return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
 
     try:
         account_object = Account.objects.get(account_uid=request.POST.get('uid'))
+        account_object.pip_requirements_array_json = json.dumps(packages_array)
+        account_object.save()
     except:
         return ResponseParser.getParsedErrorMessage('Account not found or not authorized')
-
-    account_object.pipeline_requirements_array_json = json.dumps(packages_array)
-    account_object.save()
 
     output_dict = {
         'packages_array': packages_array
     }
-    print(output_dict)
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Packages fetched successfully')
 
 
 def uninstall_package(request): ##TCW
-    new_request = request.POST.copy
-    new_request['code_to_run'] = FETCH_INSTALL_PACKAGES_CODE
-    return deployment_views.run_code(new_request)
+    request.POST = request.POST.copy()
+    request.POST['code_to_run'] = '''
+    def run_task():
+    import subprocess
+    import sys
+    library_name = ''' + request.POST.get('package_name') + '''
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", library_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    '''
+    return deployment_views.run_code(request)

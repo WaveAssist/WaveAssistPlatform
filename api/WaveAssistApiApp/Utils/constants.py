@@ -59,3 +59,18 @@ FETCH_INSTALL_PACKAGES_CODE = '''
                 list_output.append({"package_name": package_name, "package_version": package_version})
     return list_output
     '''
+
+
+FETCH_UNINSTALL_PACKAGES_CODE = '''
+    def run_task():
+    import subprocess
+    import sys
+    library_name = "${package_name}"
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", library_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    '''
+
+
