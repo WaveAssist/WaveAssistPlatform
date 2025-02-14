@@ -42,7 +42,7 @@ LOGS_LIMIT = 500
 
 
 FETCH_INSTALL_PACKAGES_CODE = '''
-    def run_task():
+def run_task():
     import subprocess
     import sys
     def list_installed_packages():
