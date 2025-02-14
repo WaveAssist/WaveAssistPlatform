@@ -115,9 +115,12 @@ def fetch_installed_packages(request):
     request.POST = request.POST.copy()
     request.POST['code_to_run'] = FETCH_INSTALL_PACKAGES_CODE
     response = deployment_views.run_code(request)
-    packages_array = json.loads(response['data']['result'])
-    print(packages_array)
 
+    try:
+        packages_array = json.loads(response['data']['result'])
+        print(packages_array)
+    except:
+        return response
     try:
         account_object = Account.objects.get(account_uid=request.POST.get('uid'))
     except:
