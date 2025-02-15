@@ -120,8 +120,12 @@ def fetch_installed_packages(request):
     request.POST['code_to_run'] = FETCH_INSTALL_PACKAGES_CODE
     response = deployment_views.run_code(request)
     try:
-        packages_array = json.loads(response['data']['result'])
-        print(packages_array)
+        response_str = response.content.decode('utf-8')
+        # Convert JSON string to Python dictionary
+        response_dict = json.loads(response_str)
+        # Extract `result` array from `data`
+        packages_array = response_dict.get("data", {}).get("result", [])
+
     except:
         return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
 
@@ -140,12 +144,11 @@ def fetch_installed_packages(request):
 
 def code_to_run_uninstall_package(package_name):
     code_to_run = '''
-    def run_task():
+def run_task():
     import subprocess
     import sys
-    library_name = ''' + package_name + '''
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", library_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", " ''' + package_name + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
         return False
@@ -156,11 +159,12 @@ def code_to_run_uninstall_package(package_name):
 def uninstall_package(request): ##TCW
     request.POST = request.POST.copy()
     package_name = request.POST.get('package_name')
-    request.POST['code_to_run'] = code_to_run_uninstall_package(package_name)
+    code_to_run = code_to_run_uninstall_package(package_name)
+    print(code_to_run)
+    request.POST['code_to_run'] = code_to_run
 
     response = deployment_views.run_code(request)
     try:
-        print(response)
         if response:
             return ResponseParser.getParsedSuccessMessage({}, '200', 'Package uninstalled successfully')
         else:
@@ -172,12 +176,11 @@ def uninstall_package(request): ##TCW
 
 def code_to_run_install_package(package_name):
     code_to_run = '''
-    def run_task():
+def run_task():
     import subprocess
     import sys
-    library_name = ''' + package_name + '''
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", library_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", " ''' + package_name + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
         return False

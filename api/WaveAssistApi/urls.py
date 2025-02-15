@@ -76,6 +76,7 @@ urlpatterns = [
     path("debug/fetch_installed_packages/", csrf_exempt(debug_views.fetch_installed_packages), name="fetch_installed_packages"),
     path("debug/uninstall_package/", csrf_exempt(debug_views.uninstall_package), name="uninstall_package"),
     path("debug/install_package/", csrf_exempt(debug_views.install_package), name="install_package"),
+    path("debug/reinstall_package/", csrf_exempt(debug_views.reinstall_package), name="reinstall_package"),
 
 
     ##Worker URL's
