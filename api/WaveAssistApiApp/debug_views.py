@@ -142,13 +142,13 @@ def fetch_installed_packages(request):
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Packages fetched successfully')
 
 
-def code_to_run_uninstall_package(package_name):
+def code_to_run_uninstall_package(package_to_uninstall):
     code_to_run = '''
 def run_task():
     import subprocess
     import sys
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", " ''' + package_name + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", " ''' + package_to_uninstall + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
         return False
@@ -158,9 +158,13 @@ def run_task():
 
 def uninstall_package(request): ##TCW
     request.POST = request.POST.copy()
-    package_name = request.POST.get('package_name')
-    code_to_run = code_to_run_uninstall_package(package_name)
-    print(code_to_run)
+    package_name = request.POST.get('package_name', '')
+    package_version = request.POST.get('package_version', None)
+    if package_version:
+        package_to_uninstall = f"{package_name}=={package_version}"
+    else:
+        package_to_uninstall = package_name
+    code_to_run = code_to_run_uninstall_package(package_to_uninstall)
     request.POST['code_to_run'] = code_to_run
 
     response = deployment_views.run_code(request)
@@ -174,13 +178,13 @@ def uninstall_package(request): ##TCW
 
 
 
-def code_to_run_install_package(package_name):
+def code_to_run_install_package(package_to_install):
     code_to_run = '''
 def run_task():
     import subprocess
     import sys
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", " ''' + package_name + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", " ''' + package_to_install + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
         return False
@@ -191,7 +195,12 @@ def run_task():
 def install_package(request):
     request.POST = request.POST.copy()
     package_name = request.POST.get('package_name')
-    request.POST['code_to_run'] = code_to_run_install_package(package_name)
+    package_version = request.POST.get('package_version', None)
+    if package_version:
+        package_to_install = f"{package_name}=={package_version}"
+    else:
+        package_to_install = package_name
+    request.POST['code_to_run'] = code_to_run_install_package(package_to_install)
 
     response = deployment_views.run_code(request)
     print(response)
@@ -205,17 +214,29 @@ def install_package(request):
         return ResponseParser.getParsedErrorMessage('Failed to install package for the account')
 
 
+def code_to_run_upgrade_package(package_to_install):
+    code_to_run = '''
+def run_task():
+    import subprocess
+    import sys
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", " ''' + package_to_install + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    '''
+    return code_to_run
+
+
 def reinstall_package(request):
     request.POST = request.POST.copy()
     package_name = request.POST.get('package_name')
-    request.POST['code_to_run'] = code_to_run_uninstall_package(package_name)
+    request.POST['code_to_run'] = code_to_run_upgrade_package(package_name)
     response = deployment_views.run_code(request)
-    if response:
-        request.POST['code_to_run'] = code_to_run_install_package(package_name)
-        response = deployment_views.run_code(request)
+    try:
         if response:
             return ResponseParser.getParsedSuccessMessage({}, '200', 'Package reinstalled successfully')
         else:
             return ResponseParser.getParsedErrorMessage('Failed to reinstall package')
-    else:
+    except:
         return ResponseParser.getParsedErrorMessage('Failed to uninstall package')

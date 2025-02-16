@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 import uuid
 from django.contrib.auth.hashers import make_password, is_password_usable
 from django.db import transaction
+import json
 
 SCHEDULE_TYPE_CHOICES = [
         ('none', 'none'),
@@ -36,7 +37,7 @@ class Account(models.Model):
         account_dict['mongo_db_url'] = self.mongo_db_url
         account_dict['db_name'] = self.db_name
         account_dict['celery_queue'] = self.celery_queue
-        account_dict['pip_requirements_array_json'] = self.pip_requirements_array_json
+        account_dict['pip_requirements_array_json'] = json.loads(self.pip_requirements_array_json)
         return account_dict
 
     class Meta:
