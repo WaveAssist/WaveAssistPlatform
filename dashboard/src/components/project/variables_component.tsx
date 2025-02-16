@@ -241,9 +241,9 @@ const VariablesComponent: React.FC = () => {
 					</label>
 					<input type="text" className="form-control" id="variableKey" value={variableKey} onChange={(e) => setVariableKey(e.target.value)} />
 					<br></br>
-					<div id="projectNameHelp" className="form-text model-text">
+					{/* <div id="projectNameHelp" className="form-text model-text">
 						Variable Key must start with project key: <b>{localStorage.getItem("selected_project_key")}</b>
-					</div>
+					</div> */}
 					<br></br>
 
 					<Modal.Footer>
