@@ -55,7 +55,9 @@ class User(models.Model):
     password = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255, default="", null=True)
     can_create_projects = models.BooleanField(default=False)
+    firebase_uid = models.CharField(max_length=255, default="", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return f"User: {self.name} ({self.username})"
