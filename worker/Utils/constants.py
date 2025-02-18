@@ -4,8 +4,8 @@ from config import *
 
 ##Main constants
 ACCOUNT_ID = os.getenv('ACCOUNT_ID', ACCOUNT_ID)
-# REDIS_URL = os.getenv('REDIS_URL', 'redis://master.rediswa.lqjglu.use1.cache.amazonaws.com:6379/0')
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_URL = os.getenv('REDIS_URL', 'redis://master.rediswa.lqjglu.use1.cache.amazonaws.com:6379/0')
+# REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 QUEUE_NAME = 'queue_' + ACCOUNT_ID
 
 ##Other logs
