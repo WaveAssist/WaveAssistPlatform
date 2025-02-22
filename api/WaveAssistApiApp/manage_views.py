@@ -16,18 +16,14 @@ from WaveAssistApiApp.data_views import set_data_for_key
 from WaveAssistApiApp.dashboard_views import get_firebase_uid
 
 def get_started(request): #TCW
-    uid = request.POST.get('uid', '')
     firebase_token = request.POST.get('firebase_token', '')
+    uid = get_firebase_uid(firebase_token)
 
-    firebase_uid = get_firebase_uid(firebase_token)
-
-    print("Firebase UID: " + firebase_uid)
     ##Create User
-    user_object = None
     try:
-        user_object = User.objects.get(firebase_uid=firebase_uid)
+        user_object = User.objects.get(uid=uid)
     except:
-        pass
+        user_object = None
 
     if user_object is None:
         ##Create User
@@ -39,8 +35,8 @@ def get_started(request): #TCW
         can_create_projects = True
         try:
             user_object = User.objects.create(uid=uid, name=name, username=username, password=password,
-                                              company_name=company_name, can_create_projects=can_create_projects,
-                                              firebase_uid = firebase_uid)
+                                              company_name=company_name, can_create_projects=can_create_projects
+                                            )
             user_object.save()
         except Exception as e:
             print("User creation failed: " + str(e))

@@ -29,14 +29,15 @@ def index(request):
     return ResponseParser.getParsedSuccessMessage([],"S01","Hello, world. You're at the WaveAssist index...")
 
 def login(request): ##TCW
-    username = request.POST.get('username')
-    password = request.POST.get('password')
+    firebase_token = request.POST.get('firebase_token', '')
+    uid = get_firebase_uid(firebase_token)
     try:
-        user_object = User.objects.get(username=username)
-        if not check_password(password, user_object.password):
-            raise Exception('Invalid Password')
+        user_object = User.objects.get(uid=uid)
     except:
-        return ResponseParser.getParsedErrorMessage('Username or Password invalid.')
+        data = {
+            'action': 'PERFORM_GET_STARTED'
+        }
+        return ResponseParser.getParsedSuccessMessage(data, 'S02', 'User not found')
 
     ##Fetch all projects of the User from AccessProvided
     project_array = Project.objects.filter(
