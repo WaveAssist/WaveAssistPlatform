@@ -1,5 +1,7 @@
 import json
 import uuid
+
+from .dashboard_views import firebase_login
 from .models import *
 from .Utils.responseParser import ResponseParser
 import pandas as pd
@@ -11,15 +13,17 @@ import WaveAssistApiApp.Utils.validator as validator
 from django.db import transaction
 from WaveAssistApiApp.Utils.MongoManager import MongoManager
 from WaveAssistApiApp.data_views import set_data_for_key
+from WaveAssistApiApp.dashboard_views import get_firebase_uid
 
 def get_started(request): #TCW
-    uid = request.POST.get('uid', '')
+    firebase_token = request.POST.get('firebase_token', '')
+    uid = get_firebase_uid(firebase_token)
+
     ##Create User
-    user_object = None
     try:
         user_object = User.objects.get(uid=uid)
     except:
-        pass
+        user_object = None
 
     if user_object is None:
         ##Create User
@@ -30,7 +34,9 @@ def get_started(request): #TCW
         company_name = request.POST.get('company_name', user_default_uuid)
         can_create_projects = True
         try:
-            user_object = User.objects.create(uid=uid, name=name, username=username, password=password, company_name=company_name, can_create_projects=can_create_projects)
+            user_object = User.objects.create(uid=uid, name=name, username=username, password=password,
+                                              company_name=company_name, can_create_projects=can_create_projects
+                                            )
             user_object.save()
         except Exception as e:
             print("User creation failed: " + str(e))

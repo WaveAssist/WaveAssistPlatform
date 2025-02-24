@@ -1,6 +1,10 @@
 import json
 import uuid
+from http.client import responses
+
 from django.shortcuts import render
+from twisted.spread.pb import respond
+
 from .models import *
 from .Utils.responseParser import ResponseParser
 import pandas as pd
@@ -17,7 +21,7 @@ from django.http import JsonResponse
 from datetime import datetime, timedelta
 import pytz
 from urllib.parse import unquote
-
+from WaveAssistApiApp import deployment_views
 
 # Initialize the CloudWatch Logs client
 client = boto3.client('logs',
@@ -108,3 +112,131 @@ def fetch_logs(request):
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f"Failed to fetch logs: {str(e)}")
 
+
+
+def fetch_installed_packages(request):
+    #TCW
+    request.POST = request.POST.copy()
+    request.POST['code_to_run'] = FETCH_INSTALL_PACKAGES_CODE
+    response = deployment_views.run_code(request)
+    try:
+        response_str = response.content.decode('utf-8')
+        # Convert JSON string to Python dictionary
+        response_dict = json.loads(response_str)
+        # Extract `result` array from `data`
+        packages_array = response_dict.get("data", {}).get("result", [])
+
+    except:
+        return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
+
+    try:
+        account_object = Account.objects.get(account_uid=request.POST.get('uid'))
+        account_object.pip_requirements_array_json = json.dumps(packages_array)
+        account_object.save()
+    except:
+        return ResponseParser.getParsedErrorMessage('Account not found or not authorized')
+
+    output_dict = {
+        'packages_array': packages_array
+    }
+    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Packages fetched successfully')
+
+
+def code_to_run_uninstall_package(package_to_uninstall):
+    code_to_run = '''
+def run_task():
+    import subprocess
+    import sys
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", " ''' + package_to_uninstall + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    '''
+    return code_to_run
+
+
+def uninstall_package(request): ##TCW
+    request.POST = request.POST.copy()
+    package_name = request.POST.get('package_name', '')
+    package_version = request.POST.get('package_version', None)
+    if package_version:
+        package_to_uninstall = f"{package_name}=={package_version}"
+    else:
+        package_to_uninstall = package_name
+    code_to_run = code_to_run_uninstall_package(package_to_uninstall)
+    request.POST['code_to_run'] = code_to_run
+
+    response = deployment_views.run_code(request)
+    try:
+        if response:
+            return ResponseParser.getParsedSuccessMessage({}, '200', 'Package uninstalled successfully')
+        else:
+            return ResponseParser.getParsedErrorMessage('Failed to uninstall package')
+    except:
+        return ResponseParser.getParsedErrorMessage('Failed to uninstall package for the account')
+
+
+
+def code_to_run_install_package(package_to_install):
+    code_to_run = '''
+def run_task():
+    import subprocess
+    import sys
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", " ''' + package_to_install + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    '''
+    return code_to_run
+
+
+def install_package(request):
+    request.POST = request.POST.copy()
+    package_name = request.POST.get('package_name')
+    package_version = request.POST.get('package_version', None)
+    if package_version:
+        package_to_install = f"{package_name}=={package_version}"
+    else:
+        package_to_install = package_name
+    request.POST['code_to_run'] = code_to_run_install_package(package_to_install)
+
+    response = deployment_views.run_code(request)
+    print(response)
+    response =True
+    try:
+        if response:
+            return ResponseParser.getParsedSuccessMessage({}, '200', 'Package installed successfully')
+        else:
+            return ResponseParser.getParsedErrorMessage('Failed to install package')
+    except:
+        return ResponseParser.getParsedErrorMessage('Failed to install package for the account')
+
+
+def code_to_run_upgrade_package(package_to_install):
+    code_to_run = '''
+def run_task():
+    import subprocess
+    import sys
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", " ''' + package_to_install + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    '''
+    return code_to_run
+
+
+def reinstall_package(request):
+    request.POST = request.POST.copy()
+    package_name = request.POST.get('package_name')
+    request.POST['code_to_run'] = code_to_run_upgrade_package(package_name)
+    response = deployment_views.run_code(request)
+    try:
+        if response:
+            return ResponseParser.getParsedSuccessMessage({}, '200', 'Package reinstalled successfully')
+        else:
+            return ResponseParser.getParsedErrorMessage('Failed to reinstall package')
+    except:
+        return ResponseParser.getParsedErrorMessage('Failed to uninstall package')

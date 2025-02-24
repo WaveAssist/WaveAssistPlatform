@@ -170,3 +170,4 @@ class DashboardSectionTestCase(TestCase):
         response_data = json.loads(response.content)
         self.assertEqual('0', response_data['success'])
         self.assertEqual(response_data['message'], 'Dashboard Section not found')
+

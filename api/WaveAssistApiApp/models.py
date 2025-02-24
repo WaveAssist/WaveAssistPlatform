@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 import uuid
 from django.contrib.auth.hashers import make_password, is_password_usable
 from django.db import transaction
+import json
 
 SCHEDULE_TYPE_CHOICES = [
         ('none', 'none'),
@@ -22,6 +23,7 @@ class Account(models.Model):
     mongo_db_url = models.CharField(max_length=255, default="", null=True)
     db_name = models.CharField(max_length=255, default="", null=True)
     celery_queue = models.CharField(max_length=255, default="", null=True)
+    pip_requirements_array_json = models.TextField(default="[]")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -35,6 +37,7 @@ class Account(models.Model):
         account_dict['mongo_db_url'] = self.mongo_db_url
         account_dict['db_name'] = self.db_name
         account_dict['celery_queue'] = self.celery_queue
+        account_dict['pip_requirements_array_json'] = json.loads(self.pip_requirements_array_json)
         return account_dict
 
     class Meta:
@@ -52,7 +55,9 @@ class User(models.Model):
     password = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255, default="", null=True)
     can_create_projects = models.BooleanField(default=False)
+    firebase_uid = models.CharField(max_length=255, default="", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return f"User: {self.name} ({self.username})"
