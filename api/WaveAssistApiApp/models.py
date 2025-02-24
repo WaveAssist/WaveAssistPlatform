@@ -17,13 +17,14 @@ SCHEDULE_TYPE_CHOICES = [
 class Account(models.Model):
     id = models.AutoField(primary_key=True)
     account_name = models.CharField(max_length=255, default="", null=True)
-    account_uid = models.UUIDField(default=uuid.uuid4, editable=False)
+    account_uid = models.CharField(editable=False, unique=True,max_length=255)
     created_by_user = models.ForeignKey('User', on_delete=models.CASCADE)
     plan_name = models.CharField(max_length=255, default="free", null=True)
     mongo_db_url = models.CharField(max_length=255, default="", null=True)
     db_name = models.CharField(max_length=255, default="", null=True)
     celery_queue = models.CharField(max_length=255, default="", null=True)
     pip_requirements_array_json = models.TextField(default="[]")
+    worker_service_arn = models.CharField(max_length=255, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -37,7 +38,7 @@ class Account(models.Model):
         account_dict['mongo_db_url'] = self.mongo_db_url
         account_dict['db_name'] = self.db_name
         account_dict['celery_queue'] = self.celery_queue
-        account_dict['pip_requirements_array_json'] = json.loads(self.pip_requirements_array_json)
+        account_dict['pip_requirements_array_json'] = json.loads(str(self.pip_requirements_array_json))
         return account_dict
 
     class Meta:
@@ -49,13 +50,13 @@ class Account(models.Model):
 
 class User(models.Model):
     id = models.AutoField(primary_key=True)
-    uid = models.UUIDField(default=uuid.uuid4, editable=False)
+    uid = models.CharField(editable=False, unique=True,max_length=255)
     name = models.CharField(max_length=255, default="", null=True)
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255, default="", null=True)
     can_create_projects = models.BooleanField(default=False)
-    firebase_uid = models.CharField(max_length=255, default="", null=True)
+    firebase_uid = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
