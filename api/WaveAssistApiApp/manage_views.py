@@ -14,28 +14,30 @@ from django.db import transaction
 from WaveAssistApiApp.Utils.MongoManager import MongoManager
 from WaveAssistApiApp.data_views import set_data_for_key
 from WaveAssistApiApp.dashboard_views import get_firebase_uid
+import WaveAssistApiApp.Utils.AWSManager as aws_manager
+
 
 def get_started(request): #TCW
     firebase_token = request.POST.get('firebase_token', '')
-    uid = get_firebase_uid(firebase_token)
-
+    firebase_id, decoded_dict = get_firebase_uid(firebase_token)
     ##Create User
     try:
-        user_object = User.objects.get(uid=uid)
+        user_object = User.objects.get(firebase_id=firebase_id)
     except:
         user_object = None
 
     if user_object is None:
         ##Create User
-        user_default_uuid = str(uid)
-        name = request.POST.get('name', user_default_uuid)
-        username = request.POST.get('username', user_default_uuid)
-        password = request.POST.get('password', user_default_uuid)
-        company_name = request.POST.get('company_name', user_default_uuid)
+        uid = uuid.uuid4()
+        name = request.POST.get('name', uid)
+        username = request.POST.get('email', uid)
+        password = request.POST.get('password', uid)
+        company_name = request.POST.get('company_name', uid)
         can_create_projects = True
         try:
             user_object = User.objects.create(uid=uid, name=name, username=username, password=password,
-                                              company_name=company_name, can_create_projects=can_create_projects
+                                              company_name=company_name, can_create_projects=can_create_projects,
+                                              firebase_id=firebase_id
                                             )
             user_object.save()
         except Exception as e:
@@ -46,7 +48,7 @@ def get_started(request): #TCW
         account_object = Account.objects.filter(created_by_user=user_object)
         if account_object.count() == 0:
             ##Create Account
-            account_name = request.POST.get('account_name', 'Default')
+            account_name = request.POST.get('account_name', user_object.name)
             account_uid = user_object.uid
             celery_queue = 'queue_' + str(account_uid)
             account_object = Account.objects.create(account_name=account_name, account_uid=account_uid, created_by_user=user_object, celery_queue=celery_queue)
@@ -67,6 +69,17 @@ def get_started(request): #TCW
         except Exception as e:
             print("Mongo url creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage('Mongo url creation failed.' + str(e))
+
+    if account_object.worker_service_arn == '':
+        ##Create Worker
+        try:
+            worker_service_arn = aws_manager.create_worker(user_object.uid)
+            account_object.worker_service_arn = worker_service_arn
+            account_object.save()
+        except Exception as e:
+            print("Worker creation failed: " + str(e))
+            return ResponseParser.getParsedErrorMessage('Worker creation failed.' + str(e))
+
 
     user_dict = user_object.get_dict()
     account_dict = account_object.get_dict()

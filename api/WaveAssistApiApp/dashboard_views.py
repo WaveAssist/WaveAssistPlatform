@@ -30,9 +30,9 @@ def index(request):
 
 def login(request): ##TCW
     firebase_token = request.POST.get('firebase_token', '')
-    uid = get_firebase_uid(firebase_token)
+    firebase_id, _ = get_firebase_uid(firebase_token)
     try:
-        user_object = User.objects.get(uid=uid)
+        user_object = User.objects.get(firebase_id=firebase_id)
     except:
         data = {
             'action': 'PERFORM_GET_STARTED'
@@ -84,14 +84,14 @@ def get_firebase_uid(firebase_token):
     if not firebase_uid:
         return ResponseParser.getParsedErrorMessage('Firebase UID not found in token')
 
-    return firebase_uid
+    return firebase_uid, decoded_token
 
 def firebase_login(request):
     try:
         # Parse the request body
         firebase_token = request.POST.get('firebase_token')
 
-        firebase_uid = get_firebase_uid(firebase_token)
+        firebase_uid, _ = get_firebase_uid(firebase_token)
         # Fetch the user object
         try:
             user_object = User.objects.get(firebase_uid=firebase_uid)

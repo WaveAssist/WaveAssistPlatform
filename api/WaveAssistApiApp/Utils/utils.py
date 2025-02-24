@@ -348,3 +348,56 @@ def generate_filter_pattern(node_key_csv, project_object):
         filter_pattern = f'{{ $.extra.project_key = "{project_object.project_key}" }}'
 
     return filter_pattern
+
+
+
+def get_task_definition(uid):
+    return {
+        "containerDefinitions": [
+            {
+                "name": "worker",
+                "image": "713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_celery_worker:latest",
+                "cpu": 0,
+                "portMappings": [],
+                "essential": True,
+                "environment": [
+                    {
+                        "name": "ACCOUNT_ID",
+                        "value": f"{uid}"
+                    }
+                ],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/WaveAssistWorkerTasks",
+                        "mode": "non-blocking",
+                        "awslogs-create-group": "true",
+                        "max-buffer-size": "25m",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    },
+                    "secretOptions": []
+                },
+                "systemControls": []
+            }
+        ],
+        "family": f"WaveAssistWorkerTasks__{uid}",
+        "taskRoleArn": "arn:aws:iam::713358430452:role/ecsTaskExecutionRole",
+        "executionRoleArn": "arn:aws:iam::713358430452:role/ecsTaskExecutionRole",
+        "networkMode": "awsvpc",
+        "volumes": [],
+        "placementConstraints": [],
+
+        "requiresCompatibilities": [
+            "FARGATE"
+        ],
+        "cpu": "512",
+        "memory": "2048",
+        "runtimePlatform": {
+            "cpuArchitecture": "X86_64",
+            "operatingSystemFamily": "LINUX"
+        },
+
+    }
