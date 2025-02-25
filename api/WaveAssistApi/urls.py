@@ -27,7 +27,6 @@ urlpatterns = [
     ##Dashboard URL's
     path("", csrf_exempt(dashboard_views.index), name="index"),
     path("login/", csrf_exempt(dashboard_views.login), name="login"),
-    path("firebase_login/", csrf_exempt(dashboard_views.firebase_login), name="firebase_login"),
 
 
     ##Manage URL's

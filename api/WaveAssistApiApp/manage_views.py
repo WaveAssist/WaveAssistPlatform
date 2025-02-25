@@ -1,7 +1,6 @@
 import json
 import uuid
 
-from .dashboard_views import firebase_login
 from .models import *
 from .Utils.responseParser import ResponseParser
 import pandas as pd
@@ -19,7 +18,11 @@ import WaveAssistApiApp.Utils.AWSManager as aws_manager
 
 def get_started(request): #TCW
     firebase_token = request.POST.get('firebase_token', '')
-    firebase_uid, decoded_dict = get_firebase_uid(firebase_token)
+    try:
+        firebase_uid, decoded_dict = get_firebase_uid(firebase_token)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(f'Failed to login: {str(e)}')
+
     ##Create User
     try:
         user_object = User.objects.get(firebase_uid=firebase_uid)
@@ -29,10 +32,10 @@ def get_started(request): #TCW
     if user_object is None:
         ##Create User
         uid = uuid.uuid4()
-        name = request.POST.get('name', decoded_dict.get('display_name',uid))
-        username = request.POST.get('email', decoded_dict.get('email',uid))
-        password = request.POST.get('password', uid)
-        company_name = request.POST.get('company_name', uid)
+        name = request.POST.get('name', decoded_dict.get('full_name','Name'))
+        username = request.POST.get('email', decoded_dict.get('email','email'))
+        password = request.POST.get('password', 'REMOVED_CREDENTIAL')
+        company_name = request.POST.get('company_name', 'Company')
         can_create_projects = True
         try:
             user_object = User.objects.create(uid=uid, name=name, username=username, password=password,
@@ -83,7 +86,8 @@ def get_started(request): #TCW
 
     user_dict = user_object.get_dict()
     account_dict = account_object.get_dict()
-    output_dict = {'user': user_dict, 'account': account_dict}
+
+    output_dict = {'user_data': user_dict, 'account': account_dict,'project_array':[]}
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'User and Account created successfully.')
 
 
