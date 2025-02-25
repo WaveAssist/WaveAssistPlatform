@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
 import "./login_component.css";
 import WALogo from "../assets/Logo/Wave_Predict_W_Logo.png";
+import { useLocation, useNavigate } from "react-router-dom";
+import { auth, googleProvider, xProvider } from "../components/firebase";
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { loginAPI } from "../services/login_services";
-import { useNavigate, useLocation } from "react-router-dom";
+
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 
 const LoginComponent: React.FC = () => {
-	const [username, setUsername] = useState("");
-	const [password, setPassword] = useState("");
 	const navigate = useNavigate();
 	const location = useLocation();
+	const [showGetStarted, setShowGetStarted] = useState(false);
+	const handleClose = () => setShowGetStarted(false);
+	const handleShow = () => setShowGetStarted(true);
 
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
@@ -17,20 +23,28 @@ const LoginComponent: React.FC = () => {
 		}
 	}, []);
 
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
+	const handleSuccessfulSignIn = async (user: any) => {
 		try {
-			const data = await loginAPI(username, password);
-			localStorage.setItem("user_data", JSON.stringify(data.user_data));
-			localStorage.setItem("project_array", JSON.stringify(data.project_array));
-			localStorage.setItem("uid", data.user_data.uid);
-
-			//Get from location state
-			const from_location = location.state as any;
-			if (from_location) {
-				navigate(from_location.from);
+			localStorage.setItem("user_data", JSON.stringify(user));
+			console.log(user);
+			console.log("Login successful! Redirecting to /manage");
+			var firebase_token = user.accessToken;
+			const data = await loginAPI(firebase_token);
+			//Check if data has key action
+			if (data.action === "PERFORM_GET_STARTED") {
+				handleShow();
+				return;
 			} else {
-				navigate("/manage");
+				localStorage.setItem("user_data", JSON.stringify(data.user_data));
+				localStorage.setItem("project_array", JSON.stringify(data.project_array));
+				localStorage.setItem("uid", data.user_data.uid);
+				//Get from location state
+				const from_location = location.state as any;
+				if (from_location) {
+					navigate(from_location.from);
+				} else {
+					navigate("/manage");
+				}
 			}
 		} catch (error) {
 			console.error("Login failed:", error);
@@ -38,13 +52,72 @@ const LoginComponent: React.FC = () => {
 		}
 	};
 
-	// Function to show the password showPassword
-	const showPassword = () => {
-		var x = document.getElementById("password");
-		if (x!.getAttribute("type") === "password") {
-			x!.setAttribute("type", "text");
-		} else {
-			x!.setAttribute("type", "password");
+	const handleGetStarted = async () => {
+		return;
+	};
+
+	const handleGoogleSignIn = async () => {
+		try {
+			const result = await signInWithPopup(auth, googleProvider);
+			handleSuccessfulSignIn(result.user);
+		} catch (error: any) {
+			if (error.code === "auth/popup-blocked") {
+				console.log("Popup blocked, trying redirect...");
+				try {
+					await signInWithRedirect(auth, googleProvider);
+					const result = await getRedirectResult(auth);
+					if (result) {
+						handleSuccessfulSignIn(result.user);
+					}
+				} catch (redirectError) {
+					console.error("Google sign-in redirect failed:", redirectError);
+					alert("Google sign-in failed. Please check your browser settings and try again.");
+				}
+			} else {
+				console.error("Google sign-in failed:", error);
+				alert("Google sign-in failed. Please try again.");
+			}
+		}
+	};
+
+	const handleXSignIn = async () => {
+		try {
+			// Attempt sign-in with popup
+			const result = await signInWithPopup(auth, xProvider);
+			handleSuccessfulSignIn(result.user);
+		} catch (error: any) {
+			if (error.code === "auth/invalid-credential") {
+				console.error("Invalid credentials. Please check your API keys and secrets.");
+				alert("Authentication failed. Please try again or contact support.");
+			} else if (error.code === "auth/popup-blocked") {
+				console.log("Popup blocked, trying redirect...");
+				try {
+					// Attempt sign-in with redirect
+					await signInWithRedirect(auth, xProvider);
+					const result = await getRedirectResult(auth);
+					if (result) {
+						handleSuccessfulSignIn(result.user);
+					} else {
+						console.error("No redirect result");
+						alert("X sign-in failed. Please try again.");
+					}
+				} catch (redirectError: any) {
+					console.error("X sign-in redirect failed:", redirectError);
+					if (redirectError.code === "auth/invalid-credential") {
+						alert("Authentication failed. Please check your X account settings.");
+					} else {
+						alert("X sign-in failed. Please check your browser settings and try again.");
+					}
+				}
+			} else if (error.code === "auth/cancelled-popup-request") {
+				console.log("Authentication cancelled by user");
+				// No need to show an alert as this is a user action
+			} else if (error.code === "auth/account-exists-with-different-credential") {
+				alert("An account already exists with the same email address but different sign-in credentials. Try signing in using a different method.");
+			} else {
+				console.error("X sign-in failed:", error);
+				alert(`X sign-in failed: ${error.message}. Please try again.`);
+			}
 		}
 	};
 
@@ -59,40 +132,29 @@ const LoginComponent: React.FC = () => {
 
 			<div className="row justify-content-center">
 				<div className="col-8 col-md-5 col-lg-3 text-center">
-					<form onSubmit={handleSubmit}>
-						<div className="form-group mb-3">
-							<input
-								type="text"
-								className="form-control"
-								id="username"
-								value={username}
-								onChange={(e) => setUsername(e.target.value)}
-								placeholder="Username"
-								data-bs-theme="dark"
-							/>
-						</div>
-						<div className="form-group mb-3">
-							<div className="input-group">
-								<input
-									type="password"
-									className="form-control"
-									id="password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									placeholder="Password"
-									data-bs-theme="dark"
-								/>
-								<button className="btn btn-outline-secondary" type="button" onClick={showPassword}>
-									<i className="bi bi-eye"></i>
-								</button>
-							</div>
-						</div>
-						<button type="submit" className="btn btn-success w-50 mt-3">
-							Login
-						</button>
-					</form>
+					<button onClick={handleGoogleSignIn} className="btn btn-light w-100 mb-3">
+						<i className="bi bi-google me-2"></i> Sign in with Google
+					</button>
+					<button onClick={handleXSignIn} className="btn btn-dark w-100 mb-3">
+						<i className="bi bi-twitter-x me-2"></i> Sign in with X
+					</button>
 				</div>
 			</div>
+
+			<Modal show={showGetStarted} onHide={handleClose}>
+				<Modal.Header closeButton>
+					<Modal.Title className="modal-title">Create new account</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>Your account does not exist with WaveAssist, Would you like to create a new account?</Modal.Body>
+				<Modal.Footer>
+					<Button variant="secondary" onClick={handleClose}>
+						Close
+					</Button>
+					<Button variant="primary" onClick={handleGetStarted}>
+						Create
+					</Button>
+				</Modal.Footer>
+			</Modal>
 		</div>
 	);
 };
