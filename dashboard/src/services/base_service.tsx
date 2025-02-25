@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_DASHBOARD_BASE_URL || "https://api.waveassist.io";
+// const BASE_URL = import.meta.env.VITE_DASHBOARD_BASE_URL || "https://api.waveassist.io";
+const BASE_URL = import.meta.env.VITE_DASHBOARD_BASE_URL || "http://localhost:8000";
 
 export const callApi = async (path: string, body: URLSearchParams): Promise<any> => {
 	const url = `${BASE_URL}/${path}`;
