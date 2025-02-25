@@ -19,25 +19,25 @@ import WaveAssistApiApp.Utils.AWSManager as aws_manager
 
 def get_started(request): #TCW
     firebase_token = request.POST.get('firebase_token', '')
-    firebase_id, decoded_dict = get_firebase_uid(firebase_token)
+    firebase_uid, decoded_dict = get_firebase_uid(firebase_token)
     ##Create User
     try:
-        user_object = User.objects.get(firebase_id=firebase_id)
+        user_object = User.objects.get(firebase_uid=firebase_uid)
     except:
         user_object = None
 
     if user_object is None:
         ##Create User
         uid = uuid.uuid4()
-        name = request.POST.get('name', uid)
-        username = request.POST.get('email', uid)
+        name = request.POST.get('name', decoded_dict.get('display_name',uid))
+        username = request.POST.get('email', decoded_dict.get('email',uid))
         password = request.POST.get('password', uid)
         company_name = request.POST.get('company_name', uid)
         can_create_projects = True
         try:
             user_object = User.objects.create(uid=uid, name=name, username=username, password=password,
                                               company_name=company_name, can_create_projects=can_create_projects,
-                                              firebase_id=firebase_id
+                                              firebase_uid=firebase_uid
                                             )
             user_object.save()
         except Exception as e:

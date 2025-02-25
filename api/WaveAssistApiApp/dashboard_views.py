@@ -30,9 +30,9 @@ def index(request):
 
 def login(request): ##TCW
     firebase_token = request.POST.get('firebase_token', '')
-    firebase_id, _ = get_firebase_uid(firebase_token)
+    firebase_uid, _ = get_firebase_uid(firebase_token)
     try:
-        user_object = User.objects.get(firebase_id=firebase_id)
+        user_object = User.objects.get(firebase_uid=firebase_uid)
     except:
         data = {
             'action': 'PERFORM_GET_STARTED'
