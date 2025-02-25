@@ -33,6 +33,7 @@ const LoginComponent: React.FC = () => {
 			console.log(user);
 			console.log("Login successful! Redirecting to /manage");
 			var firebase_token = user.accessToken;
+			localStorage.setItem("firebase_uid", firebase_token);
 			const data = await loginAPI(firebase_token);
 			setLoading(false);
 			//Check if data has key action
@@ -43,7 +44,6 @@ const LoginComponent: React.FC = () => {
 				localStorage.setItem("user_data", JSON.stringify(data.user_data));
 				localStorage.setItem("project_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
-				localStorage.setItem("firebase_uid", firebase_token);
 				//Get from location state
 				const from_location = location.state as any;
 				if (from_location) {
@@ -182,9 +182,9 @@ const LoginComponent: React.FC = () => {
 
 			<Modal show={showGetStarted} onHide={handleClose}>
 				<Modal.Header closeButton>
-					<Modal.Title className="modal-title">Create new account</Modal.Title>
+					<Modal.Title className="modal-title">Setup your account</Modal.Title>
 				</Modal.Header>
-				<Modal.Body>Your account does not exist with WaveAssist, Would you like to create a new account?</Modal.Body>
+				<Modal.Body>Your account does not exist with WaveAssist, or was not fully configured. Would you like to setup you account?</Modal.Body>
 				<Modal.Footer>
 					<Button variant="secondary" onClick={handleClose}>
 						Close
