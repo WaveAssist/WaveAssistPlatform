@@ -273,7 +273,7 @@ import pymongo
 import requests
 from requests.auth import HTTPDigestAuth
 mongo_url = "REMOVED_CREDENTIAL"
-public_key = 'ogqhsvvm'
+public_key = 'nzaopldm'
 private_key = 'REMOVED_CREDENTIAL'
 
 def create_mongo_url(user_object):
@@ -295,7 +295,7 @@ def create_mongo_url(user_object):
     except:
         pass
 
-    group_id = '64b18799a5b08a4788f0ad77'
+    group_id = '67a20af1d579ac023d1d022d'
     # Use MongoDB Atlas API to create the user
     url = f"https://cloud.mongodb.com/api/atlas/v1.0/groups/{group_id}/databaseUsers"
     headers = {
@@ -323,10 +323,10 @@ def create_mongo_url(user_object):
 
     # Generate and return the connection URL for the new user
     url = (
-        f"mongodb+srv://{username}:{password}@waveassistcluster.llvjq.mongodb.net/{db_name}"
+        f"mongodb+srv://{username}:{password}@waveassistcluster.9ju27.mongodb.net/{db_name}"
     )
-    return url, db_name
 
+    return url, db_name
 def get_database_name(user_object):
     return 'waveassist_' + str(user_object.uid)
 
