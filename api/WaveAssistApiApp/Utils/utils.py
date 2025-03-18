@@ -282,7 +282,7 @@ def create_mongo_url(user_object):
     mongo_client = pymongo.MongoClient(mongo_url)
 
     # Generate database and user details
-    db_name = f"wa_{str(user_object.uid)[:23]}"
+    db_name = f"wa_{str(user_object.uid)[:20]}"
     username = str(user_object.uid)
     password = str(user_object.uid)
 
@@ -328,7 +328,7 @@ def create_mongo_url(user_object):
 
     return url, db_name
 def get_database_name(user_object):
-    return 'wa_' + str(user_object.uid)[:23]
+    return 'wa_' + str(user_object.uid)[:20]
 
 
 
