@@ -25,13 +25,17 @@ const PackagesComponent: React.FC = () => {
 	const fetchPackages = async () => {
 		try {
 			setLoading(true);
-			const data = await fetchPackagesApi();
-			var packagesArray = data.result;
-			setPackagesArray(packagesArray);
+			const response = await fetchPackagesApi();
+			if (response && response.packages_array) {
+				setPackagesArray(response.packages_array);
+			} else {
+				showToast("Failed to fetch packages", "danger");
+			}
 			setLoading(false);
 		} catch (error) {
 			console.error("FetchPackages failed:", error);
 			showToast("Something went wrong with loading packages, please try again.", "danger");
+			setLoading(false);
 		}
 	};
 
@@ -62,7 +66,6 @@ const PackagesComponent: React.FC = () => {
 	};
 
 	const handleDelete = async (packageDict: any) => {
-		//ask for confirmation in alert
 		var package_name = packageDict.package_name;
 		var message = "Are you sure you want to remove this package: " + package_name + "?";
 		const confirmDelete = window.confirm(message);
@@ -70,17 +73,16 @@ const PackagesComponent: React.FC = () => {
 			return;
 		}
 		try {
-			// Call delete api
 			await removePackageApi(package_name);
 			showToast("Package deleted successfully.", "success");
 			fetchPackages();
 		} catch (error) {
 			console.error("DeletePackage failed:", error);
-			showToast("Could not remove package" + error, "danger");
+			showToast("Could not remove package: " + error, "danger");
 		}
 	};
+
 	const handleReinstall = async (packageDict: any) => {
-		//ask for confirmation in alert to reinstall
 		var package_name = packageDict.package_name;
 		var message = "Are you sure you want to reinstall this package: " + package_name + "?";
 		const confirmReinstall = window.confirm(message);
@@ -88,15 +90,15 @@ const PackagesComponent: React.FC = () => {
 			return;
 		}
 		try {
-			// Call reinstall api
 			await reinstallPackageApi(package_name);
 			showToast("Package reinstalled successfully.", "success");
 			fetchPackages();
 		} catch (error) {
 			console.error("ReinstallPackage failed:", error);
-			showToast("Could not reinstall package" + error, "danger");
+			showToast("Could not reinstall package: " + error, "danger");
 		}
 	};
+
 	const handleAddPackage = async () => {
 		try {
 			if (!packageName) {
@@ -111,7 +113,9 @@ const PackagesComponent: React.FC = () => {
 			handleCloseVariableEditor();
 		} catch (error) {
 			console.error("AddPackage failed:", error);
-			showToast("Could not add package" + error, "danger");
+			showToast("Could not add package: " + error, "danger");
+		} finally {
+			setLoading(false);
 		}
 	};
 
