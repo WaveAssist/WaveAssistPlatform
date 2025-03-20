@@ -2,26 +2,6 @@ import { callApi, callApiRaw } from "./base_service";
 import { objectToCsvString } from "../utils/shared_functions";
 import { NodeType } from "../utils/types";
 
-const CODE_TO_RUN = `def run_task():
-    import subprocess
-    import sys
-    import pandas as pd
-    import waveassist
-    def list_installed_packages():
-            result = subprocess.check_output([sys.executable, "-m", "pip", "freeze"], text=True)
-            return result
-    result = list_installed_packages()
-    list_result = result.split('\\n')
-    ##Get the package names and versions, and convert to a dictionary
-    list_output = []
-    for item in list_result:
-        if item:
-            package_name, package_version = item.split("==")
-            if package_version and package_name:
-                list_output.append({"package_name": package_name, "package_version": package_version})
-    return list_output
-`;
-
 export const fetchNodesApi = async (): Promise<any> => {
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
@@ -43,101 +23,46 @@ export const fetchVariablesApi = async (): Promise<any> => {
 
 // FetchPackagesAPI
 export const fetchPackagesApi = async (): Promise<any> => {
-	const body = new URLSearchParams({
-		uid: localStorage.getItem("uid") || "",
+    const body = new URLSearchParams({
+        uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-		data_run_key: localStorage.getItem("selected_env_key") || "",
-		code_to_run: CODE_TO_RUN,
-	});
-	var path = "deploy/run_code/";
-	return callApi(path, body);
+
+    });
+    const path = "debug/fetch_installed_packages/";
+    return callApi(path, body);
 };
 
 //removePackageApi
 export const removePackageApi = async (package_name: string): Promise<any> => {
-	var code_to_run = `def run_task():
-    import subprocess
-    import sys
-    library_name = "${package_name}"
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", library_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-`;
-	const body = new URLSearchParams({
-		uid: localStorage.getItem("uid") || "",
+    const body = new URLSearchParams({
+        uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-		data_run_key: localStorage.getItem("selected_env_key") || "",
-		code_to_run: code_to_run,
-		timeout: "60",
-	});
-	var path = "deploy/run_code/";
-	return callApi(path, body);
+        package_name: package_name
+    });
+    const path = "debug/uninstall_package/";
+    return callApi(path, body);
 };
 
 // reinstallPackageApi
 export const reinstallPackageApi = async (package_name: string): Promise<any> => {
-	var code_to_run = `def run_task():
-    import subprocess
-    import sys
-    library_name = "${package_name}"
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", library_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-`;
-	const body = new URLSearchParams({
-		uid: localStorage.getItem("uid") || "",
-		project_key: localStorage.getItem("selected_project_key") || "",
-		data_run_key: localStorage.getItem("selected_env_key") || "",
-		code_to_run: code_to_run,
-		timeout: "60",
-	});
-	var path = "deploy/run_code/";
-	return callApi(path, body);
+    const body = new URLSearchParams({
+        uid: localStorage.getItem("uid") || "",
+        package_name: package_name
+    });
+    const path = "debug/reinstall_package/";
+    return callApi(path, body);
 };
 
 // installPackageApi
-export const installPackageApi = async (package_name: string, package_version: string): Promise<any> => {
-	//check if package version is empty
-	var code_to_run = "";
-	if (package_version === "") {
-		code_to_run = `def run_task():
-    import subprocess
-    import sys
-    library_name = "${package_name}"
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", library_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-`;
-	} else {
-		code_to_run = `def run_task():
-    import subprocess
-    import sys
-    library_name = "${package_name}"
-    version_code = "${package_version}"
-    try:
-        package = f"{library_name}=={version_code}"
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-`;
-	}
-	console.log(code_to_run);
-	const body = new URLSearchParams({
-		uid: localStorage.getItem("uid") || "",
+export const installPackageApi = async (package_name: string, package_version?: string): Promise<any> => {
+    const body = new URLSearchParams({
+        uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-		data_run_key: localStorage.getItem("selected_env_key") || "",
-		code_to_run: code_to_run,
-		timeout: "60",
-	});
-	var path = "deploy/run_code/";
-	return callApi(path, body);
+        package_name: package_name,
+        ...(package_version && { package_version })
+    });
+    const path = "debug/install_package/";
+    return callApi(path, body);
 };
 
 // createVariableApi
