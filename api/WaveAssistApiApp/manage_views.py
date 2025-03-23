@@ -9,7 +9,6 @@ from io import StringIO as StringIO
 from .Utils.constants import *
 import WaveAssistApiApp.Utils.utils as utils
 import WaveAssistApiApp.Utils.validator as validator
-# from WaveAssistApiApp.integration_views import manage_integration_details
 from django.db import transaction
 from WaveAssistApiApp.Utils.MongoManager import MongoManager
 from WaveAssistApiApp.data_views import set_data_for_key
@@ -235,8 +234,13 @@ def delete_data_key(request): ##TCW
 
 def create_data_key(request): ##TCW
     request.POST = request.POST.copy()
-    request.POST['data_type'] = 'json'
-    request.POST['json_data'] = '[]'
+    data_type = request.POST.get('data_type', 'string')
+    if data_type == 'json' or data_type == 'dataframe':
+        data = '[]'
+    else:
+        data = ''
+    request.POST['data_type'] = data_type
+    request.POST['data'] = data
     return set_data_for_key(request)
 
 

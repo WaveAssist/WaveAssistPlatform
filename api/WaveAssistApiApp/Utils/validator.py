@@ -125,24 +125,25 @@ def validate_and_get_intervals(request, project_object, is_starting_node='0', sc
 
     return True, '', interval_object, crontab_object, run_after_nodes_array
 
+
+
 def validate_user_and_data_run(request, access_level_gte=1):
-    uid = request.POST.get('uid', '')
+    uid = utils.get_param(request, 'uid')
     try:
         user_object = User.objects.get(uid=uid)
     except:
         return False, 'User not found', None, None
 
-    data_run_key = request.POST.get('data_run_key', '')
+    data_run_key = utils.get_param(request, 'data_run_key') or utils.get_param(request, 'environment_key')
     try:
         data_run_object = DataRuns.objects.get(data_run_key=data_run_key, is_enabled=True)
     except:
-        return False, 'Data Run not found', None, None
+        return False, 'Environment/DataRun not found', None, None
 
     if not utils.does_user_have_access_to_data_run(user_object, data_run_object, access_type=access_level_gte):
-        return False, 'You do not have access to this data run', None, None
+        return False, 'You do not have access to this Environment/DataRun', None, None
 
     return True, '', user_object, data_run_object
-
 
 
 

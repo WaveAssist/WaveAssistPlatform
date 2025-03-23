@@ -16,8 +16,27 @@ import requests
 from datetime import datetime
 ##Packages
 logger = Logger()
+import json
 
 from django.db.models.functions import Lower
+
+import json
+
+def get_param(request, key: str, default=''):
+    # First try POST (form/multipart data)
+    if key in request.POST:
+        return request.POST.get(key, default)
+
+    # Avoid accessing body if it's a multipart/form-data request
+    if request.content_type.startswith("multipart/form-data"):
+        return default
+
+    # Fallback: try JSON body
+    try:
+        body_data = json.loads(request.body.decode('utf-8'))
+        return body_data.get(key, default)
+    except (ValueError, json.JSONDecodeError):
+        return default
 
 
 def does_user_have_access_to_project(client_object, project_object, access_gte=1):
