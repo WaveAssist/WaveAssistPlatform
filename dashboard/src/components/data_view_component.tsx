@@ -38,10 +38,10 @@ const DataViewComponent: React.FC = () => {
 	const fetchDataForKey = async (data_key: string) => {
 		try {
 			const data = await fetchDataForKeyAPI(data_key);
-			setDataArray(data[data_key]);
+			setDataArray(data.data);
 
-			if (data[data_key].length > 0) {
-				const keys = Object.keys(data[data_key][0]);
+			if (data.data.length > 0) {
+				const keys = Object.keys(data.data[0]);
 				const newColumnDefs = keys.map((key) => ({
 					field: key,
 					sortable: true,

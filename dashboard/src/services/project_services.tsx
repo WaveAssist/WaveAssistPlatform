@@ -1,4 +1,4 @@
-import { callApi, callApiRaw } from "./base_service";
+import { callApi, callGetApi } from "./base_service";
 import { objectToCsvString } from "../utils/shared_functions";
 import { NodeType } from "../utils/types";
 
@@ -171,10 +171,9 @@ export const downloadVariablesApi = async (variableKey: string): Promise<any> =>
 		project_key: localStorage.getItem("selected_project_key") || "",
 		data_key: variableKey,
 		data_run_key: localStorage.getItem("selected_env_key") || "",
-		output_data_type: "csv",
 	});
 	var path = "data/fetch_data_for_key/";
-	return callApiRaw(path, body);
+	return callGetApi(path, body);
 };
 
 // fetchDataForKeyAPI
@@ -184,10 +183,9 @@ export const fetchDataForKeyAPI = async (variableKey: string): Promise<any> => {
 		project_key: localStorage.getItem("selected_project_key") || "",
 		data_key: variableKey,
 		data_run_key: localStorage.getItem("selected_env_key") || "",
-		output_data_type: "json",
 	});
 	var path = "data/fetch_data_for_key/";
-	return callApi(path, body);
+	return callGetApi(path, body);
 };
 
 // uploadVariablesApi

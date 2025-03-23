@@ -76,9 +76,7 @@ const VariablesComponent: React.FC = () => {
 		try {
 			setLoading(true);
 			var response_data = await downloadVariablesApi(variable.key);
-			console.log(response_data);
-			console.log(response_data.data);
-			downloadFile(response_data.data, variable.key + ".csv", "text/csv");
+			downloadFile(response_data.data, variable.key + ".json", "text/json");
 			showToast("Variables downloaded successfully.", "success");
 		} catch (error) {
 			console.error("downloadVariablesApi failed:", error);

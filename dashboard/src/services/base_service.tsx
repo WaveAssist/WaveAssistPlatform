@@ -25,6 +25,27 @@ export const callApi = async (path: string, body: URLSearchParams): Promise<any>
 	}
 };
 
+export const callGetApi = async (path: string, params: URLSearchParams): Promise<any> => {
+	const url = `${BASE_URL}/${path}?${params.toString()}`;
+	try {
+		const response = await axios.get(url);
+		const responseDict = response.data;
+		if (responseDict.success === "1") {
+			if (responseDict && responseDict.data) {
+				return responseDict.data;
+			} else {
+				throw new Error("Invalid response structure");
+			}
+		} else {
+			const error_message = responseDict.message;
+			throw new Error(error_message);
+		}
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+};
+
 export const callApiRaw = async (path: string, body: URLSearchParams): Promise<any> => {
 	const url = `${BASE_URL}/${path}`;
 	const headers = { "Content-Type": "application/x-www-form-urlencoded" };
