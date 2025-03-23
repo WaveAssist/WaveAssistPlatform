@@ -23,7 +23,11 @@ from django.db.models.functions import Lower
 import json
 
 def get_param(request, key: str, default=''):
-    # First try POST (form/multipart data)
+    # Check GET params first
+    if key in request.GET:
+        return request.GET.get(key, default)
+
+    # Check POST params
     if key in request.POST:
         return request.POST.get(key, default)
 
