@@ -203,7 +203,6 @@ def install_package(request):
     request.POST['code_to_run'] = code_to_run_install_package(package_to_install)
 
     response = deployment_views.run_code(request)
-    print(response)
     response =True
     try:
         if response:

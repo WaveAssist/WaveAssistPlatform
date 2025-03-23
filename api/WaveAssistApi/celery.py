@@ -13,6 +13,7 @@ app = Celery('WaveAssistApi',
              broker=REDIS_URL,
              backend=REDIS_URL
              )
+
 # Load Celery settings from Django settings, the namespace 'CELERY' means all celery-related configuration keys
 # should have a `CELERY_` prefix in your Django settings file
 app.config_from_object(settings, namespace='CELERY')

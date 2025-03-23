@@ -1,127 +1,125 @@
 from .models import *
 from .Utils.responseParser import ResponseParser
-from WaveAssistApiApp.Utils.MongoManager import MongoManager, prepare_df_for_bson
+from WaveAssistApiApp.Utils.MongoManager import MongoManager
 import pandas as pd
 from io import StringIO as StringIO
 from .Utils.constants import *
 import WaveAssistApiApp.Utils.utils as utils
+from WaveAssistApiApp.Utils.utils import get_param
 import WaveAssistApiApp.Utils.validator as validator
-from WaveAssistApiApp.integration_views import get_integrations_data
-
+from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_POST
 mongo_manager= MongoManager()
 
 
-##ToDo: Write tests for all.
-
+@require_POST
 def upload_data_file(request):
+    if 'file' not in request.FILES:
+        return ResponseParser.getParsedErrorMessage('Missing file in request.')
+
     uploaded_file = request.FILES['file']
-    data_type = uploaded_file.name.split('.')[-1].lower()
-    csv_data = uploaded_file.read().decode('utf-8')
+    file_name = uploaded_file.name
+    data_type = file_name.split('.')[-1].lower()
     if data_type != 'csv':
         return ResponseParser.getParsedErrorMessage('Invalid file type. Only CSV files are allowed.')
 
-    ##call set_data_for_key api with request having csv_data
-    request.POST = request.POST.copy()
-    request.POST['data_type'] = 'csv'
-    request.POST['csv_data'] = csv_data
-    return set_data_for_key(request)
+    try:
+        # Read and parse CSV into DataFrame
+        csv_bytes = uploaded_file.read()
+        csv_string = csv_bytes.decode('utf-8')
+        df = pd.read_csv(StringIO(csv_string))
+
+        # Convert DataFrame to records (list of dicts)
+        data = df.to_json(orient='records')
+
+        # Patch request.POST so set_data_for_key can work
+        request.POST = request.POST.copy()
+        request.POST['data_type'] = 'dataframe'
+        request.POST['data'] = data
+
+        return set_data_for_key(request)
+
+    except Exception as e:
+        utils.logger.error(f"❌ Error processing uploaded file: {str(e)}")
+        return ResponseParser.getParsedErrorMessage('Error processing uploaded file.')
 
 
-def download_data_file(request): ##ToDo: Remove this API
-    ##Call fetch_data_for_key api with output_data_type as csv
-    data_key = request.POST.get('data_key', '')
-    request.POST = request.POST.copy()
-    request.POST['output_data_type'] = 'csv'
-    csv_response =  fetch_data_for_key(request)
-    if csv_response.status_code != 200:
-        ##Get csv string from response
-        csv_string = csv_response.content.decode('utf-8')
-        file_name = 'download_' + data_key
-        return ResponseParser.getHTTPResponseForCSV(csv_string, file_name)
 
-
+@require_GET
 def fetch_data_for_key(request):
     success, message, user_object, data_run_object = validator.validate_user_and_data_run(request, READ_GTE)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
-    data_run_key = request.POST.get('data_run_key', '')
-    data_key = request.POST.get('data_key', '')
 
-    output_data_type = request.POST.get('output_data_type', 'json')
-    if output_data_type not in ['json', 'csv']:
-        return ResponseParser.getParsedErrorMessage('Invalid data type')
-    db_name = utils.get_database_name(user_object)
-    mongo_manager.database = mongo_manager.client[db_name]
-    mongo_manager.collection = mongo_manager.database[data_run_key]
-    data_df = mongo_manager.fetch_data_as_dataframe(data_key)
-    if data_df is None:
-        data_df = pd.DataFrame()
+    data_run_key = get_param(request, 'data_run_key') or get_param(request, 'environment_key')
+    data_key = get_param(request, 'data_key', '')
 
-    data_df = prepare_df_for_bson(data_df)
-    if output_data_type == 'csv':
-        csv_string = data_df.to_csv(index=False)
-        return ResponseParser.getBasicHttpResponse(csv_string)
-    elif output_data_type == 'json':
-        data_array = data_df.to_dict(orient='records')
-        output_dictionary = {data_key: data_array}
-        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Data fetched successfully.')
-
-
-def set_data_for_key(request):
-    success, message, user_object , data_run_object = validator.validate_user_and_data_run(request, READ_GTE)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
-
-    data_run_key = request.POST.get('data_run_key', '')
-    data_key = request.POST.get('data_key', '')
-
-    data_type = request.POST.get('data_type', 'json')
-    if data_type not in ['json', 'csv']:
-        return ResponseParser.getParsedErrorMessage('Invalid data type')
-
-    if data_type == 'csv':
-        try:
-            csv_data = request.POST.get('csv_data', '')
-            pd_data = pd.read_csv(StringIO(csv_data))
-        except Exception as e:
-            return ResponseParser.getParsedErrorMessage('Invalid csv data')
-    else:
-        try:
-            json_data = str(request.POST.get('json_data', ''))
-            pd_data = pd.read_json(json_data)
-        except Exception as e:
-            return ResponseParser.getParsedErrorMessage('Invalid json data')
+    if not data_key:
+        return ResponseParser.getParsedErrorMessage("Missing 'data_key' in request")
 
     try:
-        ##Remove row_number column in pd_data if it exists
-        pd_data = pd_data.drop('row_number', axis=1, errors='ignore')
-
-        ##Save in mongo db
-
         db_name = utils.get_database_name(user_object)
         mongo_manager.database = mongo_manager.client[db_name]
         mongo_manager.collection = mongo_manager.database[data_run_key]
-        success = mongo_manager.replace_data_as_dataframe(data_key, pd_data)
-        if not success:
-            return ResponseParser.getParsedErrorMessage('Something went wrong with data saving')
 
-        ##Response
-        output_dictionary = {'data_key': data_key}
-        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200',
-                                                        'Data saved successfully.')
+        data, data_type = mongo_manager.fetch_data_for_key(data_key)
+        if data is None:
+            return ResponseParser.getParsedErrorMessage('Data not found')
+
+        if data_type in ["json", "dataframe"] and isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except Exception as e:
+                pass
+
+        output_data = {'data': data, 'data_type': data_type}
+        return ResponseParser.getParsedSuccessMessage(
+            output_data,
+            '200',
+            'Data fetched successfully.'
+        )
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Something went wrong with data saving: ' + str(e))
+        utils.logger.error(f"❌ Error in fetch_data_for_key API: {str(e)}")
+        return ResponseParser.getParsedErrorMessage("Server error during data fetch")
 
 
-def get_integration_data(request):
-    success, message, user_object, project_object = validator.validate_user_and_project(request,
-                                                                                        access_level_gte=ADMIN_GTE)
+
+@require_POST
+def set_data_for_key(request):
+    """Save data for a given key into the user's environment."""
+    success, message, user_object, data_run_object = validator.validate_user_and_data_run(request, READ_GTE)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    integration_data = get_integrations_data(project_object.project_key, user_object)
-    if integration_data is None:
-        return ResponseParser.getParsedErrorMessage('Error in fetching integration data, or no integration data found')
+    data_run_key = get_param(request, 'data_run_key') or get_param(request, 'environment_key')
+    data_key = get_param(request, 'data_key')
+    data_type = get_param(request, 'data_type', 'json')
+    data = get_param(request, 'data')
 
-    output_dict = {'integration_data': integration_data}
-    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Integration data fetched successfully.')
+    if not data_key or data_key=='':
+        return ResponseParser.getParsedErrorMessage("Missing 'data_key' in request.")
+
+    if data_type in ["json", "dataframe"] and isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except Exception as e:
+            pass
+
+    try:
+        db_name = utils.get_database_name(user_object)
+        mongo_manager.database = mongo_manager.client[db_name]
+        mongo_manager.collection = mongo_manager.database[data_run_key]
+
+        success = mongo_manager.insert_or_replace_data_for_key(data_key, data, data_type)
+        if not success:
+            return ResponseParser.getParsedErrorMessage('Something went wrong while saving data.')
+
+        return ResponseParser.getParsedSuccessMessage(
+            {'data_key': data_key},
+            '200',
+            'Data saved successfully.'
+        )
+    except Exception as e:
+        utils.logger.error(f"❌ Exception in set_data_for_key: {str(e)}")
+        return ResponseParser.getParsedErrorMessage('Server error during data save.')
+
