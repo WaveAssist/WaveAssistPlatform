@@ -63,9 +63,15 @@ def fetch_data_for_key(request):
         mongo_manager.collection = mongo_manager.database[data_run_key]
 
         data, data_type = mongo_manager.fetch_data_for_key(data_key)
-
         if data is None:
             return ResponseParser.getParsedErrorMessage('Data not found')
+
+        if data_type in ["json", "dataframe"] and isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except Exception as e:
+                pass
+
         output_data = {'data': data, 'data_type': data_type}
         return ResponseParser.getParsedSuccessMessage(
             output_data,
@@ -75,6 +81,8 @@ def fetch_data_for_key(request):
     except Exception as e:
         utils.logger.error(f"❌ Error in fetch_data_for_key API: {str(e)}")
         return ResponseParser.getParsedErrorMessage("Server error during data fetch")
+
+
 
 @require_POST
 def set_data_for_key(request):
@@ -90,6 +98,12 @@ def set_data_for_key(request):
 
     if not data_key or data_key=='':
         return ResponseParser.getParsedErrorMessage("Missing 'data_key' in request.")
+
+    if data_type in ["json", "dataframe"] and isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except Exception as e:
+            pass
 
     try:
         db_name = utils.get_database_name(user_object)

@@ -21,7 +21,6 @@ class MongoManager:
                 DATA_KEY: data,
                 DATA_TYPE_KEY: data_type
             }
-            print(document)
             self.collection.replace_one({IO_DATA_KEY: io_key}, document, upsert=True)
             return True
         except Exception as e:
