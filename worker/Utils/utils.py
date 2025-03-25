@@ -44,7 +44,7 @@ def start_pre_initialization():
         url = f"{BASE_URL}/fetch_config?uid={ACCOUNT_ID}&account_id={ACCOUNT_ID}"
         response_dict = requests.get(url).json()
         config_data = response_dict.get("data", {})
-        pip_requirements_array = json.loads(config_data.get("pip_requirements_array_json", '[]'))
+        pip_requirements_array = config_data.get("pip_requirements_array_json", [])
         for pip_requirement in pip_requirements_array:
             try:
                 package_name = pip_requirement.get("package_name")

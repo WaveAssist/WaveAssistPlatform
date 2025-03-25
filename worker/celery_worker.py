@@ -9,7 +9,7 @@ from Utils.constants import *
 ##Call API to fetch and store config.json
 
 ##Test and uncomment
-# utils.start_pre_initialization()
+utils.start_pre_initialization()
 
 # Setup Celery
 app = Celery('waveassist',
