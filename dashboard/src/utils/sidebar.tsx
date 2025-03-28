@@ -36,22 +36,16 @@ const Sidebar = () => {
 						Nodes
 					</Link>
 				</li>
-				<li className="nav-item">
+				{/* <li className="nav-item">
 					<Link to="/manage/variables" className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-table me-2"></i>
 						Variables
 					</Link>
-				</li>
+				</li> */}
 				<li className="nav-item">
 					<Link to="/manage/packages" className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-box-fill me-2"></i>
 						Packages
-					</Link>
-				</li>
-				<li className="nav-item">
-					<Link to="/manage/environments" className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}>
-						<i className="bi bi-stack me-2"></i>
-						Environments
 					</Link>
 				</li>
 
@@ -68,7 +62,12 @@ const Sidebar = () => {
 						Data Viewer
 					</Link>
 				</li>
-
+				<li className="nav-item">
+					<Link to="/manage/environments" className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}>
+						<i className="bi bi-stack me-2"></i>
+						Environments
+					</Link>
+				</li>
 				<li className="nav-item">
 					<Link to="/manage/logs" className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-file-text-fill me-2"></i>

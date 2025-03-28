@@ -9,9 +9,14 @@ import DarkDropdown from "../utils/dark_dropdown";
 import { useRefresh } from "../utils/RefreshContext";
 import { Spinner } from "react-bootstrap"; // Assuming you're using Bootstrap
 import { useLocation } from "react-router-dom";
+import Editor from "@monaco-editor/react";
+import { Form } from "react-bootstrap";
 
 const DataViewComponent: React.FC = () => {
 	const [dataArray, setDataArray] = useState<any[]>([]);
+	const [jsonDataString, setJsonDataString] = useState<string>("");
+	const [stringData, setStringData] = useState<string>("");
+	const [dataType, setDataType] = useState<string | undefined>(undefined);
 	const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
 	const [selectedVariableKey, setSelectedVariableKey] = useState<string | undefined>(undefined);
 	const [variablesArray, setVariablesArray] = useState<string[]>([]);
@@ -34,24 +39,47 @@ const DataViewComponent: React.FC = () => {
 			showToast("Something went wrong with loading variables, please try again.", "danger");
 		}
 	};
+	const editorOptions = {
+		selectOnLineNumbers: true,
+		roundedSelection: false,
+		readOnly: false,
+		automaticLayout: true,
+		language: "json", // Set the language to Python for syntax highlighting
+		theme: "vs-dark", // Use a dark theme
+		mode: "json",
+		quickSuggestions: true, // Enable quick suggestions
+	};
 
 	const fetchDataForKey = async (data_key: string) => {
 		try {
 			const data = await fetchDataForKeyAPI(data_key);
-			setDataArray(data.data);
+			const displayData = data.data;
+			const dataType = data.data_type;
+			setDataType(dataType);
+			console.log(displayData);
+			console.log(dataType);
+			if (dataType == "dataframe") {
+				if (displayData.length > 0) {
+					setDataArray(displayData);
+					const keys = Object.keys(displayData[0]);
+					const newColumnDefs = keys.map((key) => ({
+						field: key,
+						sortable: true,
+						filter: true,
+						resizable: true,
+						autoHeaderHeight: true,
+					}));
+					setColumnDefs(newColumnDefs);
+				}
+			} else if (dataType == "json") {
+				console.log("A3");
 
-			if (data.data.length > 0) {
-				const keys = Object.keys(data.data[0]);
-				const newColumnDefs = keys.map((key) => ({
-					field: key,
-					sortable: true,
-					filter: true,
-					resizable: true,
-					autoHeaderHeight: true,
-				}));
-				setColumnDefs(newColumnDefs);
+				console.log("jsonDataString", jsonDataString);
+				console.log(displayData);
+				setJsonDataString(JSON.stringify(displayData, null, 2));
+			} else if (dataType == "string") {
+				setStringData(displayData);
 			}
-
 			setLoading(false); // Hide loader after fetch
 		} catch (error) {
 			console.error("fetchDataForKeyAPI failed:", error);
@@ -68,13 +96,6 @@ const DataViewComponent: React.FC = () => {
 		if (selectedVariableKey) {
 			setLoading(true); // Show loader whenever selectedVariableKey changes
 			fetchDataForKey(selectedVariableKey);
-
-			const intervalId = setInterval(() => {
-				fetchDataForKey(selectedVariableKey);
-			}, 10000);
-
-			// Clean up the interval on component unmount or when selectedVariableKey changes
-			return () => clearInterval(intervalId);
 		}
 	}, [selectedVariableKey]);
 
@@ -102,23 +123,45 @@ const DataViewComponent: React.FC = () => {
 					</Spinner>
 				</div>
 			) : (
-				<div className="ag-theme-balham-dark grid-container full-screen">
-					<AgGridReact
-						columnDefs={columnDefs}
-						rowData={dataArray}
-						pagination={true}
-						paginationPageSize={20}
-						animateRows={true}
-						domLayout="autoHeight"
-						headerHeight={50} // Set the header height to 80px
-						defaultColDef={{
-							sortable: true,
-							filter: true,
-							resizable: true,
-							cellStyle: { display: "flex", alignItems: "center" }, // Center content vertically
-						}}
-						onGridReady={(params) => params.api.sizeColumnsToFit()}
-					/>
+				<div className="content-container">
+					{dataType === "dataframe" && (
+						<div className="ag-theme-balham-dark grid-container full-screen">
+							<AgGridReact
+								columnDefs={columnDefs}
+								rowData={dataArray}
+								pagination={true}
+								paginationPageSize={20}
+								animateRows={true}
+								domLayout="autoHeight"
+								headerHeight={50}
+								defaultColDef={{
+									sortable: true,
+									filter: true,
+									resizable: true,
+									cellStyle: { display: "flex", alignItems: "center" },
+								}}
+								onGridReady={(params) => params.api.sizeColumnsToFit()}
+							/>
+						</div>
+					)}
+					{dataType === "string" && (
+						<div className="string-container">
+							<Form>
+								<div className="d-flex align-items-center gap-2 mb-3">
+									<Form.Label className="mb-0 text-white">{selectedVariableKey}:</Form.Label>
+									<Form.Control type="text" className="w-50" value={stringData} /> {/*onChange={(e) => setStringData(e.target.value)} */}
+									{/* <Button type="submit" variant="primary">
+										Update
+									</Button> */}
+								</div>
+							</Form>
+						</div>
+					)}
+					{dataType === "json" && (
+						<div className="json-container">
+							<Editor width="100%" height="500px" theme="vs-dark" defaultLanguage="json" value={jsonDataString} options={editorOptions} />
+						</div>
+					)}
 				</div>
 			)}
 		</div>
