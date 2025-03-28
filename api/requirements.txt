@@ -1,4 +1,5 @@
 Django==4.2
+twisted==22.10.0
 django-cors-headers==3.14.0
 django-redis==5.2.0
 numpy==1.21.5
@@ -16,4 +17,3 @@ requests==2.31.0
 gunicorn==22.0.0
 mysqlclient==2.0.3
 firebase-admin==6.1.0
-Twisted==22.10.0

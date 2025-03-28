@@ -30,14 +30,35 @@ def index(request):
 
 def login(request): ##TCW
     firebase_token = request.POST.get('firebase_token', '')
-    firebase_id, _ = get_firebase_uid(firebase_token)
     try:
-        user_object = User.objects.get(firebase_id=firebase_id)
+        firebase_uid, _ = get_firebase_uid(firebase_token)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(f'Failed to login: {str(e)}')
+    try:
+        user_object = User.objects.get(firebase_uid=firebase_uid)
     except:
         data = {
             'action': 'PERFORM_GET_STARTED'
         }
         return ResponseParser.getParsedSuccessMessage(data, 'S02', 'User not found')
+
+    should_get_started = False
+    try:
+        account_object = Account.objects.get(created_by_user=user_object)
+        ##check if account_object has everything.
+        if account_object.mongo_db_url == '':
+            should_get_started = True
+        if account_object.worker_service_arn == '':
+            should_get_started = True
+    except:
+        should_get_started = True
+
+    if should_get_started:
+        data = {
+            'action': 'PERFORM_GET_STARTED'
+        }
+        return ResponseParser.getParsedSuccessMessage(data, 'S02', 'User not found')
+
 
     ##Fetch all projects of the User from AccessProvided
     project_array = Project.objects.filter(
@@ -70,62 +91,15 @@ def login(request): ##TCW
 
 def get_firebase_uid(firebase_token):
     if not firebase_token:
-        return ResponseParser.getParsedErrorMessage('Firebase token not provided')
+        raise Exception('Firebase token not found')
 
     # Verify the Firebase token
     try:
         decoded_token = firebase_auth.verify_id_token(firebase_token)
-        print('That')
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage(f'Firebase token verification failed: {str(e)}')
+        raise Exception(f'Failed to verify Firebase token: {str(e)}')
 
     firebase_uid = decoded_token.get('uid')
-    print(firebase_uid)
     if not firebase_uid:
-        return ResponseParser.getParsedErrorMessage('Firebase UID not found in token')
-
+        raise Exception('Firebase UID not found in the decoded token')
     return firebase_uid, decoded_token
-
-def firebase_login(request):
-    try:
-        # Parse the request body
-        firebase_token = request.POST.get('firebase_token')
-
-        firebase_uid, _ = get_firebase_uid(firebase_token)
-        # Fetch the user object
-        try:
-            user_object = User.objects.get(firebase_uid=firebase_uid)
-        except:
-            return ResponseParser.getParsedErrorMessage('User not found')
-
-        # Fetch projects and data runs for the user
-        project_array = Project.objects.filter(
-            accessprovided__type=0,
-            accessprovided__project_access_type__gte=READ_GTE,
-            accessprovided__user_object=user_object
-        ).distinct()
-
-        project_dict_array = []
-        for project_object in project_array:
-            project_dict = project_object.get_dict()
-            data_run_array = DataRuns.objects.filter(
-                accessprovided__type=1,
-                accessprovided__data_run_access_type__gte=READ_GTE,
-                accessprovided__user_object=user_object,
-                project_object=project_object
-            ).distinct()
-
-            data_run_dict_array = [data_run_object.get_dict() for data_run_object in data_run_array]
-            project_dict['data_run_array'] = data_run_dict_array
-            project_dict_array.append(project_dict)
-
-        output_dictionary = {
-            'project_array': project_dict_array,
-            'user_data': user_object.get_dict()
-        }
-
-        return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
-
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage(f'Failed to login: {str(e)}')
-

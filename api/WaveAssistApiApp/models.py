@@ -39,6 +39,7 @@ class Account(models.Model):
         account_dict['db_name'] = self.db_name
         account_dict['celery_queue'] = self.celery_queue
         account_dict['pip_requirements_array_json'] = json.loads(str(self.pip_requirements_array_json))
+        account_dict['worker_service_arn'] = self.worker_service_arn
         return account_dict
 
     class Meta:
