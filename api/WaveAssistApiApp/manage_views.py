@@ -83,6 +83,7 @@ def get_started(request): #TCW
     user_dict = user_object.get_dict()
     account_dict = account_object.get_dict()
     output_dict = {'user': user_dict, 'account': account_dict}
+    utils.send_alert_email()
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'User and Account created successfully.')
 
 

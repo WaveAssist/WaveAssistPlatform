@@ -43,6 +43,26 @@ def get_param(request, key: str, default=''):
         return default
 
 
+def send_alert_email():
+    try:
+        url = "https://api.waveassist.io/deploy/run_dag/"
+        payload = {
+            "uid": "2fec42dd-492b-4294-8154-d33c3ccf",
+            "project_key": "notifier",
+            "start_node_key": "node_notifier_notify_me",
+            "data_run_key": "notifier_default"
+        }
+
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+
+        response = requests.post(url, data=payload, headers=headers)
+        print(response.json())
+    except Exception as e:
+        print("Error in send_alert_email:" + str(e))
+
+
 def does_user_have_access_to_project(client_object, project_object, access_gte=1):
     access_count = AccessProvided.objects.filter(user_object=client_object, project_object=project_object, type=0, project_access_type__gte=access_gte).count()
     if access_count > 0:
