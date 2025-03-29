@@ -1,4 +1,4 @@
-import { callApi, callGetApi } from "./base_service";
+import { callApi, callApiJson, callGetApi } from "./base_service";
 import { objectToCsvString } from "../utils/shared_functions";
 import { NodeType } from "../utils/types";
 
@@ -23,55 +23,55 @@ export const fetchVariablesApi = async (): Promise<any> => {
 
 // FetchPackagesAPI
 export const fetchPackagesApi = async (): Promise<any> => {
-    const body = new URLSearchParams({
-        uid: localStorage.getItem("uid") || "",
+	const body = new URLSearchParams({
+		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-
-    });
-    const path = "debug/fetch_installed_packages/";
-    return callApi(path, body);
+	});
+	const path = "debug/fetch_installed_packages/";
+	return callApi(path, body);
 };
 
 //removePackageApi
 export const removePackageApi = async (package_name: string): Promise<any> => {
-    const body = new URLSearchParams({
-        uid: localStorage.getItem("uid") || "",
+	const body = new URLSearchParams({
+		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-        package_name: package_name
-    });
-    const path = "debug/uninstall_package/";
-    return callApi(path, body);
+		package_name: package_name,
+	});
+	const path = "debug/uninstall_package/";
+	return callApi(path, body);
 };
 
 // reinstallPackageApi
 export const reinstallPackageApi = async (package_name: string): Promise<any> => {
-    const body = new URLSearchParams({
-        uid: localStorage.getItem("uid") || "",
-        package_name: package_name
-    });
-    const path = "debug/reinstall_package/";
-    return callApi(path, body);
+	const body = new URLSearchParams({
+		uid: localStorage.getItem("uid") || "",
+		package_name: package_name,
+	});
+	const path = "debug/reinstall_package/";
+	return callApi(path, body);
 };
 
 // installPackageApi
 export const installPackageApi = async (package_name: string, package_version?: string): Promise<any> => {
-    const body = new URLSearchParams({
-        uid: localStorage.getItem("uid") || "",
+	const body = new URLSearchParams({
+		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-        package_name: package_name,
-        ...(package_version && { package_version })
-    });
-    const path = "debug/install_package/";
-    return callApi(path, body);
+		package_name: package_name,
+		...(package_version && { package_version }),
+	});
+	const path = "debug/install_package/";
+	return callApi(path, body);
 };
 
 // createVariableApi
-export const createVariableApi = async (variableKey: string): Promise<any> => {
+export const createVariableApi = async (variableKey: string, dataType: string): Promise<any> => {
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
 		data_run_key: localStorage.getItem("selected_env_key") || "",
 		data_key: variableKey,
+		data_type: dataType,
 	});
 	var path = "manage/create_data_key/";
 	return callApi(path, body);
@@ -125,6 +125,18 @@ export const uploadVariablesApi = async (csv_data: string, variableKey: string):
 	});
 	var path = "data/set_data_for_key/";
 	return callApi(path, body);
+};
+export const setDataForKeyApi = async (data: any, data_key: string, data_type: string): Promise<any> => {
+	const body = {
+		uid: localStorage.getItem("uid") || "",
+		project_key: localStorage.getItem("selected_project_key") || "",
+		data_key: data_key,
+		data_run_key: localStorage.getItem("selected_env_key") || "",
+		data_type: data_type,
+		data: data,
+	};
+	const path = "data/set_data_for_key/";
+	return callApiJson(path, body);
 };
 
 export const updateCodeApi = async (nodeKey: string, nodeCode: string): Promise<any> => {

@@ -36,12 +36,12 @@ const Sidebar = () => {
 						Nodes
 					</Link>
 				</li>
-				{/* <li className="nav-item">
+				<li className="nav-item">
 					<Link to="/manage/variables" className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-table me-2"></i>
-						Variables
+						Data
 					</Link>
-				</li> */}
+				</li>
 				<li className="nav-item">
 					<Link to="/manage/packages" className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-box-fill me-2"></i>
@@ -56,12 +56,12 @@ const Sidebar = () => {
 					</Link>
 				</li>
 
-				<li className="nav-item">
+				{/* <li className="nav-item">
 					<Link to="/manage/data-view" className={`nav-link ${location.pathname === "/manage/data-view" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-grid-1x2-fill me-2"></i>
 						Data Viewer
 					</Link>
-				</li>
+				</li> */}
 				<li className="nav-item">
 					<Link to="/manage/environments" className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-stack me-2"></i>
