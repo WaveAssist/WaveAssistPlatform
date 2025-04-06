@@ -50,9 +50,9 @@ def start_pre_initialization():
                 package_name = pip_requirement.get("package_name")
                 package_version = pip_requirement.get("package_version")
                 if package_version:
-                    os.system(f"pip install {package_name}=={package_version}")
+                    os.system(f"pip install -U {package_name}=={package_version}")
                 else:
-                    os.system(f"pip install {package_name}")
+                    os.system(f"pip install -U {package_name}")
             except Exception as e:
                 logger.error(f"Error in installing package, skipping: {pip_requirement} - {e}")
     except Exception as e:
