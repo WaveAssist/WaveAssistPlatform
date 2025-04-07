@@ -25,9 +25,5 @@ def fetch_config(request): ##Test Case Pending
     except:
         return ResponseParser.getParsedErrorMessage('Account not found, or not authorized.')
 
-
     config_dict = account_object.get_dict()
-    print(f"*****DEBUG LOGS***********, account_id: {account_uid}, user_id: {uid}")
-    print(f"*****DEBUG LOGS***********, account_object: {account_object}")
-    print(f"*****DEBUG LOGS***********, user_object: {user_object}")
     return ResponseParser.getParsedSuccessMessage(config_dict, '200', 'Config fetched successfully')
