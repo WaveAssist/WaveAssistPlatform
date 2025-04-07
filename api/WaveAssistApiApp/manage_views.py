@@ -695,9 +695,17 @@ def create_data_run(request): #TCW
 
     name = request.POST.get('name', '')
     is_enabled = bool(int(request.POST.get('is_enabled', '0')))
+    data_run_key = project_object.project_key + '_' + name.lower()
+
+    ##Check if data_run key already exist for project, return if it does.
+    try:
+        data_run_object = DataRuns.objects.get(data_run_key=data_run_key, project_object=project_object)
+        return ResponseParser.getParsedSuccessMessage(data_run_object.get_dict(), '200',
+                                                      'Data Run fetched successfully.')
+    except:
+        pass
 
     try:
-        data_run_key = project_object.project_key + '_' + name.lower()
         data_run_object = DataRuns.objects.create(name=name, data_run_key=data_run_key, project_object=project_object, is_enabled=is_enabled)
         data_run_object.save()
     except:
