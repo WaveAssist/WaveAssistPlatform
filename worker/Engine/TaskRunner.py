@@ -19,6 +19,9 @@ class TaskRunner(object):
         def run_code(self):
             namespace = {}
             try:
+                import waveassist
+                waveassist.set_default_environment_key(self.environment_key)
+
                 # Inject the custom print function into the namespace
                 namespace['print'] = self.custom_print
 
