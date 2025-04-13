@@ -17,6 +17,8 @@ from datetime import datetime
 ##Packages
 logger = Logger()
 import json
+import threading
+import requests
 
 from django.db.models.functions import Lower
 
@@ -43,24 +45,25 @@ def get_param(request, key: str, default=''):
         return default
 
 
+
 def send_alert_email():
-    try:
-        url = "https://api.waveassist.io/deploy/run_dag/"
-        payload = {
-            "uid": "2fec42dd-492b-4294-8154-d33c3ccf",
-            "project_key": "notifier",
-            "start_node_key": "node_notifier_notify_me",
-            "data_run_key": "notifier_default"
-        }
+    def trigger():
+        try:
+            url = "https://api.waveassist.io/deploy/run_dag/"
+            payload = {
+                "uid": "2fec42dd-492b-4294-8154-d33c3ccf",
+                "project_key": "notifier",
+                "start_node_key": "node_notifier_notify_me",
+                "data_run_key": "notifier_default"
+            }
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            requests.post(url, data=payload, headers=headers)
+        except Exception as e:
+            print("Error in background send_alert_email:", str(e))
 
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-
-        response = requests.post(url, data=payload, headers=headers)
-        print(response.json())
-    except Exception as e:
-        print("Error in send_alert_email:" + str(e))
+    threading.Thread(target=trigger).start()
 
 
 def does_user_have_access_to_project(client_object, project_object, access_gte=1):
