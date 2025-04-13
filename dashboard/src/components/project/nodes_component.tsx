@@ -343,7 +343,7 @@ const NodesComponent: React.FC = () => {
 	];
 
 	const isStartingNode = watch("is_starting_node");
-	const scheduleType = watch("schedule_type");
+	const scheduleType = watch("schedule_type") || "interval";
 
 	return (
 		<div className="main-container">

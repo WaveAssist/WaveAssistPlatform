@@ -7,18 +7,41 @@ const Sidebar = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	const handleLogout = async () => {
-		try {
-			// Add your sign-out logic here
-			localStorage.removeItem("uid");
-			localStorage.removeItem("project_array");
-			localStorage.removeItem("selected_project_key");
-			localStorage.removeItem("user_data");
+	const handleLogout = () => {
+		localStorage.removeItem("uid");
+		localStorage.removeItem("project_array");
+		localStorage.removeItem("selected_project_key");
+		localStorage.removeItem("user_data");
+		navigate("/login");
+	};
 
-			navigate("/login");
-		} catch (error) {
-			console.error("Error logging out:", error);
+	const handleDownloadKeys = () => {
+		const userData = localStorage.getItem("user_data");
+		if (!userData) {
+			alert("No user data found.");
+			return;
 		}
+
+		const parsedData = JSON.parse(userData);
+
+		// Exclude specific keys
+		const excludeKeys = ["name", "can_create_projects", "id"];
+		const filteredEntries = Object.entries(parsedData).filter(([key]) => !excludeKeys.includes(key));
+
+		if (filteredEntries.length === 0) {
+			alert("No keys to download.");
+			return;
+		}
+
+		const csvContent = "data:text/csv;charset=utf-8," + filteredEntries.map(([key, value]) => `${key},${value}`).join("\n");
+
+		const encodedUri = encodeURI(csvContent);
+		const link = document.createElement("a");
+		link.setAttribute("href", encodedUri);
+		link.setAttribute("download", "waveassist_keys.csv");
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
 	};
 
 	return (
@@ -29,9 +52,9 @@ const Sidebar = () => {
 				</a>
 			</div>
 
-			<ul className="nav nav-pills flex-column mb-auto">
+			<ul className="nav nav-pills flex-column mb-4">
 				<li className="nav-item">
-					<Link to="/manage/nodes" className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1`} aria-current="page">
+					<Link to="/manage/nodes" className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-bezier2 me-2"></i>
 						Nodes
 					</Link>
@@ -48,20 +71,12 @@ const Sidebar = () => {
 						Packages
 					</Link>
 				</li>
-
 				<li className="nav-item">
 					<Link to="/manage/deployments" className={`nav-link ${location.pathname === "/manage/deployments" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-cloud-arrow-up-fill me-2"></i>
 						Deployments
 					</Link>
 				</li>
-
-				{/* <li className="nav-item">
-					<Link to="/manage/data-view" className={`nav-link ${location.pathname === "/manage/data-view" ? "active" : "text-white"} mb-1`}>
-						<i className="bi bi-grid-1x2-fill me-2"></i>
-						Data Viewer
-					</Link>
-				</li> */}
 				<li className="nav-item">
 					<Link to="/manage/environments" className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-stack me-2"></i>
@@ -75,11 +90,35 @@ const Sidebar = () => {
 					</Link>
 				</li>
 			</ul>
-			<div>
-				<button className="btn btn-outline-light w-100" type="button" onClick={handleLogout}>
-					<i className="bi bi-box-arrow-right me-2"></i>
-					Logout
-				</button>
+
+			<div className="mt-auto">
+				<hr className="text-white" />
+				<div className="row g-2">
+					<div className="col-6">
+						<Link to="/" className="btn btn-outline-light w-100">
+							<i className="bi bi-chevron-left me-1"></i>
+							Home
+						</Link>
+					</div>
+					<div className="col-6">
+						<button className="btn btn-outline-light w-100" onClick={handleDownloadKeys}>
+							<i className="bi bi-download me-1"></i>
+							Keys
+						</button>
+					</div>
+					<div className="col-6">
+						<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light w-100">
+							<i className="bi bi-journal-code me-1"></i>
+							Docs
+						</a>
+					</div>
+					<div className="col-6">
+						<button className="btn btn-outline-light w-100" onClick={handleLogout}>
+							<i className="bi bi-box-arrow-right me-1"></i>
+							Logout
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

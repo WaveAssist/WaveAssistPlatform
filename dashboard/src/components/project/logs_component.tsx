@@ -13,18 +13,18 @@ const LogsComponent: React.FC = () => {
 	const [logString, setLogString] = useState<string>("");
 	const { showToast } = useToast();
 	const [nodesArray, setNodesArray] = useState<any[]>([]);
-	const [selectedSystemKey, setSelectedSystemKey] = useState("celery-worker");
+	const [selectedSystemKey, _] = useState("celery-worker");
 	const [selectedNodeKey, setSelectedNodeKey] = useState("All");
 	// const systemName = ["Worker", "API", "Redis", "MongoDB", "Dashboard"];
 	// const systemKeys = ["celery-worker", "django", "redis", "mongodb", "dashboard"];
 
-	const systemName = ["Worker"];
-	const systemKeys = ["celery-worker"];
+	// const systemName = ["Worker"];
+	// const systemKeys = ["celery-worker"];
 
 	//Selected system
-	const handleSystemChange = async (_system_name: string, system_key: string) => {
-		setSelectedSystemKey(system_key);
-	};
+	// const handleSystemChange = async (_system_name: string, system_key: string) => {
+	// 	setSelectedSystemKey(system_key);
+	// };
 
 	const getSelectedNodeName = () => {
 		const index = nodesArray.findIndex((node) => node.node_key === selectedNodeKey);
@@ -35,10 +35,10 @@ const LogsComponent: React.FC = () => {
 		setSelectedNodeKey(node_key);
 	};
 
-	const getSelectedSystemName = () => {
-		const index = systemKeys.indexOf(selectedSystemKey);
-		return index >= 0 ? systemName[index] : "Select System";
-	};
+	// const getSelectedSystemName = () => {
+	// 	const index = systemKeys.indexOf(selectedSystemKey);
+	// 	return index >= 0 ? systemName[index] : "Select System";
+	// };
 	const fetchNodes = async () => {
 		try {
 			const data = await fetchNodesApi();
@@ -86,13 +86,13 @@ const LogsComponent: React.FC = () => {
 				<div className="d-flex justify-content-start align-items-center mb-3">
 					<h3 className="translucent_white">Logs</h3>
 					<div className="ms-auto d-flex">
-						<DarkDropdown
+						{/* <DarkDropdown
 							items={systemName}
 							keys={systemKeys}
 							defaultText={getSelectedSystemName()}
 							headerText="Select System"
 							onItemSelect={handleSystemChange}
-						/>
+						/> */}
 						{selectedSystemKey === "celery-worker" && (
 							<DarkDropdown
 								items={["All Nodes", ...nodesArray.map((node) => node.name), "Raw Logs"]}
