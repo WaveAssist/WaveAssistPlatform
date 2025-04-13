@@ -84,8 +84,9 @@ def login(request): ##TCW
         project_dict_array.append(project_dict)
 
     output_dictionary = {'project_array': project_dict_array}
-    output_dictionary['user_data'] = user_object.get_dict()
-
+    user_data = user_object.get_dict()
+    user_data['mongo_db_url'] = account_object.mongo_db_url
+    output_dictionary['user_data'] = user_data
     return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
 
 
