@@ -61,7 +61,7 @@ const LoginComponent: React.FC = () => {
 	const handleGetStarted = async () => {
 		try {
 			setLoading(true);
-			setLoaderMessage("Setting up your account, please wait..");
+			setLoaderMessage("Setting up your account, this may take a minute..");
 			handleClose();
 			var firebase_uid = localStorage.getItem("firebase_uid");
 			const data = await getStartedAPI(firebase_uid);
