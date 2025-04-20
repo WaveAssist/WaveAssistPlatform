@@ -21,8 +21,6 @@ app = Celery('waveassist',
              backend=REDIS_URL)
 app.conf.task_default_queue = QUEUE_NAME
 
-##ToDo: Add/Plan timeout
-
 @worker_ready.connect
 def unlock_all(**kwargs):
     clear_locks(app)
@@ -39,8 +37,7 @@ def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs
         utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'environment_key': collection_key, project_key:project_key, IS_SYSTEM_TASK: True})
         raise e
 
-##ToDo: Add singleton library again
-@app.task(lock_expiry=600, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
+@app.task(base=Singleton,unique_on=['collection_key','dag_key'], lock_expiry=600, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
 def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, dag_key=None, **kwargs):
         try:
             ##ToDo: This function can be optimised by using a DFS or similar approach to generate the workflow for the DAG
