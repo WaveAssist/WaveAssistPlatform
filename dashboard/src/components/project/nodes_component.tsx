@@ -31,8 +31,8 @@ const NodesComponent: React.FC = () => {
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
 		name: "",
-		is_enabled: false,
-		is_starting_node: false,
+		is_enabled: true,
+		is_starting_node: true,
 		schedule_type: "",
 		crontab_minutes: "*",
 		crontab_hours: "*",
@@ -454,8 +454,17 @@ const NodesComponent: React.FC = () => {
 						<hr />
 
 						{/* Starting Node */}
-						<Form.Group controlId="is_starting_node">
-							<Form.Check type="checkbox" label="Starting Node" {...register("is_starting_node")} />
+						<Form.Group controlId="is_starting_node" className="mb-3">
+							<Form.Label>Is this a starting node: </Form.Label>
+							<DropdownButton
+								variant="secondary"
+								className="mt-2"
+								title={watch("is_starting_node") ? "Yes" : "No"}
+								id="isStartingNodeDropdown"
+								onSelect={(selected) => setValue("is_starting_node", selected === "yes")}>
+								<Dropdown.Item eventKey="yes">Yes</Dropdown.Item>
+								<Dropdown.Item eventKey="no">No</Dropdown.Item>
+							</DropdownButton>
 						</Form.Group>
 
 						{/* Conditional Rendering Based on Starting Node */}
