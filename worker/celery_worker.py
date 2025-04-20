@@ -5,6 +5,10 @@ from Engine.TaskRunner import TaskRunner
 import Utils.utils as utils
 from celery import chain, group
 from Utils.constants import *
+from celery_singleton import Singleton
+from celery.signals import worker_ready
+from celery_singleton import clear_locks
+
 ##Init worker to fetch details
 ##Call API to fetch and store config.json
 
@@ -18,7 +22,12 @@ app = Celery('waveassist',
 app.conf.task_default_queue = QUEUE_NAME
 
 ##ToDo: Add/Plan timeout
-@app.task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
+
+@worker_ready.connect
+def unlock_all(**kwargs):
+    clear_locks(app)
+
+@app.task(base=Singleton,unique_on=['collection_key','task_key'], bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
 def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs):
     # Task dict needs node_key, project_key and code_to_run
     try:
