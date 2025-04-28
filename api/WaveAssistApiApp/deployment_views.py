@@ -14,7 +14,8 @@ from celery import chain, group
 from kombu.serialization import dumps
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from datetime import datetime
-
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 
 ##ToDo: Runs API pending.
 ##ToDo: Logs pending.
@@ -245,3 +246,19 @@ def run_dag(request): ##TCW
     output_dict['run_id'] = result.id
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully started the DAG')
+
+
+@csrf_exempt
+@require_POST
+def webhook(request, uid, project_key, start_node_key, data_run_key):
+    ##ToDo: Store json to variable
+    data = request.POST.copy()
+    data.update({
+        'uid':            str(uid),
+        'project_key':    project_key,
+        'start_node_key': start_node_key,
+        'data_run_key':   data_run_key,
+    })
+    request.POST = data
+
+    return run_dag(request)
