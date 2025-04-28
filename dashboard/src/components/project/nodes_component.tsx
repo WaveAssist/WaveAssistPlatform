@@ -22,11 +22,15 @@ import { NodeType } from "../../utils/types";
 import { useRefresh } from "../../utils/RefreshContext";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { Badge, Collapse } from "react-bootstrap";
 
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
 	const [isOpen, setIsOpen] = useState(false);
 	const [url, setUrl] = useState("");
+	const [showWebhook, setShowWebhook] = useState(false);
+	const [webhookUrl, setWebhookUrl] = useState("");
+	const [copied, setCopied] = useState(false);
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
@@ -111,6 +115,7 @@ const NodesComponent: React.FC = () => {
 	const handleCreateNode = () => {
 		reset(defaultValuesDict);
 		setSelectedNodeKey("");
+		setWebhookUrl("");
 		setShowNodeEditor(true);
 	};
 
@@ -148,6 +153,18 @@ const NodesComponent: React.FC = () => {
 		setShowNodeEditor(false);
 	};
 
+	const generateWebhookUrl = (nodeKey: string): string => {
+		const baseUrl = "https://api.waveassist.io/webhook/run";
+		const uid = localStorage.getItem("uid");
+		const projectKey = localStorage.getItem("selected_project_key");
+		const envKey = localStorage.getItem("selected_env_key");
+
+		if (!uid || !projectKey || !envKey || !nodeKey) {
+			return ""; // Cannot generate webhook if any piece is missing
+		}
+		return `${baseUrl}/${uid}/${projectKey}/${nodeKey}/${envKey}/`;
+	};
+
 	const handleEdit = (node: any) => {
 		if (node.crontab_schedule && node.crontab_schedule.includes("m/h/dM/MY/d")) {
 			const [minute, hour, dayOfMonth, month, dayOfWeek, , timezone] = node.crontab_schedule.split(" ");
@@ -171,6 +188,7 @@ const NodesComponent: React.FC = () => {
 
 		reset(node);
 		setSelectedNodeKey(node.node_key);
+		setWebhookUrl(generateWebhookUrl(node.node_key));
 		setShowNodeEditor(true);
 	};
 
@@ -568,6 +586,49 @@ const NodesComponent: React.FC = () => {
 										</div>
 									</div>
 								)}
+
+								<hr />
+								{webhookUrl && (
+									<Form.Group className="mb-4">
+										{/* Toggle header */}
+										<div
+											onClick={() => setShowWebhook((f) => !f)}
+											style={{
+												cursor: "pointer",
+												display: "inline-flex",
+												alignItems: "center",
+												userSelect: "none",
+											}}>
+											<i className={`bi me-2 ${showWebhook ? "bi-caret-down-fill" : "bi-caret-right-fill"}`} />
+											<strong>Webhook URL</strong>
+										</div>
+
+										{/* Collapsible content */}
+										<Collapse in={showWebhook}>
+											<div className="mt-2 p-3 bg-dark text-white rounded" style={{ overflow: "hidden" }}>
+												<Badge bg="secondary">POST</Badge>
+												<span className="ms-2 flex-grow-1" style={{ wordBreak: "break-all", fontSize: "0.9rem" }}>
+													{webhookUrl}
+												</span>
+												<Button
+													variant="link"
+													className="p-0 ms-3 text-white"
+													onClick={() => {
+														navigator.clipboard.writeText(webhookUrl);
+														setCopied(true);
+														setTimeout(() => setCopied(false), 2000); // reset after 2 sec
+													}}
+													aria-label="Copy URL">
+													{copied ? (
+														<i className="bi bi-check-lg"></i> // checkmark after copy
+													) : (
+														<i className="bi bi-clipboard"></i> // normal clipboard icon
+													)}
+												</Button>
+											</div>
+										</Collapse>
+									</Form.Group>
+								)}
 							</>
 						) : (
 							<>
@@ -602,9 +663,9 @@ const NodesComponent: React.FC = () => {
 										</div>
 									))}
 								</div>
+								<br></br>
 							</>
 						)}
-						<hr />
 
 						{/* Modal Footer */}
 						<Modal.Footer>
