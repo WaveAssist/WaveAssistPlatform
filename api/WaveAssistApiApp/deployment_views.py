@@ -1,6 +1,5 @@
 import json
 import uuid
-
 from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
@@ -16,6 +15,10 @@ from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from datetime import datetime
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from WaveAssistApiApp.data_views import set_data_for_key
+from django.test import Client
+import json
+client = Client()
 
 ##ToDo: Runs API pending.
 ##ToDo: Logs pending.
@@ -249,9 +252,26 @@ def run_dag(request): ##TCW
 
 
 @csrf_exempt
-@require_POST
 def webhook(request, uid, project_key, start_node_key, data_run_key):
-    ##ToDo: Store json to variable
+    if request.method != 'POST':
+        return ResponseParser.getParsedErrorMessage("Invalid request method. Only POST is allowed.")
+
+    ##Store json to variable
+    try:
+        body = json.loads(request.body)
+        payload = {
+            'uid': uid,
+            'project_key': project_key,
+            'data_run_key': data_run_key,
+            'data': body,
+            'data_key': start_node_key + '_webhook_data',
+            'data_type': 'json',
+        }
+        response = client.post('/data/set_data_for_key/', data=json.dumps(payload), content_type='application/json')
+        print(response)
+    except Exception as e:
+        pass
+
     ##Need to retrieve the JSON and call the set_data_for_key API
     data = request.POST.copy()
     data.update({
@@ -261,5 +281,4 @@ def webhook(request, uid, project_key, start_node_key, data_run_key):
         'data_run_key':   data_run_key,
     })
     request.POST = data
-
     return run_dag(request)
