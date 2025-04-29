@@ -1,5 +1,11 @@
 #!/bin/sh
 # Run Django migrations
+export DJANGO_SETTINGS_MODULE=WaveAssistApi.settings
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+export OTEL_RESOURCE_ATTRIBUTES=service.name=waveassist-api
+
+
 python manage.py migrate
 
 # Start Celery beat
