@@ -17,8 +17,12 @@ requests==2.31.0
 gunicorn==22.0.0
 mysqlclient==2.0.3
 firebase-admin==6.1.0
-opentelemetry-distro>=0.45b0
-opentelemetry-exporter-otlp>=1.23.0
-opentelemetry-instrumentation-django>=0.45b0
-opentelemetry-instrumentation-gunicorn>=0.45b0
+opentelemetry-distro==0.43b0
+opentelemetry-exporter-otlp==1.22.0
+opentelemetry-instrumentation-django==0.43b0
 
+##Libraries
+opentelemetry-instrumentation-mysqlclient==0.43b0
+opentelemetry-instrumentation-pymongo==0.43b0
+opentelemetry-instrumentation-requests==0.43b0
+opentelemetry-instrumentation-redis==0.43b0
