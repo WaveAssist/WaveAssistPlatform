@@ -4,7 +4,8 @@ export DJANGO_SETTINGS_MODULE=WaveAssistApi.settings
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 export OTEL_RESOURCE_ATTRIBUTES=service.name=waveassist-api
-
+export OTEL_PYTHON_EXPERIMENTAL_ENABLE_METRICS=true
+export OTEL_METRIC_EXPORTER=otlp
 
 python manage.py migrate
 
