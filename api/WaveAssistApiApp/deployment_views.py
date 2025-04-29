@@ -268,7 +268,6 @@ def webhook(request, uid, project_key, start_node_key, data_run_key):
             'data_type': 'json',
         }
         response = client.post('/data/set_data_for_key/', data=json.dumps(payload), content_type='application/json')
-        print(response)
     except Exception as e:
         pass
 
