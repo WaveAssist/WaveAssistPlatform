@@ -26,12 +26,14 @@
     "firebaseui": "^6.1.0",
     "jszip": "^3.10.1",
     "monaco-editor": "^0.50.0",
+    "posthog-js": "^1.239.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.2",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.52.2",
     "react-lazylog": "^4.5.3",
-    "react-router-dom": "^6.23.1"
+    "react-router-dom": "^6.23.1",
+    "react-virtualized": "^9.22.3"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",

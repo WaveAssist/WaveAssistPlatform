@@ -4,11 +4,20 @@ import App from "./App.tsx";
 import "./index.css";
 import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
 import { ToastProvider } from "./utils/toast_context.tsx";
+import { PostHogProvider } from "posthog-js/react";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
-		<ToastProvider>
-			<App />
-		</ToastProvider>
+		<PostHogProvider
+			apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
+			options={{
+				api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+				debug: import.meta.env.MODE === "development",
+			}}
+		>
+			<ToastProvider>
+				<App />
+			</ToastProvider>
+		</PostHogProvider>
 	</React.StrictMode>
 );
