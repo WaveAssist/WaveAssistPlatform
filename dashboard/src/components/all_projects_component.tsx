@@ -10,6 +10,8 @@ import { fetchAllProjectsAPI, createProjectAPI, deleteProjectApi } from "../serv
 import { useToast } from "../utils/toast_context";
 import "./all_projects_component.css";
 
+import { usePostHog } from "posthog-js/react";
+
 const AllProjectsComponent: React.FC = () => {
 	const [newProjectName, setNewProjectName] = useState("");
 	const [newProjectKey, setNewProjectKey] = useState("");
@@ -18,10 +20,25 @@ const AllProjectsComponent: React.FC = () => {
 	const [showModal, setShowModal] = useState(false);
 	const navigate = useNavigate();
 	const { showToast } = useToast();
+	const posthog = usePostHog();
 
 	useEffect(() => {
 		fetchData();
+		registerPostHogUser();
 	}, []);
+
+	const registerPostHogUser = () => {
+		const uid = localStorage.getItem("uid");
+		if (!uid) {
+			return;
+		}
+		const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
+
+		const user_id = user_data.id || uid;
+		const name = user_data.name || "default";
+
+		posthog.identify(user_id, { uid, name });
+	};
 
 	const fetchData = async () => {
 		try {
