@@ -9,12 +9,11 @@ import { PostHogProvider } from "posthog-js/react";
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
 		<PostHogProvider
-			apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
+			apiKey="REMOVED_CREDENTIAL"
 			options={{
-				api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+				api_host: "https://us.i.posthog.com",
 				debug: import.meta.env.MODE === "development",
-			}}
-		>
+			}}>
 			<ToastProvider>
 				<App />
 			</ToastProvider>
