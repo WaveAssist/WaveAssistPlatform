@@ -75,3 +75,7 @@ FETCH_UNINSTALL_PACKAGES_CODE = '''
     '''
 
 
+
+GET_STARTED_DATA = {
+            'action': 'PERFORM_GET_STARTED'
+}
