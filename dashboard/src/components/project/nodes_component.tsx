@@ -37,7 +37,7 @@ const NodesComponent: React.FC = () => {
 		name: "",
 		is_enabled: true,
 		is_starting_node: true,
-		schedule_type: "",
+		schedule_type: "interval",
 		crontab_minutes: "*",
 		crontab_hours: "*",
 		crontab_days_of_month: "*",
@@ -45,8 +45,8 @@ const NodesComponent: React.FC = () => {
 		crontab_days_of_week: "*",
 		crontab_timezone: "UTC",
 
-		interval_every: "",
-		interval_type: "",
+		interval_every: "30",
+		interval_type: "minutes",
 
 		input_data_key_array: [],
 		output_data_key_array: [],
