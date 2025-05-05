@@ -180,7 +180,7 @@ def run_code(request: object) -> JsonResponse:
 
     project_key = project_object.project_key
     collection_key = project_key + '_default'
-    node_key = uuid.uuid4()
+    node_key = str(uuid.uuid4())
     code_to_run = request.POST.get('code_to_run', '')
     task_dict = {
         'project_key': project_key,
