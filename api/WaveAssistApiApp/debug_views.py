@@ -124,9 +124,11 @@ def fetch_installed_packages(request):
         # Convert JSON string to Python dictionary
         response_dict = json.loads(response_str)
         # Extract `result` array from `data`
-        packages_array = response_dict.get("data", {}).get("result", [])
-
+        packages_array = response_dict.get("data").get("result")
     except:
+        return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
+
+    if packages_array is None:
         return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
 
     try:
@@ -166,10 +168,9 @@ def uninstall_package(request): ##TCW
         package_to_uninstall = package_name
     code_to_run = code_to_run_uninstall_package(package_to_uninstall)
     request.POST['code_to_run'] = code_to_run
-
     response = deployment_views.run_code(request)
     try:
-        if response:
+        if response.get("success") == "1":
             return ResponseParser.getParsedSuccessMessage({}, '200', 'Package uninstalled successfully')
         else:
             return ResponseParser.getParsedErrorMessage('Failed to uninstall package')
@@ -201,11 +202,9 @@ def install_package(request):
     else:
         package_to_install = package_name
     request.POST['code_to_run'] = code_to_run_install_package(package_to_install)
-
     response = deployment_views.run_code(request)
-    response =True
     try:
-        if response:
+        if response.get("success") == "1":
             return ResponseParser.getParsedSuccessMessage({}, '200', 'Package installed successfully')
         else:
             return ResponseParser.getParsedErrorMessage('Failed to install package')
@@ -233,7 +232,7 @@ def reinstall_package(request):
     request.POST['code_to_run'] = code_to_run_upgrade_package(package_name)
     response = deployment_views.run_code(request)
     try:
-        if response:
+        if response.get("success") == "1":
             return ResponseParser.getParsedSuccessMessage({}, '200', 'Package reinstalled successfully')
         else:
             return ResponseParser.getParsedErrorMessage('Failed to reinstall package')
