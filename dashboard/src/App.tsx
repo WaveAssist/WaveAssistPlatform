@@ -19,6 +19,7 @@ import DataViewComponent from "./components/data_view_component";
 import "./App.css";
 import DeploymentsComponent from "./components/project/deployments_component";
 import LogsComponent from "./components/project/logs_component";
+import DeployComponent from "./components/deploy_component";
 function App() {
 	return (
 		<Router>
@@ -38,6 +39,7 @@ function App() {
 						<Route path="/manage/deployments" element={<PrivateRoute component={DeploymentsComponent} layout={Layout} />} />
 						<Route path="/manage/data-view" element={<PrivateRoute component={DataViewComponent} layout={Layout} />} />
 						<Route path="/manage/logs" element={<PrivateRoute component={LogsComponent} layout={Layout} />} />
+						<Route path="/deploy" element={<DeployComponent />} />
 					</Routes>
 				</section>
 			</div>

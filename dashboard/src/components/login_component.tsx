@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { auth, googleProvider, xProvider } from "../components/firebase";
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { loginAPI, getStartedAPI } from "../services/login_services";
-import { Spinner } from "react-bootstrap"; // Assuming you're using Bootstrap
+import { Spinner } from "react-bootstrap";
 
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
@@ -13,6 +13,9 @@ import Modal from "react-bootstrap/Modal";
 const LoginComponent: React.FC = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
+	const searchParams = new URLSearchParams(location.search);
+	const redirect = searchParams.get("redirect") || "/manage";
+
 	const [showGetStarted, setShowGetStarted] = useState(false);
 	const handleClose = () => setShowGetStarted(false);
 	const handleShow = () => setShowGetStarted(true);
@@ -22,21 +25,19 @@ const LoginComponent: React.FC = () => {
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
 		if (uid) {
-			navigate("/manage");
+			navigate(redirect);
 		}
-	}, []);
+	}, [navigate, redirect]);
 
 	const handleSuccessfulSignIn = async (user: any) => {
 		try {
 			setLoading(true);
 			localStorage.setItem("user_data", JSON.stringify(user));
-			console.log(user);
-			console.log("Login successful! Redirecting to /manage");
 			var firebase_token = user.accessToken;
 			localStorage.setItem("firebase_uid", firebase_token);
 			const data = await loginAPI(firebase_token);
 			setLoading(false);
-			//Check if data has key action
+
 			if (data.action === "PERFORM_GET_STARTED") {
 				handleShow();
 				return;
@@ -44,36 +45,34 @@ const LoginComponent: React.FC = () => {
 				localStorage.setItem("user_data", JSON.stringify(data.user_data));
 				localStorage.setItem("project_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
-				//Get from location state
-				const from_location = location.state as any;
-				if (from_location) {
-					navigate(from_location.from);
-				} else {
-					navigate("/manage");
-				}
+				navigate(redirect);
 			}
 		} catch (error) {
 			console.error("Login failed:", error);
 			alert("Login failed. Please check your username and password.");
+			setLoading(false);
 		}
 	};
 
 	const handleGetStarted = async () => {
 		try {
 			setLoading(true);
-			setLoaderMessage("Setting up your account, this may take a minute..");
+			setLoaderMessage("Setting up your account, this may take a minute...");
 			handleClose();
-			var firebase_uid = localStorage.getItem("firebase_uid");
+
+			const firebase_uid = localStorage.getItem("firebase_uid");
 			const data = await getStartedAPI(firebase_uid);
 			localStorage.setItem("user_data", JSON.stringify(data.user_data));
 			localStorage.setItem("project_array", JSON.stringify(data.project_array));
 			localStorage.setItem("uid", data.user_data.uid);
+
 			setLoading(false);
 			setLoaderMessage("");
-			navigate("/manage");
+			navigate(redirect);
 		} catch (error) {
 			console.error("Get Started Failed:", error);
-			alert("Something went wrong creating your account, please try again..");
+			alert("Something went wrong creating your account, please try again.");
+			setLoading(false);
 		}
 	};
 
@@ -85,16 +84,13 @@ const LoginComponent: React.FC = () => {
 		} catch (error: any) {
 			setLoading(false);
 			if (error.code === "auth/popup-blocked") {
-				console.log("Popup blocked, trying redirect...");
 				try {
 					await signInWithRedirect(auth, googleProvider);
 					const result = await getRedirectResult(auth);
-					if (result) {
-						handleSuccessfulSignIn(result.user);
-					}
+					if (result) handleSuccessfulSignIn(result.user);
 				} catch (redirectError) {
-					console.error("Google sign-in redirect failed:", redirectError);
-					alert("Google sign-in failed. Please check your browser settings and try again.");
+					console.error("Google redirect failed:", redirectError);
+					alert("Google sign-in failed. Please check your browser settings.");
 				}
 			} else {
 				console.error("Google sign-in failed:", error);
@@ -106,43 +102,22 @@ const LoginComponent: React.FC = () => {
 	const handleXSignIn = async () => {
 		try {
 			setLoading(true);
-			// Attempt sign-in with popup
 			const result = await signInWithPopup(auth, xProvider);
 			handleSuccessfulSignIn(result.user);
-			setLoading(false);
 		} catch (error: any) {
 			setLoading(false);
-			if (error.code === "auth/invalid-credential") {
-				console.error("Invalid credentials. Please check your API keys and secrets.");
-				alert("Authentication failed. Please try again or contact support.");
-			} else if (error.code === "auth/popup-blocked") {
-				console.log("Popup blocked, trying redirect...");
+			if (error.code === "auth/popup-blocked") {
 				try {
-					// Attempt sign-in with redirect
 					await signInWithRedirect(auth, xProvider);
 					const result = await getRedirectResult(auth);
-					if (result) {
-						handleSuccessfulSignIn(result.user);
-					} else {
-						console.error("No redirect result");
-						alert("X sign-in failed. Please try again.");
-					}
+					if (result) handleSuccessfulSignIn(result.user);
 				} catch (redirectError: any) {
 					console.error("X sign-in redirect failed:", redirectError);
-					if (redirectError.code === "auth/invalid-credential") {
-						alert("Authentication failed. Please check your X account settings.");
-					} else {
-						alert("X sign-in failed. Please check your browser settings and try again.");
-					}
+					alert("X sign-in failed. Please check your browser settings.");
 				}
-			} else if (error.code === "auth/cancelled-popup-request") {
-				console.log("Authentication cancelled by user");
-				// No need to show an alert as this is a user action
-			} else if (error.code === "auth/account-exists-with-different-credential") {
-				alert("An account already exists with the same email address but different sign-in credentials. Try signing in using a different method.");
 			} else {
 				console.error("X sign-in failed:", error);
-				alert(`X sign-in failed: ${error.message}. Please try again.`);
+				alert("X sign-in failed. Please try again.");
 			}
 		}
 	};
@@ -156,17 +131,13 @@ const LoginComponent: React.FC = () => {
 				</div>
 			</div>
 
-			{loading ? (
+			{loading && (
 				<div className="loader-container d-flex justify-content-center align-items-center pb-4">
 					<div className="text-center">
-						<Spinner animation="border" role="status" variant="success">
-							<span className="visually-hidden">Loading...</span>
-						</Spinner>
+						<Spinner animation="border" role="status" variant="success" />
 						<p className="mt-2 text-success">{loaderMessage}</p>
 					</div>
 				</div>
-			) : (
-				<div></div>
 			)}
 
 			<div className="row justify-content-center">
@@ -184,7 +155,9 @@ const LoginComponent: React.FC = () => {
 				<Modal.Header closeButton>
 					<Modal.Title className="modal-title">Setup your account</Modal.Title>
 				</Modal.Header>
-				<Modal.Body>Your account does not exist with WaveAssist, or was not fully configured. Would you like to setup you account?</Modal.Body>
+				<Modal.Body>
+					Your account does not exist with WaveAssist, or was not fully configured. Would you like to setup your account?
+				</Modal.Body>
 				<Modal.Footer>
 					<Button variant="secondary" onClick={handleClose}>
 						Close

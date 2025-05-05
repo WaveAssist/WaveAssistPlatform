@@ -1,0 +1,73 @@
+.deploy-container {
+    background-color: #141721;
+    min-height: 100vh;
+    padding: 40px 15%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .deploy-card {
+    background-color: #1A2430;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 900px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+    color: white;
+  }
+  
+  .deploy-card:hover {
+    transform: scale(1.01);
+    background-color: #232F42;
+  }
+  
+  .deploy-image img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  
+  .deploy-content {
+    padding: 2rem;
+  }
+  
+  .deploy-content h1 {
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 1rem;
+  }
+  
+  .description {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+  
+  .repo-info {
+    background-color: #2e3c4f;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  .repo-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  
+  .repo-info a {
+    color: #86abf2;
+    word-break: break-all;
+    text-decoration: none;
+  }
+  
+  .repo-info a:hover {
+    text-decoration: underline;
+  }
+
+  .spinner-border {
+    color: #86abf2 !important;
+  }
+  
