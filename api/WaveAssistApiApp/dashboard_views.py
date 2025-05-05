@@ -37,10 +37,7 @@ def login(request): ##TCW
     try:
         user_object = User.objects.get(firebase_uid=firebase_uid)
     except:
-        data = {
-            'action': 'PERFORM_GET_STARTED'
-        }
-        return ResponseParser.getParsedSuccessMessage(data, 'S02', 'User not found')
+        return ResponseParser.getParsedSuccessMessage(GET_STARTED_DATA, 'S02', 'User not found')
 
     should_get_started = False
     try:
@@ -52,12 +49,8 @@ def login(request): ##TCW
             should_get_started = True
     except:
         should_get_started = True
-
     if should_get_started:
-        data = {
-            'action': 'PERFORM_GET_STARTED'
-        }
-        return ResponseParser.getParsedSuccessMessage(data, 'S02', 'User not found')
+        return ResponseParser.getParsedSuccessMessage(GET_STARTED_DATA, 'S02', 'User not found')
 
 
     ##Fetch all projects of the User from AccessProvided

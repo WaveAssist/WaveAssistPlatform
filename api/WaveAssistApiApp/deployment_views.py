@@ -1,6 +1,5 @@
 import json
 import uuid
-
 from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
@@ -14,7 +13,12 @@ from celery import chain, group
 from kombu.serialization import dumps
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from datetime import datetime
-
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from WaveAssistApiApp.data_views import set_data_for_key
+from django.test import Client
+import json
+client = Client()
 
 ##ToDo: Runs API pending.
 ##ToDo: Logs pending.
@@ -179,7 +183,8 @@ def run_code(request):
     task_dict = {
         'project_key': project_key,
         'node_key': node_key,
-        'code_to_run': code_to_run
+        'code_to_run': code_to_run,
+        'task_key': node_key,
     }
 
     task_kwargs = {
@@ -188,7 +193,7 @@ def run_code(request):
     }
 
     queue_name = 'queue_' + str(user_object.uid)
-    task_run = app.send_task(TASK_TASK, kwargs=task_kwargs, queue=queue_name)
+    task_run = app.send_task(RUN_TASK, kwargs=task_kwargs, queue=queue_name)
 
     timeout = int(request.POST.get('timeout', 10))
     result = task_run.get(timeout=timeout)
@@ -245,3 +250,35 @@ def run_dag(request): ##TCW
     output_dict['run_id'] = result.id
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully started the DAG')
+
+
+@csrf_exempt
+def webhook(request, uid, project_key, start_node_key, data_run_key):
+    if request.method != 'POST':
+        return ResponseParser.getParsedErrorMessage("Invalid request method. Only POST is allowed.")
+
+    ##Store json to variable
+    try:
+        body = json.loads(request.body)
+        payload = {
+            'uid': uid,
+            'project_key': project_key,
+            'data_run_key': data_run_key,
+            'data': body,
+            'data_key': start_node_key + '_webhook_data',
+            'data_type': 'json',
+        }
+        response = client.post('/data/set_data_for_key/', data=json.dumps(payload), content_type='application/json')
+    except Exception as e:
+        pass
+
+    ##Need to retrieve the JSON and call the set_data_for_key API
+    data = request.POST.copy()
+    data.update({
+        'uid':            str(uid),
+        'project_key':    project_key,
+        'start_node_key': start_node_key,
+        'data_run_key':   data_run_key,
+    })
+    request.POST = data
+    return run_dag(request)

@@ -68,7 +68,7 @@ urlpatterns = [
     path("deploy/run_dag/", csrf_exempt(deployment_views.run_dag), name="run_dag"),
     path("deploy/generate_dag_image/", csrf_exempt(deployment_views.generate_dag_image), name="generate_dag_image"),
     path("deploy/run_code/", csrf_exempt(deployment_views.run_code), name="run_code"),
-
+    path("webhook/run/<str:uid>/<str:project_key>/<str:start_node_key>/<str:data_run_key>/", deployment_views.webhook, name='run_webhook'),
     ##Debug URL's
     path("debug/fetch_logs/", csrf_exempt(debug_views.fetch_logs), name="fetch_logs"),
     path("debug/fetch_installed_packages/", csrf_exempt(debug_views.fetch_installed_packages), name="fetch_installed_packages"),

@@ -30,7 +30,7 @@ READ_GTE = 1
 
 
 DAG_TASK = 'celery_worker.run_dag'
-TASK_TASK = 'celery_worker.run_task'
+RUN_TASK = 'celery_worker.run_task'
 
 AWSS3_ACCESS_KEY_VALUE = os.getenv('AWS_ACCESS_KEY_ID','REMOVED_CREDENTIAL')
 AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY','REMOVED_CREDENTIAL')
@@ -75,3 +75,7 @@ FETCH_UNINSTALL_PACKAGES_CODE = '''
     '''
 
 
+
+GET_STARTED_DATA = {
+            'action': 'PERFORM_GET_STARTED'
+}
