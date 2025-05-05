@@ -124,7 +124,7 @@ def fetch_installed_packages(request):
         # Convert JSON string to Python dictionary
         response_dict = json.loads(response_str)
         # Extract `result` array from `data`
-        packages_array = response_dict.get("data").get("result")
+        packages_array = response_dict.get("data", {}).get("result")
     except:
         return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
 
