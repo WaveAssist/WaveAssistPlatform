@@ -183,7 +183,8 @@ def run_code(request):
     task_dict = {
         'project_key': project_key,
         'node_key': node_key,
-        'code_to_run': code_to_run
+        'code_to_run': code_to_run,
+        'task_key': node_key,
     }
 
     task_kwargs = {
@@ -192,7 +193,7 @@ def run_code(request):
     }
 
     queue_name = 'queue_' + str(user_object.uid)
-    task_run = app.send_task(TASK_TASK, kwargs=task_kwargs, queue=queue_name)
+    task_run = app.send_task(RUN_TASK, kwargs=task_kwargs, queue=queue_name)
 
     timeout = int(request.POST.get('timeout', 10))
     result = task_run.get(timeout=timeout)
