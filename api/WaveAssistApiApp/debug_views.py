@@ -169,14 +169,7 @@ def uninstall_package(request): ##TCW
     code_to_run = code_to_run_uninstall_package(package_to_uninstall)
     request.POST['code_to_run'] = code_to_run
     response = deployment_views.run_code(request)
-    try:
-        if response.get("success") == "1":
-            return ResponseParser.getParsedSuccessMessage({}, '200', 'Package uninstalled successfully')
-        else:
-            return ResponseParser.getParsedErrorMessage('Failed to uninstall package')
-    except:
-        return ResponseParser.getParsedErrorMessage('Failed to uninstall package for the account')
-
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Package uninstallation started successfully')
 
 
 def code_to_run_install_package(package_to_install):
@@ -203,14 +196,7 @@ def install_package(request):
         package_to_install = package_name
     request.POST['code_to_run'] = code_to_run_install_package(package_to_install)
     response = deployment_views.run_code(request)
-    try:
-        if response.get("success") == "1":
-            return ResponseParser.getParsedSuccessMessage({}, '200', 'Package installed successfully')
-        else:
-            return ResponseParser.getParsedErrorMessage('Failed to install package')
-    except:
-        return ResponseParser.getParsedErrorMessage('Failed to install package for the account')
-
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Package installation started successfully')
 
 def code_to_run_upgrade_package(package_to_install):
     code_to_run = '''
@@ -231,10 +217,4 @@ def reinstall_package(request):
     package_name = request.POST.get('package_name')
     request.POST['code_to_run'] = code_to_run_upgrade_package(package_name)
     response = deployment_views.run_code(request)
-    try:
-        if response.get("success") == "1":
-            return ResponseParser.getParsedSuccessMessage({}, '200', 'Package reinstalled successfully')
-        else:
-            return ResponseParser.getParsedErrorMessage('Failed to reinstall package')
-    except:
-        return ResponseParser.getParsedErrorMessage('Failed to uninstall package')
+    return ResponseParser.getParsedSuccessMessage({}, '200', 'Package re-installation started successfully')

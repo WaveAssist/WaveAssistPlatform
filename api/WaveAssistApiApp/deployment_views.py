@@ -1,5 +1,7 @@
 import json
 import uuid
+
+from django.http import JsonResponse
 from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
@@ -171,7 +173,7 @@ def stop_deployment(request): ##TCW
 
 
 
-def run_code(request):
+def run_code(request: object) -> JsonResponse:
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
@@ -189,7 +191,8 @@ def run_code(request):
 
     task_kwargs = {
         'task_dict': task_dict,
-        'collection_key': collection_key
+        'collection_key': collection_key,
+        'task_key': node_key,
     }
 
     queue_name = 'queue_' + str(user_object.uid)
