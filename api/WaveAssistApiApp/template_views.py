@@ -32,7 +32,7 @@ def deploy_template(request):
     nodes = yaml_config.get("nodes", [])
 
     project_object = create_project_object(project_key, project_name, user_object)
-    install_requirements_from_yaml(request, yaml_config)
+    install_requirements_from_yaml(request, yaml_config, project_key)
     node_files = get_nodes_from_github(repo_name)
     file_map = {n["node_name"]: n["content"] for n in node_files}
 
