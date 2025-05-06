@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from WaveAssistApiApp import dashboard_views, manage_views, data_views, deployment_views, debug_views, worker_views
+from WaveAssistApiApp import dashboard_views, data_views, deployment_views, debug_views, worker_views, template_views
 
 from django.views.decorators.csrf import csrf_exempt
 from WaveAssistApiApp import manage_views
@@ -75,6 +75,9 @@ urlpatterns = [
     path("debug/uninstall_package/", csrf_exempt(debug_views.uninstall_package), name="uninstall_package"),
     path("debug/install_package/", csrf_exempt(debug_views.install_package), name="install_package"),
     path("debug/reinstall_package/", csrf_exempt(debug_views.reinstall_package), name="reinstall_package"),
+
+    ##Template URL's
+    path("template/deploy_template/", csrf_exempt(template_views.deploy_template), name="deploy_template"),
 
 
     ##Worker URL's
