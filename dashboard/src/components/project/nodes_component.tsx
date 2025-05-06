@@ -313,6 +313,12 @@ const NodesComponent: React.FC = () => {
 						<span className="badge badge-primary">Interval</span> <span className="badge badge-secondary">{data.interval_schedule}</span>
 					</div>
 				);
+			} else if (data.schedule_type === "none") {
+				return (
+					<div>
+						<span className="badge badge-important">Starting Node</span> <span className="badge badge-primary">Manual/Webhook Only</span>
+					</div>
+				);
 			}
 		} else {
 			return (
@@ -494,11 +500,12 @@ const NodesComponent: React.FC = () => {
 								<Form.Group controlId="schedule_type">
 									<DropdownButton
 										variant="secondary"
-										title={scheduleType === "interval" ? "Interval" : "Cron"}
+										title={scheduleType === "interval" ? "Interval" : scheduleType === "crontab" ? "Cron" : "Manual / Webhook Only"}
 										id="scheduleTypeDropdown"
 										onSelect={(selected) => setValue("schedule_type", selected!)}>
 										<Dropdown.Item eventKey="interval">Interval</Dropdown.Item>
 										<Dropdown.Item eventKey="crontab">Cron</Dropdown.Item>
+										<Dropdown.Item eventKey="none">Manual/Webhook Only</Dropdown.Item>
 									</DropdownButton>
 								</Form.Group>
 								<hr />
