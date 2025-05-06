@@ -133,6 +133,7 @@ def install_requirements_from_yaml(request, yaml_config, project_key):
         ##Add project_key
         request.POST['project_key'] = project_key
         request.POST['package_name'] = package_name
+        request.POST['timeout'] = 5
         if package_version:
             request.POST['package_version'] = package_version
         debug_views.install_package(request)  # Fire and forget — you can handle response if needed
