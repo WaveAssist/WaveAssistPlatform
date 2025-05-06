@@ -19,6 +19,8 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from WaveAssistApiApp.data_views import set_data_for_key
 from django.test import Client
+from celery.exceptions import TimeoutError
+
 import json
 client = Client()
 
@@ -197,11 +199,15 @@ def run_code(request: object) -> JsonResponse:
 
     queue_name = 'queue_' + str(user_object.uid)
     task_run = app.send_task(RUN_TASK, kwargs=task_kwargs, queue=queue_name)
+    try:
+        timeout = int(request.POST.get('timeout', 10))
+        result = task_run.get(timeout=timeout)
+        output_dict = {'task_id': task_run.id, 'result': result}
+    except TimeoutError:
+        output_dict = {'task_id': task_run.id, 'result': "Running"}
 
-    timeout = int(request.POST.get('timeout', 10))
-    result = task_run.get(timeout=timeout)
-    output_dict = {'task_id': task_run.id, 'result': result}
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully ran the code')
+
 
 def run_dag(request): ##TCW
     ##Inputs are uid, project_key, data_run_key & start_node_key
