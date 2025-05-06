@@ -6,7 +6,10 @@ from .constants import ADMIN_GTE
 from WaveAssistApiApp.models import Project, DataRuns, AccessProvided, Nodes
 from django_celery_beat.models import CrontabSchedule, IntervalSchedule
 from WaveAssistApiApp import deployment_views
+from django.test import Client
+import json
 
+client = Client()
 
 def create_project_object(project_key, project_name, user_object):
     project_object = Project.objects.create(project_key=project_key, name=project_name)
@@ -120,6 +123,7 @@ def get_nodes_from_github(repo_name, owner='WaveAssist', branch='main'):
 def install_requirements_from_yaml(request, yaml_config):
     """Install all packages listed in the 'requirements' key of the YAML"""
     packages = yaml_config.get("requirements", [])
+    print(f"Installing packages: {packages}")
     for pkg in packages:
         code_to_run = f'''
 def run_task():
@@ -133,6 +137,7 @@ def run_task():
 '''
         request.POST = request.POST.copy()
         request.POST['code_to_run'] = code_to_run
+        print(code_to_run)
         deployment_views.run_code(request)  # Fire and forget — you can handle response if needed
 
 
@@ -140,3 +145,32 @@ def get_config_yaml_from_github(repo_name, owner='WaveAssist', branch='main'):
     url = f"https://raw.githubusercontent.com/{owner}/{repo_name}/{branch}/config.yaml"
     resp = requests.get(url)
     return yaml.safe_load(resp.text)
+
+
+def configure_variables(uid, project_key, yaml_config):
+    default_env_key = f"{project_key}_default"
+    test_env_key = f"{project_key}_test"
+    all_envs = [default_env_key, test_env_key]
+    variables = yaml_config.get("variables", [])
+    for env_key in all_envs:
+        for variable in variables:
+            var_name = variable["name"]
+            var_value = variable["value"]
+            try:
+                payload = {
+                    'uid': uid,
+                    'project_key': project_key,
+                    'data_run_key': env_key,
+                    'data': var_value,
+                    'data_key': var_name,
+                    'data_type': 'string',
+                }
+                response = client.post('/data/set_data_for_key/', data=json.dumps(payload),
+                                       content_type='application/json')
+            except Exception as e:
+                pass
+
+
+
+
+
