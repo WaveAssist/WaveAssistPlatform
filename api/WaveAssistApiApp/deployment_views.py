@@ -67,7 +67,10 @@ def deploy_project(request): ##TCW
         return ResponseParser.getParsedErrorMessage(message)
 
     all_nodes = project_object.nodes_set.filter(is_enabled=True)
-    starting_nodes = all_nodes.filter(is_starting_node=True, is_enabled=True)
+    starting_nodes = all_nodes.filter(
+        is_starting_node=True,
+        is_enabled=True
+    ).exclude(schedule_type='none')
 
     queue_name = 'queue_' + str(user_object.uid)
 

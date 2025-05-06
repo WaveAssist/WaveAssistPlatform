@@ -57,9 +57,11 @@ def validate_and_get_intervals(request, project_object, is_starting_node='0', sc
         required_params = []
         if schedule_type == 'interval':
             required_params = ['interval_every', 'interval_type']
-        if schedule_type == 'crontab':
+        elif schedule_type == 'crontab':
             required_params = ['crontab_minutes', 'crontab_hours', 'crontab_days_of_month',
                                        'crontab_months_of_year', 'crontab_days_of_week', 'crontab_timezone']
+        elif schedule_type == 'none':
+            required_params = []
         missing_params = [param for param in required_params if not request.POST.get(param, '')]
         if missing_params:
             return False, 'All schedule params are required: ' + str(required_params), None, None, None
@@ -111,6 +113,8 @@ def validate_and_get_intervals(request, project_object, is_starting_node='0', sc
                 crontab_object.save()
             except:
                 return False, 'Something went wrong while creating crontab object', None, None, None
+        elif schedule_type == 'none':
+            pass
 
     else:
         run_after_nodes_keys = run_after_nodes_csv.split(',')
