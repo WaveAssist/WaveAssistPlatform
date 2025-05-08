@@ -440,8 +440,8 @@ def get_task_definition(uid):
         "requiresCompatibilities": [
             "FARGATE"
         ],
-        "cpu": "512",
-        "memory": "2048",
+        "cpu": "256",
+        "memory": "1024",
         "runtimePlatform": {
             "cpuArchitecture": "X86_64",
             "operatingSystemFamily": "LINUX"
