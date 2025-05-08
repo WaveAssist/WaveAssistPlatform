@@ -14,6 +14,10 @@ from kombu.serialization import dumps
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 import datetime
 from django.contrib.auth.hashers import check_password
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 
 
 import requests
@@ -97,3 +101,5 @@ def get_firebase_uid(firebase_token):
     if not firebase_uid:
         raise Exception('Firebase UID not found in the decoded token')
     return firebase_uid, decoded_token
+
+

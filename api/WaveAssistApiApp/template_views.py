@@ -6,7 +6,8 @@ from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
 from .Utils.projectSetup import *
-
+from .Utils.constants import *
+import base64
 
 
 def deploy_template(request):
@@ -41,3 +42,52 @@ def deploy_template(request):
     configure_variables(uid, project_key, yaml_config)
 
     return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
+
+
+def get_template(request, slug):
+    # Step 1: Netlify Identity login
+    identity_url = "https://waveassist.io/.netlify/identity/token"
+    identity_payload = {
+        "grant_type": "password",
+        "username": IDENTITY_USERNAME,  # Changed from "email" to "username" to match curl
+        "password": IDENTITY_PASSWORD  # Password should be securely stored/retrieved
+    }
+    identity_headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "*/*"
+    }
+
+    identity_resp = requests.post(identity_url, data=identity_payload, headers=identity_headers)
+    if identity_resp.status_code != 200:
+        return ResponseParser.getParsedErrorMessage("Failed to authenticate with Netlify Identity")
+    jwt = identity_resp.json().get("access_token")
+
+    # Step 2: Fetch the content from Git Gateway
+    git_gateway_url = f"https://waveassist.io/.netlify/git/github/contents/content/templates/{slug}.md"
+    headers = {
+        "Authorization": f"Bearer {jwt}"
+    }
+    file_resp = requests.get(git_gateway_url, headers=headers)
+    if file_resp.status_code != 200:
+        return ResponseParser.getParsedErrorMessage("Failed to fetch template content")
+
+    # Step 3: Return the raw content (optional: decode base64 if needed)
+    file_data = file_resp.json()
+    print(file_data)
+    content = base64.b64decode(file_data['content']).decode('utf-8')
+    parts = content.split('---', 2)
+    if len(parts) >= 3:
+        # Parse the YAML frontmatter (the middle part)
+        try:
+            output_dict = yaml.safe_load(parts[1].strip())
+            markdown_content = parts[2].strip()
+            output_dict['markdown'] = markdown_content
+            if 'thumbnail' in output_dict:
+                output_dict['thumbnail'] = output_dict['thumbnail'].replace("/images/templates/", "https://waveassist.io/images/templates/")
+        except Exception as e:
+            return ResponseParser.getParsedErrorMessage(f"Failed to parse YAML frontmatter: {str(e)}")
+    else:
+        return ResponseParser.getParsedErrorMessage("Invalid template format")
+
+    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Template fetched successfully.')
