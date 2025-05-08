@@ -6,6 +6,7 @@ from .constants import ADMIN_GTE
 from WaveAssistApiApp.models import Project, DataRuns, AccessProvided, Nodes
 from django_celery_beat.models import CrontabSchedule, IntervalSchedule
 from WaveAssistApiApp import deployment_views
+from WaveAssistApiApp import debug_views
 from django.test import Client
 import json
 
@@ -120,25 +121,22 @@ def get_nodes_from_github(repo_name, owner='WaveAssist', branch='main'):
     return node_files
 
 
-def install_requirements_from_yaml(request, yaml_config):
+def install_requirements_from_yaml(request, yaml_config, project_key):
     """Install all packages listed in the 'requirements' key of the YAML"""
     packages = yaml_config.get("requirements", [])
     print(f"Installing packages: {packages}")
-    for pkg in packages:
-        code_to_run = f'''
-def run_task():
-    import subprocess
-    import sys
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "{pkg}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-'''
+    for package_name in packages:
+        package_version=None
         request.POST = request.POST.copy()
-        request.POST['code_to_run'] = code_to_run
-        print(code_to_run)
-        deployment_views.run_code(request)  # Fire and forget — you can handle response if needed
+        if '==' in package_name:
+            package_name, package_version = package_name.split('==')
+        ##Add project_key
+        request.POST['project_key'] = project_key
+        request.POST['package_name'] = package_name
+        request.POST['timeout'] = 5
+        if package_version:
+            request.POST['package_version'] = package_version
+        debug_views.install_package(request)  # Fire and forget — you can handle response if needed
 
 
 def get_config_yaml_from_github(repo_name, owner='WaveAssist', branch='main'):
