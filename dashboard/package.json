@@ -33,6 +33,7 @@
     "react-hook-form": "^7.52.2",
     "react-joyride": "^2.9.3",
     "react-lazylog": "^4.5.3",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^6.23.1",
     "react-virtualized": "^9.22.5"
   },

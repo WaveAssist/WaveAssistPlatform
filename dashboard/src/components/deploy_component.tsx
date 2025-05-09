@@ -1,167 +1,178 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import "./deploy_component.css";
 import axios from "axios";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Spinner from "react-bootstrap/Spinner";
-import 'bootstrap/dist/css/bootstrap.min.css';
-
+import ReactMarkdown from "react-markdown";
+import "./deploy_component.css";
+import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 
 const DeployComponent: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
+	const navigate = useNavigate();
+	const [templateData, setTemplateData] = useState<any>(null);
+	const [isDeploying, setIsDeploying] = useState(false);
+	const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const [deployInfo, setDeployInfo] = useState({
-    repoUrl: "",
-    title: "",
-    description: "",
-    imageUrl: "",
-  });
+	useEffect(() => {
+		const uid = localStorage.getItem("uid");
+		const templateKey = searchParams.get("template_key");
 
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [createdProject, setCreatedProject] = useState<any>(null);
+		if (!templateKey) {
+			alert("Missing template_key in URL.");
+			navigate("/manage");
+			return;
+		}
 
-  useEffect(() => {
-    const uid = localStorage.getItem("uid");
+		if (!uid) {
+			const redirectUrl = `/deploy?template_key=${templateKey}`;
+			localStorage.setItem("postLoginRedirect", redirectUrl);
+			navigate(`/login`);
+			return;
+		}
 
-    if (!uid) {
-      const currentPath = window.location.pathname + window.location.search;
-      navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
-      return;
-    }
+		const fetchTemplate = async () => {
+			try {
+				const res = await axios.get(`https://api.waveassist.io/templates/${templateKey}/`);
+				if (res.data.success === "1") {
+					setTemplateData(res.data.data);
+				} else {
+					alert("Failed to fetch template.");
+					navigate("/manage");
+				}
+			} catch (err) {
+				console.error("Error fetching template:", err);
+				alert("Could not fetch template data.");
+				navigate("/manage");
+			}
+		};
+		fetchTemplate();
+	}, [searchParams, navigate]);
 
-    const repoUrl = searchParams.get("repo_url") || "";
-    const title = searchParams.get("title") || "";
-    const description = searchParams.get("description") || "";
-    const imageUrl = searchParams.get("image_url") || "";
+	const handleDeploy = async () => {
+		const uid = localStorage.getItem("uid");
+		if (!uid || !templateData?.repo_url) return;
+		setIsDeploying(true);
+		try {
+			const formData = new FormData();
+			formData.append("repo_url", templateData.repo_url);
+			formData.append("uid", uid);
+			const response = await axios.post("https://api.waveassist.io/template/deploy_template/", formData, {
+				headers: { "Content-Type": "multipart/form-data" },
+			});
+			if (response.data.success === "1") {
+				setShowSuccessModal(true);
+			} else {
+				alert("❌ Failed to deploy project, please try again.");
+			}
+		} catch (error) {
+			console.error("Deploy failed:", error);
+			alert("❌ Something went wrong while deploying. Please try again.");
+		} finally {
+			setIsDeploying(false);
+		}
+	};
 
-    setDeployInfo({
-      repoUrl: decodeURIComponent(repoUrl),
-      title: decodeURIComponent(title),
-      description: decodeURIComponent(description),
-      imageUrl: decodeURIComponent(imageUrl),
-    });
-  }, [searchParams, navigate]);
+	if (!templateData) return null;
 
-  const handleDeploy = async () => {
-    const uid = localStorage.getItem("uid");
-    if (!uid) return;
+	const handleLogout = async () => {
+		try {
+			// Add your sign-out logic here
+			localStorage.removeItem("uid");
+			localStorage.removeItem("project_array");
+			localStorage.removeItem("selected_project_key");
+			localStorage.removeItem("user_data");
+			navigate("/login");
+		} catch (error) {
+			console.error("Error logging out:", error);
+		}
+	};
 
-    setIsDeploying(true);
+	return (
+		<div className="deploy-container">
+			<div className="dashboard-header row align-items-center">
+				<div className="col-12 col-md-8  mb-md-0 d-flex justify-content-center justify-content-md-start">
+					<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
+				</div>
+				<div className="col-12 col-md-4 mb-3 d-flex justify-content-center justify-content-md-end">
+					<button className="btn btn-outline-secondary logout_button" onClick={handleLogout}>
+						Logout
+					</button>
+				</div>
+			</div>
 
-    try {
-      const formData = new FormData();
-      formData.append("repo_url", deployInfo.repoUrl);
-      formData.append("uid", uid);
+			<div className="separator"></div>
+			<div className="row w-100">
+				<div className="col-lg-8 order-2 order-lg-1">
+					<div className="deploy-card">
+						<div className="deploy-content">
+							<h1>{templateData.title}</h1>
+							<p className="description">{templateData.description}</p>
+							<div className="mb-3 pb-3">
+								{templateData.tags?.map((tag: string, idx: number) => (
+									<span key={idx} className="badge bg-secondary me-2 rounded-pill px-3 py-2">
+										{tag}
+									</span>
+								))}
+							</div>
+							<div className="markdown-body mb-4 mt-4">
+								<ReactMarkdown>{templateData.markdown}</ReactMarkdown>
+							</div>
+							<Button variant="success" className="w-100 mb-2 fw-semibold py-2" onClick={handleDeploy} disabled={isDeploying}>
+								🚀 Deploy Now
+							</Button>
+						</div>
+					</div>
+				</div>
 
-      const response = await axios.post(
-        "http://127.0.0.1:8000/template/deploy_template/",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+				<div className="col-lg-4 order-1 order-lg-2">
+					<div className="deploy-card text-center">
+						<div className="deploy-image">
+							<img src={templateData.thumbnail} alt={templateData.title} />
+						</div>
+						<div className="deploy-content">
+							<h4>{templateData.title}</h4>
+							<p className="description">{templateData.description}</p>
+							<div className="mb-3 pb-3">
+								{templateData.tags?.map((tag: string, idx: number) => (
+									<span key={idx} className="badge bg-secondary me-2 rounded-pill px-3 py-2">
+										{tag}
+									</span>
+								))}
+							</div>
+							<Button variant="success" className="w-100 mb-2 fw-semibold py-2" onClick={handleDeploy} disabled={isDeploying}>
+								🚀 Deploy Now
+							</Button>
+						</div>
+					</div>
+				</div>
+			</div>
 
-      if (response.data.success === "1") {
-        setCreatedProject(response.data.data);
-        setShowSuccessModal(true);
-      } else {
-        alert("❌ Failed to deploy project.");
-      }
-    } catch (error) {
-      console.error("Deploy failed:", error);
-      alert("Something went wrong while deploying. Please try again.");
-    } finally {
-      setIsDeploying(false);
-    }
-  };
-
-  return (
-    <div className="deploy-container">
-      <div className="content">
-        <div className="deploy-card">
-          {deployInfo.imageUrl && (
-            <div className="deploy-image">
-              <img src={deployInfo.imageUrl} alt={deployInfo.title} />
-            </div>
-          )}
-          <div className="deploy-content">
-            <h1>{deployInfo.title}</h1>
-            <p className="description">{deployInfo.description}</p>
-            <div className="repo-info mb-4">
-              <h3>Repository URL:</h3>
-              <a
-                href={deployInfo.repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {deployInfo.repoUrl}
-              </a>
-            </div>
-            <button
-              onClick={handleDeploy}
-              className="btn btn-primary"
-              disabled={isDeploying}
-            >
-              {isDeploying ? (
-                <>
-                  <Spinner
-                    animation="border"
-                    size="sm"
-                    className="me-2"
-                    role="status"
-                  />
-                  Deploying...
-                </>
-              ) : (
-                "🚀 Deploy Now"
-              )}
-            </button>
-
-            {isDeploying && (
-              <div className="text-center mt-4">
-                <Spinner animation="border" variant="light" className="me-2" role="status" />
-                <p className="mt-3" style={{ color: "rgba(255,255,255,0.75)" }}>
-                  Deploying your project. This may take a few minutes...
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="text-center mt-4">
-          <button
-            className="btn btn-outline-light"
-            onClick={() => navigate("/manage")}
-          >
-            ← Go to All Projects
-          </button>
-        </div>
-      </div>
-
-      <Modal
-        show={showSuccessModal}
-        onHide={() => setShowSuccessModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>🎉 Project Deployed</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>
-            Project <strong>{createdProject?.name}</strong> was created
-            successfully with key{" "}
-            <code>{createdProject?.project_key}</code>.
-          </p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="success" onClick={() => navigate("/manage")}>
-            Go to All Projects
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
-  );
+			<div className="text-center mt-4">
+				<Button variant="outline-light" onClick={() => navigate("/manage")}>
+					← Go to all projects
+				</Button>
+			</div>
+			<Modal show={isDeploying} centered backdrop="static" keyboard={false}>
+				<Modal.Body className="text-center py-5">
+					<Spinner animation="border" role="status" className="mb-3" />
+					<h5>Deploying your template, this may take a minute...</h5>
+				</Modal.Body>
+			</Modal>
+			<Modal show={showSuccessModal} backdrop="static" keyboard={false} centered>
+				<Modal.Header>
+					<Modal.Title>✅ Deployment Successful</Modal.Title>
+				</Modal.Header>
+				<Modal.Body className="text-center">
+					<p className="pt-4">All set! Your project is ready to use.</p>
+					<Button variant="success" className="mt-3 px-4 py-2 fw-semibold" onClick={() => navigate("/manage")}>
+						Go to Dashboard
+					</Button>
+				</Modal.Body>
+			</Modal>
+		</div>
+	);
 };
 
 export default DeployComponent;

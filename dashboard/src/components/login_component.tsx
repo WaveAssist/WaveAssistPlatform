@@ -25,7 +25,13 @@ const LoginComponent: React.FC = () => {
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
 		if (uid) {
-			navigate(redirect);
+			const storedRedirect = localStorage.getItem("postLoginRedirect");
+			if (storedRedirect) {
+				localStorage.removeItem("postLoginRedirect");
+				navigate(storedRedirect);
+			} else {
+				navigate(redirect);
+			}
 		}
 	}, [navigate, redirect]);
 
@@ -45,7 +51,13 @@ const LoginComponent: React.FC = () => {
 				localStorage.setItem("user_data", JSON.stringify(data.user_data));
 				localStorage.setItem("project_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
-				navigate(redirect);
+				const storedRedirect = localStorage.getItem("postLoginRedirect");
+				if (storedRedirect) {
+					localStorage.removeItem("postLoginRedirect");
+					navigate(storedRedirect);
+				} else {
+					navigate(redirect);
+				}
 			}
 		} catch (error) {
 			console.error("Login failed:", error);
@@ -68,7 +80,14 @@ const LoginComponent: React.FC = () => {
 
 			setLoading(false);
 			setLoaderMessage("");
-			navigate(redirect);
+			const storedRedirect = localStorage.getItem("postLoginRedirect");
+			console.log("Stored Redirect:", storedRedirect);
+			if (storedRedirect) {
+				localStorage.removeItem("postLoginRedirect");
+				navigate(storedRedirect);
+			} else {
+				navigate(redirect);
+			}
 		} catch (error) {
 			console.error("Get Started Failed:", error);
 			alert("Something went wrong creating your account, please try again.");
@@ -155,9 +174,7 @@ const LoginComponent: React.FC = () => {
 				<Modal.Header closeButton>
 					<Modal.Title className="modal-title">Setup your account</Modal.Title>
 				</Modal.Header>
-				<Modal.Body>
-					Your account does not exist with WaveAssist, or was not fully configured. Would you like to setup your account?
-				</Modal.Body>
+				<Modal.Body>Your account does not exist with WaveAssist, or was not fully configured. Would you like to setup your account?</Modal.Body>
 				<Modal.Footer>
 					<Button variant="secondary" onClick={handleClose}>
 						Close

@@ -100,84 +100,6 @@ const VariablesComponent: React.FC = () => {
 		}
 	};
 
-	// const handleDeleteVariable = async (variable: any) => {
-	// 	//ask for confirmation
-	// 	const confirmDelete = window.confirm("Are you sure you want to delete this variable? This action cannot be undone.");
-	// 	if (!confirmDelete) {
-	// 		return;
-	// 	}
-	// 	try {
-	// 		await deleteVariableApi(variable.key);
-	// 		showToast("Variable deleted successfully.", "success");
-	// 		fetchVariables();
-	// 	} catch (error) {
-	// 		console.error("deleteVariableApi failed:", error);
-	// 		showToast("" + error, "danger");
-	// 	}
-	// };
-
-	// const handleDownloadVariables = async (variable: any) => {
-	// 	try {
-	// 		setLoading(true);
-	// 		var response_data = await downloadVariablesApi(variable.key);
-	// 		downloadFile(response_data.data, variable.key + ".json", "text/json");
-	// 		showToast("Variables downloaded successfully.", "success");
-	// 	} catch (error) {
-	// 		console.error("downloadVariablesApi failed:", error);
-	// 		showToast("" + error, "danger");
-	// 	} finally {
-	// 		setLoading(false);
-	// 	}
-	// };
-
-	// const handleUploadVariables = async (variable: any) => {
-	// 	try {
-	// 		const input = document.createElement("input");
-	// 		input.type = "file";
-	// 		input.accept = ".csv";
-
-	// 		input.onchange = async (event: Event) => {
-	// 			const target = event.target as HTMLInputElement;
-	// 			const file = target.files?.[0];
-	// 			if (file) {
-	// 				try {
-	// 					const reader = new FileReader();
-	// 					reader.onload = async (e: ProgressEvent<FileReader>) => {
-	// 						try {
-	// 							setLoading(true);
-	// 							const csvData = e.target?.result as string;
-	// 							await uploadVariablesApi(csvData, variable.key);
-	// 							showToast("Variables uploaded successfully.", "success");
-	// 							fetchVariables();
-	// 						} catch (error) {
-	// 							console.error("uploadVariablesApi failed:", error);
-	// 							showToast("" + error, "danger");
-	// 						} finally {
-	// 							setLoading(false);
-	// 						}
-	// 					};
-
-	// 					reader.onerror = (error) => {
-	// 						console.error("File reading failed:", error);
-	// 						showToast("Failed to read the file.", "danger");
-	// 					};
-	// 					reader.readAsText(file);
-	// 				} catch (error) {
-	// 					console.error("uploadVariablesApi failed:", error);
-	// 					showToast("" + error, "danger");
-	// 				} finally {
-	// 					setLoading(false);
-	// 				}
-	// 			}
-	// 		};
-
-	// 		input.click();
-	// 	} catch (error) {
-	// 		console.error("Error in handleUploadVariables:", error);
-	// 		showToast("An unexpected error occurred.", "danger");
-	// 	}
-	// };
-
 	const gridOptions = {
 		suppressCellFocus: true,
 	};
@@ -185,22 +107,6 @@ const VariablesComponent: React.FC = () => {
 	useEffect(() => {
 		fetchVariables();
 	}, [shouldRefresh]);
-
-	// const ActionButtons = (params: any) => {
-	// 	return (
-	// 		<div>
-	// 			<Button variant="success" size="sm" onClick={() => handleUploadVariables(params.data)} className="me-3">
-	// 				<i className="bi bi-cloud-upload"></i>
-	// 			</Button>
-	// 			<Button variant="dark" size="sm" onClick={() => handleDownloadVariables(params.data)} className="me-3">
-	// 				<i className="bi bi-cloud-download"></i>
-	// 			</Button>
-	// 			<Button variant="danger" size="sm" onClick={() => handleDeleteVariable(params.data)}>
-	// 				<i className="bi bi-trash"></i>
-	// 			</Button>
-	// 		</div>
-	// 	);
-	// };
 
 	const getEditedDataArray = () => {
 		const updatedData: any[] = [];
@@ -255,28 +161,39 @@ const VariablesComponent: React.FC = () => {
 			const displayData = data.data;
 			const dataType = data.data_type;
 			setDataType(dataType);
-			if (dataType == "dataframe") {
+
+			if (dataType === "dataframe") {
 				setDataForDataframe(displayData);
-			} else if (dataType == "json") {
+			} else if (dataType === "json") {
 				setJsonDataString(JSON.stringify(displayData, null, 2));
-			} else if (dataType == "string") {
+			} else if (dataType === "string") {
 				setStringData(displayData);
 			}
-			setLoading(false); // Hide loader after fetch
-		} catch (error) {
+		} catch (error: any) {
 			console.error("fetchDataForKeyAPI failed:", error);
-			showToast("Something went wrong with loading data, please try again.", "danger");
-			setLoading(false); // Hide loader even if fetch fails
+			const errMsg = error?.message || error?.toString();
+			if (errMsg.includes("Data not found")) {
+				showToast("No data found for this variable.", "danger");
+			} else {
+				showToast("Something went wrong with loading data, please try again.", "danger");
+			}
+			return false;
+		} finally {
+			setLoading(false); // Always hide loader
 		}
+		return true;
 	};
 
 	const viewData = async (variable: any) => {
 		const key = variable.key;
 		setSelectedVariableKey(key);
+		setJsonDataString("");
+		setStringData("");
 		setLoading(true);
-		await fetchDataForKey(key);
-		setLoading(false);
-		setShowDataViewer(true);
+		var success = await fetchDataForKey(key); // `fetchDataForKey` handles loader off
+		if (success) {
+			setShowDataViewer(true);
+		}
 	};
 
 	const columnDefs = [
