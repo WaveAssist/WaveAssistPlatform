@@ -79,8 +79,7 @@
   width: 100%;
 }
 
-
-.modal-content {
+.deploy-modal .modal-content {
   background-color: #1A2430;
   text-align: center;
   border-radius: 12px;

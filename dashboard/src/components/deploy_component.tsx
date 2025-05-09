@@ -154,13 +154,13 @@ const DeployComponent: React.FC = () => {
 					← Go to all projects
 				</Button>
 			</div>
-			<Modal show={isDeploying} centered backdrop="static" keyboard={false}>
+			<Modal show={isDeploying} centered backdrop="static" keyboard={false} dialogClassName="deploy-modal">
 				<Modal.Body className="text-center py-5">
 					<Spinner animation="border" role="status" className="mb-3" />
 					<h5>Deploying your template, this may take a minute...</h5>
 				</Modal.Body>
 			</Modal>
-			<Modal show={showSuccessModal} backdrop="static" keyboard={false} centered>
+			<Modal show={showSuccessModal} backdrop="static" keyboard={false} centered dialogClassName="deploy-modal">
 				<Modal.Header>
 					<Modal.Title>✅ Deployment Successful</Modal.Title>
 				</Modal.Header>
