@@ -62,7 +62,7 @@ const Sidebar = () => {
 				<li className="nav-item">
 					<Link to="/manage/variables" className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-table me-2"></i>
-						Data
+						Variables
 					</Link>
 				</li>
 				<li className="nav-item">
