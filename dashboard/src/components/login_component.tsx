@@ -21,6 +21,7 @@ const LoginComponent: React.FC = () => {
 	const handleShow = () => setShowGetStarted(true);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [loaderMessage, setLoaderMessage] = useState("");
+	const is_test = false; // ALWAYS KEEP as FALSE
 
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
@@ -44,7 +45,7 @@ const LoginComponent: React.FC = () => {
 			const data = await loginAPI(firebase_token);
 			setLoading(false);
 
-			if (data.action === "PERFORM_GET_STARTED") {
+			if (data.action === "PERFORM_GET_STARTED" || is_test) {
 				handleShow();
 				return;
 			} else {
@@ -73,7 +74,7 @@ const LoginComponent: React.FC = () => {
 			handleClose();
 
 			const firebase_uid = localStorage.getItem("firebase_uid");
-			const data = await getStartedAPI(firebase_uid);
+			const data = await getStartedAPI(firebase_uid, is_test);
 			localStorage.setItem("user_data", JSON.stringify(data.user_data));
 			localStorage.setItem("project_array", JSON.stringify(data.project_array));
 			localStorage.setItem("uid", data.user_data.uid);
