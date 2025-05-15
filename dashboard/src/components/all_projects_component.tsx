@@ -29,15 +29,16 @@ const AllProjectsComponent: React.FC = () => {
 
 	const registerPostHogUser = () => {
 		const uid = localStorage.getItem("uid");
-		if (!uid) {
-			return;
-		}
+		if (!uid) return;
+
 		const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
-
-		const user_id = user_data.id || uid;
-		const name = user_data.name || "default";
-
-		posthog.identify(user_id, { uid, name });
+		const user_id = uid;
+		const email = user_data.username || "default@waveassist.io"; // fallback if not present
+		// Identify user for PostHog
+		posthog.identify(user_id, { email });
+		posthog.capture("user_logged_in", {
+			email,
+		});
 	};
 
 	const fetchData = async () => {
