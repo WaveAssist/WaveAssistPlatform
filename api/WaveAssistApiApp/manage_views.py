@@ -13,10 +13,13 @@ from WaveAssistApiApp.Utils.MongoManager import MongoManager
 from WaveAssistApiApp.data_views import set_data_for_key
 from WaveAssistApiApp.dashboard_views import get_firebase_uid
 import WaveAssistApiApp.Utils.AWSManager as aws_manager
+from knockapi import Knock
+knock_client = Knock(api_key=PROD_KNOCK_KEY)
 
 
 def get_started(request): #TCW
     firebase_token = request.POST.get('firebase_token', '')
+    is_test = int(request.POST.get('is_test', 0)) == 1
     try:
         firebase_uid, decoded_dict = get_firebase_uid(firebase_token)
     except Exception as e:
@@ -36,6 +39,12 @@ def get_started(request): #TCW
         password = request.POST.get('password', 'REMOVED_CREDENTIAL')
         company_name = request.POST.get('company_name', 'Company')
         can_create_projects = True
+        ##Check for name, if name not present, create name from email.
+        try:
+            if name == '':
+                name = username.split('@')[0]
+        except:
+            pass
         try:
             user_object = User.objects.create(uid=uid, name=name, username=username, password=password,
                                               company_name=company_name, can_create_projects=can_create_projects,
@@ -45,6 +54,14 @@ def get_started(request): #TCW
         except Exception as e:
             print("User creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage('User creation failed.')
+
+        ##Register user in Knock
+        knock_client.users.update(
+          user_id=str(uid),
+          name=name,
+          email=username
+        )
+
     ##Check for existing Account
     try:
         account_object = Account.objects.filter(created_by_user=user_object)
@@ -61,7 +78,7 @@ def get_started(request): #TCW
         print("Account creation failed: " + str(e))
         return ResponseParser.getParsedErrorMessage('Account creation failed.')
 
-    if account_object.mongo_db_url == '':
+    if account_object.mongo_db_url == '' and not is_test:
         ##Create Mongo url
         try:
             mongo_url,db_name = utils.create_mongo_url(user_object)
@@ -72,7 +89,7 @@ def get_started(request): #TCW
             print("Mongo url creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage('Mongo url creation failed.' + str(e))
 
-    if account_object.worker_service_arn == '':
+    if account_object.worker_service_arn == '' and not is_test:
         ##Create Worker
         try:
             worker_service_arn = aws_manager.create_worker(user_object.uid)
@@ -87,7 +104,7 @@ def get_started(request): #TCW
     account_dict = account_object.get_dict()
     user_dict['mongo_db_url'] = account_object.mongo_db_url
     output_dict = {'user_data': user_dict, 'account': account_dict,'project_array':[]}
-    utils.send_alert_email()
+    utils.run_knock_workflow(user_object.uid, 'welcome')
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'User and Account created successfully.')
 
 

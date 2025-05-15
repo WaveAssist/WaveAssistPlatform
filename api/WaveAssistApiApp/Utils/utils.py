@@ -19,7 +19,8 @@ logger = Logger()
 import json
 import threading
 import requests
-
+from knockapi import Knock
+knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.db.models.functions import Lower
 
 import json
@@ -44,6 +45,16 @@ def get_param(request, key: str, default=''):
     except (ValueError, json.JSONDecodeError):
         return default
 
+
+def run_knock_workflow(uid:str, workflow_key):
+    try:
+        knock_client.workflows.trigger(
+            key=workflow_key,
+            recipients=[uid],
+            actor=uid,
+        )
+    except Exception as e:
+        print("Error in run_knock_start_workflow:", str(e))
 
 
 def send_alert_email():
