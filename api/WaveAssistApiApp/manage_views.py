@@ -33,8 +33,8 @@ def get_started(request): #TCW
 
     if user_object is None:
         ##Create User
-        uid = uuid.uuid4()
-        name = request.POST.get('name', decoded_dict.get('full_name','Name'))
+        uid = str(uuid.uuid4())
+        name = request.POST.get('name', decoded_dict.get('full_name',''))
         username = request.POST.get('email', decoded_dict.get('email','email'))
         password = request.POST.get('password', 'REMOVED_CREDENTIAL')
         company_name = request.POST.get('company_name', 'Company')
@@ -104,7 +104,7 @@ def get_started(request): #TCW
     account_dict = account_object.get_dict()
     user_dict['mongo_db_url'] = account_object.mongo_db_url
     output_dict = {'user_data': user_dict, 'account': account_dict,'project_array':[]}
-    utils.run_knock_workflow(user_object.uid, 'welcome')
+    utils.run_knock_workflow(str(user_object.uid), 'welcome')
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'User and Account created successfully.')
 
 
