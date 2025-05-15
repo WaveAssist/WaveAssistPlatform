@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import Joyride, { Step } from "react-joyride";
+
 import {
 	fetchNodesApi,
 	updateCodeApi,
@@ -31,6 +33,26 @@ const NodesComponent: React.FC = () => {
 	const [showWebhook, setShowWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [copied, setCopied] = useState(false);
+	const [runTour, setRunTour] = useState(true);
+	
+
+	const steps: Step[] = [
+		{
+		  target: ".bi-plus-lg", // The plus icon button
+		  content: "Click here to create a new node.",
+		  disableBeacon: true,
+		},
+		{
+		  target: ".bi-pencil", // The pencil icon button
+		  content: "Click here to edit the node.",
+		},
+		{
+		  target: ".bi-play", // The play icon button
+		  content: "Click here to run the node.",
+		}
+	  ];
+	  
+
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
@@ -686,6 +708,46 @@ const NodesComponent: React.FC = () => {
 					</Form>
 				</Modal.Body>
 			</Modal>
+
+			<Joyride
+				steps={steps}
+				run={runTour}
+				showProgress
+				showSkipButton
+				continuous
+				styles={{
+					options: {
+					arrowColor: "#0D1B2A",
+					backgroundColor: "#0D1B2A",
+					primaryColor: "#2ECC71",
+					textColor: "#FFFFFF",
+					width: 300,
+					zIndex: 10000,
+					},
+					tooltipContainer: {
+					textAlign: "left",
+					padding: "16px",
+					borderRadius: "12px",
+					},
+					buttonNext: {
+					backgroundColor: "#2ECC71",
+					color: "#000",
+					},
+					buttonBack: {
+					color: "#bbb",
+					marginRight: 8,
+					},
+					buttonClose: {
+					color: "#aaa",
+					},
+				}}
+				callback={(data) => {
+					if (data.status === "finished" || data.status === "skipped") {
+					setRunTour(false);
+					}
+				}}
+			/>
+
 		</div>
 	);
 };

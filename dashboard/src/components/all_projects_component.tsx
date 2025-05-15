@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Joyride, { Step } from "react-joyride";
 
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
@@ -21,6 +22,17 @@ const AllProjectsComponent: React.FC = () => {
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const posthog = usePostHog();
+
+	const [runTour, setRunTour] = useState(true);
+	const steps: Step[] = [
+	{
+		target: ".add-project-card", // 👈 your "Add Project" card
+		content: "Click here to create a new project.",
+		disableBeacon: true,
+	},
+	// you can add more steps here later
+	];
+
 
 	useEffect(() => {
 		fetchData();
@@ -212,6 +224,47 @@ const AllProjectsComponent: React.FC = () => {
 					</Button>
 				</Modal.Footer>
 			</Modal>
+			<Joyride
+				steps={steps}
+				run={runTour}
+				continuous={true}
+				showSkipButton={true}
+				showProgress={true}
+				disableCloseOnEsc={true}
+				disableOverlayClose={true}
+				floaterProps={{ disableAnimation: true }}
+				callback={(data) => {
+					if (data.status === "finished" || data.status === "skipped") {
+						setRunTour(false);
+					}
+				}}
+				styles={{
+					options: {
+					  arrowColor: "#0D1B2A",             // blue-black background
+					  backgroundColor: "#0D1B2A",
+					  primaryColor: "#2ECC71",           // darker green button
+					  textColor: "#FFFFFF",
+					  width: 300,
+					  zIndex: 10000,
+					},
+					tooltipContainer: {
+					  textAlign: "left",
+					  padding: "16px",
+					  borderRadius: "12px",
+					},
+					buttonNext: {
+					  backgroundColor: "#2ECC71",        // dark green
+					  color: "#000",
+					},
+					buttonBack: {
+					  color: "#bbb",
+					  marginRight: 8,
+					},
+					buttonClose: {
+					  color: "#aaa",
+					},
+				  }}
+				/>
 		</div>
 	);
 };
