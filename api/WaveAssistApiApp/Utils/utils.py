@@ -46,12 +46,13 @@ def get_param(request, key: str, default=''):
         return default
 
 
-def run_knock_workflow(uid:str, workflow_key):
+def run_knock_workflow(uid:str, workflow_key, data=None):
     try:
         knock_client.workflows.trigger(
             key=workflow_key,
             recipients=[uid],
             actor=uid,
+            data=data
         )
     except Exception as e:
         print("Error in run_knock_start_workflow:", str(e))
