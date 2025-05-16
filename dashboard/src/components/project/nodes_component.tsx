@@ -33,26 +33,16 @@ const NodesComponent: React.FC = () => {
 	const [showWebhook, setShowWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [copied, setCopied] = useState(false);
-	const [runTour, setRunTour] = useState(true);
-	
+	const [runTour, setRunTour] = useState(false);
 
 	const steps: Step[] = [
 		{
-		  target: ".bi-plus-lg", // The plus icon button
-		  content: "Click here to create a new node.",
-		  disableBeacon: true,
+			target: ".bi-plus-lg", // The plus icon button
+			content: "Click here to create a new node.",
+			disableBeacon: true,
+			locale: { last: "Ok" },
 		},
-		{
-		  target: ".bi-pencil", // The pencil icon button
-		  content: "Click here to edit the node.",
-		},
-		{
-		  target: ".bi-play", // The play icon button
-		  content: "Click here to run the node.",
-		}
-	  ];
-	  
-
+	];
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
@@ -229,6 +219,12 @@ const NodesComponent: React.FC = () => {
 		try {
 			const data = await fetchNodesApi();
 			setNodesArray(data.node_array);
+			if (data.node_array.length === 0) {
+				const tourCompleted = localStorage.getItem("create_node_tour_completed");
+				if (!tourCompleted) {
+					setRunTour(true);
+				}
+			}
 		} catch (error) {
 			console.error("FetchNodesApi failed:", error);
 			showToast("Something went wrong with loading Nodes, please try again.", "danger");
@@ -717,37 +713,37 @@ const NodesComponent: React.FC = () => {
 				continuous
 				styles={{
 					options: {
-					arrowColor: "#0D1B2A",
-					backgroundColor: "#0D1B2A",
-					primaryColor: "#2ECC71",
-					textColor: "#FFFFFF",
-					width: 300,
-					zIndex: 10000,
+						arrowColor: "#0D1B2A",
+						backgroundColor: "#0D1B2A",
+						primaryColor: "#2ECC71",
+						textColor: "#FFFFFF",
+						width: 300,
+						zIndex: 10000,
 					},
 					tooltipContainer: {
-					textAlign: "left",
-					padding: "16px",
-					borderRadius: "12px",
+						textAlign: "left",
+						padding: "16px",
+						borderRadius: "12px",
 					},
 					buttonNext: {
-					backgroundColor: "#2ECC71",
-					color: "#000",
+						backgroundColor: "#2ECC71",
+						color: "#000",
 					},
 					buttonBack: {
-					color: "#bbb",
-					marginRight: 8,
+						color: "#bbb",
+						marginRight: 8,
 					},
 					buttonClose: {
-					color: "#aaa",
+						color: "#aaa",
 					},
 				}}
 				callback={(data) => {
-					if (data.status === "finished" || data.status === "skipped") {
-					setRunTour(false);
+					if (["finished", "skipped"].includes(data.status)) {
+						setRunTour(false);
+						localStorage.setItem("create_node_tour_completed", "true");
 					}
 				}}
 			/>
-
 		</div>
 	);
 };

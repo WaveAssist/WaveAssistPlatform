@@ -2,26 +2,42 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./sidebar.css";
 import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Joyride, { Step } from "react-joyride";
 
 const Sidebar = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
-	const [runTour, setRunTour] = useState(true);
+	const [runTour, setRunTour] = useState(false);
+
+	useEffect(() => {
+		const isNewUser = localStorage.getItem("is_new_user");
+		const modulesTour = localStorage.getItem("modules_tour");
+
+		if (modulesTour === null && isNewUser === "true") {
+			setRunTour(true);
+			localStorage.setItem("is_new_user", "false");
+			localStorage.setItem("modules_tour", "true");
+		}
+	}, []);
 
 	const steps: Step[] = [
 		{
+			target: ".variables-link",
+			content: "View and manage your variables here.",
+		},
+		{
 			target: ".packages-link",
-			content: "Click here to manage your installed packages.",
+			content: "Manage all your installed packages from here.",
 		},
 		{
 			target: ".logs-link",
-			content: "Here you can view logs of executed workflows.",
+			content: "View detailed logs for all your executed workflows.",
 		},
 		{
 			target: ".keys-link",
-			content: "Click here to download your API keys.",
+			content: "Download your keys to integrate with external services.",
+			locale: { last: "Got it" },
 		},
 	];
 
@@ -49,9 +65,7 @@ const Sidebar = () => {
 			return;
 		}
 
-		const csvContent =
-			"data:text/csv;charset=utf-8," +
-			filteredEntries.map(([key, value]) => `${key},${value}`).join("\n");
+		const csvContent = "data:text/csv;charset=utf-8," + filteredEntries.map(([key, value]) => `${key},${value}`).join("\n");
 
 		const encodedUri = encodeURI(csvContent);
 		const link = document.createElement("a");
@@ -111,10 +125,7 @@ const Sidebar = () => {
 
 			<ul className="nav nav-pills flex-column mb-4">
 				<li className="nav-item">
-					<Link
-						to="/manage/nodes"
-						className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1`}
-					>
+					<Link to="/manage/nodes" className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-bezier2 me-2"></i>
 						Nodes
 					</Link>
@@ -122,44 +133,31 @@ const Sidebar = () => {
 				<li className="nav-item">
 					<Link
 						to="/manage/variables"
-						className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1`}
-					>
+						className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1 variables-link`}>
 						<i className="bi bi-table me-2"></i>
 						Variables
 					</Link>
 				</li>
 				<li className="nav-item">
-					<Link
-						to="/manage/packages"
-						className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link`}
-					>
+					<Link to="/manage/packages" className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link`}>
 						<i className="bi bi-box-fill me-2"></i>
 						Packages
 					</Link>
 				</li>
 				<li className="nav-item">
-					<Link
-						to="/manage/deployments"
-						className={`nav-link ${location.pathname === "/manage/deployments" ? "active" : "text-white"} mb-1`}
-					>
+					<Link to="/manage/deployments" className={`nav-link ${location.pathname === "/manage/deployments" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-cloud-arrow-up-fill me-2"></i>
 						Deployments
 					</Link>
 				</li>
 				<li className="nav-item">
-					<Link
-						to="/manage/environments"
-						className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}
-					>
+					<Link to="/manage/environments" className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}>
 						<i className="bi bi-stack me-2"></i>
 						Environments
 					</Link>
 				</li>
 				<li className="nav-item">
-					<Link
-						to="/manage/logs"
-						className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 logs-link`}
-					>
+					<Link to="/manage/logs" className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 logs-link`}>
 						<i className="bi bi-file-text-fill me-2"></i>
 						Logs
 					</Link>
@@ -176,18 +174,13 @@ const Sidebar = () => {
 						</Link>
 					</div>
 					<div className="col-6">
-						<button className="btn btn-outline-light w-100" onClick={handleDownloadKeys}>
-							<i className="bi bi-download me-1 keys-link"></i>
+						<button className="btn btn-outline-light w-100 keys-link" onClick={handleDownloadKeys}>
+							<i className="bi bi-download me-1"></i>
 							Keys
 						</button>
 					</div>
 					<div className="col-6">
-						<a
-							href="https://docs.waveassist.io"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="btn btn-outline-light w-100"
-						>
+						<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light w-100">
 							<i className="bi bi-journal-code me-1"></i>
 							Docs
 						</a>

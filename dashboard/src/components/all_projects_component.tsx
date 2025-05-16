@@ -23,16 +23,20 @@ const AllProjectsComponent: React.FC = () => {
 	const { showToast } = useToast();
 	const posthog = usePostHog();
 
-	const [runTour, setRunTour] = useState(true);
+	const [runTour, setRunTour] = useState(false);
 	const steps: Step[] = [
-	{
-		target: ".add-project-card", // 👈 your "Add Project" card
-		content: "Click here to create a new project.",
-		disableBeacon: true,
-	},
-	// you can add more steps here later
+		{
+			target: ".add-project-card",
+			content: "Create a new project from scratch.",
+			disableBeacon: true,
+		},
+		{
+			target: ".use-template-button",
+			content: "Or start quickly with a template.",
+			disableBeacon: true,
+			locale: { last: "Ok" },
+		},
 	];
-
 
 	useEffect(() => {
 		fetchData();
@@ -57,6 +61,14 @@ const AllProjectsComponent: React.FC = () => {
 		try {
 			const data = await fetchAllProjectsAPI();
 			setProjectArray(data.project_array);
+			if (data.project_array.length === 0) {
+				const tourCompleted = localStorage.getItem("create_project_tour_completed");
+				if (tourCompleted == null) {
+					setRunTour(true);
+					localStorage.setItem("create_project_tour_completed", "true");
+					localStorage.setItem("is_new_user", "true");
+				}
+			}
 			localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 		} catch (error) {
 			console.error("FetchAllProjects failed:", error);
@@ -136,7 +148,11 @@ const AllProjectsComponent: React.FC = () => {
 					</div>
 				</div>
 				<div className="col-md-4 d-flex justify-content-end align-items-center">
-					<a href="https://waveassist.io/templates" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary ms-2">
+					<a
+						href="https://waveassist.io/templates"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="btn btn-outline-secondary ms-2 use-template-button">
 						<i className="bi bi-copy me-1"></i>
 						Templates
 					</a>
@@ -252,31 +268,31 @@ const AllProjectsComponent: React.FC = () => {
 				}}
 				styles={{
 					options: {
-					  arrowColor: "#0D1B2A",             // blue-black background
-					  backgroundColor: "#0D1B2A",
-					  primaryColor: "#2ECC71",           // darker green button
-					  textColor: "#FFFFFF",
-					  width: 300,
-					  zIndex: 10000,
+						arrowColor: "#0D1B2A", // blue-black background
+						backgroundColor: "#0D1B2A",
+						primaryColor: "#428d4f", // darker green button
+						textColor: "#FFFFFF",
+						width: 300,
+						zIndex: 10000,
 					},
 					tooltipContainer: {
-					  textAlign: "left",
-					  padding: "16px",
-					  borderRadius: "12px",
+						textAlign: "left",
+						padding: "16px",
+						borderRadius: "12px",
 					},
 					buttonNext: {
-					  backgroundColor: "#2ECC71",        // dark green
-					  color: "#000",
+						backgroundColor: "#428d4f", // dark green
+						color: "#000",
 					},
 					buttonBack: {
-					  color: "#bbb",
-					  marginRight: 8,
+						color: "#bbb",
+						marginRight: 8,
 					},
 					buttonClose: {
-					  color: "#aaa",
+						color: "#aaa",
 					},
-				  }}
-				/>
+				}}
+			/>
 		</div>
 	);
 };
