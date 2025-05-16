@@ -21,7 +21,7 @@ const LoginComponent: React.FC = () => {
 	const handleShow = () => setShowGetStarted(true);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [loaderMessage, setLoaderMessage] = useState("");
-	const is_test = true; // ALWAYS KEEP as FALSE
+	const is_test = false; // ALWAYS KEEP as FALSE
 
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
