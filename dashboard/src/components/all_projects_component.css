@@ -7,10 +7,8 @@
 .wp_logo {
   height: 25px;
   width: auto;
-  margin-top: 30px;
-  margin-bottom: 30px;
-  margin-left: 10px;
 }
+
 
 .wp_logo_login {
   height: 100px !important;
@@ -19,19 +17,23 @@
   margin-bottom: 30px;
   margin-left: 10px;
 }
-
 .logout_button {
-  margin-left: 20px;
-  margin-right: 20px;
+  margin: 0;
 }
 
 .separator {
   border-top: 1px solid #fff;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   width: 100%;
 }
 
+.separator-less-top {
+  border-top: 1px solid #fff;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  width: 100%;
+}
 .admin-panel {
   height: auto;
   width: auto;

@@ -41,15 +41,16 @@ const AllProjectsComponent: React.FC = () => {
 
 	const registerPostHogUser = () => {
 		const uid = localStorage.getItem("uid");
-		if (!uid) {
-			return;
-		}
+		if (!uid) return;
+
 		const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
-
-		const user_id = user_data.id || uid;
-		const name = user_data.name || "default";
-
-		posthog.identify(user_id, { uid, name });
+		const user_id = uid;
+		const email = user_data.username || "default@waveassist.io"; // fallback if not present
+		// Identify user for PostHog
+		posthog.identify(user_id, { email });
+		posthog.capture("user_logged_in", {
+			email,
+		});
 	};
 
 	const fetchData = async () => {
@@ -129,11 +130,22 @@ const AllProjectsComponent: React.FC = () => {
 	return (
 		<div className="base_component">
 			<div className="dashboard-header row">
-				<div className="col-md-8">
-					<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
+				<div className="col-md-8 d-flex align-items-center">
+					<div className="d-flex align-items-center mt-2" style={{ height: "100%" }}>
+						<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
+					</div>
 				</div>
-				<div className="col-md-4 d-flex justify-content-end fixed-right align-items-center">
-					<button className="btn btn-outline-secondary logout_button" onClick={handleLogout}>
+				<div className="col-md-4 d-flex justify-content-end align-items-center">
+					<a href="https://waveassist.io/templates" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary ms-2">
+						<i className="bi bi-copy me-1"></i>
+						Templates
+					</a>
+					<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary ms-2">
+						<i className="bi bi-journal-text me-1"></i>
+						Docs
+					</a>
+					<button className="btn btn-outline-secondary logout_button ms-2 me-2" onClick={handleLogout}>
+						<i className="bi bi-box-arrow-right me-1"></i>
 						Logout
 					</button>
 				</div>
