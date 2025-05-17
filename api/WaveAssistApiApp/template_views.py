@@ -7,6 +7,7 @@ from .models import *
 from .Utils.responseParser import ResponseParser
 from .Utils.projectSetup import *
 from .Utils.constants import *
+from .Utils.utils import run_knock_workflow
 import base64
 
 
@@ -40,6 +41,15 @@ def deploy_template(request):
     created_nodes = create_nodes_from_yaml(project_object, nodes, file_map)
     link_node_dependencies(yaml_config, created_nodes)
     configure_variables(uid, project_key, yaml_config)
+
+    try:
+        data = {
+            'template_name': 'gitzoid',
+            'project_key': str(project_key),
+        }
+        run_knock_workflow(str(uid), 'template', data)
+    except:
+        pass
 
     return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
 

@@ -163,7 +163,7 @@ def deploy_project(request): ##TCW
             'version_code': version,
             'deployment_key': deployment_object.key,
         }
-        utils.run_knock_workflow(user_object.uid, 'deployed', knock_data)
+        utils.run_knock_workflow(str(user_object.uid), 'deployed', knock_data)
     except:
         pass
 
