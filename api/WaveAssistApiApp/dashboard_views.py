@@ -14,6 +14,7 @@ from kombu.serialization import dumps
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 import datetime
 from django.contrib.auth.hashers import check_password
+from django.core.cache import cache
 
 
 import requests
@@ -97,3 +98,39 @@ def get_firebase_uid(firebase_token):
     if not firebase_uid:
         raise Exception('Firebase UID not found in the decoded token')
     return firebase_uid, decoded_token
+
+
+def cli_login(request):
+    try:
+        data = json.loads(request.body.decode())
+        session_id = data.get("session_id")
+        firebase_token = data.get("id_token")  # sent from frontend
+
+        if not session_id or not firebase_token:
+            return ResponseParser.getParsedSuccessMessage({}, 400, "Missing session_id or id_token")
+
+        firebase_uid, _ = get_firebase_uid(firebase_token)
+        try:
+            user_object = User.objects.get(firebase_uid=firebase_uid)
+        except User.DoesNotExist:
+            return ResponseParser.getParsedSuccessMessage({}, 404, "User not found")
+
+        # You can use your real API token logic here
+        payload = {
+            "uid": user_object.uid
+        }
+
+        # Store in cache for CLI polling to pick up
+        cache.set(f"cli_login_session:{session_id}", payload, timeout=300)
+
+        return ResponseParser.getParsedSuccessMessage(payload, 200, "CLI login success")
+
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage("Internal error: {str(e)}", 500)
+
+
+def cli_login_status(request, session_id):
+    data = cache.get(f"cli_login_session:{session_id}")
+    if data:
+        return ResponseParser.getParsedSuccessMessage(data,200, "CLI login status success")
+    return ResponseParser.getParsedErrorMessage("Not yet authenticated", 404)

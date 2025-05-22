@@ -27,7 +27,8 @@ urlpatterns = [
     ##Dashboard URL's
     path("", csrf_exempt(dashboard_views.index), name="index"),
     path("login/", csrf_exempt(dashboard_views.login), name="login"),
-
+    path("cli_login/", csrf_exempt(dashboard_views.cli_login), name="cli_login"),
+    path("cli_login/session/<str:session_id>/status", csrf_exempt(dashboard_views.cli_login_status), name="cli_login_status_view"),
 
     ##Manage URL's
     path("manage/get_started/", csrf_exempt(manage_views.get_started), name="get_started"),
