@@ -199,12 +199,12 @@ def install_package(request):
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Package installation started successfully')
 
 def code_to_run_upgrade_package(package_to_install):
-    code_to_run = '''
+    code_to_run = f'''
 def run_task():
     import subprocess
     import sys
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", " ''' + package_to_install + ''' "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "{package_to_install}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
         return False

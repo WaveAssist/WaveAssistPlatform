@@ -15,6 +15,9 @@ from django_celery_beat.models import PeriodicTask, IntervalSchedule
 import datetime
 from django.contrib.auth.hashers import check_password
 from django.core.cache import cache
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 import requests

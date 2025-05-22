@@ -79,7 +79,7 @@ urlpatterns = [
 
     ##Template URL's
     path("template/deploy_template/", csrf_exempt(template_views.deploy_template), name="deploy_template"),
-
+    path("templates/<slug:slug>/", csrf_exempt(template_views.get_template), name="get_template"),
 
     ##Worker URL's
     path("fetch_config/", csrf_exempt(worker_views.fetch_config), name="fetch_config"),

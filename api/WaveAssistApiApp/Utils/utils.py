@@ -19,7 +19,8 @@ logger = Logger()
 import json
 import threading
 import requests
-
+from knockapi import Knock
+knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.db.models.functions import Lower
 
 import json
@@ -44,6 +45,17 @@ def get_param(request, key: str, default=''):
     except (ValueError, json.JSONDecodeError):
         return default
 
+
+def run_knock_workflow(uid:str, workflow_key, data=None):
+    try:
+        knock_client.workflows.trigger(
+            key=workflow_key,
+            recipients=[uid],
+            actor=uid,
+            data=data
+        )
+    except Exception as e:
+        print("Error in run_knock_start_workflow:", str(e))
 
 
 def send_alert_email():
@@ -206,27 +218,71 @@ def get_data_and_dependencies_for_dag(project_object, node_array):
         dependency_dict[node_object.node_key] = [node.node_key for node in node_object.run_after_nodes_array.all()]
     return data_dict, dependency_dict
 
+
+from graphviz import Digraph
+from io import BytesIO
+
 def generate_dag_visualization(dag_dict):
     dot = Digraph(comment='DAGs Visualization')
 
-    # Define a consistent color palette
-    base_color = "#428d4f"
+    # Global attributes
+    dot.attr(
+        bgcolor="#1F2732",
+        rankdir="LR",
+        fontname="Open Sans Semibold",  # semibold/bold style
+        nodesep="0.8",     # reduced spacing between nodes
+        ranksep="1.0",     # reduced spacing between ranks
+        margin="0.4"
+    )
+
+    # Node appearance
+    node_style = {
+        "style": "filled,rounded",
+        "fillcolor": "#408558",
+        "fontcolor": "#ffffff",
+        "color": "#408558",
+        "fontname": "Open Sans Semibold",
+        "shape": "box",
+        "fontsize": "14",
+        "width": "1.5",
+        "height": "0.6",
+        "penwidth": "1.5"
+    }
+
+    # Edge style (thicker arrows)
+    edge_style = {
+        "color": "#408558",
+        "fontname": "Open Sans Semibold",
+        "penwidth": "2.0"  # increased arrow thickness
+    }
 
     for i, (start_node, node_list) in enumerate(dag_dict.items()):
         with dot.subgraph(name=f'cluster_{start_node.node_key}') as subgraph:
-            subgraph.attr(color=base_color, fontname="Open Sans")
-            subgraph.node(start_node.node_key, color=base_color, shape="box", style="rounded")
+            subgraph.attr(
+                style="rounded",
+                color="#408558",
+                fontname="Open Sans Semibold",
+                margin="20"
+            )
 
-            # Create nodes and edges
+            subgraph.node(
+                start_node.node_key,
+                label=start_node.name,
+                **node_style
+            )
+
             for node in node_list:
-                subgraph.node(node.node_key, color=base_color, shape="box", style="rounded", fontname="Open Sans")
+                subgraph.node(
+                    node.node_key,
+                    label=node.name,
+                    **node_style
+                )
                 for dep in node.run_after_nodes_array.all():
-                    subgraph.edge(dep.node_key, node.node_key, color=base_color, fontname="Open Sans")
+                    subgraph.edge(dep.node_key, node.node_key, **edge_style)
 
-    # Render the graph to a PNG in memory
     image_stream = BytesIO()
     image_stream.write(dot.pipe(format='png'))
-    image_stream.seek(0)  # Reset the stream position to the beginning
+    image_stream.seek(0)
     return image_stream
 
 
@@ -440,8 +496,8 @@ def get_task_definition(uid):
         "requiresCompatibilities": [
             "FARGATE"
         ],
-        "cpu": "512",
-        "memory": "2048",
+        "cpu": "256",
+        "memory": "1024",
         "runtimePlatform": {
             "cpuArchitecture": "X86_64",
             "operatingSystemFamily": "LINUX"
