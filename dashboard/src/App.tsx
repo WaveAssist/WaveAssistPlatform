@@ -21,6 +21,8 @@ import DeploymentsComponent from "./components/project/deployments_component";
 import LogsComponent from "./components/project/logs_component";
 import DeployComponent from "./components/deploy_component";
 import { useEffect } from "react";
+import ReactGA from "react-ga4";
+ReactGA.initialize("G-RHQ9VZRVXH");
 
 declare global {
 	interface Window {

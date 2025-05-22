@@ -6,7 +6,7 @@ import { auth, googleProvider, xProvider } from "../components/firebase";
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { loginAPI, getStartedAPI } from "../services/login_services";
 import { Spinner } from "react-bootstrap";
-
+import ReactGA from "react-ga4";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 
@@ -44,6 +44,10 @@ const LoginComponent: React.FC = () => {
 			localStorage.setItem("firebase_uid", firebase_token);
 			const data = await loginAPI(firebase_token);
 			setLoading(false);
+			// ✅ Fire GA4 sign_up event
+			ReactGA.event("login", {
+				method: "WaveAssist",
+			});
 
 			if (data.action === "PERFORM_GET_STARTED" || is_test) {
 				handleShow();
@@ -78,6 +82,11 @@ const LoginComponent: React.FC = () => {
 			localStorage.setItem("user_data", JSON.stringify(data.user_data));
 			localStorage.setItem("project_array", JSON.stringify(data.project_array));
 			localStorage.setItem("uid", data.user_data.uid);
+
+			// ✅ Fire GA4 sign_up event
+			ReactGA.event("sign_up", {
+				method: "WaveAssist",
+			});
 
 			setLoading(false);
 			setLoaderMessage("");
