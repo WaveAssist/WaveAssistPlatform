@@ -84,7 +84,7 @@ const LoginComponent: React.FC = () => {
 			localStorage.setItem("uid", data.user_data.uid);
 
 			// ✅ Fire GA4 sign_up event
-			ReactGA.event("sign_up", {
+			ReactGA.event("account_created", {
 				method: "WaveAssist",
 			});
 
