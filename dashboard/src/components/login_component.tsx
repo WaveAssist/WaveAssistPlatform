@@ -87,6 +87,9 @@ const LoginComponent: React.FC = () => {
 			ReactGA.event("account_created", {
 				method: "WaveAssist",
 			});
+			ReactGA.event("conversion_event_purchase", {
+				method: "WaveAssist",
+			});
 
 			setLoading(false);
 			setLoaderMessage("");
