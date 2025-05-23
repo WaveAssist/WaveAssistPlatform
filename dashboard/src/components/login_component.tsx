@@ -16,6 +16,10 @@ const LoginComponent: React.FC = () => {
 	const searchParams = new URLSearchParams(location.search);
 	const redirect = searchParams.get("redirect") || "/manage";
 
+	const session_id = searchParams.get("session_id");
+	const isCLILogin = !!session_id;
+	const [cliLoginComplete, setCliLoginComplete] = useState(false);
+
 	const [showGetStarted, setShowGetStarted] = useState(false);
 	const handleClose = () => setShowGetStarted(false);
 	const handleShow = () => setShowGetStarted(true);
@@ -24,6 +28,7 @@ const LoginComponent: React.FC = () => {
 	const is_test = false; // ALWAYS KEEP as FALSE
 
 	useEffect(() => {
+		if (isCLILogin) return; // skip redirect if CLI login
 		const uid = localStorage.getItem("uid");
 		if (uid) {
 			const storedRedirect = localStorage.getItem("postLoginRedirect");
@@ -34,7 +39,7 @@ const LoginComponent: React.FC = () => {
 				navigate(redirect);
 			}
 		}
-	}, [navigate, redirect]);
+	}, [navigate, redirect, isCLILogin]);
 
 	const handleSuccessfulSignIn = async (user: any) => {
 		try {
@@ -42,6 +47,20 @@ const LoginComponent: React.FC = () => {
 			localStorage.setItem("user_data", JSON.stringify(user));
 			var firebase_token = user.accessToken;
 			localStorage.setItem("firebase_uid", firebase_token);
+			
+			// ✅ CLI login handling
+			if (isCLILogin && session_id) {
+				await fetch("https://api.waveassist.io/cli_login/", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ session_id, id_token: firebase_token }),
+				});
+				setLoading(false);
+				setCliLoginComplete(true); // ✅ show message only after success
+				return;
+			}
+
+			// 🌐 Standard login API flow
 			const data = await loginAPI(firebase_token);
 			setLoading(false);
 			// ✅ Fire GA4 sign_up event
@@ -182,6 +201,12 @@ const LoginComponent: React.FC = () => {
 					</button>
 				</div>
 			</div>
+
+			{cliLoginComplete && (
+				<div className="text-center mt-4">
+					<p className="text-success">✅ You may now return to your terminal.</p>
+				</div>
+			)}
 
 			<Modal show={showGetStarted} onHide={handleClose}>
 				<Modal.Header closeButton>
