@@ -14,7 +14,8 @@ from graphviz import Digraph
 from io import BytesIO
 import requests
 from datetime import datetime
-##Packages
+import zipfile
+
 logger = Logger()
 import json
 import threading
@@ -112,18 +113,46 @@ def does_user_have_access_to_data_run(user_object, data_run_object, access_type 
 def resize_image(file, max_dimension=800):
     return file
 
-def upload_file_to_s3(file, s3_file_name, is_public=0):
+
+def upload_file_to_s3(file, s3_file_name=None, is_public=0):
     try:
         s3 = boto3.client('s3', aws_access_key_id=AWSS3_ACCESS_KEY_VALUE, aws_secret_access_key=AWSS3_SECRET_KEY_VALUE)
-        if is_public == 1:
-            ##Add /public/ to the file name
-            s3_file_name = "public/" + s3_file_name
+        bucket = 'waveassist-bundles' if is_public == 0 else 'waveassistapps'
+        if is_public:
+            s3_file_name = f"public/{s3_file_name}"
 
-        s3.upload_fileobj(file, 'waveassistapps', s3_file_name)
+        # Detect if file is a path or file object
+        if isinstance(file, str) and os.path.isfile(file):
+            s3.upload_file(file, bucket, s3_file_name)
+        else:
+            s3.upload_fileobj(file, bucket, s3_file_name)
+
         return True, s3_file_name
+
     except Exception as e:
-        print("Error in upload_file_to_s3:" + str(e))
+        print("❌ Error in upload_file_to_s3:", str(e))
         return False, None
+
+
+def zip_directory(source_dir, output_path):
+    with zipfile.ZipFile(output_path, "w") as bundle:
+        for root, _, files in os.walk(source_dir):
+            for file in files:
+                abs_path = os.path.join(root, file)
+                rel_path = os.path.relpath(abs_path, source_dir)
+                bundle.write(abs_path, rel_path)
+
+
+def user_has_project_access(user, project_id):
+    try:
+        project = Project.objects.get(project_key=project_id)
+        if project.accessprovided_set.filter(user_object=user).exists():
+            return project
+    except Project.DoesNotExist:
+        pass
+    return None
+
+
 def get_connected_subgraph_set(start_node, all_nodes):
     visited_nodes = set()
 
