@@ -140,25 +140,43 @@ const NodesComponent: React.FC = () => {
 		setUrl(url);
 		setIsOpen(true);
 	};
+
 	const handleDownloadCode = () => {
 		const zip = new JSZip();
-
-		// Assuming nodeArray is an array of nodes and each node has a python_code property
-		nodesArray.forEach((node, _) => {
+		const config: any = {
+			project_key: localStorage.getItem("selected_project_key") || "unknown_project",
+			nodes: [],
+		};
+	
+		nodesArray.forEach((node) => {
 			if (node.python_code) {
-				zip.file(`${node.node_key}.py`, node.python_code);
+				const safeFilename = `${node.node_key.replace(/\s+/g, "_")}.py`;
+				zip.file(safeFilename, node.python_code);
+				config.nodes.push({
+					file: safeFilename,
+					name: node.name,
+				});
 			}
 		});
-		// Generate the ZIP file and trigger the download
+	
+		const yamlContent = `project_key: ${config.project_key}
+nodes:
+${config.nodes
+	.map((n: any) => `  - file: ${n.file}\n    name: ${n.name}`)
+	.join("\n")}`;
+
+		zip.file("config.yaml", yamlContent);
+	
 		zip
 			.generateAsync({ type: "blob" })
 			.then((content) => {
-				saveAs(content, "WaveAssistCode.zip");
+				saveAs(content, `WaveAssistCode_${config.project_key}.zip`);
 			})
 			.catch((err) => {
 				console.error("Error generating zip file:", err);
 			});
 	};
+	
 
 	const handleCloseNodeEditor = () => {
 		setSelectedNodeKey("");
