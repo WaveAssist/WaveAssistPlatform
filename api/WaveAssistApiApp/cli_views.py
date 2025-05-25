@@ -11,6 +11,7 @@ from .Utils.constants import AWSS3_ACCESS_KEY_VALUE, AWSS3_SECRET_KEY_VALUE
 from .Utils.responseParser import ResponseParser
 from .Utils.utils import upload_file_to_s3, zip_directory, user_has_project_access
 
+from django.http import JsonResponse
 
 # ---------- Utility Functions ----------
 def get_user_from_token(request):
@@ -23,39 +24,34 @@ def get_user_from_token(request):
 def write_node_files(project, base_dir):
     node_configs = []
     for node in Nodes.objects.filter(project_object=project):
-        file_name = f"{node.name}.py"
+        file_name = f"{node.node_key}.py"
         path = os.path.join(base_dir, file_name)
         with open(path, "w") as f:
             f.write(node.python_code)
-        node_configs.append({"id": node.node_key,
+        node_configs.append(
+            {"key": node.node_key,
                              "name": node.name,
-                             "entrypoint": file_name,
-                             "starting_node": node.is_starting_node,
-                                "schedule": {
-                                    "type": node.schedule_type,
-                                    "cron": node.crontab_schedule,
-                                    "interval": node.interval_schedule
-                                }})
+                             "file_name": file_name,
+            }
+        )
 
     return node_configs
 
 def create_config_yaml(project_id, node_configs, base_dir):
     config = {"project_key": project_id, "nodes": node_configs}
     with open(os.path.join(base_dir, "config.yaml"), "w") as f:
-        yaml.dump(config, f)
-
-
+        yaml.dump(config, f, default_flow_style=False)
 
 # ---------- Views ----------
 
 def pull_bundle(request, project_id):
     user = get_user_from_token(request)
     if not user:
-        return ResponseParser.getParsedErrorMessage("User not found")
+        return JsonResponse({"error": "Unauthorized"}, status=401)
 
     project = user_has_project_access(user, project_id)
     if not project:
-        return ResponseParser.getParsedSuccessMessage({}, 403, "Unauthorized access to project")
+        return JsonResponse({"error": "Unauthorized"}, status=401)
 
     base_dir = os.path.join(tempfile.gettempdir(), "waveassist", user.uid, project_id)
     os.makedirs(base_dir, exist_ok=True)
@@ -80,18 +76,18 @@ def pull_bundle(request, project_id):
 @csrf_exempt
 def push_bundle(request, project_id):
     if request.method != "POST":
-        return ResponseParser.getParsedSuccessMessage({}, 405, "Method not allowed")
+        return JsonResponse({"error": "Unauthorized"}, status=401)
 
     user = get_user_from_token(request)
     if not user:
-        return ResponseParser.getParsedErrorMessage("User not found")
+        return JsonResponse({"error": "Unauthorized"}, status=401)
 
     project = user_has_project_access(user, project_id)
     if not project:
-        return ResponseParser.getParsedSuccessMessage({}, 403, "Unauthorized access to project")
+        return JsonResponse({"error": "Unauthorized"}, status=401)
 
     if "bundle" not in request.FILES:
-        return ResponseParser.getParsedSuccessMessage({}, 400, "No bundle file provided")
+        return JsonResponse({"error": "No Bundle Found"}, status=401)
 
     bundle = request.FILES["bundle"]
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -105,26 +101,24 @@ def push_bundle(request, project_id):
 
         config_path = os.path.join(tmpdir, "config.yaml")
         if not os.path.exists(config_path):
-            return ResponseParser.getParsedSuccessMessage({}, 400, "Missing config.yaml in bundle")
+            return JsonResponse({"error": "No YAML file found!"}, status=401)
 
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
 
         for node in config.get("nodes", []):
             name = node.get("name")
-            file_name = node.get("file")
-            if not name or not file_name:
+            file_name = node.get("file_name")
+            key = node.get("key")
+            if not key or not file_name:
                 continue
-
             code_path = os.path.join(tmpdir, file_name)
             if not os.path.exists(code_path):
                 continue
-
             with open(code_path, "r") as f:
                 code = f.read()
-
             try:
-                node_obj = Nodes.objects.get(name=name, project_object=project)
+                node_obj = Nodes.objects.get(node_key=key, project_object=project)
                 node_obj.python_code = code
                 node_obj.save()
             except Nodes.DoesNotExist:
