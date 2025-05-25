@@ -24,8 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'REMOVED_CREDENTIAL'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
-
+DEBUG = False
 IS_DOCKER=True
 
 ALLOWED_HOSTS = ['wavepredictbackend.us-east-1.elasticbeanstalk.com','*','api.wavepredict.com', 'https://app.waveassist.io', 'https://api.waveassist.io']
