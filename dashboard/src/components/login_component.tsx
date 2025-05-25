@@ -47,21 +47,9 @@ const LoginComponent: React.FC = () => {
 			localStorage.setItem("user_data", JSON.stringify(user));
 			var firebase_token = user.accessToken;
 			localStorage.setItem("firebase_uid", firebase_token);
-			
-			// ✅ CLI login handling
-			if (isCLILogin && session_id) {
-				await fetch("https://api.waveassist.io/cli_login/", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ session_id, id_token: firebase_token }),
-				});
-				setLoading(false);
-				setCliLoginComplete(true); // ✅ show message only after success
-				return;
-			}
 
 			// 🌐 Standard login API flow
-			const data = await loginAPI(firebase_token);
+			const data = await loginAPI(firebase_token, session_id);
 			setLoading(false);
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("login", {
@@ -76,6 +64,10 @@ const LoginComponent: React.FC = () => {
 				localStorage.setItem("project_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
 				const storedRedirect = localStorage.getItem("postLoginRedirect");
+				if (isCLILogin) {
+					setCliLoginComplete(true);
+					return;
+				}
 				if (storedRedirect) {
 					localStorage.removeItem("postLoginRedirect");
 					navigate(storedRedirect);
@@ -97,7 +89,7 @@ const LoginComponent: React.FC = () => {
 			handleClose();
 
 			const firebase_uid = localStorage.getItem("firebase_uid");
-			const data = await getStartedAPI(firebase_uid, is_test);
+			const data = await getStartedAPI(firebase_uid, is_test, session_id);
 			localStorage.setItem("user_data", JSON.stringify(data.user_data));
 			localStorage.setItem("project_array", JSON.stringify(data.project_array));
 			localStorage.setItem("uid", data.user_data.uid);
@@ -114,6 +106,11 @@ const LoginComponent: React.FC = () => {
 			setLoaderMessage("");
 			const storedRedirect = localStorage.getItem("postLoginRedirect");
 			console.log("Stored Redirect:", storedRedirect);
+			// If CLI login, just set the flag and return
+			if (isCLILogin) {
+				setCliLoginComplete(true);
+				return;
+			}
 			if (storedRedirect) {
 				localStorage.removeItem("postLoginRedirect");
 				navigate(storedRedirect);
@@ -179,6 +176,7 @@ const LoginComponent: React.FC = () => {
 				<div className="col text-center mb-3" style={{ marginTop: "-20vh" }}>
 					<img src={WALogo} alt="WavePredict Logo" className="img-fluid mb-4 wp_logo_login" />
 					<h2 className="title-message">WaveAssist Management Console</h2>
+					<p className="title-message">This login flow was initiated from the CLI — complete it here to continue.</p>
 				</div>
 			</div>
 
@@ -204,7 +202,7 @@ const LoginComponent: React.FC = () => {
 
 			{cliLoginComplete && (
 				<div className="text-center mt-4">
-					<p className="text-success">✅ You may now return to your terminal.</p>
+					<p className="text-success">✅ Login Successful! You may now return to your terminal.</p>
 				</div>
 			)}
 
