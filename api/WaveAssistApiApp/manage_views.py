@@ -13,6 +13,7 @@ from WaveAssistApiApp.Utils.MongoManager import MongoManager
 from WaveAssistApiApp.data_views import set_data_for_key
 from WaveAssistApiApp.dashboard_views import get_firebase_uid
 import WaveAssistApiApp.Utils.AWSManager as aws_manager
+from WaveAssistApiApp.dashboard_views import handle_cli_session
 from knockapi import Knock
 knock_client = Knock(api_key=PROD_KNOCK_KEY)
 
@@ -105,6 +106,7 @@ def get_started(request): #TCW
     user_dict['mongo_db_url'] = account_object.mongo_db_url
     output_dict = {'user_data': user_dict, 'account': account_dict,'project_array':[]}
     utils.run_knock_workflow(str(user_object.uid), 'welcome')
+    handle_cli_session(request, user_dict)
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'User and Account created successfully.')
 
 

@@ -1,25 +1,8 @@
-import json
-
-from django.shortcuts import render
 from .models import *
 from .Utils.responseParser import ResponseParser
 from WaveAssistApiApp.Utils.MongoManager import MongoManager
-# Create your views here.
-import pandas as pd
-from io import StringIO as StringIO
 from .Utils.constants import *
-from WaveAssistApi.celery import app
-from celery import chain, group
-from kombu.serialization import dumps
-from django_celery_beat.models import PeriodicTask, IntervalSchedule
-import datetime
-from django.contrib.auth.hashers import check_password
 from django.core.cache import cache
-import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
-
 import requests
 requests.get('https://www.googleapis.com', verify=False)
 
@@ -84,7 +67,25 @@ def login(request): ##TCW
     user_data = user_object.get_dict()
     user_data['mongo_db_url'] = account_object.mongo_db_url
     output_dictionary['user_data'] = user_data
+
+
+    ##CLI Handling.
+    handle_cli_session(request,user_data)
+
     return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
+
+
+
+
+def handle_cli_session(request, user_data):
+    try:
+        session_id = request.POST.get('session_id', '')
+        if session_id:
+            uid = str(user_data.get('uid', ''))
+            cache.set(f"cli_login_session:{session_id}", uid, timeout=300)
+    except Exception as e:
+        print("Error handling CLI session:" + str(e))
+    return
 
 
 def get_firebase_uid(firebase_token):
@@ -101,35 +102,6 @@ def get_firebase_uid(firebase_token):
     if not firebase_uid:
         raise Exception('Firebase UID not found in the decoded token')
     return firebase_uid, decoded_token
-
-
-def cli_login(request):
-    try:
-        data = json.loads(request.body.decode())
-        session_id = data.get("session_id")
-        firebase_token = data.get("id_token")  # sent from frontend
-
-        if not session_id or not firebase_token:
-            return ResponseParser.getParsedSuccessMessage({}, 400, "Missing session_id or id_token")
-
-        firebase_uid, _ = get_firebase_uid(firebase_token)
-        try:
-            user_object = User.objects.get(firebase_uid=firebase_uid)
-        except User.DoesNotExist:
-            return ResponseParser.getParsedSuccessMessage({}, 404, "User not found")
-
-        # You can use your real API token logic here
-        payload = {
-            "uid": user_object.uid
-        }
-
-        # Store in cache for CLI polling to pick up
-        cache.set(f"cli_login_session:{session_id}", payload, timeout=300)
-
-        return ResponseParser.getParsedSuccessMessage(payload, 200, "CLI login success")
-
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage("Internal error: {str(e)}", 500)
 
 
 def cli_login_status(request, session_id):
