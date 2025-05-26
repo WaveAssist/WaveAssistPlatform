@@ -16,6 +16,11 @@ import WaveAssistApiApp.Utils.AWSManager as aws_manager
 from WaveAssistApiApp.dashboard_views import handle_cli_session
 from knockapi import Knock
 knock_client = Knock(api_key=PROD_KNOCK_KEY)
+from django.test import Client
+import json
+from WaveAssistApiApp.Utils.responseParser import ResponseParser
+
+client = Client()
 
 
 def get_started(request): #TCW
@@ -171,6 +176,11 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
     except:
         return ResponseParser.getParsedErrorMessage('User not found')
 
+    try:
+        account_object = Account.objects.get(account_uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('Account not found')
+
     if not user_object.can_create_projects:
         return ResponseParser.getParsedErrorMessage('You do not have access to create projects.')
 
@@ -227,6 +237,29 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
         ##Same for test
         data_run_access_object_test = AccessProvided.objects.create(type=1, data_run_object=data_run_test_object, user_object = user_object, data_run_access_type=ADMIN_GTE)
         data_run_access_object_test.save()
+
+        # add two key value pair in the variables
+        variables = [
+            {"name": "uid", "value": str(uid)},
+            {"name": "mongo_url", "value": str(account_object.mongo_db_url)},  # or actual URL if available
+        ]
+        for env_key in [data_run_key, data_run_key_test]:
+            for variable in variables:
+                var_name = variable["name"]
+                var_value = variable["value"]
+                try:
+                    payload = {
+                        'uid': uid,
+                        'project_key': project_key,
+                        'data_run_key': env_key,
+                        'data': var_value,
+                        'data_key': var_name,
+                        'data_type': 'string',
+                    }
+                    response = client.post('/data/set_data_for_key/', data=json.dumps(payload),
+                                           content_type='application/json')
+                except Exception as e:
+                    pass
 
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project access creation failed: ' + str(e))

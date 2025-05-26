@@ -1,17 +1,17 @@
 import json
 import uuid
-
 from django.shortcuts import render
-
-from .models import *
 from .Utils.responseParser import ResponseParser
+from .models import *
 from .Utils.projectSetup import *
 from .Utils.constants import *
 from .Utils.utils import run_knock_workflow
 import base64
+from WaveAssistApiApp import manage_views
 
 
 def deploy_template(request):
+    request.POST = request.POST.copy()
     uid = request.POST.get('uid', '')
     try:
         user_object = User.objects.get(uid=uid)
@@ -33,7 +33,16 @@ def deploy_template(request):
 
     nodes = yaml_config.get("nodes", [])
 
-    project_object = create_project_object(project_key, project_name, user_object)
+
+    request.POST['project_key'] = project_key
+    request.POST['project_name'] = project_name
+    create_project_response = manage_views.create_project(request)
+    response_data = json.loads(create_project_response.content)
+
+    if response_data.get("success") == "1":
+        project_key = response_data["data"]["project_key"]
+        project_object = Project.objects.get(project_key=project_key)
+
     install_requirements_from_yaml(request, yaml_config, project_key)
     node_files = get_nodes_from_github(repo_name)
     file_map = {n["node_name"]: n["content"] for n in node_files}
@@ -44,7 +53,7 @@ def deploy_template(request):
 
     try:
         data = {
-            'template_name': 'gitzoid',
+            'template_name': str(project_name.lower()),
             'project_key': str(project_key),
         }
         run_knock_workflow(str(uid), 'template', data)
