@@ -131,15 +131,24 @@ def fetch_installed_packages(request):
     if packages_array is None:
         return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
 
+    # STEP 1: Get base package names
+    base_packages = utils.get_base_package_names()
+
+    # STEP 2: Filter out base packages
+    filtered_packages = [
+        pkg for pkg in packages_array
+        if pkg["package_name"].lower() not in base_packages
+    ]
+
     try:
         account_object = Account.objects.get(account_uid=request.POST.get('uid'))
-        account_object.pip_requirements_array_json = json.dumps(packages_array)
+        account_object.pip_requirements_array_json = json.dumps(filtered_packages)
         account_object.save()
     except:
         return ResponseParser.getParsedErrorMessage('Account not found or not authorized')
 
     output_dict = {
-        'packages_array': packages_array
+        'packages_array': filtered_packages
     }
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Packages fetched successfully')
 
