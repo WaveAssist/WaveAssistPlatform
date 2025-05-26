@@ -536,7 +536,7 @@ def get_task_definition(uid):
 
 
 def get_base_package_names():
-    with open("base_requirements.txt", "r") as f:
+    with open("ignore_requirements.txt", "r") as f:
         lines = f.readlines()
     base_packages = set()
     for line in lines:
