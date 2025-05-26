@@ -21,11 +21,6 @@
     flex-direction: column;
 }
 
-.grid-container {
-    flex-grow: 1;
-    width: 100%;
-}
-
 
 .badge-primary {
     background-color: #428d4f;
@@ -98,5 +93,6 @@
 .grid-container {
   flex: 1; /* Makes each grid take equal width */
   min-width: 45%; /* Prevents shrinking too much */
-  height: 90vh; /* Adjust based on requirement */
+  width: 100%; /* Ensures full width in smaller screens */
+  height: 100%; /* Ensures full height in smaller screens */
 }

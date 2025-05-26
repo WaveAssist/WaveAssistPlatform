@@ -153,8 +153,9 @@ const NodesComponent: React.FC = () => {
 				const safeFilename = `${node.node_key.replace(/\s+/g, "_")}.py`;
 				zip.file(safeFilename, node.python_code);
 				config.nodes.push({
-					file: safeFilename,
+					key: node.node_key,
 					name: node.name,
+					file_name: safeFilename,
 				});
 			}
 		});
