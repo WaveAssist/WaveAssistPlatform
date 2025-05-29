@@ -201,8 +201,7 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
 
     ##Check if project_key already exists
     try:
-        project_count = Project.objects.filter(project_key=project_key).count()
-        if project_count > 0: ##Project key already exists
+        if AccessProvided.objects.filter(project_object__project_key=project_key, user_object=user_object).exists():
             return ResponseParser.getParsedErrorMessage('Project key already exists.')
     except:
         pass
