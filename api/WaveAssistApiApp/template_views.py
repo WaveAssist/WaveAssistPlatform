@@ -30,7 +30,6 @@ def deploy_template(request):
 
     project_name = yaml_config.get("name", "")
     project_key = f"{project_name.lower()}_{uuid.uuid4().hex[:4]}"
-
     nodes = yaml_config.get("nodes", [])
 
 
@@ -38,18 +37,21 @@ def deploy_template(request):
     request.POST['project_name'] = project_name
     create_project_response = manage_views.create_project(request)
     response_data = json.loads(create_project_response.content)
+    
+    try:
+        if response_data.get("success") == "1":
+            project_key = response_data["data"]["project_key"]
+            project_object = Project.objects.get(project_key=project_key)
 
-    if response_data.get("success") == "1":
-        project_key = response_data["data"]["project_key"]
-        project_object = Project.objects.get(project_key=project_key)
+        install_requirements_from_yaml(request, yaml_config, project_key)
+        node_files = get_nodes_from_github(repo_name)
+        file_map = {n["node_name"]: n["content"] for n in node_files}
 
-    install_requirements_from_yaml(request, yaml_config, project_key)
-    node_files = get_nodes_from_github(repo_name)
-    file_map = {n["node_name"]: n["content"] for n in node_files}
-
-    created_nodes = create_nodes_from_yaml(project_object, nodes, file_map)
-    link_node_dependencies(yaml_config, created_nodes)
-    configure_variables(uid, project_key, yaml_config)
+        created_nodes = create_nodes_from_yaml(project_object, nodes, file_map)
+        link_node_dependencies(yaml_config, created_nodes)
+        configure_variables(uid, project_key, yaml_config)
+    except:
+        return ResponseParser.getParsedErrorMessage("Project was not created")
 
     try:
         data = {
