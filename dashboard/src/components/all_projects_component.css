@@ -127,3 +127,7 @@
   background-color: #428d4f !important;
   border-color: #428d4f !important;
 }
+
+.ag-cell {
+  user-select: text !important;
+}

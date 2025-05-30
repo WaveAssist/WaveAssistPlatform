@@ -147,7 +147,7 @@ const NodesComponent: React.FC = () => {
 			project_key: localStorage.getItem("selected_project_key") || "unknown_project",
 			nodes: [],
 		};
-	
+
 		nodesArray.forEach((node) => {
 			if (node.python_code) {
 				const safeFilename = `${node.node_key.replace(/\s+/g, "_")}.py`;
@@ -159,15 +159,13 @@ const NodesComponent: React.FC = () => {
 				});
 			}
 		});
-	
+
 		const yamlContent = `project_key: ${config.project_key}
 nodes:
-${config.nodes
-	.map((n: any) => `  - file: ${n.file}\n    name: ${n.name}`)
-	.join("\n")}`;
+${config.nodes.map((n: any) => `  - file: ${n.file}\n    name: ${n.name}`).join("\n")}`;
 
 		zip.file("config.yaml", yamlContent);
-	
+
 		zip
 			.generateAsync({ type: "blob" })
 			.then((content) => {
@@ -177,7 +175,6 @@ ${config.nodes
 				console.error("Error generating zip file:", err);
 			});
 	};
-	
 
 	const handleCloseNodeEditor = () => {
 		setSelectedNodeKey("");
@@ -381,14 +378,23 @@ ${config.nodes
 	};
 
 	const columnDefs = [
-		{ headerName: "Name", field: "name", flex: 1, minWidth: 150, resizable: true }, // Expands to fill space
+		{ headerName: "Name", field: "name", flex: 1, minWidth: 120, resizable: true }, // Expands to fill space
+		// node_key
+		{
+			headerName: "Node Key",
+			field: "node_key",
+			cellRenderer: (params: any) => <span className="badge badge-secondary">{params.value}</span>,
+			flex: 1,
+			minWidth: 120, // Prevents shrinking too much
+			resizable: true,
+		},
 		{
 			headerName: "Status",
 			field: "is_enabled",
 			cellRenderer: (params: any) => (
 				<span className={`badge ${params.value ? "badge-primary" : "badge-danger"}`}>{params.value ? "Enabled" : "Disabled"}</span>
 			),
-			width: 160,
+			width: 120,
 			minWidth: 120, // Prevents shrinking too much
 			resizable: true,
 		},
