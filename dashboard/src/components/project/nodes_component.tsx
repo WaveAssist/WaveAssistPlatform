@@ -162,9 +162,9 @@ const NodesComponent: React.FC = () => {
 	
 		const yamlContent = `project_key: ${config.project_key}
 nodes:
-${config.nodes
-	.map((n: any) => `  - file: ${n.file}\n    name: ${n.name}`)
-	.join("\n")}`;
+${config.nodes.map((n: any) => `  - key: ${n.key}
+    file_name: ${n.file_name}
+    name: ${n.name}`).join('\n')}`;
 
 		zip.file("config.yaml", yamlContent);
 	
