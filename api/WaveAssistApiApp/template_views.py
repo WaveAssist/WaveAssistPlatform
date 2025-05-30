@@ -117,3 +117,69 @@ def get_template(request, slug):
         return ResponseParser.getParsedErrorMessage("Invalid template format")
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Template fetched successfully.')
+
+
+
+
+
+def list_templates(request):
+    # Step 1: Authenticate with Netlify Identity
+    identity_url = "https://waveassist.io/.netlify/identity/token"
+    payload = {
+        "grant_type": "password",
+        "username": IDENTITY_USERNAME,  # Changed from "email" to "username" to match curl
+        "password": IDENTITY_PASSWORD  # Password should be securely stored/retrieved
+    }
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "*/*",
+    }
+
+    auth_resp = requests.post(identity_url, data=payload, headers=headers)
+    if auth_resp.status_code != 200:
+        return ResponseParser.getParsedErrorMessage("Failed to authenticate with Netlify Identity")
+    jwt = auth_resp.json().get("access_token")
+
+    # Step 2: List all template files via Git Gateway
+    dir_url = "https://waveassist.io/.netlify/git/github/contents/content/templates"
+    headers = {"Authorization": f"Bearer {jwt}"}
+    list_resp = requests.get(dir_url, headers=headers)
+    if list_resp.status_code != 200:
+        return ResponseParser.getParsedErrorMessage("Failed to fetch templates list")
+
+    items = list_resp.json()
+    templates = []
+
+    # Step 3: For each markdown file, fetch and parse frontmatter
+    for item in items:
+        if item.get("type") == "file" and item.get("name", "").endswith(".md"):
+            slug = item["name"][:-3]  # remove .md
+            file_url = f"https://waveassist.io/.netlify/git/github/contents/content/templates/{slug}.md"
+            file_resp = requests.get(file_url, headers=headers)
+            if file_resp.status_code != 200:
+                continue
+
+            data = file_resp.json()
+            raw = base64.b64decode(data.get("content", "")).decode("utf-8")
+            parts = raw.split('---', 2)
+            if len(parts) < 3:
+                continue
+
+            try:
+                meta = yaml.safe_load(parts[1].strip()) or {}
+            except yaml.YAMLError:
+                meta = {}
+
+            # Normalize thumbnail URL
+            if "thumbnail" in meta:
+                meta["thumbnail"] = meta["thumbnail"].replace(
+                    "/images/templates/",
+                    "https://waveassist.io/images/templates/"
+                )
+
+            meta["slug"] = slug
+            templates.append(meta)
+
+    # Step 4: Return list of template metadata
+    return ResponseParser.getParsedSuccessMessage(templates, '200', 'Templates fetched successfully.')
