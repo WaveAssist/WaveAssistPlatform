@@ -145,6 +145,7 @@ export const updateCodeApi = async (nodeKey: string, nodeCode: string): Promise<
 		uid: localStorage.getItem("uid") || "",
 		node_key: nodeKey,
 		python_code: nodeCode,
+		project_key: localStorage.getItem("selected_project_key") || "",
 	});
 	return callApi(path, body);
 };
