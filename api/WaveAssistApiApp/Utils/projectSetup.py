@@ -66,7 +66,7 @@ def link_node_dependencies(yaml_config, created_nodes):
         run_after = node_def.get("run_after", [])
         if not run_after:
             continue
-        node_object = created_nodes[node_def["id"]]
+        node_object = created_nodes[node_def["key"]]
         node_object.run_after_nodes_array.set([created_nodes[k] for k in run_after if k in created_nodes])
         node_object.save()
 
