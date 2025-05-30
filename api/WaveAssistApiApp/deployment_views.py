@@ -119,7 +119,7 @@ def deploy_project(request): ##TCW
             ##Create DAGs for the run, iterate through dag_dict
             for start_node, node_list in dag_dict.items():
                 ##Create DAG object
-                dag_key = "DAG_" + start_node.node_key + '_' + deployment_key
+                dag_key = "DAG_" + str(project_object.project_key) + "_" + start_node.node_key + '_' + deployment_key
                 dag_object = DAG.objects.create(
                     key = dag_key,
                     start_node = start_node,
@@ -246,7 +246,7 @@ def run_dag(request): ##TCW
     #### ------ Validations End -------- ####
 
     ##Create DAG object
-    dag_key = "DAG_" + start_node.node_key + '_test_run_' + data_run_object.data_run_key + '_' + str(datetime.now())
+    dag_key = "DAG_" + str(project_object.project_key) + '_' + start_node.node_key + '_test_run_' + data_run_object.data_run_key + '_' + str(datetime.now())
     dag_object = DAG.objects.create(
         key = dag_key,
         start_node = start_node,

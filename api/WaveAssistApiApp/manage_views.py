@@ -423,7 +423,7 @@ def create_node(request): ##TCW
         return ResponseParser.getParsedErrorMessage('Output data keys should belong to this project: ' + message)
 
     node_name = request.POST.get('name', '')
-    node_key = "node_" + project_object.project_key + "_" + node_name.lower().replace(' ', '_')
+    node_key = node_name.lower().replace(' ', '_')
     is_enabled = bool(int(request.POST.get('is_enabled', '0')))
 
     is_starting_node = bool(int(request.POST.get('is_starting_node', '0')))
@@ -431,6 +431,10 @@ def create_node(request): ##TCW
     success, message, interval_object, crontab_object, run_after_nodes_array = validator.validate_and_get_intervals(request, project_object)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+
+    ##Check if node_key already exists
+    if Nodes.objects.filter(node_key=node_key, project_object=project_object).exists():
+        return ResponseParser.getParsedErrorMessage('Node with this key/name already exists in this project.')
 
     try:
         with transaction.atomic():
@@ -541,7 +545,7 @@ def delete_node(request): #TWC
         return ResponseParser.getParsedErrorMessage(message)
     node_key = request.POST.get('node_key', '')
     try:
-        node_object = Nodes.objects.get(node_key=node_key)
+        node_object = Nodes.objects.get(node_key=node_key, project_object=project_object)
     except:
         return ResponseParser.getParsedErrorMessage('Node not found.')
     try:
@@ -570,20 +574,16 @@ def delete_node(request): #TWC
 def update_code(request): #TWC
     node_key = request.POST.get('node_key', '')
     python_code = request.POST.get('python_code', '')
-    try:
-        node_object = Nodes.objects.get(node_key=node_key)
-    except:
-        return ResponseParser.getParsedErrorMessage('Node not found')
-
-    project_key = node_object.project_object.project_key
-
-    request.POST = request.POST.copy()
-    request.POST['project_key'] = project_key
 
     ##Validate request
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+
+    try:
+        node_object = Nodes.objects.get(node_key=node_key, project_object = project_object)
+    except:
+        return ResponseParser.getParsedErrorMessage('Node not found')
 
     node_object.python_code = python_code
     node_object.save()

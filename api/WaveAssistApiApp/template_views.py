@@ -27,6 +27,9 @@ def deploy_template(request):
 
     repo_name = repo_url.split("/")[-1].replace(".git", "")
     yaml_config = get_config_yaml_from_github(repo_name)
+    is_valid, message =  validate_yaml_config(yaml_config)
+    if not is_valid:
+        return ResponseParser.getParsedErrorMessage("Error with yaml: " + str(message))
 
     project_name = yaml_config.get("name", "")
     project_key = f"{project_name.lower()}_{uuid.uuid4().hex[:4]}"
@@ -42,6 +45,8 @@ def deploy_template(request):
         if response_data.get("success") == "1":
             project_key = response_data["data"]["project_key"]
             project_object = Project.objects.get(project_key=project_key)
+        else:
+            return ResponseParser.getParsedErrorMessage("Project creation failed: " + response_data.get("message", "Unknown error"))
 
         install_requirements_from_yaml(request, yaml_config, project_key)
         node_files = get_nodes_from_github(repo_name)

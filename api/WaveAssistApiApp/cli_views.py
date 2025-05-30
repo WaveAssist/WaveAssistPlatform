@@ -105,7 +105,7 @@ def push_bundle(request, project_id):
 
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
-
+        ##ToDo: better error handling..
         for node in config.get("nodes", []):
             name = node.get("name")
             file_name = node.get("file_name")

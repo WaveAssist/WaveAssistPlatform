@@ -171,7 +171,7 @@ class DataKey(models.Model):
 class Project(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255, default="", null=True)
-    project_key = models.CharField(max_length=255)
+    project_key = models.CharField(max_length=255, unique=True)
     integration_array = models.ManyToManyField('Integrations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -199,7 +199,7 @@ class Project(models.Model):
 
 class DataRuns(models.Model):
     id = models.BigAutoField(primary_key=True)
-    data_run_key = models.CharField(max_length=255, null=True)
+    data_run_key = models.CharField(max_length=255, unique=True, null=True)
     name = models.CharField(max_length=255)
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
     is_enabled = models.BooleanField(default=False)

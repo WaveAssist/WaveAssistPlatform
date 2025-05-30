@@ -12,46 +12,20 @@ import json
 
 client = Client()
 
-def create_project_object(project_key, project_name, user_object):
-    project_object = Project.objects.create(project_key=project_key, name=project_name)
-
-    # Default run
-    data_run_object = DataRuns.objects.create(
-        project_object=project_object,
-        data_run_key=f"{project_key}_default",
-        name="Default",
-        is_enabled=True
-    )
-
-    # Test run
-    data_run_test_object = DataRuns.objects.create(
-        project_object=project_object,
-        data_run_key=f"{project_key}_test",
-        name="Test",
-        is_enabled=True
-    )
-
-    # Grant access
-    AccessProvided.objects.create(type=0, project_object=project_object, user_object=user_object, project_access_type=ADMIN_GTE)
-    AccessProvided.objects.create(type=1, data_run_object=data_run_object, user_object=user_object, data_run_access_type=ADMIN_GTE)
-    AccessProvided.objects.create(type=1, data_run_object=data_run_test_object, user_object=user_object, data_run_access_type=ADMIN_GTE)
-
-    return project_object
-
 
 def create_nodes_from_yaml(project_object, nodes, file_map):
     created_nodes = {}
 
     for node in nodes:
-        node_key = node["id"]
-        entrypoint = node["entrypoint"].replace(".py", "")
-        python_code = file_map.get(entrypoint, "")
+        node_key = node["key"]
+        file_name = node["file_name"].replace(".py", "")
+        python_code = file_map.get(file_name, "")
+        name = node.get("name", node_key)
         schedule_type, cron_obj, interval_obj = parse_schedule(node.get("schedule", {}))
-
         node_object = Nodes.objects.create(
             project_object=project_object,
-            node_key=f"{node_key}_{uuid.uuid4().hex[:4]}",
-            name=node["name"],
+            node_key=node_key,
+            name=name,
             python_code=python_code,
             is_starting_node=node.get("starting_node", False),
             is_enabled=True,
@@ -143,6 +117,28 @@ def get_config_yaml_from_github(repo_name, owner='WaveAssist', branch='main'):
     url = f"https://raw.githubusercontent.com/{owner}/{repo_name}/{branch}/config.yaml"
     resp = requests.get(url)
     return yaml.safe_load(resp.text)
+
+
+
+def validate_yaml_config(yaml_config):
+    ##Validate that node_keys are all unique and lower case and without spaces
+    if not isinstance(yaml_config, dict):
+        return False, "YAML config is not a valid dictionary"
+    nodes_array = yaml_config.get("nodes", [])
+    node_keys = set()
+    for node in nodes_array:
+        node_key = node.get("key")
+        if not node_key:
+            return False, "Node key is missing in one of the nodes"
+        if not isinstance(node_key, str):
+            return False, f"Node key is not a string: {node_key}"
+        node_key_expected = node_key.lower().replace(" ", "_")
+        if node_key != node_key_expected:
+            return False, f"Node key '{node_key}' is not in lower case or contains spaces. Use '{node_key_expected}' instead."
+        if node_key in node_keys:
+            return False, f"Duplicate node key found: {node_key}"
+        node_keys.add(node_key)
+    return True, "YAML config is valid"
 
 
 def configure_variables(uid, project_key, yaml_config):
