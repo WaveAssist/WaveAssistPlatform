@@ -8,7 +8,7 @@ from .Utils.constants import *
 from .Utils.utils import run_knock_workflow
 import base64
 from WaveAssistApiApp import manage_views
-
+from django.views.decorators.cache import cache_page
 
 def deploy_template(request):
     request.POST = request.POST.copy()
@@ -119,9 +119,7 @@ def get_template(request, slug):
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Template fetched successfully.')
 
 
-
-
-
+@cache_page(60 * 60)  # Cache for 1 hr
 def list_templates(request):
     # Step 1: Authenticate with Netlify Identity
     identity_url = "https://waveassist.io/.netlify/identity/token"

@@ -109,6 +109,11 @@ DATABASES = {
 
 MONGO_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING', 'REMOVED_CREDENTIAL')
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
 
 
 # Password validation
