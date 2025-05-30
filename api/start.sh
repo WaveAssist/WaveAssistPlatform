@@ -16,4 +16,5 @@ celery -A WaveAssistApi beat --loglevel=info &
 celery -A WaveAssistApi flower --port=5555 --basic_auth=admin:admin &
 
 # Start Gunicorn
-opentelemetry-instrument gunicorn --timeout 120 --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application --workers 1
+#opentelemetry-instrument gunicorn --timeout 120 --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application --workers 2
+gunicorn --timeout 120 --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application --workers 2
