@@ -186,7 +186,7 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
 
     project_key = request.POST.get('project_key', '')
     project_name = request.POST.get('project_name', '')
-    should_create_node = request.POST.get('should_create_node', 'False')
+    should_create_node = request.POST.get('should_create_node', '0')
     if project_key == '':
         return ResponseParser.getParsedErrorMessage('Project key not found.')
 
@@ -260,9 +260,9 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
                                            content_type='application/json')
                 except Exception as e:
                     pass
-        #create a default node if should_create_node is true
 
-        if should_create_node.lower() == 'true':
+        #create a default node if should_create_node is true
+        if str(should_create_node) == '1':
             node_array = [{'name':'Node1', 'is_starting_node': '1', 'is_enabled': '1'},
                           {'name':'Node2', 'is_starting_node': '0', 'is_enabled': '1',
                            'run_after_nodes_csv': 'node1'},]
