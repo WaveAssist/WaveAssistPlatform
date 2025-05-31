@@ -13,6 +13,7 @@ export const createProjectAPI = async (projectName: string, projectKey: string):
 		uid: localStorage.getItem("uid") || "",
 		project_key: projectKey,
 		project_name: projectName,
+		should_create_nodes: "1",
 	});
 	var path = "manage/create_project/";
 	return callApi(path, body);

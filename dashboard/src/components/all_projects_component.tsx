@@ -19,6 +19,7 @@ const AllProjectsComponent: React.FC = () => {
 	const [showAlert, setShowAlert] = useState(false);
 	const [projectArray, setProjectArray] = useState([]);
 	const [showModal, setShowModal] = useState(false);
+	const [isProjectKeyEdited, setIsProjectKeyEdited] = useState(false);
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const posthog = usePostHog();
@@ -43,6 +44,12 @@ const AllProjectsComponent: React.FC = () => {
 		registerPostHogUser();
 	}, []);
 
+	useEffect(() => {
+		if (!isProjectKeyEdited) {
+			const generatedKey = newProjectName.toLowerCase().replace(/\s+/g, "_");
+			setNewProjectKey(generatedKey);
+		}
+	}, [newProjectName]);
 	const registerPostHogUser = () => {
 		const uid = localStorage.getItem("uid");
 		if (!uid) return;
@@ -93,6 +100,7 @@ const AllProjectsComponent: React.FC = () => {
 		setShowAlert(false);
 		setNewProjectName("");
 		setNewProjectKey("");
+		setIsProjectKeyEdited(false);
 		setShowModal(true);
 	};
 
@@ -212,6 +220,7 @@ const AllProjectsComponent: React.FC = () => {
 				<Modal.Header closeButton>
 					<Modal.Title className="modal-title">Add New Project</Modal.Title>
 				</Modal.Header>
+
 				<Modal.Body>
 					<div className="mb-3">
 						<label htmlFor="projectNameInput" className="form-label">
@@ -234,22 +243,40 @@ const AllProjectsComponent: React.FC = () => {
 							className="form-control"
 							id="projectKeyInput"
 							value={newProjectKey}
-							onChange={(e) => setNewProjectKey(e.target.value)}
+							onChange={(e) => {
+								setNewProjectKey(e.target.value);
+								setIsProjectKeyEdited(true); // prevent auto-sync from this point
+							}}
 						/>
-						<div id="projectNameHelp" className="form-text model-text">
-							This has to be unique, lower case & without spaces
+						<div id="projectNameHelp" className="form-text" style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: "0.9rem" }}>
+							Must be lowercase and without spaces.
 						</div>
 
 						{showAlert && <Alert variant="danger">Could not create the project, try a different name.</Alert>}
 					</div>
 				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={handleCloseModal}>
-						Close
-					</Button>
-					<Button variant="primary" onClick={handleCreateProject}>
-						Create
-					</Button>
+				<Modal.Footer className="d-flex justify-content-between align-items-center">
+					<div className="text-white small mt-2">
+						<div>Want a head start?</div>
+						<Button
+							size="sm"
+							className="p-0 translucent_blue bg-transparent border-0 text-decoration-none"
+							onClick={() => window.open("https://waveassist.io/templates", "_blank")}
+							onMouseOver={(e) => e.currentTarget.classList.add("text-decoration-underline")}
+							onMouseOut={(e) => e.currentTarget.classList.remove("text-decoration-underline")}>
+							{/* <i className="bi bi-lightning-fill me-1" style={{ fontSize: "0.8rem" }}></i> */}
+							Use a template instead →
+						</Button>
+					</div>
+
+					<div className="mt-2">
+						<Button variant="secondary" onClick={handleCloseModal}>
+							Close
+						</Button>
+						<Button variant="primary" onClick={handleCreateProject} className="ms-2">
+							Create
+						</Button>
+					</div>
 				</Modal.Footer>
 			</Modal>
 			<Joyride

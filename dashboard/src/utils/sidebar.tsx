@@ -162,6 +162,25 @@ const Sidebar = () => {
 						Logs
 					</Link>
 				</li>
+
+				<li className="nav-item mb-1 text-uppercase small ps-2 pt-3" style={{ color: "#ffffff80", fontSize: "11px", letterSpacing: "0.05em" }}>
+					Resources
+				</li>
+
+				<li className="nav-item" style={{ fontSize: "15px", marginBottom: "3px" }}>
+					<a href="https://waveassist.io/templates" target="_blank" rel="noopener noreferrer" className="nav-link text-white fw-normal py-1">
+						<i className="bi bi-bookmark-check-fill me-2"></i>
+						Templates
+						<i className="bi bi-box-arrow-up-right ms-2" style={{ fontSize: "14px" }}></i>
+					</a>
+				</li>
+				<li className="nav-item" style={{ fontSize: "15px" }}>
+					<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="nav-link text-white fw-normal py-1">
+						<i className="bi bi-file-earmark-code-fill me-2"></i>
+						Docs
+						<i className="bi bi-box-arrow-up-right ms-2" style={{ fontSize: "14px" }}></i>
+					</a>
+				</li>
 			</ul>
 
 			<div className="mt-auto">
@@ -179,13 +198,8 @@ const Sidebar = () => {
 							Keys
 						</button>
 					</div>
-					<div className="col-6">
-						<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light w-100">
-							<i className="bi bi-journal-code me-1"></i>
-							Docs
-						</a>
-					</div>
-					<div className="col-6">
+
+					<div className="col-12">
 						<button className="btn btn-outline-light w-100" onClick={handleLogout}>
 							<i className="bi bi-box-arrow-right me-1"></i>
 							Logout

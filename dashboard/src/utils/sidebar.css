@@ -25,6 +25,8 @@
   .nav-pills .nav-link.active {
     --bs-nav-pills-link-active-bg: #2d3b52; 
   }
+
+  
   
   .wp_logo {
     height: 25px;
@@ -32,3 +34,8 @@
     margin-top: 15px;
     margin-bottom: 30px;
   }
+  .nav-link:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+	border-radius: 6px;
+	transition: background-color 0.2s ease;
+}
