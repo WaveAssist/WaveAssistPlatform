@@ -186,7 +186,7 @@ def create_project(request): ##TCW
 
     project_key = request.POST.get('project_key', '')
     project_name = request.POST.get('project_name', '')
-    should_create_node = request.POST.get('should_create_node', '0')
+    should_create_nodes = request.POST.get('should_create_nodes', '0')
     if project_key == '':
         return ResponseParser.getParsedErrorMessage('Project key not found.')
 
@@ -262,7 +262,7 @@ def create_project(request): ##TCW
                     pass
 
         #create a default node if should_create_node is true
-        if str(should_create_node) == '1':
+        if str(should_create_nodes) == '1':
             try:
                 for node in DEFAULT_NODES_ARRAY:
                     request.POST = request.POST.copy()
@@ -438,16 +438,15 @@ def create_node(request): ##TCW
         return ResponseParser.getParsedErrorMessage('Node with this key/name already exists in this project.')
 
     default_code = """\
-# This is the sample node code
-# You can edit this code to define your workflow logic
+# Sample node code — replace with your logic
 
 import waveassist
 
 # Initialize WaveAssist
 waveassist.init()
 
-# Your code starts here...
-    """
+# Add your workflow logic below
+"""
 
     try:
         with transaction.atomic():
