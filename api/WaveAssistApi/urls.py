@@ -78,6 +78,7 @@ urlpatterns = [
 
     ##Template URL's
     path("template/deploy_template/", csrf_exempt(template_views.deploy_template), name="deploy_template"),
+    path("templates/list_templates/", csrf_exempt(template_views.list_templates), name="list_templates"),
     path("templates/<slug:slug>/", csrf_exempt(template_views.get_template), name="get_template"),
 
     ##CLI URL's

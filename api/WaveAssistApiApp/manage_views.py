@@ -553,10 +553,10 @@ def update_node(request): ## TCW
 
             node_object.save()
 
-            ##Check DAG
-            success, node_list, message = utils.check_dag(node_object, project_object.nodes_set.filter(is_enabled=True))
-            if not success:
-                raise Exception("Invalid DAG: " + message)
+            # # ##Check DAG
+            # success, node_list, message = utils.check_dag(node_object, project_object.nodes_set.filter(is_enabled=True))
+            # if not success:
+            #     raise Exception("Invalid DAG: " + message)
 
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong while updating Node: ' + str(e))
@@ -576,21 +576,7 @@ def delete_node(request): #TWC
     except:
         return ResponseParser.getParsedErrorMessage('Node not found.')
     try:
-        with transaction.atomic():
-            node_object.delete()
-
-            ##Fetch the first node of the project for DAG Check by is_starting_node
-            starting_node = project_object.nodes_set.filter(is_starting_node=True, is_enabled=True).first()
-
-            ##If no starting node, throw error
-            if starting_node is None:
-                raise Exception("No starting node found in project, ensure you have at least one starting node.")
-
-            ##Check DAG
-            success, node_list, message = utils.check_dag(starting_node, project_object.nodes_set.filter(is_enabled=True))
-
-            if not success:
-                raise Exception("Invalid DAG after deletion, ensure you delete the nodes in a fashion that ensures valid DAGS: " + message)
+        node_object.delete()
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong while deleting Node, error: ' + str(e))
 
