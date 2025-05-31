@@ -119,7 +119,7 @@ const DeployComponent: React.FC = () => {
 							<div className="markdown-body mb-4 mt-4">
 								<ReactMarkdown>{templateData.markdown}</ReactMarkdown>
 							</div>
-							<Button variant="success" className="w-100 mb-2 fw-semibold py-2" onClick={handleDeploy} disabled={isDeploying}>
+							<Button variant="success" className="w-100 mb-2  py-2" onClick={handleDeploy} disabled={isDeploying}>
 								🚀 Deploy Now
 							</Button>
 						</div>
@@ -134,14 +134,8 @@ const DeployComponent: React.FC = () => {
 						<div className="deploy-content">
 							<h4>{templateData.title}</h4>
 							<p className="description">{templateData.description}</p>
-							<div className="mb-3 pb-3">
-								{templateData.tags?.map((tag: string, idx: number) => (
-									<span key={idx} className="badge bg-secondary me-2 rounded-pill px-3 py-2">
-										{tag}
-									</span>
-								))}
-							</div>
-							<Button variant="success" className="w-100 mb-2 fw-semibold py-2" onClick={handleDeploy} disabled={isDeploying}>
+
+							<Button variant="success" className="w-100 mb-2  mt-4 py-2" onClick={handleDeploy} disabled={isDeploying}>
 								🚀 Deploy Now
 							</Button>
 						</div>
