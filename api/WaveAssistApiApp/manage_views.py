@@ -186,6 +186,7 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
 
     project_key = request.POST.get('project_key', '')
     project_name = request.POST.get('project_name', '')
+    should_create_node = request.POST.get('should_create_node', 'False')
     if project_key == '':
         return ResponseParser.getParsedErrorMessage('Project key not found.')
 
@@ -259,6 +260,19 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
                                            content_type='application/json')
                 except Exception as e:
                     pass
+        #create a default node if should_create_node is true
+
+        if should_create_node.lower() == 'true':
+            node_array = [{'name':'Node1', 'is_starting_node': '1', 'is_enabled': '1'},
+                          {'name':'Node2', 'is_starting_node': '0', 'is_enabled': '1',
+                           'run_after_nodes_csv': 'node1'},]
+            for node in node_array:
+                request.POST = request.POST.copy()
+                request.POST['name'] = node['name']
+                request.POST['is_starting_node'] = node['is_starting_node']
+                request.POST['is_enabled'] = node['is_enabled']
+                request.POST['run_after_nodes_csv'] = node.get('run_after_nodes_csv', '')
+                create_node(request)
 
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project access creation failed: ' + str(e))
@@ -436,6 +450,18 @@ def create_node(request): ##TCW
     if Nodes.objects.filter(node_key=node_key, project_object=project_object).exists():
         return ResponseParser.getParsedErrorMessage('Node with this key/name already exists in this project.')
 
+    default_code = """\
+    # This is the default node script
+    # You can customize this code to define your workflow logic
+
+    import waveassist
+
+    # Initialize WaveAssist
+    waveassist.init()
+
+    # Your code starts here...
+    """
+
     try:
         with transaction.atomic():
             node_object = Nodes(
@@ -447,6 +473,7 @@ def create_node(request): ##TCW
                 schedule_type=schedule_type,
                 interval_schedule=interval_object,
                 crontab_schedule=crontab_object,
+                python_code=default_code
             )
             node_object.save()
 
