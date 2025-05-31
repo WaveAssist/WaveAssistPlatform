@@ -169,7 +169,7 @@ def fetch_all_projects(request): #TCW
 
 
 
-def create_project(request): ##TCW ##ToDo: Update test case for name & key
+def create_project(request): ##TCW
     uid = request.POST.get('uid', '')
     try:
         user_object = User.objects.get(uid=uid)
@@ -263,17 +263,16 @@ def create_project(request): ##TCW ##ToDo: Update test case for name & key
 
         #create a default node if should_create_node is true
         if str(should_create_node) == '1':
-            node_array = [{'name':'Node1', 'is_starting_node': '1', 'is_enabled': '1'},
-                          {'name':'Node2', 'is_starting_node': '0', 'is_enabled': '1',
-                           'run_after_nodes_csv': 'node1'},]
-            for node in node_array:
-                request.POST = request.POST.copy()
-                request.POST['name'] = node['name']
-                request.POST['is_starting_node'] = node['is_starting_node']
-                request.POST['is_enabled'] = node['is_enabled']
-                request.POST['run_after_nodes_csv'] = node.get('run_after_nodes_csv', '')
-                create_node(request)
-
+            try:
+                for node in DEFAULT_NODES_ARRAY:
+                    request.POST = request.POST.copy()
+                    request.POST['name'] = node['name']
+                    request.POST['is_starting_node'] = node['is_starting_node']
+                    request.POST['is_enabled'] = node['is_enabled']
+                    request.POST['run_after_nodes_csv'] = node.get('run_after_nodes_csv', '')
+                    create_node(request)
+            except Exception as e:
+                print("Error creating default nodes: " + str(e))
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project access creation failed: ' + str(e))
 
@@ -424,18 +423,6 @@ def create_node(request): ##TCW
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    input_data_key_csv = request.POST.get('input_data_key_csv', '')
-    output_data_key_csv = request.POST.get('output_data_key_csv', '')
-
-    ##Validate Keys - Input
-    success, message, input_data_keys_array = validator.validate_keys_csv(input_data_key_csv, project_object)
-    if not success:
-        return ResponseParser.getParsedErrorMessage('Input data keys should belong to this project: ' + message)
-    ##Validate Keys - Output
-    success, message, output_data_keys_array = validator.validate_keys_csv(output_data_key_csv, project_object)
-    if not success:
-        return ResponseParser.getParsedErrorMessage('Output data keys should belong to this project: ' + message)
-
     node_name = request.POST.get('name', '')
     node_key = node_name.lower().replace(' ', '_')
     is_enabled = bool(int(request.POST.get('is_enabled', '0')))
@@ -451,15 +438,15 @@ def create_node(request): ##TCW
         return ResponseParser.getParsedErrorMessage('Node with this key/name already exists in this project.')
 
     default_code = """\
-    # This is the default node script
-    # You can customize this code to define your workflow logic
+# This is the sample node code
+# You can edit this code to define your workflow logic
 
-    import waveassist
+import waveassist
 
-    # Initialize WaveAssist
-    waveassist.init()
+# Initialize WaveAssist
+waveassist.init()
 
-    # Your code starts here...
+# Your code starts here...
     """
 
     try:
@@ -477,22 +464,16 @@ def create_node(request): ##TCW
             )
             node_object.save()
 
-
-            for input_data_key_object in input_data_keys_array:
-                node_object.input_data_key_array.add(input_data_key_object)
-            for output_data_key_object in output_data_keys_array:
-                node_object.output_data_key_array.add(output_data_key_object)
-
             ##Run after nodes array
             node_object.run_after_nodes_array.set(run_after_nodes_array)
 
             ##Save Node
             node_object.save()
 
-            ##Check DAG
-            success, node_list, message = utils.check_dag(node_object, project_object.nodes_set.filter(is_enabled=True))
-            if not success:
-                raise Exception("Invalid DAG: " + message)
+            #Check DAG
+            # success, node_list, message = utils.check_dag(node_object, project_object.nodes_set.filter(is_enabled=True))
+            # if not success:
+            #     raise Exception("Invalid DAG: " + message)
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong while creating Node: ' + str(e))
 

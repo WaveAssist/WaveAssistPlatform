@@ -82,3 +82,9 @@ FETCH_UNINSTALL_PACKAGES_CODE = '''
 GET_STARTED_DATA = {
             'action': 'PERFORM_GET_STARTED'
 }
+
+
+DEFAULT_NODES_ARRAY = [
+    {'name': 'SampleStartNode', 'is_starting_node': '1', 'is_enabled': '1'},
+    {'name': 'SampleFollowUpNode', 'is_starting_node': '0', 'is_enabled': '1', 'run_after_nodes_csv': 'samplestartnode'},
+]
