@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { fetchVariablesApi, fetchDataForKeyAPI, createVariableApi, setDataForKeyApi } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
 import { Form, Button, Spinner, DropdownButton, Dropdown } from "react-bootstrap";
+import Papa from 'papaparse';
 import { AgGridReact } from "ag-grid-react"; // for JSX
 import type { AgGridReact as AgGridReactType } from "ag-grid-react"; // for typing
 import "./project_components.css";
@@ -70,9 +71,21 @@ const VariablesComponent: React.FC = () => {
 		try {
 			const data = await fetchVariablesApi();
 			var flatKeys = data.data_keys;
-			const rowData = flatKeys.map((variable: any) => ({
-				key: variable, // Auto-generate a variable key like "Var1", "Var2", etc.
-				value: variable, // Use the actual variable value
+			const rowData = await Promise.all(flatKeys.map(async (variable: any) => {
+				try {
+					const varData = await fetchDataForKeyAPI(variable);
+					return {
+						key: variable,
+						value: variable,
+						dataType: varData.data_type
+					};
+				} catch (error) {
+					return {
+						key: variable,
+						value: variable,
+						dataType: null
+					};
+				}
 			}));
 
 			setVariablesArray(rowData);
@@ -86,6 +99,42 @@ const VariablesComponent: React.FC = () => {
 	const handleShowVariableEditor = () => {
 		setVariableKey("");
 		setShowVariableEditor(true);
+	};
+
+	const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, variableKey: string) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		// Check if file is a CSV
+		if (!file.name.toLowerCase().endsWith('.csv')) {
+			showToast('Please upload only CSV files', 'danger');
+			// Reset the file input
+			event.target.value = '';
+			return;
+		}
+
+		setLoading(true); // Start loading
+		try {
+			const result = await new Promise((resolve, reject) => {
+				Papa.parse(file, {
+					complete: resolve,
+					error: reject,
+					header: true,
+				});
+			});
+
+			const parsedData = (result as any).data;
+			await setDataForKeyApi(parsedData, variableKey, 'dataframe');
+			showToast('CSV file uploaded successfully', 'success');
+			fetchDataForKey(variableKey);
+		} catch (error) {
+			console.error('Error uploading CSV:', error);
+			showToast('Error uploading CSV file', 'danger');
+		} finally {
+			setLoading(false); // Stop loading regardless of success or failure
+			// Reset the file input
+			event.target.value = '';
+		}
 	};
 
 	const handleCreateVariable = async () => {
@@ -207,9 +256,37 @@ const VariablesComponent: React.FC = () => {
 		{
 			headerName: "Data",
 			cellRenderer: (params: any) => (
-				<Button variant="outline-secondary" size="sm" onClick={() => viewData(params.data)}>
-					View Data
-				</Button>
+				<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+					<Button 
+						variant="outline-success" 
+						size="sm" 
+						className="d-flex align-items-center gap-2"
+						onClick={() => viewData(params.data)}
+					>
+						View Data
+					</Button>
+					{params.data.dataType === 'dataframe' && (
+						<div className="file-upload-container">
+							<input
+								type="file"
+								accept=".csv"
+								onChange={(e) => handleFileUpload(e, params.data.key)}
+								style={{ display: 'none' }}
+								id={`file-upload-${params.data.key}`}
+							/>
+							<Button
+								variant="outline-success"
+								size="sm"
+								className="d-flex align-items-center"
+								onClick={() => document.getElementById(`file-upload-${params.data.key}`)?.click()}
+								title="Upload CSV"
+							>
+								<i className="bi bi-cloud-upload me-2"></i>
+								 Upload
+							</Button>
+						</div>
+					)}
+				</div>
 			),
 			flex: 1,
 			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
@@ -271,6 +348,7 @@ const VariablesComponent: React.FC = () => {
 						<DropdownButton variant="secondary" title={newDataType} id="scheduleTypeDropdown" onSelect={(selected) => setNewDataType(selected!)}>
 							<Dropdown.Item eventKey="json">json</Dropdown.Item>
 							<Dropdown.Item eventKey="string">string</Dropdown.Item>
+							<Dropdown.Item eventKey="dataframe">dataframe</Dropdown.Item>
 						</DropdownButton>
 					</Form.Group>
 					<br></br>
