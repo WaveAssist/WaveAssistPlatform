@@ -87,3 +87,9 @@ GET_STARTED_DATA = {
 # SendGrid settings
 SEND_GRID_KEY = "REMOVED_CREDENTIAL"
 DEFAULT_FROM_EMAIL = "kakshil.shah@waveassist.io"
+
+
+DEFAULT_NODES_ARRAY = [
+    {'name': 'SampleNode1', 'is_starting_node': '1', 'is_enabled': '1'},
+    {'name': 'SampleNode2', 'is_starting_node': '0', 'is_enabled': '1', 'run_after_nodes_csv': 'samplenode1'},
+]
