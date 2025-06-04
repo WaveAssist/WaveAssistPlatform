@@ -19,6 +19,7 @@ mysqlclient==2.0.3
 firebase-admin==6.1.0
 PyYAML==6.0.2
 knockapi==1.0.0
+sendgrid==6.12.3
 opentelemetry-distro==0.43b0
 opentelemetry-exporter-otlp==1.22.0
 opentelemetry-instrumentation-django==0.43b0

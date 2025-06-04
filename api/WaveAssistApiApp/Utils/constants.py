@@ -82,3 +82,8 @@ FETCH_UNINSTALL_PACKAGES_CODE = '''
 GET_STARTED_DATA = {
             'action': 'PERFORM_GET_STARTED'
 }
+
+
+# SendGrid settings
+SEND_GRID_KEY = "REMOVED_CREDENTIAL"
+DEFAULT_FROM_EMAIL = "kakshil.shah@waveassist.io"

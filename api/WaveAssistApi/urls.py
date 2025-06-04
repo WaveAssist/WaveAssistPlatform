@@ -16,7 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from WaveAssistApiApp import dashboard_views, data_views, deployment_views, debug_views, worker_views, template_views, cli_views
+from WaveAssistApiApp import (dashboard_views, data_views, deployment_views, debug_views, worker_views, template_views,
+                              cli_views, sdk_views)
 
 from django.views.decorators.csrf import csrf_exempt
 from WaveAssistApiApp import manage_views
@@ -88,6 +89,9 @@ urlpatterns = [
 
     ##Worker URL's
     path("fetch_config/", csrf_exempt(worker_views.fetch_config), name="fetch_config"),
+
+    ##SDK URL's
+    path("sdk/send_email/", csrf_exempt(sdk_views.send_email), name="send_email"),
 
 ]
 
