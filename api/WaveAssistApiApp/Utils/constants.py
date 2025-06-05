@@ -86,7 +86,7 @@ GET_STARTED_DATA = {
 
 # SendGrid settings
 SEND_GRID_KEY = "REMOVED_CREDENTIAL"
-DEFAULT_FROM_EMAIL = "kakshil.shah@waveassist.io"
+DEFAULT_FROM_EMAIL = "WaveAssist Updates <updates@waveassist.io>"
 
 
 DEFAULT_NODES_ARRAY = [

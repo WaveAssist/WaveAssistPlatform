@@ -8,8 +8,10 @@ import WaveAssistApiApp.Utils.validator as validator
 import WaveAssistApiApp.Utils.utils as utils
 from WaveAssistApiApp.Utils.utils import get_param
 from .models import User, Project
+import json
+from django.views.decorators.http import require_POST
 
-
+@require_POST
 def send_email(request):
     try:
         # Validate user and project access
@@ -22,17 +24,10 @@ def send_email(request):
         to_email = get_param(request, "to_email")
         subject = get_param(request, "subject")
         html_content = get_param(request, "html_content")
-        from_email = get_param(request, "from_email") or DEFAULT_FROM_EMAIL
+        from_email = DEFAULT_FROM_EMAIL
 
         if not all([to_email, subject, html_content]):
             return ResponseParser.getParsedErrorMessage("Missing one or more required fields: to_email, subject, html_content")
-
-        if not from_email:
-            return ResponseParser.getParsedErrorMessage("Sender email not configured. Pass 'from_email' or set 'DEFAULT_FROM_EMAIL'.")
-
-        sendgrid_api_key = SEND_GRID_KEY
-        if not sendgrid_api_key:
-            return ResponseParser.getParsedErrorMessage("SENDGRID_API_KEY is not configured on the server.")
 
         # Send email via SendGrid
         message = Mail(
@@ -42,7 +37,7 @@ def send_email(request):
             html_content=html_content
         )
 
-        sg = SendGridAPIClient(sendgrid_api_key)
+        sg = SendGridAPIClient(SEND_GRID_KEY)
         response = sg.send(message)
 
         if 200 <= response.status_code < 300:
