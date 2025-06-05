@@ -12,17 +12,11 @@ from .models import User, Project
 
 def send_email(request):
     try:
-        uid = get_param(request, 'uid')
-        try:
-            user_object = User.objects.get(uid=uid)
-        except:
-            return ResponseParser.getParsedErrorMessage('User not found')
+        # Validate user and project access
+        success, message, user_object, project_object = validator.validate_user_and_project(request, READ_GTE)
 
-        project_key = get_param(request, 'project_key')
-        try:
-            project_object = Project.objects.get(project_key=project_key)
-        except:
-            return ResponseParser.getParsedErrorMessage('Project not found')
+        if not success:
+            return ResponseParser.getParsedErrorMessage(message)
 
         # Extract required POST params
         to_email = get_param(request, "to_email")

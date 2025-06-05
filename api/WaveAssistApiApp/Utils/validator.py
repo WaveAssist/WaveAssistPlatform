@@ -1,3 +1,4 @@
+from .utils import get_param
 from ..models import *
 import WaveAssistApiApp.Utils.utils as utils
 import re
@@ -5,13 +6,13 @@ import django_celery_beat.models as celery_models
 import pytz
 
 def validate_user_and_project(request, access_level_gte=1):
-    uid = request.POST.get('uid', '')
+    uid = get_param(request, 'uid', '')
     try:
         user_object = User.objects.get(uid=uid)
     except:
         return False, 'User not found', None, None
 
-    project_key = request.POST.get('project_key', '')
+    project_key = get_param(request, 'project_key', '')
     try:
         project_object = Project.objects.get(project_key=project_key)
     except:
