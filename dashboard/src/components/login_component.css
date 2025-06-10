@@ -23,9 +23,60 @@ wp_logo {
     font-family: 'Roboto', sans-serif;
     color: rgba(230,230,230,0.5);
   }
-  
+.login-buttons {
+	width: 100%;
+	max-width: 300px;
+	margin: 0 auto;
+}
 
+.login-buttons .btn {
+	padding: 0.75rem 1rem;
+	font-weight: 500;
+	border-radius: 8px;
+	transition: all 0.2s;
+}
+
+.login-buttons .btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
+.wp_logo_login {
+	height: auto;
+	margin-bottom: 1.5rem;
+}
 
 .logo-section{
 	margin-top: -40vh !important;
 }
+
+/* Center card */
+.wa-card {
+	width: 100%;
+	max-width: 420px;
+	background: #131621;
+	border-radius: 1rem;
+	padding: 2.5rem;
+	text-align: center;
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+  .wa-title {
+	font-size: 1.5rem;
+	font-weight: 500;
+	line-height: 1.1;
+	margin-bottom: 1.25rem;
+	color: #ffffff;
+  }
+
+  .wa-login-page {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	background: #0b0d14;
+	padding: 2rem;
+}
+
+  

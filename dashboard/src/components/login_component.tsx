@@ -171,14 +171,14 @@ const LoginComponent: React.FC = () => {
 	};
 
 	return (
-		<div className="container vh-100 d-flex flex-column justify-content-center">
-			<div className="row">
-				<div className="col text-center mb-3" style={{ marginTop: "-20vh" }}>
-					<img src={WALogo} alt="WavePredict Logo" className="img-fluid mb-4 wp_logo_login" />
-					<h2 className="title-message">WaveAssist Management Console</h2>
+		<div className="wa-login-page">
+			<div className="wa-card">
+				<div className="text-center mb-4">
+					<img src={WALogo} alt="WaveAssist Logo" className="img-fluid mb-4 wp_logo_login" />
+					<h1 className="wa-title">Welcome to WaveAssist</h1>
+					<p className="title-message">Sign in to access your AI workflows</p>
 					{isCLILogin && <p className="title-message">This login flow was initiated from the CLI — complete it here to continue.</p>}
 				</div>
-			</div>
 
 			{loading && (
 				<div className="loader-container d-flex justify-content-center align-items-center pb-4">
@@ -189,8 +189,7 @@ const LoginComponent: React.FC = () => {
 				</div>
 			)}
 
-			<div className="row justify-content-center">
-				<div className="col-8 col-md-5 col-lg-3 text-center">
+				<div className="login-buttons">
 					<button onClick={handleGoogleSignIn} className="btn btn-light w-100 mb-3">
 						<i className="bi bi-google me-2"></i> Sign in with Google
 					</button>
@@ -198,7 +197,6 @@ const LoginComponent: React.FC = () => {
 						<i className="bi bi-twitter-x me-2"></i> Sign in with X
 					</button>
 				</div>
-			</div>
 
 			{cliLoginComplete && (
 				<div className="text-center mt-4">
@@ -220,6 +218,7 @@ const LoginComponent: React.FC = () => {
 					</Button>
 				</Modal.Footer>
 			</Modal>
+			</div>
 		</div>
 	);
 };
