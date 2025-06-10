@@ -18,6 +18,7 @@ const LoginComponent: React.FC = () => {
 
 	const session_id = searchParams.get("session_id");
 	const isCLILogin = !!session_id;
+
 	const [cliLoginComplete, setCliLoginComplete] = useState(false);
 
 	const [showGetStarted, setShowGetStarted] = useState(false);
@@ -176,48 +177,48 @@ const LoginComponent: React.FC = () => {
 				<div className="text-center mb-4">
 					<img src={WALogo} alt="WaveAssist Logo" className="img-fluid mb-4 wp_logo_login" />
 					<h1 className="wa-title">Welcome to WaveAssist</h1>
-					<p className="title-message">Sign in to access your AI workflows</p>
+					<p className="title-message">Sign up for free to access your workflows</p>
 					{isCLILogin && <p className="title-message">This login flow was initiated from the CLI — complete it here to continue.</p>}
 				</div>
 
-			{loading && (
-				<div className="loader-container d-flex justify-content-center align-items-center pb-4">
-					<div className="text-center">
-						<Spinner animation="border" role="status" variant="success" />
-						<p className="mt-2 text-success">{loaderMessage}</p>
+				{loading && (
+					<div className="loader-container d-flex justify-content-center align-items-center pb-4">
+						<div className="text-center">
+							<Spinner animation="border" role="status" variant="success" />
+							<p className="mt-2 text-success">{loaderMessage}</p>
+						</div>
 					</div>
-				</div>
-			)}
+				)}
 
 				<div className="login-buttons">
 					<button onClick={handleGoogleSignIn} className="btn btn-light w-100 mb-3">
-						<i className="bi bi-google me-2"></i> Sign in with Google
+						<i className="bi bi-google me-2"></i> Continue with Google
 					</button>
 					<button onClick={handleXSignIn} className="btn btn-dark w-100 mb-3">
-						<i className="bi bi-twitter-x me-2"></i> Sign in with X
+						<i className="bi bi-twitter-x me-2"></i> Continue with X
 					</button>
 				</div>
 
-			{cliLoginComplete && (
-				<div className="text-center mt-4">
-					<p className="text-success">✅ Login Successful! You may now return to your terminal.</p>
-				</div>
-			)}
+				{cliLoginComplete && (
+					<div className="text-center mt-4">
+						<p className="text-success">✅ Login Successful! You may now return to your terminal.</p>
+					</div>
+				)}
 
-			<Modal show={showGetStarted} onHide={handleClose}>
-				<Modal.Header closeButton>
-					<Modal.Title className="modal-title">Setup your account</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>Your account does not exist with WaveAssist, or was not fully configured. Would you like to setup your account?</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={handleClose}>
-						Close
-					</Button>
-					<Button variant="primary" onClick={handleGetStarted}>
-						Create
-					</Button>
-				</Modal.Footer>
-			</Modal>
+				<Modal show={showGetStarted} onHide={handleClose}>
+					<Modal.Header closeButton>
+						<Modal.Title className="modal-title">Setup your account</Modal.Title>
+					</Modal.Header>
+					<Modal.Body>Your account does not exist with WaveAssist, or was not fully configured. Would you like to setup your account?</Modal.Body>
+					<Modal.Footer>
+						<Button variant="secondary" onClick={handleClose}>
+							Close
+						</Button>
+						<Button variant="primary" onClick={handleGetStarted}>
+							Create
+						</Button>
+					</Modal.Footer>
+				</Modal>
 			</div>
 		</div>
 	);
