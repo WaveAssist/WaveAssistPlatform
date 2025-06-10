@@ -7,8 +7,8 @@ import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase
 import { loginAPI, getStartedAPI } from "../services/login_services";
 import { Spinner } from "react-bootstrap";
 import ReactGA from "react-ga4";
-import Button from "react-bootstrap/Button";
-import Modal from "react-bootstrap/Modal";
+// import Button from "react-bootstrap/Button";
+// import Modal from "react-bootstrap/Modal";
 
 const LoginComponent: React.FC = () => {
 	const navigate = useNavigate();
@@ -21,12 +21,9 @@ const LoginComponent: React.FC = () => {
 
 	const [cliLoginComplete, setCliLoginComplete] = useState(false);
 
-	const [showGetStarted, setShowGetStarted] = useState(false);
-	const handleClose = () => setShowGetStarted(false);
-	const handleShow = () => setShowGetStarted(true);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [loaderMessage, setLoaderMessage] = useState("");
-	const is_test = false; // ALWAYS KEEP as FALSE
+	const is_test = true; // ALWAYS KEEP as FALSE
 
 	useEffect(() => {
 		if (isCLILogin) return; // skip redirect if CLI login
@@ -58,7 +55,7 @@ const LoginComponent: React.FC = () => {
 			});
 
 			if (data.action === "PERFORM_GET_STARTED" || is_test) {
-				handleShow();
+				handleGetStarted();
 				return;
 			} else {
 				localStorage.setItem("user_data", JSON.stringify(data.user_data));
@@ -87,7 +84,6 @@ const LoginComponent: React.FC = () => {
 		try {
 			setLoading(true);
 			setLoaderMessage("Setting up your account, this may take a minute...");
-			handleClose();
 
 			const firebase_uid = localStorage.getItem("firebase_uid");
 			const data = await getStartedAPI(firebase_uid, is_test, session_id);
@@ -205,7 +201,7 @@ const LoginComponent: React.FC = () => {
 					</div>
 				)}
 
-				<Modal show={showGetStarted} onHide={handleClose}>
+				{/* <Modal show={showGetStarted} onHide={handleClose}>
 					<Modal.Header closeButton>
 						<Modal.Title className="modal-title">Setup your account</Modal.Title>
 					</Modal.Header>
@@ -218,7 +214,7 @@ const LoginComponent: React.FC = () => {
 							Create
 						</Button>
 					</Modal.Footer>
-				</Modal>
+				</Modal> */}
 			</div>
 		</div>
 	);
