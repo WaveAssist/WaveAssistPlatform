@@ -25,7 +25,7 @@ wp_logo {
   }
 .login-buttons {
 	width: 100%;
-	max-width: 300px;
+	max-width: 350px;
 	margin: 0 auto;
 }
 
@@ -35,12 +35,6 @@ wp_logo {
 	border-radius: 8px;
 	transition: all 0.2s;
 }
-
-.login-buttons .btn:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
 
 .wp_logo_login {
 	height: auto;
