@@ -1,19 +1,21 @@
 
 import os
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
 from .Utils.responseParser import ResponseParser
 from .Utils.constants import *
 import WaveAssistApiApp.Utils.validator as validator
 import WaveAssistApiApp.Utils.utils as utils
 from WaveAssistApiApp.Utils.utils import get_param
-from .models import User, Project
-import json
 from django.views.decorators.http import require_POST
+import mimetypes
+
+
+import base64
 
 @require_POST
 def send_email(request):
-    try:
+    # try:
         # Validate user and project access
         success, message, user_object, project_object = validator.validate_user_and_project(request, READ_GTE)
 
@@ -21,15 +23,20 @@ def send_email(request):
             return ResponseParser.getParsedErrorMessage(message)
 
         # Extract required POST params
-        to_email = get_param(request, "to_email")
         subject = get_param(request, "subject")
         html_content = get_param(request, "html_content")
+        attachment_file = request.FILES.get("attachment")  # <-- expecting uploaded file in form-data
         from_email = DEFAULT_FROM_EMAIL
 
-        if not all([to_email, subject, html_content]):
-            return ResponseParser.getParsedErrorMessage("Missing one or more required fields: to_email, subject, html_content")
 
-        # Send email via SendGrid
+        print("FILES:", request.FILES)
+
+        if not all([subject, html_content]):
+            return ResponseParser.getParsedErrorMessage("Missing one or more required fields: subject, html_content")
+
+        to_email = str(user_object.username)
+
+        # Build the email message
         message = Mail(
             from_email=from_email,
             to_emails=to_email,
@@ -37,6 +44,24 @@ def send_email(request):
             html_content=html_content
         )
 
+        # Add attachment if present
+        if attachment_file:
+            file_data = attachment_file.read()
+            encoded_file = base64.b64encode(file_data).decode()
+
+            # Guess MIME type from filename
+            mime_type, _ = mimetypes.guess_type(attachment_file.name)
+            mime_type = mime_type or "application/octet-stream"  # Fallback if unknown
+
+            attached_file = Attachment(
+                FileContent(encoded_file),
+                FileName(attachment_file.name),
+                FileType(mime_type),
+                Disposition("attachment")
+            )
+            message.attachment = attached_file
+
+        # Send the email
         sg = SendGridAPIClient(SEND_GRID_KEY)
         response = sg.send(message)
 
@@ -51,6 +76,6 @@ def send_email(request):
                 f"Failed to send email. Status code: {response.status_code}, Body: {response.body.decode('utf-8')}"
             )
 
-    except Exception as e:
-        utils.logger.error(f"❌ Error in send_email API: {str(e)}")
-        return ResponseParser.getParsedErrorMessage("Server error while sending email")
+    # except Exception as e:
+    #     utils.logger.error(f"❌ Error in send_email API: {str(e)}")
+    #     return ResponseParser.getParsedErrorMessage("Server error while sending email")
