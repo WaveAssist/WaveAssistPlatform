@@ -47,6 +47,7 @@ export const reinstallPackageApi = async (package_name: string): Promise<any> =>
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
 		package_name: package_name,
+		project_key: localStorage.getItem("selected_project_key") || "",
 	});
 	const path = "debug/reinstall_package/";
 	return callApi(path, body);

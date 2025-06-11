@@ -84,7 +84,7 @@ const PackagesComponent: React.FC = () => {
 
 	const handleReinstall = async (packageDict: any) => {
 		var package_name = packageDict.package_name;
-		var message = "Are you sure you want to reinstall this package: " + package_name + "?";
+		var message = "Are you sure you want to reinstall & upgrade this package: " + package_name + "?";
 		const confirmReinstall = window.confirm(message);
 		if (!confirmReinstall) {
 			return;
