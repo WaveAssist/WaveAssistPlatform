@@ -55,7 +55,8 @@ def deploy_template(request):
         created_nodes = create_nodes_from_yaml(project_object, nodes, file_map)
         link_node_dependencies(yaml_config, created_nodes)
         configure_variables(uid, project_key, yaml_config)
-    except:
+    except Exception as e:
+        print(f"❌ Error creating project or nodes: {str(e)}")
         return ResponseParser.getParsedErrorMessage("Project was not created")
 
     try:

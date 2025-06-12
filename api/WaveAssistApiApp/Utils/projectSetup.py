@@ -39,6 +39,8 @@ def create_nodes_from_yaml(project_object, nodes, file_map):
 
 
 def parse_schedule(schedule_dict):
+    if not schedule_dict:
+        return "none", None, None
     if "cron" in schedule_dict:
         cron_parts = (schedule_dict["cron"].split(" ") + ["*"] * 5)[:5]
         crontab_obj, _ = CrontabSchedule.objects.get_or_create(
