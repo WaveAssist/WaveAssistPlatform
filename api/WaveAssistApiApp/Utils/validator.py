@@ -139,7 +139,7 @@ def validate_user_and_data_run(request, access_level_gte=1):
     except:
         return False, 'User not found', None, None
 
-    data_run_key = utils.get_param(request, 'data_run_key') or utils.get_param(request, 'environment_key')
+    data_run_key = utils.get_param(request, 'data_run_key', None) or utils.get_param(request, 'environment_key', None)
     try:
         data_run_object = DataRuns.objects.get(data_run_key=data_run_key, is_enabled=True)
     except:

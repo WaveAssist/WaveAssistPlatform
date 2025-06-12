@@ -26,9 +26,9 @@ from django.db.models.functions import Lower
 
 import json
 
-def get_param(request, key: str, default=''):
+def get_param(request, key: str, default=None):
     # Check GET params first
-    if key in request.GET:
+    if request.method == "GET":
         return request.GET.get(key, default)
 
     # Check POST params
