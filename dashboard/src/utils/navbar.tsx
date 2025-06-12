@@ -5,7 +5,6 @@ import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
 import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext"; // Import the custom hook
-
 const NavbarComponent: React.FC = () => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
@@ -20,7 +19,7 @@ const NavbarComponent: React.FC = () => {
 	const projectKeys = projectsArray.map((project: any) => project.project_key);
 	const projectNames = projectsArray.map((project: any) => project.name + " - " + project.project_key);
 	const [selectedEnvName, setSelectedEnvName] = useState("Default");
-	const [versionCode, setVersionCode] = useState("");
+	const [versionCode, setVersionCode] = useState("1.0.0");
 
 	useEffect(() => {
 		fetchEnvironments();

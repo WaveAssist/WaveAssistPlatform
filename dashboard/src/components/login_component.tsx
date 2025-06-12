@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import "./login_component.css";
 import WALogo from "../assets/Logo/Wave_Predict_W_Logo.png";
 import { useLocation, useNavigate } from "react-router-dom";
-import { auth, googleProvider, xProvider } from "../components/firebase";
+import { auth, googleProvider } from "../components/firebase";
+// import { xProvider } from "../components/firebase";
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { loginAPI, getStartedAPI } from "../services/login_services";
 import { Spinner } from "react-bootstrap";
@@ -144,28 +145,28 @@ const LoginComponent: React.FC = () => {
 		}
 	};
 
-	const handleXSignIn = async () => {
-		try {
-			setLoading(true);
-			const result = await signInWithPopup(auth, xProvider);
-			handleSuccessfulSignIn(result.user);
-		} catch (error: any) {
-			setLoading(false);
-			if (error.code === "auth/popup-blocked") {
-				try {
-					await signInWithRedirect(auth, xProvider);
-					const result = await getRedirectResult(auth);
-					if (result) handleSuccessfulSignIn(result.user);
-				} catch (redirectError: any) {
-					console.error("X sign-in redirect failed:", redirectError);
-					alert("X sign-in failed. Please check your browser settings.");
-				}
-			} else {
-				console.error("X sign-in failed:", error);
-				alert("X sign-in failed. Please try again.");
-			}
-		}
-	};
+	// const handleXSignIn = async () => {
+	// 	try {
+	// 		setLoading(true);
+	// 		const result = await signInWithPopup(auth, xProvider);
+	// 		handleSuccessfulSignIn(result.user);
+	// 	} catch (error: any) {
+	// 		setLoading(false);
+	// 		if (error.code === "auth/popup-blocked") {
+	// 			try {
+	// 				await signInWithRedirect(auth, xProvider);
+	// 				const result = await getRedirectResult(auth);
+	// 				if (result) handleSuccessfulSignIn(result.user);
+	// 			} catch (redirectError: any) {
+	// 				console.error("X sign-in redirect failed:", redirectError);
+	// 				alert("X sign-in failed. Please check your browser settings.");
+	// 			}
+	// 		} else {
+	// 			console.error("X sign-in failed:", error);
+	// 			alert("X sign-in failed. Please try again.");
+	// 		}
+	// 	}
+	// };
 
 	return (
 		<div className="wa-login-page">
@@ -190,9 +191,9 @@ const LoginComponent: React.FC = () => {
 					<button onClick={handleGoogleSignIn} className="btn btn-light w-100 mb-3">
 						<i className="bi bi-google me-2"></i> Continue with Google
 					</button>
-					<button onClick={handleXSignIn} className="btn btn-dark w-100 mb-3">
+					{/* <button onClick={handleXSignIn} className="btn btn-dark w-100 mb-3">
 						<i className="bi bi-twitter-x me-2"></i> Continue with X
-					</button>
+					</button> */}
 				</div>
 
 				{cliLoginComplete && (

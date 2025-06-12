@@ -37,15 +37,16 @@
     "react-lazylog": "^4.5.3",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^6.23.1",
-    "react-virtualized": "^9.22.5"
+    "react-virtualized": "^9.22.5",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
+    "@types/papaparse": "^5.3.14",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@types/react-lazylog": "^4.5.4",
     "@types/react-modal-image": "^2.6.3",
-    "@types/papaparse": "^5.3.14",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react": "^4.2.1",
