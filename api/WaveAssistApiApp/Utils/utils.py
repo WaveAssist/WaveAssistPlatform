@@ -44,7 +44,7 @@ def get_param(request, key: str, default=''):
         body_data = json.loads(request.body.decode('utf-8'))
         return body_data.get(key, default)
     except Exception as e:
-        print(f"Error parsing JSON body: {str(e)}")
+        print(f"Error parsing JSON body: {str(e)}, when fetching key: {key} from request {str(request)}")
         return default
 
 
