@@ -12,7 +12,7 @@ from django.core.validators import validate_email
 import mimetypes
 import base64
 
-MAX_FILE_SIZE_MB = 5
+MAX_FILE_SIZE_MB = 10
 MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 
