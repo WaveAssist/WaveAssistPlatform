@@ -77,7 +77,6 @@ const NavbarComponent: React.FC = () => {
 	// };
 
 	const handleOpenModal = () => {
-		setVersionCode("");
 		setShowModal(true);
 	};
 
