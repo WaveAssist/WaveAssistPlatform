@@ -63,6 +63,7 @@ const DeployComponent: React.FC = () => {
 			});
 			if (response.data.success === "1") {
 				setShowSuccessModal(true);
+				localStorage.setItem("is_template_run", "true");
 			} else {
 				alert("❌ Failed to deploy project, please try again.");
 			}

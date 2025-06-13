@@ -37,8 +37,8 @@ const NodesComponent: React.FC = () => {
 
 	const steps: Step[] = [
 		{
-			target: ".bi-plus-lg", // The plus icon button
-			content: "Click here to create a new node.",
+			target: ".play-button-step", // The plus icon button
+			content: "Click on the play button to run your workflow",
 			disableBeacon: true,
 			locale: { last: "Ok" },
 		},
@@ -240,11 +240,11 @@ ${config.nodes
 		try {
 			const data = await fetchNodesApi();
 			setNodesArray(data.node_array);
-			if (data.node_array.length === 0) {
-				const tourCompleted = localStorage.getItem("create_node_tour_completed");
-				if (!tourCompleted) {
-					setRunTour(true);
-				}
+			const is_template_run = localStorage.getItem("is_template_run");
+			const tourCompleted = localStorage.getItem("run_node_tour") === "true";
+			if (!tourCompleted && is_template_run === "true") {
+				setRunTour(true);
+				localStorage.setItem("run_node_tour", "true");
 			}
 		} catch (error) {
 			console.error("FetchNodesApi failed:", error);
@@ -323,7 +323,7 @@ ${config.nodes
 				</Button>{" "}
 				{params.data.is_starting_node && (
 					<Button variant="success" size="sm" onClick={() => handleRun(params.data)}>
-						<i className="bi bi-play"></i>
+						<i className="bi bi-play">Run</i>
 					</Button>
 				)}
 				{!params.data.is_starting_node && (
@@ -390,7 +390,7 @@ ${config.nodes
 			field: "node_key",
 			cellRenderer: (params: any) => <span className="badge badge-secondary">{params.value}</span>,
 			flex: 1,
-			minWidth: 120, // Prevents shrinking too much
+			minWidth: 80, // Prevents shrinking too much
 			resizable: true,
 		},
 		{
@@ -400,7 +400,7 @@ ${config.nodes
 				<span className={`badge ${params.value ? "badge-primary" : "badge-danger"}`}>{params.value ? "Enabled" : "Disabled"}</span>
 			),
 			width: 120,
-			minWidth: 120, // Prevents shrinking too much
+			minWidth: 80, // Prevents shrinking too much
 			resizable: true,
 		},
 		{
@@ -411,7 +411,7 @@ ${config.nodes
 			cellRenderer: (params: any) => formatSchedule(params.data),
 		},
 		{ headerName: "Code", cellRenderer: ViewCodeButton, width: 160, minWidth: 120, resizable: true },
-		{ headerName: "Actions", cellRenderer: ActionButtons, width: 160, minWidth: 120, resizable: true },
+		{ headerName: "Actions", cellRenderer: ActionButtons, width: 180, minWidth: 140, resizable: true },
 	];
 
 	const isStartingNode = watch("is_starting_node");
