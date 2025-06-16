@@ -33,7 +33,7 @@ const AllProjectsComponent: React.FC = () => {
 		},
 		{
 			target: ".use-template-button",
-			content: "Or start quickly with a template.",
+			content: "Or start quickly with a assistant template.",
 			disableBeacon: true,
 			locale: { last: "Ok" },
 		},
@@ -157,12 +157,12 @@ const AllProjectsComponent: React.FC = () => {
 				</div>
 				<div className="col-md-4 d-flex justify-content-end align-items-center">
 					<a
-						href="https://waveassist.io/templates"
+						href="https://waveassist.io/assistants"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="btn btn-outline-secondary ms-2 use-template-button">
 						<i className="bi bi-copy me-1"></i>
-						Templates
+						Assistants
 					</a>
 					<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary ms-2">
 						<i className="bi bi-journal-text me-1"></i>
@@ -261,11 +261,11 @@ const AllProjectsComponent: React.FC = () => {
 						<Button
 							size="sm"
 							className="p-0 translucent_blue bg-transparent border-0 text-decoration-none"
-							onClick={() => window.open("https://waveassist.io/templates", "_blank")}
+							onClick={() => window.open("https://waveassist.io/assistants", "_blank")}
 							onMouseOver={(e) => e.currentTarget.classList.add("text-decoration-underline")}
 							onMouseOut={(e) => e.currentTarget.classList.remove("text-decoration-underline")}>
 							{/* <i className="bi bi-lightning-fill me-1" style={{ fontSize: "0.8rem" }}></i> */}
-							Use a template instead →
+							Use an assistant instead →
 						</Button>
 					</div>
 
