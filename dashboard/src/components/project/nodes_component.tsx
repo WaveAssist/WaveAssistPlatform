@@ -201,7 +201,7 @@ ${config.nodes
 	const generateEmailWebhook = (nodeId: string): string => {
 		const uid = localStorage.getItem("uid");
 		const projectKey = localStorage.getItem("selected_project_key");
-		const projectArray = JSON.parse(localStorage.getItem("project_array") || "[]");
+		const projectArray = JSON.parse(localStorage.getItem("projects_array") || "[]");
 		const matchingProject = projectArray.find((project: { id: string; project_key: string }) => project.project_key === projectKey);
 		const projectId = matchingProject?.id || null;
 
@@ -211,14 +211,14 @@ ${config.nodes
 		const matchingEnv = environmentArray.find((env: { id: string; key: string }) => env.key === envKey);
 
 		const envId = matchingEnv?.id || null;
-
 		if (!uid || !projectId || !nodeId || !envId) {
+			console.warn("Missing required fields for email webhook generation:", { uid, projectId, nodeId, envId });
 			return ""; // required fields missing
 		}
 
 		// Base64 URL-safe encode
 		const b64url = (str: string): string => btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-
+		console.log("b64url", b64url);
 		const uuidNoDash = uid.replace(/-/g, "");
 		const emailLocal = [uuidNoDash, b64url(projectId), b64url(nodeId), b64url(envId)].join(".");
 
@@ -693,26 +693,30 @@ ${config.nodes
 
 										{/* Collapsible content */}
 										<Collapse in={showWebhook}>
-											<div className="mt-2 p-3 bg-dark text-white rounded" style={{ overflow: "hidden" }}>
-												<Badge bg="secondary">POST</Badge>
-												<span className="ms-2 flex-grow-1" style={{ wordBreak: "break-all", fontSize: "0.9rem" }}>
-													{webhookUrl}
-												</span>
-												<Button
-													variant="link"
-													className="p-0 ms-3 text-white"
-													onClick={() => {
-														navigator.clipboard.writeText(webhookUrl);
-														setCopied(true);
-														setTimeout(() => setCopied(false), 2000); // reset after 2 sec
-													}}
-													aria-label="Copy URL">
-													{copied ? (
-														<i className="bi bi-check-lg"></i> // checkmark after copy
-													) : (
-														<i className="bi bi-clipboard"></i> // normal clipboard icon
-													)}
-												</Button>
+											<div>
+												<span className="trigger-text">Send a POST request to this URL to trigger the workflow programmatically.</span>
+
+												<div className="mt-2 p-3 bg-dark text-white rounded" style={{ overflow: "hidden" }}>
+													<Badge bg="secondary">POST</Badge>
+													<span className="ms-2 flex-grow-1" style={{ wordBreak: "break-all", fontSize: "0.9rem" }}>
+														{webhookUrl}
+													</span>
+													<Button
+														variant="link"
+														className="p-0 ms-3 text-white"
+														onClick={() => {
+															navigator.clipboard.writeText(webhookUrl);
+															setCopied(true);
+															setTimeout(() => setCopied(false), 2000); // reset after 2 sec
+														}}
+														aria-label="Copy URL">
+														{copied ? (
+															<i className="bi bi-check-lg"></i> // checkmark after copy
+														) : (
+															<i className="bi bi-clipboard"></i> // normal clipboard icon
+														)}
+													</Button>
+												</div>
 											</div>
 										</Collapse>
 									</Form.Group>
@@ -735,6 +739,7 @@ ${config.nodes
 										{/* Collapsible content */}
 										<Collapse in={showEmailWebhook}>
 											<div className="mt-2 p-3 bg-dark text-white rounded" style={{ overflow: "hidden" }}>
+												<span className="trigger-text">Sending any email to this address will trigger the workflow.</span>
 												<Badge bg="secondary">POST</Badge>
 												<span className="ms-2 flex-grow-1" style={{ wordBreak: "break-all", fontSize: "0.9rem" }}>
 													{emailWebhook}

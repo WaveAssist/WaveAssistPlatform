@@ -96,3 +96,11 @@
   width: 100%; /* Ensures full width in smaller screens */
   height: 100%; /* Ensures full height in smaller screens */
 }
+
+.trigger-text {
+  display: block;
+  margin: 0.5rem 0;
+  font-size: 13px;
+  color: #adb5bd;      /* Bootstrap’s $gray-600 */
+  line-height: 1.2;
+}
