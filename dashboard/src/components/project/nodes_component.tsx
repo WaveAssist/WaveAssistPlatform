@@ -272,7 +272,14 @@ ${config.nodes
 	const fetchNodes = async () => {
 		try {
 			const data = await fetchNodesApi();
-			setNodesArray(data.node_array);
+			var nodes_array = data.node_array;
+			//Sort to keep the starting node at the top
+			nodes_array.sort((a: any, b: any) => {
+				if (a.is_starting_node && !b.is_starting_node) return -1;
+				if (!a.is_starting_node && b.is_starting_node) return 1;
+				return 0; // Keep original order for other nodes
+			});
+			setNodesArray(nodes_array);
 			const is_template_run = localStorage.getItem("is_template_run");
 			const tourCompleted = localStorage.getItem("run_node_tour") === "true";
 			if (!tourCompleted && is_template_run === "true") {
