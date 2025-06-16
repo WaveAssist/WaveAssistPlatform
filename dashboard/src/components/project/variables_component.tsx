@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { fetchVariablesApi, fetchDataForKeyAPI, createVariableApi, setDataForKeyApi, getDataUrl } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
-import { Form, Button, Spinner, DropdownButton, Dropdown, OverlayTrigger,
-	Tooltip, } from "react-bootstrap";
-import Papa from 'papaparse';
+import { Form, Button, Spinner, DropdownButton, Dropdown, OverlayTrigger, Tooltip } from "react-bootstrap";
+import Papa from "papaparse";
 import { AgGridReact } from "ag-grid-react"; // for JSX
 import type { AgGridReact as AgGridReactType } from "ag-grid-react"; // for typing
 import "./project_components.css";
@@ -13,43 +12,33 @@ import { useRefresh } from "../../utils/RefreshContext";
 import Editor from "@monaco-editor/react";
 import { ColDef } from "ag-grid-community";
 
-
 /**
  * Clipboard button used inside the Variable‐table.
  * Shows a tooltip with feedback (“Copy URL” → “Copied!”).
  */
 const CopyWebhookButton: React.FC<{ url: string }> = ({ url }) => {
 	const [copied, setCopied] = useState(false);
-  
+
 	const handleCopy = async () => {
-	  try {
-		await navigator.clipboard.writeText(url);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 1500);
-	  } catch (_) {
-		// fallback: open in new tab if copy fails
-		window.open(url, "_blank", "noopener,noreferrer");
-	  }
+		try {
+			await navigator.clipboard.writeText(url);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 1500);
+		} catch (_) {
+			// fallback: open in new tab if copy fails
+			window.open(url, "_blank", "noopener,noreferrer");
+		}
 	};
-  
+
 	return (
-	  <OverlayTrigger
-		placement="top"
-		overlay={<Tooltip>{copied ? "Copied!" : "Copy webhook URL"}</Tooltip>}
-	  >
-		<Button
-		  variant="outline-secondary"
-		  size="sm"
-		  className="d-flex align-items-center gap-1"
-		  onClick={handleCopy}
-		>
-		  <i className="bi bi-clipboard" />
-		  <span className="d-none d-md-inline">Copy</span>
-		</Button>
-	  </OverlayTrigger>
+		<OverlayTrigger placement="top" overlay={<Tooltip>{copied ? "Copied!" : "Copy webhook URL"}</Tooltip>}>
+			<Button variant="outline-secondary" size="sm" className="d-flex align-items-center gap-1" onClick={handleCopy}>
+				<i className="bi bi-clipboard" />
+				<span className="d-none d-md-inline">Webhook URL</span>
+			</Button>
+		</OverlayTrigger>
 	);
-  };
-  
+};
 
 const VariablesComponent: React.FC = () => {
 	const [variablesArray, setVariablesArray] = useState<any[]>([]);
@@ -110,22 +99,24 @@ const VariablesComponent: React.FC = () => {
 		try {
 			const data = await fetchVariablesApi();
 			var flatKeys = data.data_keys;
-			const rowData = await Promise.all(flatKeys.map(async (variable: any) => {
-				try {
-					const varData = await fetchDataForKeyAPI(variable);
-					return {
-						key: variable,
-						value: variable,
-						dataType: varData.data_type
-					};
-				} catch (error) {
-					return {
-						key: variable,
-						value: variable,
-						dataType: null
-					};
-				}
-			}));
+			const rowData = await Promise.all(
+				flatKeys.map(async (variable: any) => {
+					try {
+						const varData = await fetchDataForKeyAPI(variable);
+						return {
+							key: variable,
+							value: variable,
+							dataType: varData.data_type,
+						};
+					} catch (error) {
+						return {
+							key: variable,
+							value: variable,
+							dataType: null,
+						};
+					}
+				})
+			);
 
 			setVariablesArray(rowData);
 		} catch (error) {
@@ -145,10 +136,10 @@ const VariablesComponent: React.FC = () => {
 		if (!file) return;
 
 		// Check if file is a CSV
-		if (!file.name.toLowerCase().endsWith('.csv')) {
-			showToast('Please upload only CSV files', 'danger');
+		if (!file.name.toLowerCase().endsWith(".csv")) {
+			showToast("Please upload only CSV files", "danger");
 			// Reset the file input
-			event.target.value = '';
+			event.target.value = "";
 			return;
 		}
 
@@ -163,16 +154,16 @@ const VariablesComponent: React.FC = () => {
 			});
 
 			const parsedData = (result as any).data;
-			await setDataForKeyApi(parsedData, variableKey, 'dataframe');
-			showToast('CSV file uploaded successfully', 'success');
+			await setDataForKeyApi(parsedData, variableKey, "dataframe");
+			showToast("CSV file uploaded successfully", "success");
 			fetchDataForKey(variableKey);
 		} catch (error) {
-			console.error('Error uploading CSV:', error);
-			showToast('Error uploading CSV file', 'danger');
+			console.error("Error uploading CSV:", error);
+			showToast("Error uploading CSV file", "danger");
 		} finally {
 			setLoading(false); // Stop loading regardless of success or failure
 			// Reset the file input
-			event.target.value = '';
+			event.target.value = "";
 		}
 	};
 
@@ -288,45 +279,34 @@ const VariablesComponent: React.FC = () => {
 		{
 			headerName: "Variable Key",
 			field: "value",
+			flex: 1,
 			cellRenderer: (params: any) => (
 				<div className="d-flex align-items-center gap-2">
-				  <span className="tit mr-2">{params.value}</span>
+					<span className="tit mr-2">{params.value}</span>
+					<span className="badge bg-secondary">{params.data.dataType || "unknown"}</span>
 				</div>
-			  ),
-			  flex: 1.4,
-			  cellStyle: { display: "flex", alignItems: "center" },
-			},
-		{
-			headerName: "Data Type",
-			field: "dataType",
-			cellRenderer: (params: any) => (
-				<span className="badge bg-secondary">
-					{params.value || 'unknown'}
-				</span>
 			),
-			flex: 1,
-			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
 		},
+
 		{
-			headerName: "Data",
+			headerName: "Actions",
+			field: "value",
+			minWidth: 370, // Prevents shrinking too much
+			resizable: true,
 			cellRenderer: (params: any) => (
-				<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-					<Button 
-						variant="outline-success" 
-						size="sm" 
-						className="d-flex align-items-center gap-2"
-						onClick={() => viewData(params.data)}
-					>
+				<div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+					<CopyWebhookButton url={getDataUrl(params.value)} />
+					<Button variant="outline-success" size="sm" className="d-flex align-items-center gap-2" onClick={() => viewData(params.data)}>
 						<i className="bi bi-search" />
-						<span className="d-none d-md-inline">View</span>
+						<span className="d-none d-md-inline">View Data</span>
 					</Button>
-					{params.data.dataType === 'dataframe' && (
+					{params.data.dataType === "dataframe" && (
 						<div className="file-upload-container">
 							<input
 								type="file"
 								accept=".csv"
 								onChange={(e) => handleFileUpload(e, params.data.key)}
-								style={{ display: 'none' }}
+								style={{ display: "none" }}
 								id={`file-upload-${params.data.key}`}
 							/>
 							<Button
@@ -334,29 +314,14 @@ const VariablesComponent: React.FC = () => {
 								size="sm"
 								className="d-flex align-items-center gap-2"
 								onClick={() => document.getElementById(`file-upload-${params.data.key}`)?.click()}
-								title="Upload CSV"
-							>
+								title="Upload CSV">
 								<i className="bi bi-cloud-upload "></i>
-								 
 							</Button>
 						</div>
 					)}
 				</div>
 			),
-			flex: 1,
-			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
 		},
-		{	
-			headerName: "Webhook URL",
-			field: "value",
-			cellRenderer: (params: any) => {
-				if (!params.value) return null;
-				return <CopyWebhookButton url={getDataUrl(params.value)} />;
-			},
-			flex: 1,
-			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
-		},
-
 	];
 
 	return (
