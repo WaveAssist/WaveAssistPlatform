@@ -545,3 +545,36 @@ def get_base_package_names():
             pkg = line.strip().split("==")[0].lower()
             base_packages.add(pkg)
     return base_packages
+
+
+import base64
+import uuid
+
+
+def b64url_decode(s: str) -> str:
+    pad = '=' * (4 - len(s) % 4)
+    return base64.urlsafe_b64decode(s + pad).decode()
+
+def decode_email_webhook_token(token: str) -> dict:
+    """
+    Decode a token of the form:
+    <UUID-no-dash>.<b64(projectId)>.<b64(nodeId)>.<b64(envId)>
+
+    Example:
+        21bcd57ab350490bb8bd2b93c0c5bfa9.MTcx.Mzg3.MzM0
+    """
+    try:
+        uuid_hex, b_project, b_node, b_env = token.split(".")
+        uid = str(uuid.UUID(uuid_hex))  # adds dashes
+        project_id = b64url_decode(b_project)
+        node_id = b64url_decode(b_node)
+        env_id = b64url_decode(b_env)
+    except Exception as e:
+        return None
+
+    return {
+        "uid": uid,
+        "project_id": project_id,
+        "node_id": node_id,
+        "env_id": env_id,
+    }

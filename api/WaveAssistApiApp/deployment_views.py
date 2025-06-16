@@ -304,3 +304,59 @@ def webhook(request, uid, project_key, start_node_key, data_run_key):
     })
     request.POST = data
     return run_dag(request)
+
+
+@csrf_exempt
+def email_webhook(request):
+    """Handles inbound emails from SendGrid's Parse Webhook."""
+    if request.method != "POST":
+        return JsonResponse({"detail": "Method not allowed"}, status=405)
+
+    try:
+        to_addr = request.POST.get("to", "")
+        local_part = to_addr.split("@")[0]
+        data = utils.decode_email_webhook_token(local_part)
+        if not data:
+            return ResponseParser.getParsedErrorMessage("Invalid email format or token.")
+
+        uid, project_id, node_id, env_id = data.values()
+        try:
+            project = Project.objects.get(id=project_id)
+            data_run = DataRuns.objects.get(id=env_id, project_object=project)
+            node = Nodes.objects.get(id=node_id, project_object=project, is_enabled=True, is_starting_node=True)
+        except:
+            return ResponseParser.getParsedErrorMessage("Project, DataRun, or Node not found.")
+
+        payload = {
+            'uid': uid,
+            'project_key': project.project_key,
+            'data_run_key': data_run.data_run_key,
+            'data': {
+                'subject': request.POST.get("subject", ""),
+                'text': request.POST.get("text", ""),
+                'html': request.POST.get("html", ""),
+                'from': request.POST.get("from", ""),
+            },
+            'data_key': f"{node.node_key}_webhook_data",
+            'data_type': 'json',
+        }
+
+        Client().post(
+            '/data/set_data_for_key/',
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+
+        # Prepare for DAG execution
+        post_data = request.POST.copy()
+        post_data.update({
+            'uid': uid,
+            'project_key': project.project_key,
+            'start_node_key': node.node_key,
+            'data_run_key': data_run.data_run_key,
+        })
+        request.POST = post_data
+        return run_dag(request)
+
+    except Exception as e:
+        return JsonResponse({"error": f"Exception: {str(e)}"}, status=500)
