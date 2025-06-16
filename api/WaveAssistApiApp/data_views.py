@@ -81,7 +81,7 @@ def fetch_data_for_key(request):
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    data_run_key = get_param(request, 'data_run_key') or get_param(request, 'environment_key')
+    data_run_key = get_param(request, 'data_run_key', None) or get_param(request, 'environment_key', None)
     data_key = get_param(request, 'data_key', '')
 
     if not data_key:
@@ -121,7 +121,7 @@ def set_data_for_key(request):
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    data_run_key = get_param(request, 'data_run_key') or get_param(request, 'environment_key')
+    data_run_key = get_param(request, 'data_run_key', None) or get_param(request, 'environment_key', None)
     data_key = get_param(request, 'data_key')
     data_type = get_param(request, 'data_type', 'json')
     data = get_param(request, 'data')
