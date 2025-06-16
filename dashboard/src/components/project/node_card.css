@@ -1,0 +1,59 @@
+/* src/components/node_card.css */
+.card-root {
+  width: 300px;
+  height: 180px; /* fixed height to evenly space sections */
+  padding: 16px;
+  background-color: #232f42;
+  color: #e2e8f0;
+  border-radius: 8px;
+  border: 2px solid;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.card-root.enabled {
+  border-color: #428d4f;
+}
+
+.card-root.disabled {
+  border-color: #d9534f;
+  opacity: 0.8;
+}
+
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.title-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btn-section,
+.run-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-section {
+  justify-content: center;
+}
+
+.run-section {
+  justify-content: space-between;
+}
+
+.schedule-label {
+  font-size: 11px;
+}

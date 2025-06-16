@@ -104,3 +104,41 @@
   color: #adb5bd;      /* Bootstrap’s $gray-600 */
   line-height: 1.2;
 }
+/* React Flow Controls panel styling */
+.react-flow__controls {
+  background-color: #1f2633 !important; /* deeper dark, not fully black */
+  border: 1px solid #2b3548;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Control buttons */
+.react-flow__controls-button {
+  background-color: #1f2633 !important;
+  color: #e2e8f0 !important; /* light gray text/icons */
+  border-bottom: 1px solid #2b3548;
+  padding: 10px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Remove divider for last button */
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+/* On hover - slightly brighter button */
+.react-flow__controls-button:hover {
+  background-color: #2b3548 !important;
+  color: #ffffff !important;
+}
+.react-flow__controls-button svg {
+  fill: #e2e8f0 !important; /* light gray */
+  width: 16px;
+  height: 16px;
+}
+
+/* Optional: On hover, brighten the icon */
+.react-flow__controls-button:hover svg {
+  fill: #ffffff !important;
+}

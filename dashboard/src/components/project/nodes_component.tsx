@@ -1,18 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Joyride, { Step } from "react-joyride";
-
-import {
-	fetchNodesApi,
-	updateCodeApi,
-	createNodeApi,
-	updateNodeApi,
-	deleteNodeApi,
-	runDAGApi,
-	generate_dag_image,
-} from "../../services/project_services";
+import { Node as RFNode, Edge as RFEdge } from "reactflow";
+import { fetchNodesApi, updateCodeApi, createNodeApi, updateNodeApi, deleteNodeApi, runDAGApi } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
 import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap";
-import { AgGridReact } from "ag-grid-react";
 import "./project_components.css";
 import type { GridOptions } from "ag-grid-community";
 import "../../utils/ag-theme-project.css";
@@ -25,18 +16,28 @@ import { useRefresh } from "../../utils/RefreshContext";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { Badge, Collapse } from "react-bootstrap";
+import NodeTableView from "./node_table_view";
+import NodeFlowView from "./node_flow_view";
+import dagre from "dagre";
+import { Position } from "reactflow";
+
+// Constants for node size
+const NODE_WIDTH = 180;
+const NODE_HEIGHT = 60;
 
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
-	const [isOpen, setIsOpen] = useState(false);
-	const [url, setUrl] = useState("");
+	// const [isOpen, setIsOpen] = useState(false);
+	// const [url, setUrl] = useState("");
 	const [showWebhook, setShowWebhook] = useState(false);
 	const [showEmailWebhook, setShowEmailWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [copied, setCopied] = useState(false);
 	const [runTour, setRunTour] = useState(false);
 	const [emailWebhook, setEmailWebhook] = useState("");
-
+	const [view, setView] = useState<"flow" | "table">(() => (localStorage.getItem("nodesView") as any) ?? "table");
+	const [rfNodes, setRfNodes] = useState<RFNode[]>([]);
+	const [rfEdges, setRfEdges] = useState<RFEdge[]>([]);
 	const steps: Step[] = [
 		{
 			target: ".play-button-step", // The plus icon button
@@ -45,6 +46,9 @@ const NodesComponent: React.FC = () => {
 			locale: { last: "Ok" },
 		},
 	];
+	useEffect(() => {
+		localStorage.setItem("nodesView", view);
+	}, [view]);
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
@@ -78,6 +82,81 @@ const NodesComponent: React.FC = () => {
 	} = useForm({
 		defaultValues: defaultValuesDict,
 	});
+	function getScheduleLabel(n: any) {
+		if (n.is_starting_node) {
+			if (n.schedule_type === "crontab") return n.crontab_schedule.replace(/\(.*?\)/g, "");
+			if (n.schedule_type === "interval") return n.interval_schedule;
+			return "Manual / Webhook";
+		}
+		return `After: ${n.run_after_nodes_array.map((p: any) => p.name).join(", ")}`;
+	}
+
+	/** Convert WaveAssist nodes → React-Flow nodes & edges */
+
+	const buildFlow = (nodesArr: any[]): { rfNodes: RFNode[]; rfEdges: RFEdge[] } => {
+		const rfNodes: RFNode[] = nodesArr.map((n: any) => ({
+			id: n.node_key,
+			type: "card", // Use your custom node type if applicable
+			data: {
+				name: n.name,
+				node_key: n.node_key,
+				is_enabled: n.is_enabled,
+				scheduleLabel: getScheduleLabel(n),
+				onView: () => handleViewCode(n),
+				onEdit: () => handleEdit(n),
+				onDelete: () => handleDelete(n),
+				onRun: () => handleRun(n),
+				canRun: n.is_starting_node,
+				label: n.name,
+			},
+			position: { x: 0, y: 0 }, // Placeholder — dagre sets actual values
+			style: {
+				background: "#232F42",
+				border: `2px solid ${n.is_enabled ? "#428d4f" : "#d9534f"}`,
+				color: "#fff",
+				borderRadius: 8,
+				fontSize: 13,
+			},
+		}));
+
+		const rfEdges: RFEdge[] = nodesArr.flatMap((n: any) =>
+			n.run_after_nodes_array.map((parent: any) => ({
+				id: `${parent.node_key}->${n.node_key}`,
+				source: parent.node_key,
+				target: n.node_key,
+				animated: true,
+				style: { stroke: "#428d4f" },
+				markerEnd: { type: "arrowclosed", color: "#428d4f" },
+			}))
+		);
+
+		// Layout with dagre
+		const dagreGraph = new dagre.graphlib.Graph();
+		dagreGraph.setDefaultEdgeLabel(() => ({}));
+		dagreGraph.setGraph({ rankdir: "TB" }); // Top-Bottom layout
+
+		rfNodes.forEach((node) => {
+			dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+		});
+		rfEdges.forEach((edge) => {
+			dagreGraph.setEdge(edge.source, edge.target);
+		});
+
+		dagre.layout(dagreGraph);
+
+		// Apply positions
+		const layoutedNodes = rfNodes.map((node) => {
+			const { x, y } = dagreGraph.node(node.id);
+			return {
+				...node,
+				position: { x, y },
+				sourcePosition: Position.Bottom,
+				targetPosition: Position.Top,
+			};
+		});
+
+		return { rfNodes: layoutedNodes, rfEdges };
+	};
 
 	const onSubmit = async (data: any) => {
 		try {
@@ -113,7 +192,7 @@ const NodesComponent: React.FC = () => {
 	const handleClose = () => {
 		setSelectedNodeKey("");
 		setShowCodeModal(false);
-		setIsOpen(false);
+		// setIsOpen(false);
 	};
 
 	const handleSave = async () => {
@@ -131,15 +210,15 @@ const NodesComponent: React.FC = () => {
 		setShowNodeEditor(true);
 	};
 
-	const handleDiagram = async () => {
-		setLoading(true);
-		var data_dict = await generate_dag_image();
-		setLoading(false);
-		var s3_key = data_dict.s3_key;
-		var url = "https://waveassistapps.s3.amazonaws.com/" + s3_key;
-		setUrl(url);
-		setIsOpen(true);
-	};
+	// const handleDiagram = async () => {
+	// 	setLoading(true);
+	// 	var data_dict = await generate_dag_image();
+	// 	setLoading(false);
+	// 	var s3_key = data_dict.s3_key;
+	// 	var url = "https://waveassistapps.s3.amazonaws.com/" + s3_key;
+	// 	setUrl(url);
+	// 	setIsOpen(true);
+	// };
 
 	const handleDownloadCode = () => {
 		const zip = new JSZip();
@@ -280,6 +359,9 @@ ${config.nodes
 				return 0; // Keep original order for other nodes
 			});
 			setNodesArray(nodes_array);
+			const { rfNodes, rfEdges } = buildFlow(nodes_array);
+			setRfNodes(rfNodes);
+			setRfEdges(rfEdges);
 			const is_template_run = localStorage.getItem("is_template_run");
 			const tourCompleted = localStorage.getItem("run_node_tour") === "true";
 			if (!tourCompleted && is_template_run === "true") {
@@ -351,6 +433,10 @@ ${config.nodes
 			View Code
 		</button>
 	);
+
+	const toggleView = () => {
+		setView(view === "flow" ? "table" : "flow");
+	};
 
 	const ActionButtons = (params: any) => {
 		return (
@@ -471,31 +557,35 @@ ${config.nodes
 				<div className="d-flex justify-content-start align-items-center mb-3">
 					<h3 className="translucent_white">Nodes</h3>
 					<div className="ms-auto d-flex">
-						<Button variant="dark" onClick={handleDiagram}>
-							<span className="bi bi-diagram-2"></span>
+						<Button variant="dark" onClick={toggleView} className="ms-2" aria-label="Toggle view">
+							{
+								view === "flow" ? (
+									<span className="bi bi-table"> &nbsp; Table View </span> // shows table icon when in Flow, so click → Table
+								) : (
+									<span className="bi bi-diagram-2"> Flow View</span>
+								) // shows diagram icon when in Table, so click → Flow
+							}
+						</Button>
+
+						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
+							<span className="bi bi-plus-lg"> Create Node</span>
 						</Button>
 						<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
 							<span className="bi bi-cloud-download"></span>
 						</Button>
-						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
-							<span className="bi bi-plus-lg"></span>
-						</Button>
 					</div>
 				</div>
 
-				<div className="ag-theme-custom grid-container">
-					<AgGridReact
-						rowData={nodesArray}
-						columnDefs={columnDefs}
-						pagination={true}
-						paginationPageSize={10}
-						gridOptions={gridOptions}
-						defaultColDef={defaultColDef}
-					/>
-				</div>
+				{view === "table" ? (
+					<NodeTableView rowData={nodesArray} columnDefs={columnDefs} gridOptions={gridOptions} defaultColDef={defaultColDef} />
+				) : (
+					<Suspense fallback={<Spinner animation="border" />}>
+						<NodeFlowView nodes={rfNodes} edges={rfEdges} onNodeClick={(id: string) => handleEdit(nodesArray.find((n) => n.node_key === id))} />
+					</Suspense>
+				)}
 			</div>
 
-			<Modal show={isOpen} onHide={handleClose} size="lg" centered>
+			{/* <Modal show={isOpen} onHide={handleClose} size="lg" centered>
 				<Modal.Header closeButton>
 					<Modal.Title>Nodes Flow</Modal.Title>
 				</Modal.Header>
@@ -504,7 +594,7 @@ ${config.nodes
 						<img src={url} alt="Generated" style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto" }} />
 					</div>
 				</Modal.Body>
-			</Modal>
+			</Modal> */}
 
 			<Modal show={showCodeModal} onHide={handleClose} size="lg" centered>
 				<Modal.Header>
