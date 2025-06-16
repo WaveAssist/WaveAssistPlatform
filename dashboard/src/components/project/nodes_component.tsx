@@ -747,7 +747,7 @@ ${config.nodes
 										<Collapse in={showEmailWebhook}>
 											<div className="mt-2 p-3 bg-dark text-white rounded" style={{ overflow: "hidden" }}>
 												<span className="trigger-text">Sending any email to this address will trigger the workflow.</span>
-												<Badge bg="secondary">POST</Badge>
+												<Badge bg="secondary">EMAIL TO: </Badge>
 												<span className="ms-2 flex-grow-1" style={{ wordBreak: "break-all", fontSize: "0.9rem" }}>
 													{emailWebhook}
 												</span>
