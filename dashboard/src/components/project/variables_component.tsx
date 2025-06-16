@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { fetchVariablesApi, fetchDataForKeyAPI, createVariableApi, setDataForKeyApi } from "../../services/project_services";
+import { fetchVariablesApi, fetchDataForKeyAPI, createVariableApi, setDataForKeyApi, getDataUrl } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
-import { Form, Button, Spinner, DropdownButton, Dropdown } from "react-bootstrap";
+import { Form, Button, Spinner, DropdownButton, Dropdown, OverlayTrigger,
+	Tooltip, } from "react-bootstrap";
 import Papa from 'papaparse';
 import { AgGridReact } from "ag-grid-react"; // for JSX
 import type { AgGridReact as AgGridReactType } from "ag-grid-react"; // for typing
@@ -11,6 +12,44 @@ import Modal from "react-bootstrap/Modal";
 import { useRefresh } from "../../utils/RefreshContext";
 import Editor from "@monaco-editor/react";
 import { ColDef } from "ag-grid-community";
+
+
+/**
+ * Clipboard button used inside the Variable‐table.
+ * Shows a tooltip with feedback (“Copy URL” → “Copied!”).
+ */
+const CopyWebhookButton: React.FC<{ url: string }> = ({ url }) => {
+	const [copied, setCopied] = useState(false);
+  
+	const handleCopy = async () => {
+	  try {
+		await navigator.clipboard.writeText(url);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 1500);
+	  } catch (_) {
+		// fallback: open in new tab if copy fails
+		window.open(url, "_blank", "noopener,noreferrer");
+	  }
+	};
+  
+	return (
+	  <OverlayTrigger
+		placement="top"
+		overlay={<Tooltip>{copied ? "Copied!" : "Copy webhook URL"}</Tooltip>}
+	  >
+		<Button
+		  variant="outline-secondary"
+		  size="sm"
+		  className="d-flex align-items-center gap-1"
+		  onClick={handleCopy}
+		>
+		  <i className="bi bi-clipboard" />
+		  <span className="d-none d-md-inline">Copy</span>
+		</Button>
+	  </OverlayTrigger>
+	);
+  };
+  
 
 const VariablesComponent: React.FC = () => {
 	const [variablesArray, setVariablesArray] = useState<any[]>([]);
@@ -249,8 +288,23 @@ const VariablesComponent: React.FC = () => {
 		{
 			headerName: "Variable Key",
 			field: "value",
-			cellRenderer: (params: any) => <span className="badge badge-primary">{params.value}</span>,
-			flex: 3,
+			cellRenderer: (params: any) => (
+				<div className="d-flex align-items-center gap-2">
+				  <span className="tit mr-2">{params.value}</span>
+				</div>
+			  ),
+			  flex: 1.4,
+			  cellStyle: { display: "flex", alignItems: "center" },
+			},
+		{
+			headerName: "Data Type",
+			field: "dataType",
+			cellRenderer: (params: any) => (
+				<span className="badge bg-secondary">
+					{params.value || 'unknown'}
+				</span>
+			),
+			flex: 1,
 			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
 		},
 		{
@@ -263,7 +317,8 @@ const VariablesComponent: React.FC = () => {
 						className="d-flex align-items-center gap-2"
 						onClick={() => viewData(params.data)}
 					>
-						View Data
+						<i className="bi bi-search" />
+						<span className="d-none d-md-inline">View</span>
 					</Button>
 					{params.data.dataType === 'dataframe' && (
 						<div className="file-upload-container">
@@ -277,12 +332,12 @@ const VariablesComponent: React.FC = () => {
 							<Button
 								variant="outline-success"
 								size="sm"
-								className="d-flex align-items-center"
+								className="d-flex align-items-center gap-2"
 								onClick={() => document.getElementById(`file-upload-${params.data.key}`)?.click()}
 								title="Upload CSV"
 							>
-								<i className="bi bi-cloud-upload me-2"></i>
-								 Upload
+								<i className="bi bi-cloud-upload "></i>
+								 
 							</Button>
 						</div>
 					)}
@@ -291,13 +346,17 @@ const VariablesComponent: React.FC = () => {
 			flex: 1,
 			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
 		},
+		{	
+			headerName: "Webhook URL",
+			field: "value",
+			cellRenderer: (params: any) => {
+				if (!params.value) return null;
+				return <CopyWebhookButton url={getDataUrl(params.value)} />;
+			},
+			flex: 1,
+			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
+		},
 
-		// {
-		// 	headerName: "Actions",
-		// 	cellRenderer: ActionButtons,
-		// 	flex: 1,
-		// 	cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
-		// },
 	];
 
 	return (
