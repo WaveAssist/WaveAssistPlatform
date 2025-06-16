@@ -21,6 +21,14 @@ export const fetchVariablesApi = async (): Promise<any> => {
 	return callApi(path, body);
 };
 
+export const getDataUrl = (key: string): string => {
+	const uid = localStorage.getItem("uid") || "";
+	const project_key = localStorage.getItem("selected_project_key") || "";
+	const data_run_key = localStorage.getItem("selected_env_key") || "";
+	const base_url = "https://api.waveassist.io";
+	return `${base_url}/data/fetch_data/${uid}/${project_key}/${data_run_key}/${key}`;
+};
+
 // FetchPackagesAPI
 export const fetchPackagesApi = async (): Promise<any> => {
 	const body = new URLSearchParams({
