@@ -38,12 +38,12 @@ const DeployComponent: React.FC = () => {
 				if (res.data.success === "1") {
 					setTemplateData(res.data.data);
 				} else {
-					alert("Failed to fetch template.");
+					alert("Failed to fetch assistant.");
 					navigate("/manage");
 				}
 			} catch (err) {
-				console.error("Error fetching template:", err);
-				alert("Could not fetch template data.");
+				console.error("Error fetching assistant:", err);
+				alert("Could not fetch assistant data.");
 				navigate("/manage");
 			}
 		};
@@ -152,7 +152,7 @@ const DeployComponent: React.FC = () => {
 			<Modal show={isDeploying} centered backdrop="static" keyboard={false} dialogClassName="deploy-modal">
 				<Modal.Body className="text-center py-5">
 					<Spinner animation="border" role="status" className="mb-3" />
-					<h5>Deploying your template, this may take a minute...</h5>
+					<h5>Deploying your assistant, this may take a minute...</h5>
 				</Modal.Body>
 			</Modal>
 			<Modal show={showSuccessModal} backdrop="static" keyboard={false} centered dialogClassName="deploy-modal">

@@ -168,9 +168,9 @@ const Sidebar = () => {
 				</li>
 
 				<li className="nav-item" style={{ fontSize: "15px", marginBottom: "3px" }}>
-					<a href="https://waveassist.io/templates" target="_blank" rel="noopener noreferrer" className="nav-link text-white fw-normal py-1">
+					<a href="https://waveassist.io/assistants" target="_blank" rel="noopener noreferrer" className="nav-link text-white fw-normal py-1">
 						<i className="bi bi-bookmark-check-fill me-2"></i>
-						Templates
+						Assistants
 						<i className="bi bi-box-arrow-up-right ms-2" style={{ fontSize: "14px" }}></i>
 					</a>
 				</li>
