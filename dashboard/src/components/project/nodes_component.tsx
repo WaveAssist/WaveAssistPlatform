@@ -31,9 +31,11 @@ const NodesComponent: React.FC = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [url, setUrl] = useState("");
 	const [showWebhook, setShowWebhook] = useState(false);
+	const [showEmailWebhook, setShowEmailWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [copied, setCopied] = useState(false);
 	const [runTour, setRunTour] = useState(false);
+	const [emailWebhook, setEmailWebhook] = useState("");
 
 	const steps: Step[] = [
 		{
@@ -78,8 +80,6 @@ const NodesComponent: React.FC = () => {
 	});
 
 	const onSubmit = async (data: any) => {
-		console.log("Form Data:", data);
-
 		try {
 			if (selected_node_key === "") {
 				await createNodeApi(data);
@@ -198,6 +198,38 @@ ${config.nodes
 		return `${baseUrl}/${uid}/${projectKey}/${nodeKey}/${envKey}/`;
 	};
 
+	const generateEmailWebhook = (nodeId: string): string => {
+		const uid = localStorage.getItem("uid");
+		const projectKey = localStorage.getItem("selected_project_key");
+		const projectArray = JSON.parse(localStorage.getItem("project_array") || "[]");
+		const matchingProject = projectArray.find((project: { id: string; project_key: string }) => project.project_key === projectKey);
+		const projectId = matchingProject?.id || null;
+
+		const environmentArray = JSON.parse(localStorage.getItem("environment_array") || "[]");
+		const envKey = localStorage.getItem("selected_env_key");
+
+		const matchingEnv = environmentArray.find((env: { id: string; key: string }) => env.key === envKey);
+
+		const envId = matchingEnv?.id || null;
+
+		if (!uid || !projectId || !nodeId || !envId) {
+			return ""; // required fields missing
+		}
+
+		// Base64 URL-safe encode
+		const b64url = (str: string): string => btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+		const uuidNoDash = uid.replace(/-/g, "");
+		const emailLocal = [uuidNoDash, b64url(projectId), b64url(nodeId), b64url(envId)].join(".");
+
+		if (emailLocal.length > 64) {
+			console.warn("Email local-part exceeds 64 characters.");
+			return "";
+		}
+
+		return `${emailLocal}@trigger.waveassist.io`;
+	};
+
 	const handleEdit = (node: any) => {
 		if (node.crontab_schedule && node.crontab_schedule.includes("m/h/dM/MY/d")) {
 			const [minute, hour, dayOfMonth, month, dayOfWeek, , timezone] = node.crontab_schedule.split(" ");
@@ -222,6 +254,7 @@ ${config.nodes
 		reset(node);
 		setSelectedNodeKey(node.node_key);
 		setWebhookUrl(generateWebhookUrl(node.node_key));
+		setEmailWebhook(generateEmailWebhook(node.id));
 		setShowNodeEditor(true);
 	};
 
@@ -670,6 +703,47 @@ ${config.nodes
 													className="p-0 ms-3 text-white"
 													onClick={() => {
 														navigator.clipboard.writeText(webhookUrl);
+														setCopied(true);
+														setTimeout(() => setCopied(false), 2000); // reset after 2 sec
+													}}
+													aria-label="Copy URL">
+													{copied ? (
+														<i className="bi bi-check-lg"></i> // checkmark after copy
+													) : (
+														<i className="bi bi-clipboard"></i> // normal clipboard icon
+													)}
+												</Button>
+											</div>
+										</Collapse>
+									</Form.Group>
+								)}
+								{emailWebhook && (
+									<Form.Group className="mb-4">
+										{/* Toggle header */}
+										<div
+											onClick={() => setShowEmailWebhook((f) => !f)}
+											style={{
+												cursor: "pointer",
+												display: "inline-flex",
+												alignItems: "center",
+												userSelect: "none",
+											}}>
+											<i className={`bi me-2 ${showEmailWebhook ? "bi-caret-down-fill" : "bi-caret-right-fill"}`} />
+											<strong>Trigger Email</strong>
+										</div>
+
+										{/* Collapsible content */}
+										<Collapse in={showEmailWebhook}>
+											<div className="mt-2 p-3 bg-dark text-white rounded" style={{ overflow: "hidden" }}>
+												<Badge bg="secondary">POST</Badge>
+												<span className="ms-2 flex-grow-1" style={{ wordBreak: "break-all", fontSize: "0.9rem" }}>
+													{emailWebhook}
+												</span>
+												<Button
+													variant="link"
+													className="p-0 ms-3 text-white"
+													onClick={() => {
+														navigator.clipboard.writeText(emailWebhook);
 														setCopied(true);
 														setTimeout(() => setCopied(false), 2000); // reset after 2 sec
 													}}

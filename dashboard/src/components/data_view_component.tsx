@@ -56,8 +56,6 @@ const DataViewComponent: React.FC = () => {
 			const displayData = data.data;
 			const dataType = data.data_type;
 			setDataType(dataType);
-			console.log(displayData);
-			console.log(dataType);
 			if (dataType == "dataframe") {
 				if (displayData.length > 0) {
 					setDataArray(displayData);
@@ -72,10 +70,6 @@ const DataViewComponent: React.FC = () => {
 					setColumnDefs(newColumnDefs);
 				}
 			} else if (dataType == "json") {
-				console.log("A3");
-
-				console.log("jsonDataString", jsonDataString);
-				console.log(displayData);
 				setJsonDataString(JSON.stringify(displayData, null, 2));
 			} else if (dataType == "string") {
 				setStringData(displayData);
