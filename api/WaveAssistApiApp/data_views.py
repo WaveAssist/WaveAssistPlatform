@@ -1,3 +1,6 @@
+from django.http import JsonResponse
+from httplib2.auth import params
+
 from .models import *
 from .Utils.responseParser import ResponseParser
 from WaveAssistApiApp.Utils.MongoManager import MongoManager
@@ -42,6 +45,33 @@ def upload_data_file(request):
     except Exception as e:
         utils.logger.error(f"❌ Error processing uploaded file: {str(e)}")
         return ResponseParser.getParsedErrorMessage('Error processing uploaded file.')
+
+@require_GET
+def fetch_data(request, uid, project_key, data_run_key, data_key):
+    """Fetch data for a given key from the user's environment."""
+    params = {
+        'uid': uid,
+        'project_key': project_key,
+        'data_run_key': data_run_key,
+        'data_key': data_key
+    }
+    request.GET = request.GET.copy()
+    request.GET.update(params)
+    response = fetch_data_for_key(request)
+    ## process response, check for success
+    if response.status_code != 200:
+        utils.logger.error(f"❌ Error fetching data: {response.content.decode('utf-8')}")
+        return ResponseParser.getParsedErrorMessage('Error fetching data.')
+    try:
+        response_data = json.loads(response.content.decode('utf-8'))
+        if not response_data.get('success','0') == '1':
+            utils.logger.error(f"❌ Error fetching data: {response_data.get('message')}")
+            return ResponseParser.getParsedErrorMessage(response_data.get('message'))
+
+        return JsonResponse(response_data.get('data'), status=200)
+    except Exception as e:
+        utils.logger.error(f"❌ Error parsing response: {str(e)}")
+        return ResponseParser.getParsedErrorMessage('Error parsing response from data fetch API.')
 
 
 
@@ -122,4 +152,3 @@ def set_data_for_key(request):
     except Exception as e:
         utils.logger.error(f"❌ Exception in set_data_for_key: {str(e)}")
         return ResponseParser.getParsedErrorMessage('Server error during data save.')
-

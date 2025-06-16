@@ -62,6 +62,7 @@ urlpatterns = [
     path("data/upload_data_file/", csrf_exempt(data_views.upload_data_file), name="upload_data_file"),
     path("data/fetch_data_for_key/", csrf_exempt(data_views.fetch_data_for_key), name="fetch_data_for_key"),
     path("data/set_data_for_key/", csrf_exempt(data_views.set_data_for_key), name="set_data_for_key"),
+    path("data/fetch_data/<str:uid>/<str:project_key>/<str:data_run_key>/<str:data_key>/", csrf_exempt(data_views.fetch_data), name="fetch_data"),
 
     ##Build URL's
     path("deploy/deploy_project/", csrf_exempt(deployment_views.deploy_project), name="deploy_project"),
