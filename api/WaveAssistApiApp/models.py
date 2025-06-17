@@ -386,3 +386,76 @@ class DAG(models.Model):
         dag_dict['key'] = self.key
         dag_dict['is_running'] = self.is_running
         return dag_dict
+
+
+class DagRuns(models.Model):
+    id = models.AutoField(primary_key=True)
+    run_id = models.CharField(max_length=60, unique=True, null=True)            # Celery UUID
+    dag_object = models.ForeignKey('DAG', on_delete=models.CASCADE, null=True)  # Which DAG definition
+    project_object = models.ForeignKey('Project', on_delete=models.CASCADE)     # Tenant / workspace
+    data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE, null=True)  # Data run associated with this DAG run
+
+    # Status life-cycle
+    STATUS_CHOICES = [
+        ('PENDING',  'Pending'),
+        ('STARTED',  'Started'),
+        ('SUCCESS',  'Success'),
+        ('FAILED',   'Failed'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "WaveAssist_DagRuns"
+        verbose_name = 'DAG Run'
+        verbose_name_plural = 'DAG Runs'
+
+    def __str__(self):
+        return f"DAG Run: {self.id} ({self.run_key})"
+
+    def get_dict(self):
+        return {
+            'id':           self.id,
+            'run_id':  self.run_id,
+            'status':       self.status,
+            'started_at':   self.started_at,
+            'finished_at':  self.finished_at,
+        }
+
+
+class NodeRuns(models.Model):
+    id = models.AutoField(primary_key=True)
+    task_id = models.CharField(max_length=50, unique=True)        # Celery UUID
+    dag_run_object = models.ForeignKey('DagRuns', on_delete=models.CASCADE)
+    node_object = models.ForeignKey('Nodes', on_delete=models.CASCADE)
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('STARTED', 'Started'),
+        ('RETRY',   'Retry'),
+        ('SUCCESS', 'Success'),
+        ('FAILED',  'Failed'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    result = models.TextField(null=True, blank=True)
+    traceback = models.TextField(null=True, blank=True)           # exc info for failures
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "WaveAssist_NodeRuns"
+        verbose_name = 'Node Run'
+        verbose_name_plural = 'Node Runs'
+    def __str__(self):
+        return f"Node Run: {self.id} ({self.task_id})"
+
+    def get_dict(self):
+        return {
+            'task_id':      self.task_id,
+            'status':       self.status,
+            'started_at':   self.started_at,
+            'finished_at':  self.finished_at,
+            'result':       self.result,
+        }
