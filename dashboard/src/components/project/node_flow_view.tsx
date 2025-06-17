@@ -1,24 +1,26 @@
 // src/components/node_flow_view.tsx
-import ReactFlow, { Background, Controls, Node, Edge } from "reactflow";
+import ReactFlow, { Background, Controls, Node, Edge, NodeChange } from "reactflow";
+
 import "reactflow/dist/style.css";
 import "./project_components.css";
-// import NodeCard from "./node_card";
+import NodeCard from "./node_card";
 type Props = {
 	nodes: Node[];
 	edges: Edge[];
-	onNodeClick?: (nodeId: string) => void;
+	onNodesChange?: (changes: NodeChange[]) => void;
 };
-// const nodeTypes = { card: NodeCard };
+const nodeTypes = { card: NodeCard };
 
-export default function NodeFlowView({ nodes, edges, onNodeClick }: Props) {
+export default function NodeFlowView({ nodes, edges, onNodesChange }: Props) {
 	return (
 		<div style={{ flex: 1, height: "70vh" }}>
 			<ReactFlow
-				// nodeTypes={nodeTypes}
+				nodeTypes={nodeTypes}
 				proOptions={{ hideAttribution: true }} // 👈 Add this
 				nodes={nodes}
 				edges={edges}
-				onNodeClick={(_, n) => onNodeClick!(n.id)}
+				nodesDraggable={true}
+				onNodesChange={onNodesChange}
 				fitView
 				fitViewOptions={{ padding: 0.4 }} // 👈 zooms out a bit
 			>

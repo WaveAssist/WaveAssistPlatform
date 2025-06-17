@@ -1,59 +1,79 @@
 /* src/components/node_card.css */
-.card-root {
-  width: 300px;
-  height: 180px; /* fixed height to evenly space sections */
-  padding: 16px;
-  background-color: #232f42;
-  color: #e2e8f0;
-  border-radius: 8px;
-  border: 2px solid;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+.simple-node {
+	width: 250px;
+	height: 50px;
+	background-color: #1e293b;
+	border-radius: 12px;
+	border: 2px solid transparent;
+	color: rgba(255, 255, 255, 0.9);
+	padding: 0 12px;
+	font-size: 13px;
+
+	display: flex;
+	align-items: center;
+
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.card-root.enabled {
-  border-color: #428d4f;
+.simple-node.enabled {
+	border-color: #49d078;
 }
 
-.card-root.disabled {
-  border-color: #d9534f;
-  opacity: 0.8;
+.simple-node.disabled {
+	border-color: #888;
+	opacity: 0.7;
 }
 
-.card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+.node-content {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
 }
 
-.title-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.node-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.title {
-  font-size: 16px;
-  font-weight: 600;
+.node-actions {
+	display: flex;
+	gap: 8px;
 }
 
-.btn-section,
-.run-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.node-actions i {
+	font-size: 14px;
+	color: #4dd38c; /* soft custom green */
+	cursor: pointer;
 }
 
-.btn-section {
-  justify-content: center;
+.react-flow__node {
+	box-shadow: none !important;
+	border: none !important;
 }
 
-.run-section {
-  justify-content: space-between;
+.node-actions {
+	gap: 4px;
 }
 
-.schedule-label {
-  font-size: 11px;
+.node-actions i {
+	width: 20px;
+	height: 20px;
+	border: 1.2px solid #4dd38c;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 8px;
+	color: #4dd38c;
+	cursor: pointer;
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.node-actions i:hover {
+	background-color: rgba(77, 211, 140, 0.12);
+	color: #4dd38c;
 }

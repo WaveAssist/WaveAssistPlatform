@@ -20,10 +20,11 @@ import NodeTableView from "./node_table_view";
 import NodeFlowView from "./node_flow_view";
 import dagre from "dagre";
 import { Position } from "reactflow";
+import { applyNodeChanges, NodeChange } from "reactflow";
 
 // Constants for node size
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 60;
+const NODE_WIDTH = 250;
+const NODE_HEIGHT = 50;
 
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
@@ -49,6 +50,10 @@ const NodesComponent: React.FC = () => {
 	useEffect(() => {
 		localStorage.setItem("nodesView", view);
 	}, [view]);
+
+	const handleNodesChange = (changes: NodeChange[]) => {
+		setRfNodes((nds) => applyNodeChanges(changes, nds));
+	};
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
@@ -97,6 +102,8 @@ const NodesComponent: React.FC = () => {
 		const rfNodes: RFNode[] = nodesArr.map((n: any) => ({
 			id: n.node_key,
 			type: "card", // Use your custom node type if applicable
+			draggable: true, // ✅ Optional but explicit
+
 			data: {
 				name: n.name,
 				node_key: n.node_key,
@@ -125,8 +132,11 @@ const NodesComponent: React.FC = () => {
 				source: parent.node_key,
 				target: n.node_key,
 				animated: true,
-				style: { stroke: "#428d4f" },
-				markerEnd: { type: "arrowclosed", color: "#428d4f" },
+				style: {
+					stroke: "#49d078", // or your preferred green
+					strokeWidth: 1.5,
+				},
+				markerEnd: { type: "arrowclosed", color: "#49d078" },
 			}))
 		);
 
@@ -568,7 +578,7 @@ ${config.nodes
 						</Button>
 
 						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
-							<span className="bi bi-plus-lg"> Create Node</span>
+							<span className="bi bi-plus-lg"> Add Node</span>
 						</Button>
 						<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
 							<span className="bi bi-cloud-download"></span>
@@ -580,7 +590,7 @@ ${config.nodes
 					<NodeTableView rowData={nodesArray} columnDefs={columnDefs} gridOptions={gridOptions} defaultColDef={defaultColDef} />
 				) : (
 					<Suspense fallback={<Spinner animation="border" />}>
-						<NodeFlowView nodes={rfNodes} edges={rfEdges} onNodeClick={(id: string) => handleEdit(nodesArray.find((n) => n.node_key === id))} />
+						<NodeFlowView nodes={rfNodes} edges={rfEdges} onNodesChange={handleNodesChange} />
 					</Suspense>
 				)}
 			</div>
@@ -623,7 +633,7 @@ ${config.nodes
 
 			<Modal show={showNodeEditor} onHide={handleCloseNodeEditor} size="lg" centered>
 				<Modal.Header closeButton>
-					<Modal.Title>{selected_node_key === "" ? "Create Node" : "Edit Node"}</Modal.Title>
+					<Modal.Title>{selected_node_key === "" ? "Add Node" : "Edit Node"}</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
 					<Form onSubmit={handleSubmit(onSubmit)}>
