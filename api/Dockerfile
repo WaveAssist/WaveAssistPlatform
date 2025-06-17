@@ -27,5 +27,8 @@ EXPOSE 8000
 # Expose port 5555 for Celery Flower
 EXPOSE 5555
 
+# Ensure all scripts are executable
+RUN chmod +x ./start.sh ./start_beat.sh ./start_flower.sh
+
 # Start the Gunicorn server to serve the Django application ##ToDo: Shift to supervisor if needed.
 CMD ["./start.sh"]
