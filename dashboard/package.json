@@ -21,6 +21,7 @@
     "axios": "^1.6.8",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "dagre": "^0.8.5",
     "file-saver": "^2.0.5",
     "firebase": "^10.14.1",
     "firebaseui": "^6.1.0",
@@ -38,9 +39,11 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^6.23.1",
     "react-virtualized": "^9.22.5",
+    "reactflow": "^11.11.4",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@types/dagre": "^0.7.52",
     "@types/file-saver": "^2.0.7",
     "@types/papaparse": "^5.3.14",
     "@types/react": "^18.2.66",

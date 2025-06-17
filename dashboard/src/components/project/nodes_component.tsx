@@ -1,18 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Joyride, { Step } from "react-joyride";
-
-import {
-	fetchNodesApi,
-	updateCodeApi,
-	createNodeApi,
-	updateNodeApi,
-	deleteNodeApi,
-	runDAGApi,
-	generate_dag_image,
-} from "../../services/project_services";
+import { Node as RFNode, Edge as RFEdge } from "reactflow";
+import { fetchNodesApi, updateCodeApi, createNodeApi, updateNodeApi, deleteNodeApi, runDAGApi } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
 import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap";
-import { AgGridReact } from "ag-grid-react";
 import "./project_components.css";
 import type { GridOptions } from "ag-grid-community";
 import "../../utils/ag-theme-project.css";
@@ -25,16 +16,29 @@ import { useRefresh } from "../../utils/RefreshContext";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { Badge, Collapse } from "react-bootstrap";
+import NodeTableView from "./node_table_view";
+import NodeFlowView from "./node_flow_view";
+import dagre from "dagre";
+import { Position } from "reactflow";
+import { applyNodeChanges, NodeChange } from "reactflow";
+
+// Constants for node size
+const NODE_WIDTH = 250;
+const NODE_HEIGHT = 50;
 
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
-	const [isOpen, setIsOpen] = useState(false);
-	const [url, setUrl] = useState("");
+	// const [isOpen, setIsOpen] = useState(false);
+	// const [url, setUrl] = useState("");
 	const [showWebhook, setShowWebhook] = useState(false);
+	const [showEmailWebhook, setShowEmailWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [copied, setCopied] = useState(false);
 	const [runTour, setRunTour] = useState(false);
-
+	const [emailWebhook, setEmailWebhook] = useState("");
+	const [view, setView] = useState<"flow" | "table">(() => (localStorage.getItem("nodesView") as any) ?? "table");
+	const [rfNodes, setRfNodes] = useState<RFNode[]>([]);
+	const [rfEdges, setRfEdges] = useState<RFEdge[]>([]);
 	const steps: Step[] = [
 		{
 			target: ".play-button-step", // The plus icon button
@@ -43,6 +47,13 @@ const NodesComponent: React.FC = () => {
 			locale: { last: "Ok" },
 		},
 	];
+	useEffect(() => {
+		localStorage.setItem("nodesView", view);
+	}, [view]);
+
+	const handleNodesChange = (changes: NodeChange[]) => {
+		setRfNodes((nds) => applyNodeChanges(changes, nds));
+	};
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
@@ -76,10 +87,88 @@ const NodesComponent: React.FC = () => {
 	} = useForm({
 		defaultValues: defaultValuesDict,
 	});
+	function getScheduleLabel(n: any) {
+		if (n.is_starting_node) {
+			if (n.schedule_type === "crontab") return n.crontab_schedule.replace(/\(.*?\)/g, "");
+			if (n.schedule_type === "interval") return n.interval_schedule;
+			return "Manual / Webhook";
+		}
+		return `After: ${n.run_after_nodes_array.map((p: any) => p.name).join(", ")}`;
+	}
+
+	/** Convert WaveAssist nodes → React-Flow nodes & edges */
+
+	const buildFlow = (nodesArr: any[]): { rfNodes: RFNode[]; rfEdges: RFEdge[] } => {
+		const rfNodes: RFNode[] = nodesArr.map((n: any) => ({
+			id: n.node_key,
+			type: "card", // Use your custom node type if applicable
+			draggable: true, // ✅ Optional but explicit
+
+			data: {
+				name: n.name,
+				node_key: n.node_key,
+				is_enabled: n.is_enabled,
+				scheduleLabel: getScheduleLabel(n),
+				onView: () => handleViewCode(n),
+				onEdit: () => handleEdit(n),
+				onDelete: () => handleDelete(n),
+				onRun: () => handleRun(n),
+				canRun: n.is_starting_node,
+				label: n.name,
+			},
+			position: { x: 0, y: 0 }, // Placeholder — dagre sets actual values
+			style: {
+				background: "#232F42",
+				border: `2px solid ${n.is_enabled ? "#428d4f" : "#d9534f"}`,
+				color: "#fff",
+				borderRadius: 8,
+				fontSize: 13,
+			},
+		}));
+
+		const rfEdges: RFEdge[] = nodesArr.flatMap((n: any) =>
+			n.run_after_nodes_array.map((parent: any) => ({
+				id: `${parent.node_key}->${n.node_key}`,
+				source: parent.node_key,
+				target: n.node_key,
+				animated: true,
+				style: {
+					stroke: "#49d078", // or your preferred green
+					strokeWidth: 1.5,
+				},
+				markerEnd: { type: "arrowclosed", color: "#49d078" },
+			}))
+		);
+
+		// Layout with dagre
+		const dagreGraph = new dagre.graphlib.Graph();
+		dagreGraph.setDefaultEdgeLabel(() => ({}));
+		dagreGraph.setGraph({ rankdir: "TB" }); // Top-Bottom layout
+
+		rfNodes.forEach((node) => {
+			dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+		});
+		rfEdges.forEach((edge) => {
+			dagreGraph.setEdge(edge.source, edge.target);
+		});
+
+		dagre.layout(dagreGraph);
+
+		// Apply positions
+		const layoutedNodes = rfNodes.map((node) => {
+			const { x, y } = dagreGraph.node(node.id);
+			return {
+				...node,
+				position: { x, y },
+				sourcePosition: Position.Bottom,
+				targetPosition: Position.Top,
+			};
+		});
+
+		return { rfNodes: layoutedNodes, rfEdges };
+	};
 
 	const onSubmit = async (data: any) => {
-		console.log("Form Data:", data);
-
 		try {
 			if (selected_node_key === "") {
 				await createNodeApi(data);
@@ -113,7 +202,7 @@ const NodesComponent: React.FC = () => {
 	const handleClose = () => {
 		setSelectedNodeKey("");
 		setShowCodeModal(false);
-		setIsOpen(false);
+		// setIsOpen(false);
 	};
 
 	const handleSave = async () => {
@@ -131,15 +220,15 @@ const NodesComponent: React.FC = () => {
 		setShowNodeEditor(true);
 	};
 
-	const handleDiagram = async () => {
-		setLoading(true);
-		var data_dict = await generate_dag_image();
-		setLoading(false);
-		var s3_key = data_dict.s3_key;
-		var url = "https://waveassistapps.s3.amazonaws.com/" + s3_key;
-		setUrl(url);
-		setIsOpen(true);
-	};
+	// const handleDiagram = async () => {
+	// 	setLoading(true);
+	// 	var data_dict = await generate_dag_image();
+	// 	setLoading(false);
+	// 	var s3_key = data_dict.s3_key;
+	// 	var url = "https://waveassistapps.s3.amazonaws.com/" + s3_key;
+	// 	setUrl(url);
+	// 	setIsOpen(true);
+	// };
 
 	const handleDownloadCode = () => {
 		const zip = new JSZip();
@@ -198,6 +287,38 @@ ${config.nodes
 		return `${baseUrl}/${uid}/${projectKey}/${nodeKey}/${envKey}/`;
 	};
 
+	const generateEmailWebhook = (nodeId: string): string => {
+		const uid = localStorage.getItem("uid");
+		const projectKey = localStorage.getItem("selected_project_key");
+		const projectArray = JSON.parse(localStorage.getItem("projects_array") || "[]");
+		const matchingProject = projectArray.find((project: { id: string; project_key: string }) => project.project_key === projectKey);
+		const projectId = matchingProject?.id || null;
+
+		const environmentArray = JSON.parse(localStorage.getItem("environment_array") || "[]");
+		const envKey = localStorage.getItem("selected_env_key");
+
+		const matchingEnv = environmentArray.find((env: { id: string; key: string }) => env.key === envKey);
+
+		const envId = matchingEnv?.id || null;
+		if (!uid || !projectId || !nodeId || !envId) {
+			console.warn("Missing required fields for email webhook generation:", { uid, projectId, nodeId, envId });
+			return ""; // required fields missing
+		}
+
+		// Base64 URL-safe encode
+		const b64url = (str: string): string => btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+		console.log("b64url", b64url);
+		const uuidNoDash = uid.replace(/-/g, "");
+		const emailLocal = [uuidNoDash, b64url(projectId), b64url(nodeId), b64url(envId)].join(".");
+
+		if (emailLocal.length > 64) {
+			console.warn("Email local-part exceeds 64 characters.");
+			return "";
+		}
+
+		return `${emailLocal}@trigger.waveassist.io`;
+	};
+
 	const handleEdit = (node: any) => {
 		if (node.crontab_schedule && node.crontab_schedule.includes("m/h/dM/MY/d")) {
 			const [minute, hour, dayOfMonth, month, dayOfWeek, , timezone] = node.crontab_schedule.split(" ");
@@ -222,6 +343,7 @@ ${config.nodes
 		reset(node);
 		setSelectedNodeKey(node.node_key);
 		setWebhookUrl(generateWebhookUrl(node.node_key));
+		setEmailWebhook(generateEmailWebhook(node.id));
 		setShowNodeEditor(true);
 	};
 
@@ -239,7 +361,17 @@ ${config.nodes
 	const fetchNodes = async () => {
 		try {
 			const data = await fetchNodesApi();
-			setNodesArray(data.node_array);
+			var nodes_array = data.node_array;
+			//Sort to keep the starting node at the top
+			nodes_array.sort((a: any, b: any) => {
+				if (a.is_starting_node && !b.is_starting_node) return -1;
+				if (!a.is_starting_node && b.is_starting_node) return 1;
+				return 0; // Keep original order for other nodes
+			});
+			setNodesArray(nodes_array);
+			const { rfNodes, rfEdges } = buildFlow(nodes_array);
+			setRfNodes(rfNodes);
+			setRfEdges(rfEdges);
 			const is_template_run = localStorage.getItem("is_template_run");
 			const tourCompleted = localStorage.getItem("run_node_tour") === "true";
 			if (!tourCompleted && is_template_run === "true") {
@@ -311,6 +443,10 @@ ${config.nodes
 			View Code
 		</button>
 	);
+
+	const toggleView = () => {
+		setView(view === "flow" ? "table" : "flow");
+	};
 
 	const ActionButtons = (params: any) => {
 		return (
@@ -431,31 +567,35 @@ ${config.nodes
 				<div className="d-flex justify-content-start align-items-center mb-3">
 					<h3 className="translucent_white">Nodes</h3>
 					<div className="ms-auto d-flex">
-						<Button variant="dark" onClick={handleDiagram}>
-							<span className="bi bi-diagram-2"></span>
+						<Button variant="dark" onClick={toggleView} className="ms-2" aria-label="Toggle view">
+							{
+								view === "flow" ? (
+									<span className="bi bi-table"> &nbsp; Table View </span> // shows table icon when in Flow, so click → Table
+								) : (
+									<span className="bi bi-diagram-2"> Flow View</span>
+								) // shows diagram icon when in Table, so click → Flow
+							}
+						</Button>
+
+						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
+							<span className="bi bi-plus-lg"> Add Node</span>
 						</Button>
 						<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
 							<span className="bi bi-cloud-download"></span>
 						</Button>
-						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
-							<span className="bi bi-plus-lg"></span>
-						</Button>
 					</div>
 				</div>
 
-				<div className="ag-theme-custom grid-container">
-					<AgGridReact
-						rowData={nodesArray}
-						columnDefs={columnDefs}
-						pagination={true}
-						paginationPageSize={10}
-						gridOptions={gridOptions}
-						defaultColDef={defaultColDef}
-					/>
-				</div>
+				{view === "table" ? (
+					<NodeTableView rowData={nodesArray} columnDefs={columnDefs} gridOptions={gridOptions} defaultColDef={defaultColDef} />
+				) : (
+					<Suspense fallback={<Spinner animation="border" />}>
+						<NodeFlowView nodes={rfNodes} edges={rfEdges} onNodesChange={handleNodesChange} />
+					</Suspense>
+				)}
 			</div>
 
-			<Modal show={isOpen} onHide={handleClose} size="lg" centered>
+			{/* <Modal show={isOpen} onHide={handleClose} size="lg" centered>
 				<Modal.Header closeButton>
 					<Modal.Title>Nodes Flow</Modal.Title>
 				</Modal.Header>
@@ -464,7 +604,7 @@ ${config.nodes
 						<img src={url} alt="Generated" style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto" }} />
 					</div>
 				</Modal.Body>
-			</Modal>
+			</Modal> */}
 
 			<Modal show={showCodeModal} onHide={handleClose} size="lg" centered>
 				<Modal.Header>
@@ -493,7 +633,7 @@ ${config.nodes
 
 			<Modal show={showNodeEditor} onHide={handleCloseNodeEditor} size="lg" centered>
 				<Modal.Header closeButton>
-					<Modal.Title>{selected_node_key === "" ? "Create Node" : "Edit Node"}</Modal.Title>
+					<Modal.Title>{selected_node_key === "" ? "Add Node" : "Edit Node"}</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
 					<Form onSubmit={handleSubmit(onSubmit)}>
@@ -660,16 +800,62 @@ ${config.nodes
 
 										{/* Collapsible content */}
 										<Collapse in={showWebhook}>
+											<div>
+												<span className="trigger-text">Send a POST request to this URL to trigger the workflow programmatically.</span>
+
+												<div className="mt-2 p-3 bg-dark text-white rounded" style={{ overflow: "hidden" }}>
+													<Badge bg="secondary">POST</Badge>
+													<span className="ms-2 flex-grow-1" style={{ wordBreak: "break-all", fontSize: "0.9rem" }}>
+														{webhookUrl}
+													</span>
+													<Button
+														variant="link"
+														className="p-0 ms-3 text-white"
+														onClick={() => {
+															navigator.clipboard.writeText(webhookUrl);
+															setCopied(true);
+															setTimeout(() => setCopied(false), 2000); // reset after 2 sec
+														}}
+														aria-label="Copy URL">
+														{copied ? (
+															<i className="bi bi-check-lg"></i> // checkmark after copy
+														) : (
+															<i className="bi bi-clipboard"></i> // normal clipboard icon
+														)}
+													</Button>
+												</div>
+											</div>
+										</Collapse>
+									</Form.Group>
+								)}
+								{emailWebhook && (
+									<Form.Group className="mb-4">
+										{/* Toggle header */}
+										<div
+											onClick={() => setShowEmailWebhook((f) => !f)}
+											style={{
+												cursor: "pointer",
+												display: "inline-flex",
+												alignItems: "center",
+												userSelect: "none",
+											}}>
+											<i className={`bi me-2 ${showEmailWebhook ? "bi-caret-down-fill" : "bi-caret-right-fill"}`} />
+											<strong>Trigger Email</strong>
+										</div>
+
+										{/* Collapsible content */}
+										<Collapse in={showEmailWebhook}>
 											<div className="mt-2 p-3 bg-dark text-white rounded" style={{ overflow: "hidden" }}>
-												<Badge bg="secondary">POST</Badge>
+												<span className="trigger-text">Sending any email to this address will trigger the workflow.</span>
+												<Badge bg="secondary">EMAIL TO: </Badge>
 												<span className="ms-2 flex-grow-1" style={{ wordBreak: "break-all", fontSize: "0.9rem" }}>
-													{webhookUrl}
+													{emailWebhook}
 												</span>
 												<Button
 													variant="link"
 													className="p-0 ms-3 text-white"
 													onClick={() => {
-														navigator.clipboard.writeText(webhookUrl);
+														navigator.clipboard.writeText(emailWebhook);
 														setCopied(true);
 														setTimeout(() => setCopied(false), 2000); // reset after 2 sec
 													}}

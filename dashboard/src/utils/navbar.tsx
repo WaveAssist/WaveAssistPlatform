@@ -29,8 +29,7 @@ const NavbarComponent: React.FC = () => {
 		try {
 			const data = await fetchEnvironmentsApi();
 			setEnvironmentArray(data.environment_array);
-			localStorage.setItem("setEnvironmentArray", JSON.stringify(data.environment_array));
-
+			localStorage.setItem("environment_array", JSON.stringify(data.environment_array));
 			//Check if selected_env_key is present in the environment array
 			const selectedEnvKey = localStorage.getItem("selected_env_key");
 			if (selectedEnvKey) {
@@ -72,7 +71,6 @@ const NavbarComponent: React.FC = () => {
 	// const getDefaultEnvironmentName = (): string => {
 	// 	const selectedEnvKey = localStorage.getItem("selected_env_key");
 	// 	const selectedEnv = environmentArray.find((env: any) => env.key === selectedEnvKey);
-	// 	console.log(selectedEnvKey, selectedEnv, environmentArray);
 	// 	return selectedEnv ? selectedEnv.name : "Select Environment";
 	// };
 

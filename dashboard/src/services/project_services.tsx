@@ -199,7 +199,6 @@ export const createNodeApi = async (data: NodeType): Promise<any> => {
 
 export const updateNodeApi = async (nodeKey: string, data: NodeType): Promise<any> => {
 	var path = "manage/update_node/";
-	console.log("UPDATE NODE API", data);
 
 	var input_csv = objectToCsvString(data.input_data_key_array, "key");
 	var output_csv = objectToCsvString(data.output_data_key_array, "key");

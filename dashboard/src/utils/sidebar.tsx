@@ -43,7 +43,7 @@ const Sidebar = () => {
 
 	const handleLogout = () => {
 		localStorage.removeItem("uid");
-		localStorage.removeItem("project_array");
+		localStorage.removeItem("projects_array");
 		localStorage.removeItem("selected_project_key");
 		localStorage.removeItem("user_data");
 		navigate("/login");

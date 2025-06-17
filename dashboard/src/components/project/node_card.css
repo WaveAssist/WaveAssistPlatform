@@ -1,0 +1,79 @@
+/* src/components/node_card.css */
+.simple-node {
+	width: 250px;
+	height: 50px;
+	background-color: #1e293b;
+	border-radius: 12px;
+	border: 2px solid transparent;
+	color: rgba(255, 255, 255, 0.9);
+	padding: 0 12px;
+	font-size: 13px;
+
+	display: flex;
+	align-items: center;
+
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.simple-node.enabled {
+	border-color: #49d078;
+}
+
+.simple-node.disabled {
+	border-color: #888;
+	opacity: 0.7;
+}
+
+.node-content {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+}
+
+.node-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.node-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.node-actions i {
+	font-size: 14px;
+	color: #4dd38c; /* soft custom green */
+	cursor: pointer;
+}
+
+.react-flow__node {
+	box-shadow: none !important;
+	border: none !important;
+}
+
+.node-actions {
+	gap: 4px;
+}
+
+.node-actions i {
+	width: 20px;
+	height: 20px;
+	border: 1.2px solid #4dd38c;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 8px;
+	color: #4dd38c;
+	cursor: pointer;
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.node-actions i:hover {
+	background-color: rgba(77, 211, 140, 0.12);
+	color: #4dd38c;
+}
