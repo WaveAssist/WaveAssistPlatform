@@ -64,6 +64,13 @@ const DeployComponent: React.FC = () => {
 			if (response.data.success === "1") {
 				setShowSuccessModal(true);
 				localStorage.setItem("is_template_run", "true");
+				// The project key might be in a different field in the response
+				const projectKey = response.data.data?.project_key || response.data.project_key;
+				if (projectKey) {
+					localStorage.setItem("selected_project_key", projectKey);
+				} else {
+					console.error('No project key found in response');
+				}
 			} else {
 				alert("❌ Failed to deploy project, please try again.");
 			}
@@ -161,8 +168,8 @@ const DeployComponent: React.FC = () => {
 				</Modal.Header>
 				<Modal.Body className="text-center">
 					<p className="pt-4">All set! Your project is ready to use.</p>
-					<Button variant="success" className="mt-3 px-4 py-2 fw-semibold" onClick={() => navigate("/manage")}>
-						Go to Dashboard
+					<Button variant="success" className="mt-3 px-4 py-2 fw-semibold" onClick={() => navigate(`/manage/nodes?project_key=${localStorage.getItem("selected_project_key")}`)}>						
+						Go to Assistant
 					</Button>
 				</Modal.Body>
 			</Modal>

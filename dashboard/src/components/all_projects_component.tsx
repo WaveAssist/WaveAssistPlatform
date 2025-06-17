@@ -134,7 +134,8 @@ const AllProjectsComponent: React.FC = () => {
 			showToast("Project created successfully", "success");
 			setShowAlert(false);
 			handleCloseModal();
-			fetchData();
+			localStorage.setItem("selected_project_key", newProjectKey);
+			navigate(`/manage/nodes?project_key=${newProjectKey}`);
 		} catch (error) {
 			console.error("FetchAllProjects failed:", error);
 			var error_message = "Something went wrong creating the project: " + error;
