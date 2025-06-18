@@ -6,6 +6,7 @@ from django.utils import timezone
 from WaveAssistApi.celery import app
 from celery.events import EventReceiver
 from celery.events.state import State
+import time
 
 from WaveAssistApiApp.models import *
 from WaveAssistApiApp.Utils.constants import *
@@ -66,7 +67,16 @@ class Command(BaseCommand):
                 if ev_type == "task-received":
                     ##Create nodeRun
                     try:
-                        dag_run = DagRuns.objects.get(run_id=parent_run_id)
+                        for i in range(5):
+                            try:
+                                dag_run = DagRuns.objects.get(run_id=parent_run_id)
+                                break
+                            except:
+                                time.sleep(0.1)  # small delay and retry
+                        else: ##Runs if the loop did not break
+                            print(self.style.ERROR(f"❌ DagRun with ID {parent_run_id} not found after retries."))
+                            return
+
                         data_run = DataRuns.objects.get(data_run_key=data_run_key)
                         project_object = data_run.project_object
                         node_object = Nodes.objects.get(node_key=node_key, project_object=project_object)
