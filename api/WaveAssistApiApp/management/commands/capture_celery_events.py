@@ -7,7 +7,7 @@ from WaveAssistApi.celery import app
 from celery.events import EventReceiver
 from celery.events.state import State
 import time
-
+import random
 from WaveAssistApiApp.models import *
 from WaveAssistApiApp.Utils.constants import *
 import ast
@@ -67,13 +67,16 @@ class Command(BaseCommand):
                 if ev_type == "task-received":
                     ##Create nodeRun
                     try:
-                        for i in range(5):
+                        # Try for up to 2 seconds with backoff
+                        MAX_RETRIES = 6
+                        for i in range(MAX_RETRIES):
                             try:
                                 dag_run = DagRuns.objects.get(run_id=parent_run_id)
                                 break
                             except:
-                                time.sleep(0.1)  # small delay and retry
-                        else: ##Runs if the loop did not break
+                                sleep_time = 0.1 * (2 ** i) + random.uniform(0, 0.1)  # exponential backoff with jitter
+                                time.sleep(sleep_time)
+                        else:
                             print(self.style.ERROR(f"❌ DagRun with ID {parent_run_id} not found after retries."))
                             return
 
