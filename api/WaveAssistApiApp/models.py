@@ -395,7 +395,6 @@ class DagRuns(models.Model):
     dag_object = models.ForeignKey('DAG', on_delete=models.CASCADE, null=True)  # Which DAG definition
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)     # Tenant / workspace
     data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE, null=True)  # Data run associated with this DAG run
-
     started_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
@@ -405,13 +404,12 @@ class DagRuns(models.Model):
         verbose_name_plural = 'DAG Runs'
 
     def __str__(self):
-        return f"DAG Run: {self.id} ({self.run_key})"
+        return f"DAG Run: {self.id} ({self.run_id})"
 
     def get_dict(self):
         return {
             'id':           self.id,
             'run_id':  self.run_id,
-            'status':       self.status,
             'started_at':   self.started_at,
             'finished_at':  self.finished_at,
         }
