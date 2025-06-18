@@ -233,7 +233,7 @@ class DataRuns(models.Model):
 class Nodes(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255, default="", null=True)
-    node_key = models.CharField(max_length=255)
+    node_key = models.CharField(max_length=255, db_index=True)
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)
     is_enabled = models.BooleanField(default=False)
 
