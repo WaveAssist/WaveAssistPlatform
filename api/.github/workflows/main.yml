@@ -28,16 +28,16 @@ jobs:
     - name: Push the Docker image to ECR
       run: docker push 713358430452.dkr.ecr.us-east-1.amazonaws.com/waveassist_django_backend:latest
       
-    # - name: Force new deployment on ECS
-    #   env:
-    #     AWS_REGION: us-east-1
-    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #   run: |
-    #     aws ecs update-service \
-    #       --cluster WaveAssistFargateCluster \
-    #       --service WaveAssistAPILoadBalancedService \
-    #       --force-new-deployment \
-    #       --region $AWS_REGION
+    - name: Force new deployment on ECS
+      env:
+        AWS_REGION: us-east-1
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        aws ecs update-service \
+          --cluster WaveAssistFargateCluster \
+          --service WaveAssistAPILoadBalancedService \
+          --force-new-deployment \
+          --region $AWS_REGION
 
       
