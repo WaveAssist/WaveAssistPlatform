@@ -144,7 +144,7 @@ def deploy_project(request): ##TCW
                     interval= start_node.interval_schedule,  # Link the schedule
                     crontab= start_node.crontab_schedule,  # Link the schedule
                     name=dag_key,  # Name of the periodic task
-                    task='celery_worker.run_dag',  # Use 'celery.chain' for chaining tasks
+                    task=DAG_TASK,  # Use 'celery.chain' for chaining tasks
                     kwargs=dag_kwargs,  # Serialize the workflow
                     one_off=False,  # If True, the task will run only once
                     enabled=True,  # Whether this task is enabled,

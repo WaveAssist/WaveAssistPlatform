@@ -388,6 +388,7 @@ class DAG(models.Model):
         return dag_dict
 
 
+
 class DagRuns(models.Model):
     id = models.AutoField(primary_key=True)
     run_id = models.CharField(max_length=60, unique=True, null=True)            # Celery UUID
@@ -395,14 +396,6 @@ class DagRuns(models.Model):
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)     # Tenant / workspace
     data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE, null=True)  # Data run associated with this DAG run
 
-    # Status life-cycle
-    STATUS_CHOICES = [
-        ('PENDING',  'Pending'),
-        ('STARTED',  'Started'),
-        ('SUCCESS',  'Success'),
-        ('FAILED',   'Failed'),
-    ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     started_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
@@ -424,19 +417,20 @@ class DagRuns(models.Model):
         }
 
 
-class NodeRuns(models.Model):
-    id = models.AutoField(primary_key=True)
-    task_id = models.CharField(max_length=50, unique=True)        # Celery UUID
-    dag_run_object = models.ForeignKey('DagRuns', on_delete=models.CASCADE)
-    node_object = models.ForeignKey('Nodes', on_delete=models.CASCADE)
-    STATUS_CHOICES = [
+RUN_STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('STARTED', 'Started'),
         ('RETRY',   'Retry'),
         ('SUCCESS', 'Success'),
         ('FAILED',  'Failed'),
     ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+class NodeRuns(models.Model):
+    id = models.AutoField(primary_key=True)
+    task_id = models.CharField(max_length=50, unique=True, null=True)  # Celery UUID
+    dag_run_object = models.ForeignKey('DagRuns', on_delete=models.CASCADE)
+    node_object = models.ForeignKey('Nodes', on_delete=models.CASCADE)
+
+    status = models.CharField(max_length=20, choices=RUN_STATUS_CHOICES, default='PENDING')
 
     started_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
