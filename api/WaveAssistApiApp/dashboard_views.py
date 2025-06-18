@@ -4,7 +4,7 @@ from WaveAssistApiApp.Utils.MongoManager import MongoManager
 from .Utils.constants import *
 from django.core.cache import cache
 import WaveAssistApiApp.Utils.utils as utils
-
+import requests
 from firebase_admin import auth as firebase_auth
 from .firebase_init import initialize_firebase
 initialize_firebase()
