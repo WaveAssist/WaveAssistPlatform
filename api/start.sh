@@ -13,4 +13,4 @@ export DJANGO_SETTINGS_MODULE=WaveAssistApi.settings
 python manage.py migrate
 
 # Start Gunicorn
-gunicorn --timeout 120 --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application --workers 1
+gunicorn --timeout 120 --bind 0.0.0.0:8000 WaveAssistApi.wsgi:application --workers 2

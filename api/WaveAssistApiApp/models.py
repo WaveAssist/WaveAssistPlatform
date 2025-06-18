@@ -392,7 +392,6 @@ class DAG(models.Model):
 class DagRuns(models.Model):
     id = models.AutoField(primary_key=True)
     run_id = models.CharField(max_length=60, unique=True, null=True)            # Celery UUID
-    dag_object = models.ForeignKey('DAG', on_delete=models.CASCADE, null=True)  # Which DAG definition
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)     # Tenant / workspace
     data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE, null=True)  # Data run associated with this DAG run
     started_at = models.DateTimeField(auto_now_add=True)
