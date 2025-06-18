@@ -138,23 +138,23 @@ const Sidebar = () => {
 						Variables
 					</Link>
 				</li>
-                                <li className="nav-item">
-                                        <Link to="/manage/packages" className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link`}>
-                                                <i className="bi bi-box-fill me-2"></i>
-                                                Packages
-                                        </Link>
-                                </li>
-                                <li className="nav-item">
-                                        <Link to="/manage/runs" className={`nav-link ${location.pathname === "/manage/runs" ? "active" : "text-white"} mb-1`}> 
-                                                <i className="bi bi-clock-history me-2"></i>
-                                                Runs
-                                        </Link>
-                                </li>
-                                <li className="nav-item">
-                                        <Link to="/manage/deployments" className={`nav-link ${location.pathname === "/manage/deployments" ? "active" : "text-white"} mb-1`}>
-                                                <i className="bi bi-cloud-arrow-up-fill me-2"></i>
-                                                Deployments
-                                        </Link>
+				<li className="nav-item">
+					<Link to="/manage/packages" className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link`}>
+						<i className="bi bi-box-fill me-2"></i>
+						Packages
+					</Link>
+				</li>
+				<li className="nav-item">
+					<Link to="/manage/runs" className={`nav-link ${location.pathname === "/manage/runs" ? "active" : "text-white"} mb-1`}>
+						<i className="bi bi-bar-chart-steps me-2"></i>
+						Runs
+					</Link>
+				</li>
+				<li className="nav-item">
+					<Link to="/manage/deployments" className={`nav-link ${location.pathname === "/manage/deployments" ? "active" : "text-white"} mb-1`}>
+						<i className="bi bi-cloud-arrow-up-fill me-2"></i>
+						Deployments
+					</Link>
 				</li>
 				<li className="nav-item">
 					<Link to="/manage/environments" className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}>
