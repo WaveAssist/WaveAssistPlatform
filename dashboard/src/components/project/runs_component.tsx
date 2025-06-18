@@ -42,20 +42,20 @@ const RunsComponent: React.FC = () => {
 		fetchRuns();
 	}, [shouldRefresh]);
 
-        const [showRunModal, setShowRunModal] = useState(false);
-        const [selectedRunId, setSelectedRunId] = useState("");
+	const [showRunModal, setShowRunModal] = useState(false);
+	const [selectedRunId, setSelectedRunId] = useState("");
 
-        const handleViewDetails = (run: any) => {
-                if (run && run.run_id) {
-                        setSelectedRunId(run.run_id);
-                        setShowRunModal(true);
-                }
-        };
+	const handleViewDetails = (run: any) => {
+		if (run && run.run_id) {
+			setSelectedRunId(run.run_id);
+			setShowRunModal(true);
+		}
+	};
 
-        const handleClose = () => {
-                setSelectedRunId("");
-                setShowRunModal(false);
-        };
+	const handleClose = () => {
+		setSelectedRunId("");
+		setShowRunModal(false);
+	};
 
 	const gridOptions = {
 		suppressCellFocus: true,
@@ -129,39 +129,42 @@ const RunsComponent: React.FC = () => {
 		},
 	];
 
-        return (
-                <div className="main-container">
-                        <div className="mt-3">
-                                <div className="d-flex justify-content-between align-items-center mb-3">
-                                        <h3 className="translucent_white">Runs</h3>
-                                </div>
-                                <div className="ag-theme-custom grid-container">
-                                        <AgGridReact
-                                                rowData={runsArray}
-                                                columnDefs={columnDefs}
-                                                pagination={true}
-                                                paginationPageSize={10}
-                                                gridOptions={gridOptions}
-                                                defaultColDef={defaultColDef}
-                                        />
-                                </div>
-                        </div>
+	return (
+		<div className="main-container">
+			<div className="mt-3">
+				<div className="d-flex justify-content-between align-items-center mb-3">
+					<h3 className="translucent_white">Runs</h3>
+				</div>
+				<div className="ag-theme-custom grid-container">
+					<AgGridReact
+						rowData={runsArray}
+						columnDefs={columnDefs}
+						pagination={true}
+						paginationPageSize={10}
+						gridOptions={gridOptions}
+						defaultColDef={defaultColDef}
+					/>
+				</div>
+			</div>
 
-                        <Modal show={showRunModal} onHide={handleClose} size="lg" centered>
-                                <Modal.Header closeButton>
-                                        <Modal.Title>Run Details</Modal.Title>
-                                </Modal.Header>
-                                <Modal.Body>
-                                        {selectedRunId && <NodeRunsComponent dagRunId={selectedRunId} />}
-                                </Modal.Body>
-                                <Modal.Footer>
-                                        <Button variant="secondary" onClick={handleClose}>
-                                                Close
-                                        </Button>
-                                </Modal.Footer>
-                        </Modal>
-                </div>
-        );
+			<Modal show={showRunModal} onHide={handleClose} size="lg" centered>
+				<Modal.Header closeButton>
+					<Modal.Title>Run Details</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					{/* {selectedRunId && <NodeRunsComponent dagRunId={selectedRunId} />} */}
+					<div style={{ height: "400px", width: "100%" }} className="ag-theme-custom">
+						{selectedRunId && <NodeRunsComponent dagRunId={selectedRunId} />}
+					</div>
+				</Modal.Body>
+				<Modal.Footer>
+					<Button variant="secondary" onClick={handleClose}>
+						Close
+					</Button>
+				</Modal.Footer>
+			</Modal>
+		</div>
+	);
 };
 
 export default RunsComponent;
