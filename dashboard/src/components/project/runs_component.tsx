@@ -3,6 +3,7 @@ import { AgGridReact } from "ag-grid-react";
 import { fetchDagRunsApi } from "../../services/runs_services";
 import { useToast } from "../../utils/toast_context";
 import { useRefresh } from "../../utils/RefreshContext";
+import { useNavigate } from "react-router-dom";
 import "./project_components.css";
 import "../../utils/ag-theme-project.css";
 
@@ -39,9 +40,13 @@ const RunsComponent: React.FC = () => {
 		fetchRuns();
 	}, [shouldRefresh]);
 
-	const handleViewDetails = (run: any) => {
-		console.log("View Details for run", run);
-	};
+        const navigate = useNavigate();
+
+        const handleViewDetails = (run: any) => {
+                if (run && run.run_id) {
+                        navigate(`/manage/runs/${run.run_id}`);
+                }
+        };
 
 	const gridOptions = {
 		suppressCellFocus: true,
