@@ -114,16 +114,16 @@ const RunDetailsComponent: React.FC = () => {
     if (!runId) return null;
 
     return (
-        <div className="main-container" style={{ height: "100%" }}>
-            <div style={{ display: "flex", height: "60%" }}>
-                <div style={{ width: "50%" }}>
-                    <NodeFlowView nodes={rfNodes} edges={rfEdges} />
-                </div>
-                <div style={{ width: "50%" }}>
+        <div className="main-container" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", height: "70%" }}>
+                <div style={{ width: "65%" }}>
                     <NodeRunsComponent dagRunId={runId} />
                 </div>
+                <div style={{ width: "35%" }}>
+                    <NodeFlowView nodes={rfNodes} edges={rfEdges} />
+                </div>
             </div>
-            <div style={{ height: "40%" }}>
+            <div style={{ height: "30%", overflowY: "auto" }}>
                 <LogsComponent />
             </div>
         </div>

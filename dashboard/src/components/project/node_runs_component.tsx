@@ -61,18 +61,6 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId }) => {
             cellStyle: { display: "flex", alignItems: "center" },
         },
         {
-            headerName: "Node Key",
-            field: "node_key",
-            flex: 3,
-            cellStyle: { display: "flex", alignItems: "center" },
-        },
-        {
-            headerName: "Task ID",
-            field: "task_id",
-            flex: 4,
-            cellStyle: { display: "flex", alignItems: "center" },
-        },
-        {
             headerName: "Started At",
             field: "started_at",
             flex: 3,
@@ -111,16 +99,10 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId }) => {
             ),
             cellStyle: { display: "flex", alignItems: "center" },
         },
-        {
-            headerName: "Result",
-            field: "result",
-            flex: 3,
-            cellStyle: { display: "flex", alignItems: "center" },
-        },
     ];
 
     return (
-        <div className="ag-theme-custom grid-container">
+        <div className="ag-theme-custom grid-container" style={{ fontSize: "12px" }}>
             <AgGridReact
                 rowData={nodeRunsArray}
                 columnDefs={columnDefs}
@@ -128,6 +110,7 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId }) => {
                 paginationPageSize={10}
                 gridOptions={gridOptions}
                 defaultColDef={defaultColDef}
+                onGridReady={(params) => params.api.sizeColumnsToFit()}
             />
         </div>
     );
