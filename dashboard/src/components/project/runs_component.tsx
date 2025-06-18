@@ -1,11 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "react-bootstrap";
 import { AgGridReact } from "ag-grid-react";
 import { fetchDagRunsApi } from "../../services/runs_services";
 import { useToast } from "../../utils/toast_context";
 import { useRefresh } from "../../utils/RefreshContext";
 import "./project_components.css";
 import "../../utils/ag-theme-project.css";
+
+const formatTimestamp = (timestamp: string) => {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    const datePart = date.toLocaleDateString([], { month: "2-digit", day: "2-digit" });
+    const timePart = date.toLocaleTimeString([], {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        fractionalSecondDigits: 3,
+    });
+    return `${datePart} ${timePart}`;
+};
 
 const RunsComponent: React.FC = () => {
     const [runsArray, setRunsArray] = useState<any[]>([]);
@@ -53,12 +66,14 @@ const RunsComponent: React.FC = () => {
             headerName: "Started At",
             field: "started_at",
             flex: 3,
+            cellRenderer: (params: any) => formatTimestamp(params.value),
             cellStyle: { display: "flex", alignItems: "center" },
         },
         {
             headerName: "Finished At",
             field: "finished_at",
             flex: 3,
+            cellRenderer: (params: any) => formatTimestamp(params.value),
             cellStyle: { display: "flex", alignItems: "center" },
         },
         {
@@ -78,9 +93,9 @@ const RunsComponent: React.FC = () => {
             headerName: "Actions",
             flex: 2,
             cellRenderer: (params: any) => (
-                <Button variant="outline-primary" size="sm" onClick={() => handleViewDetails(params.data)}>
+                <button className="btn btn-outline-success btn-sm" onClick={() => handleViewDetails(params.data)}>
                     View Details
-                </Button>
+                </button>
             ),
             cellStyle: { display: "flex", alignItems: "center" },
         },
