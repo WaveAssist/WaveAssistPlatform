@@ -37,16 +37,16 @@ class TaskRunner(object):
 
                 # Call the function and return the result
                 result = namespace['run_task']()
-                return result
+                return True
             except SyntaxError as e:
                 utils.logger.info("Syntax error in the provided code: " + str(e), extra=self.extra_dict)
-                return None
+                return False
             except NameError as e:
                 utils.logger.info("Name error in the provided code: " + str(e), extra=self.extra_dict)
-                return None
+                return False
             except Exception as e:
                 utils.logger.info("An error occurred: " + str(e), extra=self.extra_dict)
-                return None
+                return False
 
         def run(self):
             utils.logger.info("Starting Node: " + str(self.node_key), extra=self.extra_dict)
