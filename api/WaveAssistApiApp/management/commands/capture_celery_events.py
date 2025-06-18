@@ -47,13 +47,12 @@ class Command(BaseCommand):
                 try:
                     dag = DAG.objects.get(key=dag_key)
                     data_run = DataRuns.objects.get(data_run_key=data_run_key)
-                    dag_run = DagRuns.objects.create(
+                    DagRuns.objects.create(
                         run_id=run_id,
                         dag_object=dag,
                         project_object=data_run.project_object,
                         data_run_object=data_run,
                     )
-                    dag_run.save()
 
                 except Exception as e:
                     print(self.style.ERROR(f"❌ Error processing DAG Event: {e}"))
@@ -97,10 +96,10 @@ class Command(BaseCommand):
                         # c) SUCCESS
                         elif ev_type == "task-succeeded":
                             result = task.result
-                            if result == 'True':
-                                node_run.status = "SUCCESS"
-                            else:
+                            if result == 'False':
                                 node_run.status = "FAILED"
+                            else:
+                                node_run.status = "SUCCESS"
                             node_run.finished_at = timezone.now()
                             node_run.result = result
                             node_run.save()
