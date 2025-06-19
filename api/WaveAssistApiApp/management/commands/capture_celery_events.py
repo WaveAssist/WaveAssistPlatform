@@ -17,9 +17,7 @@ from celery.events import EventReceiver
 from celery.events.state import State
 
 from WaveAssistApi.celery import app
-from WaveAssistApiApp.models import (
-    DAG, Nodes, DataRuns, DagRuns, NodeRuns
-)
+from WaveAssistApiApp.models import *
 from WaveAssistApiApp.Utils.constants import DAG_TASK, RUN_TASK
 
 
@@ -73,7 +71,7 @@ class Command(BaseCommand):
         # ------------------------------------------------------------------
         # DagRuns: update_or_create with full context (lazy creation)
         # ------------------------------------------------------------------
-        dag_run, _ = DagRuns.get_or_create(
+        dag_run, _ = DagRuns.objects.get_or_create(
             run_id = dag_run_id,
             defaults = {
                 "project_object"  : project,
@@ -84,7 +82,7 @@ class Command(BaseCommand):
         # ------------------------------------------------------------------
         # NodeRuns: get_or_create, then merge columns
         # ------------------------------------------------------------------
-        node_run, created = NodeRuns.get_or_create(
+        node_run, created = NodeRuns.objects.get_or_create(
             dag_run_object = dag_run,
             node_object    = node,
             defaults = {
