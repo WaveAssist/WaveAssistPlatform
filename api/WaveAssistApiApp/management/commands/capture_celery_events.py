@@ -63,7 +63,6 @@ class Command(BaseCommand):
                 dag_run_object=dag_run,
                 node_object=node,
                 defaults={
-                    "task_id": run_id,
                     "status":  "STARTED",
                 }
             )
@@ -72,7 +71,7 @@ class Command(BaseCommand):
             dt = timezone.make_aware(datetime.fromtimestamp(timestamp))
 
             if ev_type == TASK_STARTED:
-                node_run.started_at = node_run.started_at or dt
+                node_run.started_at = dt
 
             elif ev_type == TASK_COMPLETED:
                 node_run.finished_at = dt

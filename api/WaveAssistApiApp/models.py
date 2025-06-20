@@ -423,15 +423,11 @@ RUN_STATUS_CHOICES = [
     ]
 class NodeRuns(models.Model):
     id = models.AutoField(primary_key=True)
-    task_id = models.CharField(max_length=50, unique=True, null=True)  # Celery UUID
     dag_run_object = models.ForeignKey('DagRuns', on_delete=models.CASCADE)
     node_object = models.ForeignKey('Nodes', on_delete=models.CASCADE)
-
     status = models.CharField(max_length=20, choices=RUN_STATUS_CHOICES, default='PENDING')
-
-    started_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
-    result = models.TextField(null=True, blank=True)
     traceback = models.TextField(null=True, blank=True)           # exc info for failures
     created_at = models.DateTimeField(auto_now_add=True)
 
