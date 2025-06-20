@@ -17,6 +17,10 @@ ACCOUNT_KEY = 'WaveAssist'
 BASE_URL = "https://api.waveassist.io"
 TIMEOUT_DURATION = 300
 INTEGRATION_SUFFIX = "_integrations"
+CUSTOM_EVENT_KEY = 'wa-task-event'
+TASK_STARTED = 'STARTED'
+TASK_COMPLETED = 'COMPLETED'
+TASK_FAILED = 'FAILED'
 
 ##Keys:
 PD_DATA_KEY = 'PDData'

@@ -1,6 +1,4 @@
 import sys
-
-from celery import Celery
 from Engine.TaskRunner import TaskRunner
 import Utils.utils as utils
 from celery import chain, group
@@ -9,17 +7,9 @@ from celery_singleton import Singleton
 from celery.signals import worker_ready
 from celery_singleton import clear_locks
 
-##Init worker to fetch details
-##Call API to fetch and store config.json
-
-##Test and uncomment
+##Initialize Celery app
 utils.start_pre_initialization()
-
-# Setup Celery
-app = Celery('waveassist',
-             broker=REDIS_URL,
-             backend=REDIS_URL)
-app.conf.task_default_queue = QUEUE_NAME
+from celery_app import app
 
 @worker_ready.connect
 def unlock_all(**kwargs):

@@ -1,6 +1,9 @@
 import Utils.utils as utils
 from Utils.Timer import Timer
 from Utils.constants import *
+from celery_app import app
+from datetime import datetime
+import uuid
 
 class TaskRunner(object):
         def __init__(self, task_dict, environment_key):
@@ -37,24 +40,27 @@ class TaskRunner(object):
 
                 # Call the function and return the result
                 result = namespace['run_task']()
-                return True
+                return True, ""
             except SyntaxError as e:
                 utils.logger.info("Syntax error in the provided code: " + str(e), extra=self.extra_dict)
-                return False
+                return False, str(e)
             except NameError as e:
                 utils.logger.info("Name error in the provided code: " + str(e), extra=self.extra_dict)
-                return False
+                return False, str(e)
             except Exception as e:
                 utils.logger.info("An error occurred: " + str(e), extra=self.extra_dict)
-                return False
+                return False, str(e)
 
         def run(self):
+            run_uuid = str(uuid.uuid4())  # ── ADDED ──
+            utils.log_event(app, run_uuid, TASK_STARTED, self.node_key, self.project_key, self.environment_key)
             utils.logger.info("Starting Node: " + str(self.node_key), extra=self.extra_dict)
             timer = Timer(str(self.node_key))
             timer.start()
-            result = self.run_code()
+            result, error_message = self.run_code()
             timer.print_elapsed()
             utils.logger.info("Completed Node: " + str(self.node_key), extra=self.extra_dict)
+            utils.log_event(app, run_uuid, TASK_COMPLETED, self.node_key, self.project_key, self.environment_key, result, error_message)
             return result
 
 
