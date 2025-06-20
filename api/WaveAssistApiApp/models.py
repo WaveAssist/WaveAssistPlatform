@@ -394,9 +394,7 @@ class DagRuns(models.Model):
     run_id = models.CharField(max_length=60, unique=True, null=True)            # Celery UUID
     project_object = models.ForeignKey('Project', on_delete=models.CASCADE)     # Tenant / workspace
     data_run_object = models.ForeignKey('DataRuns', on_delete=models.CASCADE, null=True)  # Data run associated with this DAG run
-    started_at = models.DateTimeField(auto_now_add=True)
-    finished_at = models.DateTimeField(null=True, blank=True)
-
+    created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = "WaveAssist_DagRuns"
         verbose_name = 'DAG Run'
@@ -409,8 +407,6 @@ class DagRuns(models.Model):
         return {
             'id':           self.id,
             'run_id':  self.run_id,
-            'started_at':   self.started_at,
-            'finished_at':  self.finished_at,
         }
 
 
