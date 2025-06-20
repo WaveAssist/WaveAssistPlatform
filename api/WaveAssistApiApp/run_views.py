@@ -20,7 +20,7 @@ def fetch_dag_runs(request):  # TCW
         return ResponseParser.getParsedErrorMessage(message)
 
     dag_runs_array = DagRuns.objects.filter(project_object=project_object,
-                                  data_run_object=data_run_object).order_by('-started_at')
+                                  data_run_object=data_run_object).order_by('-started_at').limit(100)
     dag_dict_array = []
     for dag_run_object in dag_runs_array:
         dag_dict = dag_run_object.get_dict()
