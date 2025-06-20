@@ -6,11 +6,12 @@ from datetime import datetime
 import uuid
 
 class TaskRunner(object):
-        def __init__(self, task_dict, environment_key):
+        def __init__(self, task_dict, environment_key, run_id):
             self.node_key = task_dict['node_key']
             self.project_key = task_dict['project_key']
             self.code_to_run = task_dict['code_to_run']
             self.environment_key = environment_key
+            self.run_id = run_id
             self.extra_dict = {"node_key": self.node_key, "project_key": self.project_key, "environment_key": self.environment_key, IS_SYSTEM_TASK: True}
             self.extra_dict_exec = {"node_key": self.node_key, "project_key": self.project_key, "environment_key": self.environment_key, IS_SYSTEM_TASK: False}
 
@@ -52,17 +53,16 @@ class TaskRunner(object):
                 return False, str(e)
 
         def run(self):
-            run_uuid = str(uuid.uuid4())  # ── ADDED ──
             with app.connection() as conn:
                 dispatcher = app.events.Dispatcher(conn)
-                utils.log_event(dispatcher, run_uuid, TASK_STARTED, self.node_key, self.project_key, self.environment_key)
+                utils.log_event(dispatcher, self.run_id, TASK_STARTED, self.node_key, self.project_key, self.environment_key)
                 utils.logger.info("Starting Node: " + str(self.node_key), extra=self.extra_dict)
                 timer = Timer(str(self.node_key))
                 timer.start()
                 result, error_message = self.run_code()
                 timer.print_elapsed()
                 utils.logger.info("Completed Node: " + str(self.node_key), extra=self.extra_dict)
-                utils.log_event(dispatcher, run_uuid, TASK_COMPLETED, self.node_key, self.project_key, self.environment_key, result, error_message)
+                utils.log_event(dispatcher, self.run_id, TASK_COMPLETED, self.node_key, self.project_key, self.environment_key, result, error_message)
             return result
 
 

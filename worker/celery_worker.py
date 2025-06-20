@@ -6,6 +6,7 @@ from Utils.constants import *
 from celery_singleton import Singleton
 from celery.signals import worker_ready
 from celery_singleton import clear_locks
+import uuid
 
 ##Initialize Celery app
 utils.start_pre_initialization()
@@ -16,10 +17,10 @@ def unlock_all(**kwargs):
     clear_locks(app)
 
 @app.task(base=Singleton,unique_on=['collection_key','task_key'], bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
-def run_task(*args, task_dict=None, collection_key=None, task_key=None, **kwargs):
+def run_task(*args, task_dict=None, collection_key=None, task_key=None, run_id=None, **kwargs):
     # Task dict needs node_key, project_key and code_to_run
     try:
-        task_runner = TaskRunner(task_dict, collection_key)
+        task_runner = TaskRunner(task_dict, collection_key, run_id)
         result = task_runner.run()
         return result
     except Exception as e:
@@ -33,7 +34,7 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
             ##ToDo: This function can be optimised by using a DFS or similar approach to generate the workflow for the DAG
             ##ToDo: Figure out a way to have celery beat run after previous completion. or limit queue length
             ##ToDo: Write tests
-
+            run_uuid = str(uuid.uuid4())
             ##It will mainly optimise the wait time for certain tasks, which need not necessarily wait for others.
             layers_array = utils.generate_flow_layers(dependencies_dict)
             workflow_array = []
@@ -42,7 +43,7 @@ def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, 
                 current_layer_tasks_signatures = []
                 for task_key in layer:
                     task_dict = data_dict[task_key]
-                    task = run_task.si(task_dict=task_dict, collection_key=collection_key, task_key=task_key)
+                    task = run_task.si(task_dict=task_dict, collection_key=collection_key, task_key=task_key, run_id=run_uuid)
                     current_layer_tasks_signatures.append(task)
 
                 ##Create a group of tasks for the current layer & append
