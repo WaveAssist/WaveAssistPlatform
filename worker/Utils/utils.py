@@ -33,22 +33,19 @@ def generate_flow_layers(dependencies_dict):
         logger.error("Error in generate_flow_layers: " + str(e))
         return []
 
-
-def log_event(app, run_uuid,event_type, node_key, project_key, environment_key, did_succeed=None, error_message=None):
+def log_event(dispatcher, run_uuid, event_type, node_key, project_key, environment_key, did_succeed=None, error_message=None):
     try:
-        with app.connection() as conn:
-            dispatcher = app.events.Dispatcher(conn)
-            dispatcher.send(
-                CUSTOM_EVENT_KEY,
-                event_type=event_type,
-                uuid=run_uuid,
-                node_key=node_key,
-                project_key=project_key,
-                collection_key=environment_key,
-                did_succeed=did_succeed,
-                error_message = error_message,
-                timestamp=datetime.utcnow().timestamp()
-            )
+        dispatcher.send(
+            CUSTOM_EVENT_KEY,
+            event_type=event_type,
+            uuid=run_uuid,
+            node_key=node_key,
+            project_key=project_key,
+            collection_key=environment_key,
+            did_succeed=did_succeed,
+            error_message=error_message,
+            timestamp=datetime.utcnow().timestamp()
+        )
     except Exception as e:
         logger.error(f"Error in log_event: {str(e)}")
 

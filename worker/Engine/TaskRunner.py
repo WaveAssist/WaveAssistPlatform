@@ -53,14 +53,16 @@ class TaskRunner(object):
 
         def run(self):
             run_uuid = str(uuid.uuid4())  # ── ADDED ──
-            utils.log_event(app, run_uuid, TASK_STARTED, self.node_key, self.project_key, self.environment_key)
-            utils.logger.info("Starting Node: " + str(self.node_key), extra=self.extra_dict)
-            timer = Timer(str(self.node_key))
-            timer.start()
-            result, error_message = self.run_code()
-            timer.print_elapsed()
-            utils.logger.info("Completed Node: " + str(self.node_key), extra=self.extra_dict)
-            utils.log_event(app, run_uuid, TASK_COMPLETED, self.node_key, self.project_key, self.environment_key, result, error_message)
+            with app.connection() as conn:
+                dispatcher = app.events.Dispatcher(conn)
+                utils.log_event(dispatcher, run_uuid, TASK_STARTED, self.node_key, self.project_key, self.environment_key)
+                utils.logger.info("Starting Node: " + str(self.node_key), extra=self.extra_dict)
+                timer = Timer(str(self.node_key))
+                timer.start()
+                result, error_message = self.run_code()
+                timer.print_elapsed()
+                utils.logger.info("Completed Node: " + str(self.node_key), extra=self.extra_dict)
+                utils.log_event(dispatcher, run_uuid, TASK_COMPLETED, self.node_key, self.project_key, self.environment_key, result, error_message)
             return result
 
 
