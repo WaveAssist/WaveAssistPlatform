@@ -436,13 +436,12 @@ class NodeRuns(models.Model):
         verbose_name = 'Node Run'
         verbose_name_plural = 'Node Runs'
     def __str__(self):
-        return f"Node Run: {self.id} ({self.task_id})"
+        return f"Node Run: {self.id}"
 
     def get_dict(self):
         return {
-            'task_id':      self.task_id,
             'status':       self.status,
             'started_at':   self.started_at,
             'finished_at':  self.finished_at,
-            'result':       self.result,
+            'traceback':    self.traceback,
         }
