@@ -14,7 +14,7 @@ dag_kwargs = {
         'node2': {
             'node_key': 'node2',
             'project_key': 'proj1',
-            'code_to_run': 'def run_task():\n    print(str(1/0))'
+            'code_to_run': 'def run_task():\n    print("node 2")'
         }
     },
     'collection_key': 'REMOVED_CREDENTIAL',
