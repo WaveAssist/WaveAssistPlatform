@@ -168,9 +168,22 @@ const DeployComponent: React.FC = () => {
 				</Modal.Header>
 				<Modal.Body className="text-center">
 					<p className="pt-4">All set! Your project is ready to use.</p>
-					<Button variant="success" className="mt-3 px-4 py-2 fw-semibold" onClick={() => navigate(`/manage/nodes?project_key=${localStorage.getItem("selected_project_key")}`)}>						
-						Go to Assistant
-					</Button>
+                                        <Button
+                                                variant="success"
+                                                className="mt-3 px-4 py-2 fw-semibold"
+                                                onClick={() => {
+                                                        if (Array.isArray(templateData.input_array) && templateData.input_array.length > 0) {
+                                                                localStorage.setItem(
+                                                                        "wizard_input_array",
+                                                                        JSON.stringify(templateData.input_array)
+                                                                );
+                                                                localStorage.setItem("show_wizard", "true");
+                                                        }
+                                                        navigate(`/manage/nodes?project_key=${localStorage.getItem("selected_project_key")}`);
+                                                }}
+                                        >
+                                                Go to Assistant
+                                        </Button>
 				</Modal.Body>
 			</Modal>
 		</div>
