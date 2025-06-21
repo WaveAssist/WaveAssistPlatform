@@ -105,7 +105,7 @@ def get_started(request): #TCW
             print("Worker creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage('Worker creation failed.' + str(e))
 
-    if account_object.open_router_key == '' and not is_test:
+    if account_object.open_router_key == '':
         try:
             open_router_key = utils.create_openrouter_token(user_object.uid, grant_usd=3)
             if open_router_key:

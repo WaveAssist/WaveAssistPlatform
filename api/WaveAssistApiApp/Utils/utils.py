@@ -462,16 +462,19 @@ def create_mongo_url(user_object):
 def get_database_name(user_object):
     return 'wa_' + str(user_object.uid)[:20]
 
-
 def create_openrouter_token(uid, grant_usd=3):
     """Create an OpenRouter API token for the given user."""
     try:
-        url = "https://openrouter.ai/api/v1/provision"
+        url = "https://openrouter.ai/api/v1/keys"
         headers = {
             "Authorization": f"Bearer {OPENROUTER_PROVISIONING_KEY}",
             "Content-Type": "application/json",
         }
-        payload = {"user": str(uid), "grant": grant_usd}
+        payload = {
+            "name": f"Token for {uid}",
+            "label": str(uid),
+            "limit": grant_usd
+        }
         response = requests.post(url, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -479,7 +482,6 @@ def create_openrouter_token(uid, grant_usd=3):
     except Exception as e:
         print("Error creating openrouter token:", str(e))
         return None
-
 
 
 
