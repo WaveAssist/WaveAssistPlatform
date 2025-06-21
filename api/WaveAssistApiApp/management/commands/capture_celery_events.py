@@ -22,6 +22,7 @@ class Command(BaseCommand):
 
     def _handle_custom_event(self, event):
         # extract required fields
+        print(event)
         ev_type        = event.get('event_type')
         run_id         = event.get('uuid')
         node_key       = event.get('node_key')

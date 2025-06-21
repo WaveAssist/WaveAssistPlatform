@@ -105,6 +105,15 @@ def get_started(request): #TCW
             print("Worker creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage('Worker creation failed.' + str(e))
 
+    if account_object.open_router_key == '':
+        try:
+            open_router_key = utils.create_openrouter_token(user_object.uid, grant_usd=2)
+            if open_router_key:
+                account_object.open_router_key = open_router_key
+                account_object.save()
+        except Exception as e:
+            print("OpenRouter key creation failed: " + str(e))
+
 
     user_dict = user_object.get_dict()
     account_dict = account_object.get_dict()
@@ -242,6 +251,7 @@ def create_project(request): ##TCW
         variables = [
             {"name": "uid", "value": str(uid)},
             {"name": "mongo_url", "value": str(account_object.mongo_db_url)},  # or actual URL if available
+            {"name": "open_router_key", "value": str(account_object.open_router_key)},
         ]
         for env_key in [data_run_key, data_run_key_test]:
             for variable in variables:
