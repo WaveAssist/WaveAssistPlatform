@@ -2,13 +2,13 @@ import React, { useEffect, useState, Suspense } from "react";
 import Joyride, { Step } from "react-joyride";
 import { Node as RFNode, Edge as RFEdge } from "reactflow";
 import {
-        fetchNodesApi,
-        updateCodeApi,
-        createNodeApi,
-        updateNodeApi,
-        deleteNodeApi,
-        runDAGApi,
-        setDataForKeyApi,
+	fetchNodesApi,
+	updateCodeApi,
+	createNodeApi,
+	updateNodeApi,
+	deleteNodeApi,
+	runDAGApi,
+	setDataForKeyApi,
 } from "../../services/project_services";
 import { deployProjectApi } from "../../services/navbar_services";
 import { useNavigate } from "react-router-dom";
@@ -37,7 +37,7 @@ const NODE_WIDTH = 250;
 const NODE_HEIGHT = 50;
 
 const NodesComponent: React.FC = () => {
-        const { shouldRefresh } = useRefresh();
+	const { shouldRefresh } = useRefresh();
 	// const [isOpen, setIsOpen] = useState(false);
 	// const [url, setUrl] = useState("");
 	const [showWebhook, setShowWebhook] = useState(false);
@@ -48,46 +48,46 @@ const NodesComponent: React.FC = () => {
 	const [emailWebhook, setEmailWebhook] = useState("");
 	const [view, setView] = useState<"flow" | "table">(() => (localStorage.getItem("nodesView") as any) ?? "table");
 	const [rfNodes, setRfNodes] = useState<RFNode[]>([]);
-        const [rfEdges, setRfEdges] = useState<RFEdge[]>([]);
+	const [rfEdges, setRfEdges] = useState<RFEdge[]>([]);
 
-        const [showWizard, setShowWizard] = useState(false);
-        const [wizardInputs, setWizardInputs] = useState<any[]>([]);
-        const [wizardValues, setWizardValues] = useState<Record<string, string>>({});
-        const [processingWizard, setProcessingWizard] = useState(false);
-        const [wizardDone, setWizardDone] = useState(false);
-        const [startingNodeKey, setStartingNodeKey] = useState<string | null>(null);
-        const navigate = useNavigate();
-        const steps: Step[] = [
-                {
-                        target: ".play-button-step", // The plus icon button
-                        content: "Click on the play button to run your workflow",
-                        disableBeacon: true,
-                        locale: { last: "Ok" },
-                },
-        ];
-        useEffect(() => {
-                const wizardStr = localStorage.getItem("wizard_input_array");
-                let arr: any[] = [];
-                if (wizardStr) {
-                        try {
-                                arr = JSON.parse(wizardStr);
-                                setWizardInputs(arr);
-                                const defaults: Record<string, string> = {};
-                                arr.forEach((i: any) => {
-                                        defaults[i.key] = i.default_value || "";
-                                });
-                                setWizardValues(defaults);
-                        } catch (e) {
-                                console.error("Failed to parse wizard input array", e);
-                        }
-                }
-                if (Array.isArray(arr) && arr.length > 0 && localStorage.getItem("show_wizard") === "true") {
-                        setShowWizard(true);
-                }
-        }, []);
-        useEffect(() => {
-                localStorage.setItem("nodesView", view);
-        }, [view]);
+	const [showWizard, setShowWizard] = useState(false);
+	const [wizardInputs, setWizardInputs] = useState<any[]>([]);
+	const [wizardValues, setWizardValues] = useState<Record<string, string>>({});
+	const [processingWizard, setProcessingWizard] = useState(false);
+	const [wizardDone, setWizardDone] = useState(false);
+	const [startingNodeKey, setStartingNodeKey] = useState<string | null>(null);
+	const navigate = useNavigate();
+	const steps: Step[] = [
+		{
+			target: ".play-button-step", // The plus icon button
+			content: "Click on the play button to run your workflow",
+			disableBeacon: true,
+			locale: { last: "Ok" },
+		},
+	];
+	useEffect(() => {
+		const wizardStr = localStorage.getItem("wizard_input_array");
+		let arr: any[] = [];
+		if (wizardStr) {
+			try {
+				arr = JSON.parse(wizardStr);
+				setWizardInputs(arr);
+				const defaults: Record<string, string> = {};
+				arr.forEach((i: any) => {
+					defaults[i.key] = i.default_value || "";
+				});
+				setWizardValues(defaults);
+			} catch (e) {
+				console.error("Failed to parse wizard input array", e);
+			}
+		}
+		if (Array.isArray(arr) && arr.length > 0 && localStorage.getItem("show_wizard") === "true") {
+			setShowWizard(true);
+		}
+	}, []);
+	useEffect(() => {
+		localStorage.setItem("nodesView", view);
+	}, [view]);
 
 	const handleNodesChange = (changes: NodeChange[]) => {
 		setRfNodes((nds) => applyNodeChanges(changes, nds));
@@ -406,13 +406,13 @@ ${config.nodes
 				if (!a.is_starting_node && b.is_starting_node) return 1;
 				return 0; // Keep original order for other nodes
 			});
-                       setNodesArray(nodes_array);
-                       const { rfNodes, rfEdges } = buildFlow(nodes_array);
-                       setRfNodes(rfNodes);
-                       setRfEdges(rfEdges);
-                       const startNode = nodes_array.find((n: any) => n.is_starting_node);
-                       setStartingNodeKey(startNode ? startNode.node_key : nodes_array[0]?.node_key || null);
-                       const is_template_run = localStorage.getItem("is_template_run");
+			setNodesArray(nodes_array);
+			const { rfNodes, rfEdges } = buildFlow(nodes_array);
+			setRfNodes(rfNodes);
+			setRfEdges(rfEdges);
+			const startNode = nodes_array.find((n: any) => n.is_starting_node);
+			setStartingNodeKey(startNode ? startNode.node_key : nodes_array[0]?.node_key || null);
+			const is_template_run = localStorage.getItem("is_template_run");
 			const tourCompleted = localStorage.getItem("run_node_tour") === "true";
 			if (!tourCompleted && is_template_run === "true") {
 				setRunTour(true);
@@ -484,34 +484,34 @@ ${config.nodes
 		</button>
 	);
 
-        const toggleView = () => {
-                setView(view === "flow" ? "table" : "flow");
-        };
+	const toggleView = () => {
+		setView(view === "flow" ? "table" : "flow");
+	};
 
-        const handleWizardInputChange = (key: string, value: string) => {
-                setWizardValues((prev) => ({ ...prev, [key]: value }));
-        };
+	const handleWizardInputChange = (key: string, value: string) => {
+		setWizardValues((prev) => ({ ...prev, [key]: value }));
+	};
 
-        const handleRunAndDeploy = async () => {
-                setProcessingWizard(true);
-                try {
-                        for (const input of wizardInputs) {
-                                await setDataForKeyApi(wizardValues[input.key], input.key, "string");
-                        }
-                        if (startingNodeKey) {
-                                const env = localStorage.getItem("selected_env_key") || "";
-                                await runDAGApi(startingNodeKey, env);
-                        }
-                        await deployProjectApi("1.0.0");
-                        setWizardDone(true);
-                        localStorage.setItem("show_wizard", "false");
-                } catch (error) {
-                        console.error("Wizard run failed:", error);
-                        showToast("" + error, "danger");
-                } finally {
-                        setProcessingWizard(false);
-                }
-        };
+	const handleRunAndDeploy = async () => {
+		setProcessingWizard(true);
+		try {
+			for (const input of wizardInputs) {
+				await setDataForKeyApi(wizardValues[input.key], input.key, "string");
+			}
+			if (startingNodeKey) {
+				const env = localStorage.getItem("selected_env_key") || "";
+				await runDAGApi(startingNodeKey, env);
+			}
+			await deployProjectApi("1.0.0");
+			setWizardDone(true);
+			localStorage.setItem("show_wizard", "false");
+		} catch (error) {
+			console.error("Wizard run failed:", error);
+			showToast("" + error, "danger");
+		} finally {
+			setProcessingWizard(false);
+		}
+	};
 
 	const ActionButtons = (params: any) => {
 		return (
@@ -984,50 +984,46 @@ ${config.nodes
 						</Modal.Footer>
 					</Form>
 				</Modal.Body>
-                        </Modal>
+			</Modal>
 
-                        <Modal show={showWizard} backdrop="static" keyboard={false} centered>
-                                <Modal.Header>
-                                        <Modal.Title>Setup Wizard</Modal.Title>
-                                </Modal.Header>
-                                <Modal.Body>
-                                        {wizardDone ? (
-                                                <div className="text-center">
-                                                        <span className="badge bg-success mb-2">Deployed</span>
-                                                        <p>🎉 Your assistant was started and deployed! 🎉</p>
-                                                </div>
-                                        ) : (
-                                                <Form>
-                                                        {wizardInputs.map((inp) => (
-                                                                <Form.Group className="mb-3" key={inp.key}>
-                                                                        <Form.Label>{inp.key}</Form.Label>
-                                                                        <Form.Control
-                                                                                type="text"
-                                                                                value={wizardValues[inp.key] || ""}
-                                                                                onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}
-                                                                        />
-                                                                        {inp.helper_message && (
-                                                                                <Form.Text className="text-muted">{inp.helper_message}</Form.Text>
-                                                                        )}
-                                                                </Form.Group>
-                                                        ))}
-                                                </Form>
-                                        )}
-                                </Modal.Body>
-                                <Modal.Footer>
-                                        {wizardDone ? (
-                                                <Button variant="primary" onClick={() => navigate("/manage/logs")}>View Logs</Button>
-                                        ) : (
-                                                <Button variant="success" className="w-100" onClick={handleRunAndDeploy} disabled={processingWizard}>
-                                                        {processingWizard ? "Processing..." : "Run and Deploy"}
-                                                </Button>
-                                        )}
-                                </Modal.Footer>
-                        </Modal>
+			<Modal show={showWizard} backdrop="static" keyboard={false} centered>
+				<Modal.Header>
+					<Modal.Title>Setup Wizard</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					{wizardDone ? (
+						<div className="text-center">
+							<span className="badge bg-success mb-2">Deployed</span>
+							<p>🎉 Your assistant was started and deployed! 🎉</p>
+						</div>
+					) : (
+						<Form>
+							{wizardInputs.map((inp) => (
+								<Form.Group className="mb-3" key={inp.key}>
+									<Form.Label>{inp.key}</Form.Label>
+									<Form.Control type="text" value={wizardValues[inp.key] || ""} onChange={(e) => handleWizardInputChange(inp.key, e.target.value)} />
+									{inp.helper_message && <Form.Text className="text-secondary">{inp.helper_message}</Form.Text>}
+								</Form.Group>
+							))}
+						</Form>
+					)}
+				</Modal.Body>
+				<Modal.Footer>
+					{wizardDone ? (
+						<Button variant="primary" onClick={() => navigate("/manage/logs")}>
+							View Logs
+						</Button>
+					) : (
+						<Button variant="success" className="w-100" onClick={handleRunAndDeploy} disabled={processingWizard}>
+							{processingWizard ? "Processing..." : "Run and Deploy"}
+						</Button>
+					)}
+				</Modal.Footer>
+			</Modal>
 
-                        <Joyride
-                                steps={steps}
-                                run={runTour}
+			<Joyride
+				steps={steps}
+				run={runTour}
 				showProgress
 				showSkipButton
 				continuous
