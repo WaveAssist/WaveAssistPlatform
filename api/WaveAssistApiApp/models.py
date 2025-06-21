@@ -25,6 +25,7 @@ class Account(models.Model):
     celery_queue = models.CharField(max_length=255, default="", null=True)
     pip_requirements_array_json = models.TextField(default="[]")
     worker_service_arn = models.CharField(max_length=255, default="")
+    open_router_key = models.CharField(max_length=255, default="", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_working_running = models.BooleanField(default=True)
 
@@ -41,6 +42,7 @@ class Account(models.Model):
         account_dict['celery_queue'] = self.celery_queue
         account_dict['pip_requirements_array_json'] = json.loads(str(self.pip_requirements_array_json))
         account_dict['worker_service_arn'] = self.worker_service_arn
+        account_dict['open_router_key'] = self.open_router_key
         account_dict['is_working_running'] = self.is_working_running
         return account_dict
 
