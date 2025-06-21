@@ -462,7 +462,7 @@ def create_mongo_url(user_object):
 def get_database_name(user_object):
     return 'wa_' + str(user_object.uid)[:20]
 
-def create_openrouter_token(uid, grant_usd=3):
+def create_openrouter_token(uid, grant_usd=2):
     """Create an OpenRouter API token for the given user."""
     try:
         url = "https://openrouter.ai/api/v1/keys"

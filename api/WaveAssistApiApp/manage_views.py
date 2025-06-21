@@ -107,7 +107,7 @@ def get_started(request): #TCW
 
     if account_object.open_router_key == '':
         try:
-            open_router_key = utils.create_openrouter_token(user_object.uid, grant_usd=3)
+            open_router_key = utils.create_openrouter_token(user_object.uid, grant_usd=2)
             if open_router_key:
                 account_object.open_router_key = open_router_key
                 account_object.save()
