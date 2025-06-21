@@ -172,11 +172,13 @@ const DeployComponent: React.FC = () => {
                                                 variant="success"
                                                 className="mt-3 px-4 py-2 fw-semibold"
                                                 onClick={() => {
-                                                        localStorage.setItem(
-                                                                "wizard_input_array",
-                                                                JSON.stringify(templateData.input_array || [])
-                                                        );
-                                                        localStorage.setItem("show_wizard", "true");
+                                                        if (Array.isArray(templateData.input_array) && templateData.input_array.length > 0) {
+                                                                localStorage.setItem(
+                                                                        "wizard_input_array",
+                                                                        JSON.stringify(templateData.input_array)
+                                                                );
+                                                                localStorage.setItem("show_wizard", "true");
+                                                        }
                                                         navigate(`/manage/nodes?project_key=${localStorage.getItem("selected_project_key")}`);
                                                 }}
                                         >

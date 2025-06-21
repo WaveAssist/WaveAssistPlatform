@@ -67,9 +67,10 @@ const NodesComponent: React.FC = () => {
         ];
         useEffect(() => {
                 const wizardStr = localStorage.getItem("wizard_input_array");
+                let arr: any[] = [];
                 if (wizardStr) {
                         try {
-                                const arr = JSON.parse(wizardStr);
+                                arr = JSON.parse(wizardStr);
                                 setWizardInputs(arr);
                                 const defaults: Record<string, string> = {};
                                 arr.forEach((i: any) => {
@@ -80,7 +81,7 @@ const NodesComponent: React.FC = () => {
                                 console.error("Failed to parse wizard input array", e);
                         }
                 }
-                if (localStorage.getItem("show_wizard") === "true") {
+                if (Array.isArray(arr) && arr.length > 0 && localStorage.getItem("show_wizard") === "true") {
                         setShowWizard(true);
                 }
         }, []);
@@ -501,7 +502,7 @@ ${config.nodes
                                 const env = localStorage.getItem("selected_env_key") || "";
                                 await runDAGApi(startingNodeKey, env);
                         }
-                        await deployProjectApi("1");
+                        await deployProjectApi("1.0.0");
                         setWizardDone(true);
                         localStorage.setItem("show_wizard", "false");
                 } catch (error) {
@@ -992,7 +993,8 @@ ${config.nodes
                                 <Modal.Body>
                                         {wizardDone ? (
                                                 <div className="text-center">
-                                                        <span className="badge bg-success">Deployed!!</span>
+                                                        <span className="badge bg-success mb-2">Deployed</span>
+                                                        <p>🎉 Your assistant was started and deployed! 🎉</p>
                                                 </div>
                                         ) : (
                                                 <Form>
@@ -1001,10 +1003,12 @@ ${config.nodes
                                                                         <Form.Label>{inp.key}</Form.Label>
                                                                         <Form.Control
                                                                                 type="text"
-                                                                                placeholder={inp.helper_message}
                                                                                 value={wizardValues[inp.key] || ""}
                                                                                 onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}
                                                                         />
+                                                                        {inp.helper_message && (
+                                                                                <Form.Text className="text-muted">{inp.helper_message}</Form.Text>
+                                                                        )}
                                                                 </Form.Group>
                                                         ))}
                                                 </Form>
