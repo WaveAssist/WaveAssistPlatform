@@ -7,6 +7,7 @@ import Spinner from "react-bootstrap/Spinner";
 import ReactMarkdown from "react-markdown";
 import "./deploy_component.css";
 import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
+import { fetchAllProjectsAPI } from "../services/all_projects_services";
 
 const DeployComponent: React.FC = () => {
 	const [searchParams] = useSearchParams();
@@ -61,16 +62,25 @@ const DeployComponent: React.FC = () => {
 			const response = await axios.post("https://api.waveassist.io/template/deploy_template/", formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
-			if (response.data.success === "1") {
-				setShowSuccessModal(true);
-				localStorage.setItem("is_template_run", "true");
-				// The project key might be in a different field in the response
-				const projectKey = response.data.data?.project_key || response.data.project_key;
-				if (projectKey) {
-					localStorage.setItem("selected_project_key", projectKey);
-				} else {
-					console.error('No project key found in response');
-				}
+                        if (response.data.success === "1") {
+                                setShowSuccessModal(true);
+                                localStorage.setItem("is_template_run", "true");
+                                // The project key might be in a different field in the response
+                                const projectKey = response.data.data?.project_key || response.data.project_key;
+                                if (projectKey) {
+                                        localStorage.setItem("selected_project_key", projectKey);
+                                        try {
+                                                const projectData = await fetchAllProjectsAPI();
+                                                localStorage.setItem(
+                                                        "projects_array",
+                                                        JSON.stringify(projectData.project_array)
+                                                );
+                                        } catch (err) {
+                                                console.error("Failed to refresh projects:", err);
+                                        }
+                                } else {
+                                        console.error("No project key found in response");
+                                }
 			} else {
 				alert("❌ Failed to deploy project, please try again.");
 			}
