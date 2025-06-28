@@ -66,21 +66,27 @@ const NodesComponent: React.FC = () => {
 		},
 	];
 	useEffect(() => {
-		const wizardStr = localStorage.getItem("wizard_input_array");
-		let arr: any[] = [];
-		if (wizardStr) {
-			try {
-				arr = JSON.parse(wizardStr);
-				setWizardInputs(arr);
-				const defaults: Record<string, string> = {};
-				arr.forEach((i: any) => {
-					defaults[i.key] = i.default_value || "";
-				});
-				setWizardValues(defaults);
-			} catch (e) {
-				console.error("Failed to parse wizard input array", e);
-			}
-		}
+                const wizardStr = localStorage.getItem("wizard_input_array");
+                let arr: any[] = [];
+                if (wizardStr) {
+                        try {
+                                arr = JSON.parse(wizardStr);
+                                setWizardInputs(arr);
+                                const defaults: Record<string, string> = {};
+                                arr.forEach((i: any) => {
+                                        if (i.default_value !== undefined) {
+                                                defaults[i.key] = i.default_value;
+                                        } else if (Array.isArray(i.options) && i.options.length > 0) {
+                                                defaults[i.key] = i.options[0];
+                                        } else {
+                                                defaults[i.key] = "";
+                                        }
+                                });
+                                setWizardValues(defaults);
+                        } catch (e) {
+                                console.error("Failed to parse wizard input array", e);
+                        }
+                }
 		if (Array.isArray(arr) && arr.length > 0 && localStorage.getItem("show_wizard") === "true") {
 			setShowWizard(true);
 		}
@@ -997,15 +1003,33 @@ ${config.nodes
 							<p>🎉 Your assistant was started and deployed! 🎉</p>
 						</div>
 					) : (
-						<Form>
-							{wizardInputs.map((inp) => (
-								<Form.Group className="mb-3" key={inp.key}>
-									<Form.Label>{inp.key}</Form.Label>
-									<Form.Control type="text" value={wizardValues[inp.key] || ""} onChange={(e) => handleWizardInputChange(inp.key, e.target.value)} />
-									{inp.helper_message && <Form.Text className="text-secondary">{inp.helper_message}</Form.Text>}
-								</Form.Group>
-							))}
-						</Form>
+                                                <Form>
+                                                        {wizardInputs.map((inp) => (
+                                                                <Form.Group className="mb-3" key={inp.key}>
+                                                                        <Form.Label>{inp.key}</Form.Label>
+                                                                        {Array.isArray(inp.options) && inp.options.length > 0 ? (
+                                                                                <Form.Select
+                                                                                        value={wizardValues[inp.key] || inp.options[0]}
+                                                                                        onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}>
+                                                                                        {inp.options.map((opt: string, idx: number) => (
+                                                                                                <option key={idx} value={opt}>
+                                                                                                        {opt}
+                                                                                                </option>
+                                                                                        ))}
+                                                                                </Form.Select>
+                                                                        ) : (
+                                                                                <Form.Control
+                                                                                        type="text"
+                                                                                        value={wizardValues[inp.key] || ""}
+                                                                                        onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}
+                                                                                />
+                                                                        )}
+                                                                        {inp.helper_message && (
+                                                                                <Form.Text className="text-secondary">{inp.helper_message}</Form.Text>
+                                                                        )}
+                                                                </Form.Group>
+                                                        ))}
+                                                </Form>
 					)}
 				</Modal.Body>
 				<Modal.Footer>
