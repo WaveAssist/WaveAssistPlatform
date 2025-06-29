@@ -110,7 +110,7 @@ const NodesComponent: React.FC = () => {
 		crontab_days_of_month: "*",
 		crontab_months_of_year: "*",
 		crontab_days_of_week: "*",
-		crontab_timezone: "UTC",
+		crontab_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 
 		interval_every: "30",
 		interval_type: "minutes",
