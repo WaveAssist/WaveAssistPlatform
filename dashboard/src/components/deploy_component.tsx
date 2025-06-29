@@ -59,6 +59,7 @@ const DeployComponent: React.FC = () => {
 			const formData = new FormData();
 			formData.append("repo_url", templateData.repo_url);
 			formData.append("uid", uid);
+			formData.append("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
 			const response = await axios.post("https://api.waveassist.io/template/deploy_template/", formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
