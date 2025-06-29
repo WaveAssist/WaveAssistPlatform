@@ -134,6 +134,14 @@ const AllProjectsComponent: React.FC = () => {
 			showToast("Project created successfully", "success");
 			setShowAlert(false);
 			handleCloseModal();
+			
+			// Update projects array in localStorage
+			const existingProjects = JSON.parse(localStorage.getItem("projects_array") || "[]");
+			const newProject = { name: newProjectName, project_key: newProjectKey };
+			existingProjects.push(newProject);
+			localStorage.setItem("projects_array", JSON.stringify(existingProjects));
+			
+			// Set selected project and navigate
 			localStorage.setItem("selected_project_key", newProjectKey);
 			navigate(`/manage/nodes?project_key=${newProjectKey}`);
 		} catch (error) {
