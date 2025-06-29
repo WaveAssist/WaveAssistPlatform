@@ -25,6 +25,8 @@ def deploy_template(request):
     if not repo_url:
         return ResponseParser.getParsedErrorMessage("Missing template Repo URL in request")
 
+    timezone = request.POST.get('timezone', 'UTC')
+
     repo_name = repo_url.split("/")[-1].replace(".git", "")
     yaml_config = get_config_yaml_from_github(repo_name)
     is_valid, message =  validate_yaml_config(yaml_config)
@@ -52,7 +54,7 @@ def deploy_template(request):
         node_files = get_nodes_from_github(repo_name)
         file_map = {n["node_name"]: n["content"] for n in node_files}
 
-        created_nodes = create_nodes_from_yaml(project_object, nodes, file_map)
+        created_nodes = create_nodes_from_yaml(project_object, nodes, file_map, timezone)
         link_node_dependencies(yaml_config, created_nodes)
         configure_variables(uid, project_key, yaml_config)
     except Exception as e:

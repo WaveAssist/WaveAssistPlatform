@@ -13,7 +13,7 @@ import json
 client = Client()
 
 
-def create_nodes_from_yaml(project_object, nodes, file_map):
+def create_nodes_from_yaml(project_object, nodes, file_map, timezone):
     created_nodes = {}
 
     for node in nodes:
@@ -21,7 +21,7 @@ def create_nodes_from_yaml(project_object, nodes, file_map):
         file_name = node["file_name"].replace(".py", "")
         python_code = file_map.get(file_name, "")
         name = node.get("name", node_key)
-        schedule_type, cron_obj, interval_obj = parse_schedule(node.get("schedule", {}))
+        schedule_type, cron_obj, interval_obj = parse_schedule(node.get("schedule", {}), timezone)
         node_object = Nodes.objects.create(
             project_object=project_object,
             node_key=node_key,
@@ -38,7 +38,7 @@ def create_nodes_from_yaml(project_object, nodes, file_map):
     return created_nodes
 
 
-def parse_schedule(schedule_dict):
+def parse_schedule(schedule_dict, default_timezone="UTC"):
     if not schedule_dict:
         return "none", None, None
     if "cron" in schedule_dict:
@@ -49,7 +49,7 @@ def parse_schedule(schedule_dict):
             day_of_month=cron_parts[2],
             month_of_year=cron_parts[3],
             day_of_week=cron_parts[4],
-            timezone=schedule_dict.get("timezone", "UTC")
+            timezone= default_timezone
         )
         return "crontab", crontab_obj, None
 
