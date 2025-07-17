@@ -2,7 +2,7 @@ import uuid
 import base64
 import requests
 import yaml
-from .constants import ADMIN_GTE
+from .constants import ADMIN_GTE, GITHUB_USERNAME, GITHUB_TOKEN
 from WaveAssistApiApp.models import Project, DataRuns, AccessProvided, Nodes
 from django_celery_beat.models import CrontabSchedule, IntervalSchedule
 from WaveAssistApiApp import deployment_views
@@ -77,7 +77,8 @@ def get_nodes_from_github(repo_name, owner='WaveAssist', branch='main'):
     repo = f"{owner}/{repo_name}"
     tree_url = f"https://api.github.com/repos/{repo}/git/trees/{branch}?recursive=1"
     try:
-        tree_data = requests.get(tree_url).json()
+        tree_resp = requests.get(tree_url, auth=(GITHUB_USERNAME, GITHUB_TOKEN))
+        tree_data = tree_resp.json()
     except Exception as e:
         print(f"[ERROR] Fetching repo tree failed: {e}")
         return []
@@ -85,13 +86,15 @@ def get_nodes_from_github(repo_name, owner='WaveAssist', branch='main'):
     node_files = []
     for item in tree_data.get("tree", []):
         if item["type"] == "blob" and item["path"].endswith(".py"):
-            file_url = f"https://api.github.com/repos/{repo}/contents/{item['path']}"
+            file_url = f"https://api.github.com/repos/{repo}/contents/{item['path']}?ref={branch}"
             try:
-                content = requests.get(file_url).json().get("content", "")
-                node_files.append({
-                    "node_name": item["path"].split("/")[-1].replace(".py", ""),
-                    "content": base64.b64decode(content).decode("utf-8")
-                })
+                file_resp = requests.get(file_url, auth=(GITHUB_USERNAME, GITHUB_TOKEN))
+                content = file_resp.json().get("content", "")
+                if content:
+                    node_files.append({
+                        "node_name": item["path"].split("/")[-1].replace(".py", ""),
+                        "content": base64.b64decode(content).decode("utf-8")
+                    })
             except Exception as e:
                 print(f"[SKIP] {item['path']}: {e}")
     return node_files
@@ -116,9 +119,12 @@ def install_requirements_from_yaml(request, yaml_config, project_key):
 
 
 def get_config_yaml_from_github(repo_name, owner='WaveAssist', branch='main'):
-    url = f"https://raw.githubusercontent.com/{owner}/{repo_name}/{branch}/config.yaml"
-    resp = requests.get(url)
-    return yaml.safe_load(resp.text)
+    url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/config.yaml?ref={branch}"
+    resp = requests.get(url, auth=(GITHUB_USERNAME, GITHUB_TOKEN))
+    if resp.status_code != 200:
+        raise Exception("Failed to fetch config.yaml")
+    content = resp.json().get("content", "")
+    return yaml.safe_load(base64.b64decode(content).decode("utf-8"))
 
 
 
