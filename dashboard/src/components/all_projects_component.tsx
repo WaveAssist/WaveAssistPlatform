@@ -13,11 +13,19 @@ import "./all_projects_component.css";
 
 import { usePostHog } from "posthog-js/react";
 
+interface Project {
+  project_key: string;
+  name: string;
+  is_premium?: boolean;
+  // Add other project properties as needed
+}
+
 const AllProjectsComponent: React.FC = () => {
 	const [newProjectName, setNewProjectName] = useState("");
 	const [newProjectKey, setNewProjectKey] = useState("");
 	const [showAlert, setShowAlert] = useState(false);
-	const [projectArray, setProjectArray] = useState([]);
+	const [projectArray, setProjectArray] = useState<Project[]>([]);
+	const [isUserPremium, setIsUserPremium] = useState(false);
 	const [showModal, setShowModal] = useState(false);
 	const [isProjectKeyEdited, setIsProjectKeyEdited] = useState(false);
 	const navigate = useNavigate();
@@ -42,7 +50,10 @@ const AllProjectsComponent: React.FC = () => {
 	useEffect(() => {
 		fetchData();
 		registerPostHogUser();
-	}, []);
+		// Get user's premium status from localStorage
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		setIsUserPremium(userData.is_premium || false);
+		}, []);
 
 	useEffect(() => {
 		if (!isProjectKeyEdited) {
@@ -68,6 +79,23 @@ const AllProjectsComponent: React.FC = () => {
 		try {
 			const data = await fetchAllProjectsAPI();
 			setProjectArray(data.project_array);
+
+			// Store the premium status of all projects in localStorage
+			if (data.project_array && data.project_array.length > 0) {
+				// Get the currently selected project key
+				const selectedProjectKey = localStorage.getItem("selected_project_key");
+				
+				// Find the selected project in the project array
+				const selectedProject = data.project_array.find(
+					(project: any) => project.project_key === selectedProjectKey
+				);
+
+				// If a project is selected, store its premium status in localStorage
+				if (selectedProject) {
+					localStorage.setItem("is_project_premium", selectedProject.is_premium ? "true" : "false");
+				}
+			}
+
 			if (data.project_array.length === 0) {
 				const tourCompleted = localStorage.getItem("create_project_tour_completed");
 				if (tourCompleted == null) {
@@ -137,12 +165,17 @@ const AllProjectsComponent: React.FC = () => {
 			
 			// Update projects array in localStorage
 			const existingProjects = JSON.parse(localStorage.getItem("projects_array") || "[]");
-			const newProject = { name: newProjectName, project_key: newProjectKey };
+			const newProject: Project = { 
+				name: newProjectName, 
+				project_key: newProjectKey,
+				is_premium: false // New projects are not premium by default
+			};
 			existingProjects.push(newProject);
 			localStorage.setItem("projects_array", JSON.stringify(existingProjects));
 			
-			// Set selected project and navigate
+			// Set selected project and premium status, then navigate
 			localStorage.setItem("selected_project_key", newProjectKey);
+			localStorage.setItem("is_project_premium", "false");
 			navigate(`/manage/nodes?project_key=${newProjectKey}`);
 		} catch (error) {
 			console.error("FetchAllProjects failed:", error);
@@ -152,7 +185,15 @@ const AllProjectsComponent: React.FC = () => {
 	};
 
 	const handleViewDetails = (projectKey: string) => {
+		// Find the selected project in the project array
+		const selectedProject = projectArray.find((p: Project) => p.project_key === projectKey);
+		
+		// Store the project key and premium status in localStorage
 		localStorage.setItem("selected_project_key", projectKey);
+		if (selectedProject) {
+			localStorage.setItem("is_project_premium", selectedProject.is_premium ? "true" : "false");
+		}
+
 		navigate(`/manage/nodes?project_key=${projectKey}`);
 	};
 
@@ -207,14 +248,21 @@ const AllProjectsComponent: React.FC = () => {
 							<div className="col-sm-4 project-card ml-5" key={project.project_key} onClick={() => handleViewDetails(project.project_key)}>
 								<div className="card text-white bg-dark mb-3 ml-5 mr-5">
 									<div className="card-body position-relative p-3">
-										<h5 className="card-title translucent_white fs-4">{project.name}</h5>
+										<div className="d-flex align-items-center">
+											<h5 className="card-title translucent_white fs-4 mb-0">{project.name}</h5>
+											{project.is_premium && (
+												<span className="badge bg-warning text-dark ms-2" style={{ fontSize: '0.6rem' }}>PREMIUM</span>
+											)}
+										</div>
 										<h5 className="card-title translucent_white_more fs-6 mb-3">{project.project_key}</h5>
 										<button
 											className="btn btn-dark delete-icon translucent_white p-2"
 											onClick={(e) => {
 												e.stopPropagation();
 												handleDeleteProject(project.project_key);
-											}}>
+											}}
+											disabled={project.is_premium && !isUserPremium}
+											title={project.is_premium && !isUserPremium ? "Premium projects cannot be deleted" : ""}>
 											<i className="bi bi-trash-fill"></i>
 										</button>
 									</div>

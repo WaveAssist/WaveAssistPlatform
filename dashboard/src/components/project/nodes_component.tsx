@@ -152,6 +152,7 @@ const NodesComponent: React.FC = () => {
 				name: n.name,
 				node_key: n.node_key,
 				is_enabled: n.is_enabled,
+				is_premium: n.is_premium, // Include the premium flag from the node data
 				scheduleLabel: getScheduleLabel(n),
 				onView: () => handleViewCode(n),
 				onEdit: () => handleEdit(n),
@@ -405,7 +406,18 @@ ${config.nodes
 	const fetchNodes = async () => {
 		try {
 			const data = await fetchNodesApi();
+			console.log('API Response:', data); // Debug log to see the API response
+			
+			// Ensure project premium status is set in localStorage
+			const projectData = JSON.parse(localStorage.getItem('selected_project') || '{}');
+			if (projectData && projectData.is_premium !== undefined) {
+				localStorage.setItem("is_project_premium", projectData.is_premium ? "true" : "false");
+			} else if (data.is_project_premium !== undefined) {
+				localStorage.setItem("is_project_premium", data.is_project_premium ? "true" : "false");
+			}
+			
 			var nodes_array = data.node_array;
+			console.log('Nodes array:', nodes_array); // Debug log to see the nodes array
 			//Sort to keep the starting node at the top
 			nodes_array.sort((a: any, b: any) => {
 				if (a.is_starting_node && !b.is_starting_node) return -1;
@@ -484,11 +496,28 @@ ${config.nodes
 		fetchNodes();
 	};
 
-	const ViewCodeButton = (params: any) => (
-		<button className="btn btn-outline-success btn-sm" onClick={() => handleViewCode(params.data)}>
-			View Code
-		</button>
-	);
+	const ViewCodeButton = (params: any) => {
+		// Debug log to see the node data
+		console.log('ViewCode Node data:', params.data);
+		
+		// Check if the project is premium and if the user has premium access
+		const isProjectPremium = localStorage.getItem("is_project_premium") === 'true';
+		const hasPremiumAccess = localStorage.getItem("has_premium_access") === 'true';
+		const isDisabled = isProjectPremium && !hasPremiumAccess;
+		
+		// Debug log to see the premium status
+		console.log(`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, hasPremiumAccess: ${hasPremiumAccess}, isDisabled: ${isDisabled}`);
+
+		return (
+			<button 
+				className={`btn btn-outline-success btn-sm ${isDisabled ? 'disabled' : ''}`} 
+				onClick={() => !isDisabled && handleViewCode(params.data)}
+				title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
+			>
+				View Code
+			</button>
+		);
+	};
 
 	const toggleView = () => {
 		setView(view === "flow" ? "table" : "flow");
@@ -520,16 +549,44 @@ ${config.nodes
 	};
 
 	const ActionButtons = (params: any) => {
+		// Debug log to see the node data
+		console.log('Node data:', params.data);
+		
+		// Check if the project is premium and if the user has premium access
+		const isProjectPremium = localStorage.getItem("is_project_premium") === 'true';
+		const hasPremiumAccess = localStorage.getItem("has_premium_access") === 'true';
+		const isDisabled = isProjectPremium && !hasPremiumAccess;
+		
+		// Debug log to see the premium status
+		console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, hasPremiumAccess: ${hasPremiumAccess}, isDisabled: ${isDisabled}`);
+
 		return (
 			<div>
-				<Button variant="dark" size="sm" onClick={() => handleEdit(params.data)}>
+				<Button 
+					variant="dark" 
+					size="sm" 
+					onClick={() => handleEdit(params.data)}
+					disabled={isDisabled}
+					title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
+				>
 					<i className="bi bi-pencil"></i>
 				</Button>{" "}
-				<Button variant="danger" size="sm" onClick={() => handleDelete(params.data)}>
+				<Button 
+					variant="danger" 
+					size="sm" 
+					onClick={() => handleDelete(params.data)}
+					disabled={isDisabled}
+					title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}
+				>
 					<i className="bi bi-trash"></i>
 				</Button>{" "}
 				{params.data.is_starting_node && (
-					<Button variant="success" size="sm" onClick={() => handleRun(params.data)}>
+					<Button 
+						variant="success" 
+						size="sm" 
+						onClick={() => handleRun(params.data)}
+						title="Run node"
+					>
 						<i className="bi bi-play">Run</i>
 					</Button>
 				)}
