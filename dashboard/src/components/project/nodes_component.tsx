@@ -238,32 +238,44 @@ const NodesComponent: React.FC = () => {
 	const [nodesArray, setNodesArray] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 
-	const { showToast } = useToast();
-	const [showCodeModal, setShowCodeModal] = useState(false);
-	const [selected_node_key, setSelectedNodeKey] = useState("");
-	const [modalCode, setModalCode] = useState('print("Hello, world!")');
-	const [showNodeEditor, setShowNodeEditor] = useState(false);
+        const { showToast } = useToast();
+        const [showCodeModal, setShowCodeModal] = useState(false);
+        const [selected_node_key, setSelectedNodeKey] = useState("");
+        const [modalCode, setModalCode] = useState('print("Hello, world!")');
+        const [showNodeEditor, setShowNodeEditor] = useState(false);
 
-	const handleClose = () => {
-		setSelectedNodeKey("");
-		setShowCodeModal(false);
-		// setIsOpen(false);
-	};
+        const premiumBlocked = (): boolean => {
+                const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+                const isUserPremium = userData.is_premium === true;
+                if (isProjectPremium && !isUserPremium) {
+                        showToast("Upgrade to use Premium template", "warning");
+                        return true;
+                }
+                return false;
+        };
 
-	const handleSave = async () => {
-		await updateCodeApi(selected_node_key, modalCode);
-		showToast("Code updated successfully.", "success");
-		setSelectedNodeKey("");
-		handleClose();
-		fetchNodes();
-	};
+        const handleClose = () => {
+                setSelectedNodeKey("");
+                setShowCodeModal(false);
+                // setIsOpen(false);
+        };
 
-	const handleCreateNode = () => {
-		reset(defaultValuesDict);
-		setSelectedNodeKey("");
-		setWebhookUrl("");
-		setShowNodeEditor(true);
-	};
+        const handleSave = async () => {
+                await updateCodeApi(selected_node_key, modalCode);
+                showToast("Code updated successfully.", "success");
+                setSelectedNodeKey("");
+                handleClose();
+                fetchNodes();
+        };
+
+        const handleCreateNode = () => {
+                if (premiumBlocked()) return;
+                reset(defaultValuesDict);
+                setSelectedNodeKey("");
+                setWebhookUrl("");
+                setShowNodeEditor(true);
+        };
 
 	// const handleDiagram = async () => {
 	// 	setLoading(true);
@@ -275,12 +287,13 @@ const NodesComponent: React.FC = () => {
 	// 	setIsOpen(true);
 	// };
 
-	const handleDownloadCode = () => {
-		const zip = new JSZip();
-		const config: any = {
-			project_key: localStorage.getItem("selected_project_key") || "unknown_project",
-			nodes: [],
-		};
+        const handleDownloadCode = () => {
+                if (premiumBlocked()) return;
+                const zip = new JSZip();
+                const config: any = {
+                        project_key: localStorage.getItem("selected_project_key") || "unknown_project",
+                        nodes: [],
+                };
 
 		nodesArray.forEach((node) => {
 			if (node.python_code) {
@@ -364,9 +377,10 @@ ${config.nodes
 		return `${emailLocal}@trigger.waveassist.io`;
 	};
 
-	const handleEdit = (node: any) => {
-		if (node.crontab_schedule && node.crontab_schedule.includes("m/h/dM/MY/d")) {
-			const [minute, hour, dayOfMonth, month, dayOfWeek, , timezone] = node.crontab_schedule.split(" ");
+        const handleEdit = (node: any) => {
+                if (premiumBlocked()) return;
+                if (node.crontab_schedule && node.crontab_schedule.includes("m/h/dM/MY/d")) {
+                        const [minute, hour, dayOfMonth, month, dayOfWeek, , timezone] = node.crontab_schedule.split(" ");
 			Object.assign(node, {
 				crontab_minutes: minute,
 				crontab_hours: hour,
@@ -450,18 +464,20 @@ ${config.nodes
 		fetchNodes();
 	}, [shouldRefresh]);
 
-	const handleViewCode = (node: any) => {
-		setModalCode(node.python_code);
-		setSelectedNodeKey(node.node_key);
-		setShowCodeModal(true);
-	};
+        const handleViewCode = (node: any) => {
+                if (premiumBlocked()) return;
+                setModalCode(node.python_code);
+                setSelectedNodeKey(node.node_key);
+                setShowCodeModal(true);
+        };
 
-	const handleDelete = async (node: any) => {
-		//ask for confirmation
-		const confirmDelete = window.confirm("Are you sure you want to delete this node? This action cannot be undone.");
-		if (!confirmDelete) {
-			return;
-		}
+        const handleDelete = async (node: any) => {
+                if (premiumBlocked()) return;
+                //ask for confirmation
+                const confirmDelete = window.confirm("Are you sure you want to delete this node? This action cannot be undone.");
+                if (!confirmDelete) {
+                        return;
+                }
 		try {
 			await deleteNodeApi(node.node_key);
 			showToast("Node deleted successfully.", "success");
@@ -509,16 +525,16 @@ ${config.nodes
                 // Debug log to see the premium status
                 console.log(`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
 
-		return (
-			<button 
-				className={`btn btn-outline-success btn-sm ${isDisabled ? 'disabled' : ''}`} 
-				onClick={() => !isDisabled && handleViewCode(params.data)}
-				title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
-			>
-				View Code
-			</button>
-		);
-	};
+                return (
+                        <button
+                                className={`btn btn-outline-success btn-sm ${isDisabled ? 'disabled' : ''}`}
+                                onClick={() => handleViewCode(params.data)}
+                                title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
+                        >
+                                View Code
+                        </button>
+                );
+        };
 
 	const toggleView = () => {
 		setView(view === "flow" ? "table" : "flow");
@@ -564,24 +580,24 @@ ${config.nodes
 
 		return (
 			<div>
-				<Button 
-					variant="dark" 
-					size="sm" 
-					onClick={() => handleEdit(params.data)}
-					disabled={isDisabled}
-					title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
-				>
-					<i className="bi bi-pencil"></i>
-				</Button>{" "}
-				<Button 
-					variant="danger" 
-					size="sm" 
-					onClick={() => handleDelete(params.data)}
-					disabled={isDisabled}
-					title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}
-				>
-					<i className="bi bi-trash"></i>
-				</Button>{" "}
+                                <Button
+                                        variant="dark"
+                                        size="sm"
+                                        className={isDisabled ? "disabled" : ""}
+                                        onClick={() => handleEdit(params.data)}
+                                        title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
+                                >
+                                        <i className="bi bi-pencil"></i>
+                                </Button>{" "}
+                                <Button
+                                        variant="danger"
+                                        size="sm"
+                                        className={isDisabled ? "disabled" : ""}
+                                        onClick={() => handleDelete(params.data)}
+                                        title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}
+                                >
+                                        <i className="bi bi-trash"></i>
+                                </Button>{" "}
 				{params.data.is_starting_node && (
 					<Button 
 						variant="success" 
