@@ -28,6 +28,10 @@ ADMIN_GTE = 3
 WRITE_GTE = 2
 READ_GTE = 1
 
+# GitHub credentials for accessing private repositories
+GITHUB_USERNAME = 'WaveAssist'
+GITHUB_TOKEN = 'REMOVED_CREDENTIAL'
+
 
 DAG_TASK = 'celery_worker.run_dag'
 RUN_TASK = 'celery_worker.run_task'

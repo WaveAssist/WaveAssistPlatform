@@ -27,8 +27,15 @@ def deploy_template(request):
 
     timezone = request.POST.get('timezone', 'UTC')
 
-    repo_name = repo_url.split("/")[-1].replace(".git", "")
-    yaml_config = get_config_yaml_from_github(repo_name)
+    repo_parts = repo_url.replace('.git', '').rstrip('/').split('/')
+    if len(repo_parts) >= 2:
+        owner = repo_parts[-2]
+        repo_name = repo_parts[-1]
+    else:
+        owner = GITHUB_USERNAME
+        repo_name = repo_parts[-1]
+
+    yaml_config = get_config_yaml_from_github(repo_name, owner)
     is_valid, message =  validate_yaml_config(yaml_config)
     if not is_valid:
         return ResponseParser.getParsedErrorMessage("Error with yaml: " + str(message))
@@ -51,7 +58,7 @@ def deploy_template(request):
             return ResponseParser.getParsedErrorMessage("Project creation failed: " + response_data.get("message", "Unknown error"))
 
         install_requirements_from_yaml(request, yaml_config, project_key)
-        node_files = get_nodes_from_github(repo_name)
+        node_files = get_nodes_from_github(repo_name, owner)
         file_map = {n["node_name"]: n["content"] for n in node_files}
 
         created_nodes = create_nodes_from_yaml(project_object, nodes, file_map, timezone)
