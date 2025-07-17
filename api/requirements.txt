@@ -13,7 +13,7 @@ flower==2.0.1
 whitenoise==6.0.0
 gunicorn==22.0.0
 graphviz==0.20.3
-requests==2.31.0
+requests>=2.32.4
 gunicorn==22.0.0
 mysqlclient==2.0.3
 firebase-admin==6.1.0
