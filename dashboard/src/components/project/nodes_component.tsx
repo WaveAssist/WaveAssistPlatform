@@ -496,17 +496,18 @@ ${config.nodes
 		fetchNodes();
 	};
 
-	const ViewCodeButton = (params: any) => {
-		// Debug log to see the node data
-		console.log('ViewCode Node data:', params.data);
-		
-		// Check if the project is premium and if the user has premium access
-		const isProjectPremium = localStorage.getItem("is_project_premium") === 'true';
-		const hasPremiumAccess = localStorage.getItem("has_premium_access") === 'true';
-		const isDisabled = isProjectPremium && !hasPremiumAccess;
-		
-		// Debug log to see the premium status
-		console.log(`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, hasPremiumAccess: ${hasPremiumAccess}, isDisabled: ${isDisabled}`);
+        const ViewCodeButton = (params: any) => {
+                // Debug log to see the node data
+                console.log('ViewCode Node data:', params.data);
+
+                // Check if the project is premium and if the user has premium access
+                const isProjectPremium = localStorage.getItem("is_project_premium") === 'true';
+                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+                const isUserPremium = userData.is_premium === true;
+                const isDisabled = isProjectPremium && !isUserPremium;
+
+                // Debug log to see the premium status
+                console.log(`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
 
 		return (
 			<button 
@@ -548,17 +549,18 @@ ${config.nodes
 		}
 	};
 
-	const ActionButtons = (params: any) => {
-		// Debug log to see the node data
-		console.log('Node data:', params.data);
-		
-		// Check if the project is premium and if the user has premium access
-		const isProjectPremium = localStorage.getItem("is_project_premium") === 'true';
-		const hasPremiumAccess = localStorage.getItem("has_premium_access") === 'true';
-		const isDisabled = isProjectPremium && !hasPremiumAccess;
-		
-		// Debug log to see the premium status
-		console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, hasPremiumAccess: ${hasPremiumAccess}, isDisabled: ${isDisabled}`);
+        const ActionButtons = (params: any) => {
+                // Debug log to see the node data
+                console.log('Node data:', params.data);
+
+                // Check if the project is premium and if the user has premium access
+                const isProjectPremium = localStorage.getItem("is_project_premium") === 'true';
+                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+                const isUserPremium = userData.is_premium === true;
+                const isDisabled = isProjectPremium && !isUserPremium;
+
+                // Debug log to see the premium status
+                console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
 
 		return (
 			<div>
