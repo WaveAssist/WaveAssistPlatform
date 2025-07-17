@@ -51,11 +51,26 @@ const NavbarComponent: React.FC = () => {
 		}
 	};
 
-	const handleProjectChange = async (_project_name: string, project_key: string) => {
-		localStorage.setItem("selected_project_key", project_key);
-		await fetchEnvironments();
-		triggerRefresh(); // Trigger a refresh
-	};
+        const handleProjectChange = async (_project_name: string, project_key: string) => {
+                localStorage.setItem("selected_project_key", project_key);
+
+                // Retrieve the selected project's details so we can update
+                // the premium status flag used throughout the app
+                const selectedProject = projectsArray.find((p: any) => p.project_key === project_key);
+                if (selectedProject) {
+                        localStorage.setItem(
+                                "is_project_premium",
+                                selectedProject.is_premium ? "true" : "false"
+                        );
+                        localStorage.setItem("selected_project", JSON.stringify(selectedProject));
+                } else {
+                        localStorage.removeItem("is_project_premium");
+                        localStorage.removeItem("selected_project");
+                }
+
+                await fetchEnvironments();
+                triggerRefresh(); // Trigger a refresh
+        };
 
 	const handleEnvChange = (env_name: string, env_key: string) => {
 		localStorage.setItem("selected_env_key", env_key);
