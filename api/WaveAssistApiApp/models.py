@@ -28,6 +28,7 @@ class Account(models.Model):
     open_router_key = models.CharField(max_length=255, default="", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_working_running = models.BooleanField(default=True)
+    is_premium = models.BooleanField(default=False)  # True if the account is premium, False if free
 
     def __str__(self):
         return f"Account: {self.account_name} ({self.plan_name})"
@@ -44,6 +45,7 @@ class Account(models.Model):
         account_dict['worker_service_arn'] = self.worker_service_arn
         account_dict['open_router_key'] = self.open_router_key
         account_dict['is_working_running'] = self.is_working_running
+        account_dict['is_premium'] = self.is_premium
         return account_dict
 
     class Meta:
@@ -175,6 +177,8 @@ class Project(models.Model):
     name = models.CharField(max_length=255, default="", null=True)
     project_key = models.CharField(max_length=255, unique=True)
     integration_array = models.ManyToManyField('Integrations', blank=True)
+    is_premium = models.BooleanField(default=False)  # True if the project is premium, False if free
+
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -187,6 +191,7 @@ class Project(models.Model):
         project_dict['id'] = self.id
         project_dict['name'] = self.name
         project_dict['project_key'] = self.project_key
+        project_dict['is_premium'] = self.is_premium
 
         for integration_object in self.integration_array.all():
             project_dict['integration_array'] = integration_object.get_dict()
