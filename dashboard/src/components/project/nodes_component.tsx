@@ -249,7 +249,7 @@ const NodesComponent: React.FC = () => {
                 const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
                 const isUserPremium = userData.is_premium === true;
                 if (isProjectPremium && !isUserPremium) {
-                        showToast("Upgrade to use Premium template", "warning");
+                        showToast("Upgrade to edit Premium template", "warning");
                         return true;
                 }
                 return false;
