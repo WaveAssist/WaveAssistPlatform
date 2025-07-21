@@ -70,21 +70,59 @@ def send_email(request):
             )
             message.attachment = attached_file
 
-        # Send the email
-        sg = SendGridAPIClient(SEND_GRID_KEY)
-        response = sg.send(message)
 
-        if 200 <= response.status_code < 300:
+        try:
+            # Send the email
+            sg = SendGridAPIClient(SEND_GRID_KEY)
+            response = sg.send(message)
+
+            if 200 <= response.status_code < 300:
+                return ResponseParser.getParsedSuccessMessage(
+                    {"status": "sent", "to_email": to_email},
+                    '200',
+                    "Email sent successfully."
+                )
+            else:
+                raise Exception("Failed to send email. Status code: {}".format(response.status_code))
+        except:
+            send_email_backup(from_email=from_email,
+                              to_emails=to_email,
+                              subject=subject,
+                              html_content=html_content)
             return ResponseParser.getParsedSuccessMessage(
-                {"status": "sent", "to_email": to_email},
+                {"status": "sent_backup", "to_email": to_email},
                 '200',
-                "Email sent successfully."
+                "Email sent successfully via backup method."
             )
-        else:
-            return ResponseParser.getParsedErrorMessage(
-                f"Failed to send email. Status code: {response.status_code}, Body: {response.body.decode('utf-8')}"
-            )
-
     except Exception as e:
-        utils.logger.error(f"❌ Error in send_email API: {str(e)}")
-        return ResponseParser.getParsedErrorMessage("Server error while sending email")
+        return ResponseParser.getParsedErrorMessage(f"Error sending email: {str(e)}")
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+def send_email_backup(from_email,
+                      to_emails,
+                      subject,
+                      html_content) -> None:
+    try:
+        # Normalize recipients to a list
+        recipients = [to_emails] if isinstance(to_emails, str) else list(to_emails)
+
+        # Build the message
+        msg = MIMEMultipart()
+        msg['From'] = from_email
+        msg['To'] = ', '.join(recipients)
+        msg['Subject'] = subject
+        msg.attach(MIMEText(html_content, 'html'))
+
+        # Connect to Gmail SMTP and send
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(MAILER_LOGIN_EMAIL, MAILER_LOGIN_EMAIL_PASSWORD)
+        server.sendmail(from_email, recipients, msg.as_string())
+        server.quit()
+        print(f"Email sent successfully to {recipients}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
