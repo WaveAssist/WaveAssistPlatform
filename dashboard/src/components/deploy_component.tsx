@@ -61,7 +61,7 @@ const DeployComponent: React.FC = () => {
 			formData.append("uid", uid);
 			formData.append("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
 			const isPremium = searchParams.get("is_premium") === "true";
-			formData.append("is_premium", isPremium.toString());
+			formData.append("is_premium", isPremium ? "1" : "0");
 			const response = await axios.post("https://api.waveassist.io/template/deploy_template/", formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
