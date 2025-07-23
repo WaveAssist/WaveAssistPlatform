@@ -219,7 +219,7 @@ def create_project(request): ##TCW
     try:
         is_premium = bool(int(request.POST.get('is_premium', '0')))
     except:
-        is_premium = False
+        is_premium = '1'
 
     try:
         project_object = Project.objects.create(project_key=project_key, name=project_name,
