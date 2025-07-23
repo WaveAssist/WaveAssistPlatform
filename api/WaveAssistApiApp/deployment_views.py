@@ -308,14 +308,20 @@ def webhook(request, uid, project_key, start_node_key, data_run_key):
 
 @csrf_exempt
 def email_webhook(request):
-    """Handles inbound emails from SendGrid's Parse Webhook."""
+    """Handles inbound emails from Postmark's Parse Webhook."""
     if request.method != "POST":
         return JsonResponse({"detail": "Method not allowed"}, status=405)
 
     try:
-        to_addr = request.POST.get("to", "")
+        try:
+            payload_json = json.loads(request.body.decode())
+        except Exception:
+            return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+
+        to_addr = payload_json.get("To", "")
         local_part = to_addr.split("@")[0]
         data = utils.decode_email_webhook_token(local_part)
+        print("Decoded data from email token:", data)
         if not data:
             return ResponseParser.getParsedErrorMessage("Invalid email format or token.")
 
@@ -332,10 +338,10 @@ def email_webhook(request):
             'project_key': project.project_key,
             'data_run_key': data_run.data_run_key,
             'data': {
-                'subject': request.POST.get("subject", ""),
-                'text': request.POST.get("text", ""),
-                'html': request.POST.get("html", ""),
-                'from': request.POST.get("from", ""),
+                'subject': payload_json.get("Subject", ""),
+                'text': payload_json.get("TextBody", ""),
+                'html': payload_json.get("HtmlBody", ""),
+                'from': payload_json.get("From", ""),
             },
             'data_key': f"{node.node_key}_webhook_data",
             'data_type': 'json',
@@ -348,13 +354,12 @@ def email_webhook(request):
         )
 
         # Prepare for DAG execution
-        post_data = request.POST.copy()
-        post_data.update({
+        post_data = {
             'uid': uid,
             'project_key': project.project_key,
             'start_node_key': node.node_key,
             'data_run_key': data_run.data_run_key,
-        })
+        }
         request.POST = post_data
         return run_dag(request)
 
