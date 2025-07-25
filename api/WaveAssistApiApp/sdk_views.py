@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from django.core.validators import validate_email
 import mimetypes
 import base64
+from postmarker.core import PostmarkClient
 
 MAX_FILE_SIZE_MB = 10
 MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
@@ -40,50 +41,43 @@ def send_email(request):
         except Exception as e:
             return ResponseParser.getParsedErrorMessage("Invalid recipient email address.")
 
-        # Build the email message
-        message = Mail(
-            from_email=from_email,
-            to_emails=to_email,
-            subject=subject,
-            html_content=html_content
-        )
+        # Prepare Postmark client
+        client = PostmarkClient(server_token=POSTMARK_API_TOKEN)
 
-        # Add attachment if present
+        # Build attachment if present
+        attachments = []
         if attachment_file:
             if attachment_file.size > MAX_FILE_SIZE_BYTES:
                 return ResponseParser.getParsedErrorMessage(
                     f"Attachment too large. Max size is {MAX_FILE_SIZE_MB} MB."
                 )
-
             file_data = attachment_file.read()
             encoded_file = base64.b64encode(file_data).decode()
-
-            # Guess MIME type from filename
             mime_type, _ = mimetypes.guess_type(attachment_file.name)
-            mime_type = mime_type or "application/octet-stream"  # Fallback if unknown
+            mime_type = mime_type or "application/octet-stream"
 
-            attached_file = Attachment(
-                FileContent(encoded_file),
-                FileName(attachment_file.name),
-                FileType(mime_type),
-                Disposition("attachment")
-            )
-            message.attachment = attached_file
+            attachments.append({
+                "Name": attachment_file.name,
+                "Content": encoded_file,
+                "ContentType": mime_type,
+                "ContentID": None
+            })
 
 
         try:
             # Send the email
-            sg = SendGridAPIClient(SEND_GRID_KEY)
-            response = sg.send(message)
-
-            if 200 <= response.status_code < 300:
-                return ResponseParser.getParsedSuccessMessage(
-                    {"status": "sent", "to_email": to_email},
-                    '200',
-                    "Email sent successfully."
-                )
-            else:
-                raise Exception("Failed to send email. Status code: {}".format(response.status_code))
+            client.emails.send(
+                From=from_email,
+                To=to_email,
+                Subject=subject,
+                HtmlBody=html_content,
+                Attachments=attachments if attachments else None
+            )
+            return ResponseParser.getParsedSuccessMessage(
+                {"status": "sent", "to_email": to_email},
+                '200',
+                "Email sent successfully via Postmark."
+            )
         except:
             send_email_backup(from_email=from_email,
                               to_emails=to_email,
@@ -92,7 +86,7 @@ def send_email(request):
             return ResponseParser.getParsedSuccessMessage(
                 {"status": "sent_backup", "to_email": to_email},
                 '200',
-                "Email sent successfully via backup method."
+                "Email sent via backup method due to Postmark failure."
             )
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f"Error sending email: {str(e)}")

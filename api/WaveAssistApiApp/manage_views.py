@@ -217,7 +217,13 @@ def create_project(request): ##TCW
         pass
 
     try:
-        project_object = Project.objects.create(project_key=project_key, name = project_name)
+        is_premium = bool(int(request.POST.get('is_premium', '0')))
+    except:
+        is_premium = '1'
+
+    try:
+        project_object = Project.objects.create(project_key=project_key, name=project_name,
+                                                is_premium=is_premium)
         project_object.save()
 
         ##Add a default datarun to project
