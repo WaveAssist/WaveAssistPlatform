@@ -22,6 +22,8 @@ from datetime import datetime, timedelta
 import pytz
 from urllib.parse import unquote
 from WaveAssistApiApp import deployment_views
+import waveassist
+
 
 # Initialize the CloudWatch Logs client
 client = boto3.client('logs',
@@ -121,15 +123,16 @@ def fetch_installed_packages(request):
     response = deployment_views.run_code(request)
     try:
         response_str = response.content.decode('utf-8')
-        # Convert JSON string to Python dictionary
         response_dict = json.loads(response_str)
-        # Extract `result` array from `data`
-        packages_array = response_dict.get("data", {}).get("result")
+        result = response_dict.get("data", {}).get("result")
     except:
         return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
 
-    if packages_array is None:
+    if result is None:
         return ResponseParser.getParsedErrorMessage('Failed to fetch installed packages')
+
+    waveassist.init(request.POST.get('uid'), request.POST.get('project_key'))
+    packages_array = waveassist.fetch_data('installed_packages')
 
     # STEP 1: Get base package names
     base_packages = utils.get_base_package_names()

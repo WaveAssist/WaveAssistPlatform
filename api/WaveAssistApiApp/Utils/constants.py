@@ -72,6 +72,9 @@ def run_task():
             package_name, package_version = item.split("==")
             if package_version and package_name:
                 list_output.append({"package_name": package_name, "package_version": package_version})
+    import waveassist
+    waveassist.init()
+    waveassist.store_data('installed_packages', list_output)
     return list_output
     '''
 
