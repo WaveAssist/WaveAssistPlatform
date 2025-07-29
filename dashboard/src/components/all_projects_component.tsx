@@ -199,13 +199,13 @@ const AllProjectsComponent: React.FC = () => {
 
 	return (
 		<div className="base_component">
-                        <div className="dashboard-header row">
+                        <div className="dashboard-header row flex-md-nowrap">
                                 <div className="col-6 col-md-8 d-flex align-items-center justify-content-start">
                                         <div className="d-flex align-items-center mt-2" style={{ height: "100%" }}>
                                                 <img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
                                         </div>
                                 </div>
-                                <div className="col-6 col-md-4 d-flex justify-content-end align-items-center mt-3 mt-md-0">
+                                <div className="col-6 col-md-4 d-flex justify-content-end align-items-center mt-3 mt-md-0 flex-nowrap">
                                         <a
                                                 href="https://waveassist.io/assistants"
                                                 target="_blank"
