@@ -209,20 +209,20 @@ const AllProjectsComponent: React.FC = () => {
                                         <a
                                                 href="https://waveassist.io/assistants"
                                                 target="_blank"
-						rel="noopener noreferrer"
-						className="btn btn-outline-secondary ms-2 use-template-button">
-						<i className="bi bi-copy me-1"></i>
-						Assistants
-					</a>
-					<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary ms-2">
-						<i className="bi bi-journal-text me-1"></i>
-						Docs
-					</a>
-					<button className="btn btn-outline-secondary logout_button ms-2 me-2" onClick={handleLogout}>
-						<i className="bi bi-box-arrow-right me-1"></i>
-						Logout
-					</button>
-				</div>
+                                                rel="noopener noreferrer"
+                                                className="btn btn-outline-secondary btn-sm ms-2 use-template-button">
+                                                <i className="bi bi-copy"></i>
+                                                <span className="d-none d-md-inline ms-1">Assistants</span>
+                                        </a>
+                                        <a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary btn-sm ms-2">
+                                                <i className="bi bi-journal-text"></i>
+                                                <span className="d-none d-md-inline ms-1">Docs</span>
+                                        </a>
+                                        <button className="btn btn-outline-secondary btn-sm logout_button ms-2 me-2" onClick={handleLogout}>
+                                                <i className="bi bi-box-arrow-right"></i>
+                                                <span className="d-none d-md-inline ms-1">Logout</span>
+                                        </button>
+                                </div>
 			</div>
 
 			<div className="separator"></div>
