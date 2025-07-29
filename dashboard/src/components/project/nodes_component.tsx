@@ -46,9 +46,21 @@ const NodesComponent: React.FC = () => {
 	const [copied, setCopied] = useState(false);
 	const [runTour, setRunTour] = useState(false);
 	const [emailWebhook, setEmailWebhook] = useState("");
-	const [view, setView] = useState<"flow" | "table">(() => (localStorage.getItem("nodesView") as any) ?? "table");
+	const [view, setView] = useState<"flow" | "table">(() => {
+		const saved = localStorage.getItem("nodesView");
+		if (saved === "flow" || saved === "table") return saved;
+		return "table";
+	});
 	const [rfNodes, setRfNodes] = useState<RFNode[]>([]);
 	const [rfEdges, setRfEdges] = useState<RFEdge[]>([]);
+
+	// Mobile detection
+	const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+	useEffect(() => {
+		const handleResize = () => setIsMobile(window.innerWidth < 768);
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
 
 	const [showWizard, setShowWizard] = useState(false);
 	const [wizardInputs, setWizardInputs] = useState<any[]>([]);
@@ -66,27 +78,27 @@ const NodesComponent: React.FC = () => {
 		},
 	];
 	useEffect(() => {
-                const wizardStr = localStorage.getItem("wizard_input_array");
-                let arr: any[] = [];
-                if (wizardStr) {
-                        try {
-                                arr = JSON.parse(wizardStr);
-                                setWizardInputs(arr);
-                                const defaults: Record<string, string> = {};
-                                arr.forEach((i: any) => {
-                                        if (i.default_value !== undefined) {
-                                                defaults[i.key] = i.default_value;
-                                        } else if (Array.isArray(i.options) && i.options.length > 0) {
-                                                defaults[i.key] = i.options[0];
-                                        } else {
-                                                defaults[i.key] = "";
-                                        }
-                                });
-                                setWizardValues(defaults);
-                        } catch (e) {
-                                console.error("Failed to parse wizard input array", e);
-                        }
-                }
+		const wizardStr = localStorage.getItem("wizard_input_array");
+		let arr: any[] = [];
+		if (wizardStr) {
+			try {
+				arr = JSON.parse(wizardStr);
+				setWizardInputs(arr);
+				const defaults: Record<string, string> = {};
+				arr.forEach((i: any) => {
+					if (i.default_value !== undefined) {
+						defaults[i.key] = i.default_value;
+					} else if (Array.isArray(i.options) && i.options.length > 0) {
+						defaults[i.key] = i.options[0];
+					} else {
+						defaults[i.key] = "";
+					}
+				});
+				setWizardValues(defaults);
+			} catch (e) {
+				console.error("Failed to parse wizard input array", e);
+			}
+		}
 		if (Array.isArray(arr) && arr.length > 0 && localStorage.getItem("show_wizard") === "true") {
 			setShowWizard(true);
 		}
@@ -238,44 +250,44 @@ const NodesComponent: React.FC = () => {
 	const [nodesArray, setNodesArray] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 
-        const { showToast } = useToast();
-        const [showCodeModal, setShowCodeModal] = useState(false);
-        const [selected_node_key, setSelectedNodeKey] = useState("");
-        const [modalCode, setModalCode] = useState('print("Hello, world!")');
-        const [showNodeEditor, setShowNodeEditor] = useState(false);
+	const { showToast } = useToast();
+	const [showCodeModal, setShowCodeModal] = useState(false);
+	const [selected_node_key, setSelectedNodeKey] = useState("");
+	const [modalCode, setModalCode] = useState('print("Hello, world!")');
+	const [showNodeEditor, setShowNodeEditor] = useState(false);
 
-        const premiumBlocked = (): boolean => {
-                const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-                const isUserPremium = userData.is_premium === true;
-                if (isProjectPremium && !isUserPremium) {
-                        showToast("Upgrade to edit Premium template", "warning");
-                        return true;
-                }
-                return false;
-        };
+	const premiumBlocked = (): boolean => {
+		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		const isUserPremium = userData.is_premium === true;
+		if (isProjectPremium && !isUserPremium) {
+			showToast("Upgrade to edit Premium template", "warning");
+			return true;
+		}
+		return false;
+	};
 
-        const handleClose = () => {
-                setSelectedNodeKey("");
-                setShowCodeModal(false);
-                // setIsOpen(false);
-        };
+	const handleClose = () => {
+		setSelectedNodeKey("");
+		setShowCodeModal(false);
+		// setIsOpen(false);
+	};
 
-        const handleSave = async () => {
-                await updateCodeApi(selected_node_key, modalCode);
-                showToast("Code updated successfully.", "success");
-                setSelectedNodeKey("");
-                handleClose();
-                fetchNodes();
-        };
+	const handleSave = async () => {
+		await updateCodeApi(selected_node_key, modalCode);
+		showToast("Code updated successfully.", "success");
+		setSelectedNodeKey("");
+		handleClose();
+		fetchNodes();
+	};
 
-        const handleCreateNode = () => {
-                if (premiumBlocked()) return;
-                reset(defaultValuesDict);
-                setSelectedNodeKey("");
-                setWebhookUrl("");
-                setShowNodeEditor(true);
-        };
+	const handleCreateNode = () => {
+		if (premiumBlocked()) return;
+		reset(defaultValuesDict);
+		setSelectedNodeKey("");
+		setWebhookUrl("");
+		setShowNodeEditor(true);
+	};
 
 	// const handleDiagram = async () => {
 	// 	setLoading(true);
@@ -287,13 +299,13 @@ const NodesComponent: React.FC = () => {
 	// 	setIsOpen(true);
 	// };
 
-        const handleDownloadCode = () => {
-                if (premiumBlocked()) return;
-                const zip = new JSZip();
-                const config: any = {
-                        project_key: localStorage.getItem("selected_project_key") || "unknown_project",
-                        nodes: [],
-                };
+	const handleDownloadCode = () => {
+		if (premiumBlocked()) return;
+		const zip = new JSZip();
+		const config: any = {
+			project_key: localStorage.getItem("selected_project_key") || "unknown_project",
+			nodes: [],
+		};
 
 		nodesArray.forEach((node) => {
 			if (node.python_code) {
@@ -377,10 +389,10 @@ ${config.nodes
 		return `${emailLocal}@trigger.waveassist.io`;
 	};
 
-        const handleEdit = (node: any) => {
-                if (premiumBlocked()) return;
-                if (node.crontab_schedule && node.crontab_schedule.includes("m/h/dM/MY/d")) {
-                        const [minute, hour, dayOfMonth, month, dayOfWeek, , timezone] = node.crontab_schedule.split(" ");
+	const handleEdit = (node: any) => {
+		if (premiumBlocked()) return;
+		if (node.crontab_schedule && node.crontab_schedule.includes("m/h/dM/MY/d")) {
+			const [minute, hour, dayOfMonth, month, dayOfWeek, , timezone] = node.crontab_schedule.split(" ");
 			Object.assign(node, {
 				crontab_minutes: minute,
 				crontab_hours: hour,
@@ -420,18 +432,18 @@ ${config.nodes
 	const fetchNodes = async () => {
 		try {
 			const data = await fetchNodesApi();
-			console.log('API Response:', data); // Debug log to see the API response
-			
+			console.log("API Response:", data); // Debug log to see the API response
+
 			// Ensure project premium status is set in localStorage
-			const projectData = JSON.parse(localStorage.getItem('selected_project') || '{}');
+			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
 			if (projectData && projectData.is_premium !== undefined) {
 				localStorage.setItem("is_project_premium", projectData.is_premium ? "true" : "false");
 			} else if (data.is_project_premium !== undefined) {
 				localStorage.setItem("is_project_premium", data.is_project_premium ? "true" : "false");
 			}
-			
+
 			var nodes_array = data.node_array;
-			console.log('Nodes array:', nodes_array); // Debug log to see the nodes array
+			console.log("Nodes array:", nodes_array); // Debug log to see the nodes array
 			//Sort to keep the starting node at the top
 			nodes_array.sort((a: any, b: any) => {
 				if (a.is_starting_node && !b.is_starting_node) return -1;
@@ -464,20 +476,20 @@ ${config.nodes
 		fetchNodes();
 	}, [shouldRefresh]);
 
-        const handleViewCode = (node: any) => {
-                if (premiumBlocked()) return;
-                setModalCode(node.python_code);
-                setSelectedNodeKey(node.node_key);
-                setShowCodeModal(true);
-        };
+	const handleViewCode = (node: any) => {
+		if (premiumBlocked()) return;
+		setModalCode(node.python_code);
+		setSelectedNodeKey(node.node_key);
+		setShowCodeModal(true);
+	};
 
-        const handleDelete = async (node: any) => {
-                if (premiumBlocked()) return;
-                //ask for confirmation
-                const confirmDelete = window.confirm("Are you sure you want to delete this node? This action cannot be undone.");
-                if (!confirmDelete) {
-                        return;
-                }
+	const handleDelete = async (node: any) => {
+		if (premiumBlocked()) return;
+		//ask for confirmation
+		const confirmDelete = window.confirm("Are you sure you want to delete this node? This action cannot be undone.");
+		if (!confirmDelete) {
+			return;
+		}
 		try {
 			await deleteNodeApi(node.node_key);
 			showToast("Node deleted successfully.", "success");
@@ -512,29 +524,30 @@ ${config.nodes
 		fetchNodes();
 	};
 
-        const ViewCodeButton = (params: any) => {
-                // Debug log to see the node data
-                console.log('ViewCode Node data:', params.data);
+	const ViewCodeButton = (params: any) => {
+		// Debug log to see the node data
+		console.log("ViewCode Node data:", params.data);
 
-                // Check if the project is premium and if the user has premium access
-                const isProjectPremium = localStorage.getItem("is_project_premium") === 'true';
-                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-                const isUserPremium = userData.is_premium === true;
-                const isDisabled = isProjectPremium && !isUserPremium;
+		// Check if the project is premium and if the user has premium access
+		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		const isUserPremium = userData.is_premium === true;
+		const isDisabled = isProjectPremium && !isUserPremium;
 
-                // Debug log to see the premium status
-                console.log(`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
+		// Debug log to see the premium status
+		console.log(
+			`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`
+		);
 
-                return (
-                        <button
-                                className={`btn btn-outline-success btn-sm ${isDisabled ? 'disabled' : ''}`}
-                                onClick={() => handleViewCode(params.data)}
-                                title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
-                        >
-                                View Code
-                        </button>
-                );
-        };
+		return (
+			<button
+				className={`btn btn-outline-success btn-sm ${isDisabled ? "disabled" : ""}`}
+				onClick={() => handleViewCode(params.data)}
+				title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}>
+				View Code
+			</button>
+		);
+	};
 
 	const toggleView = () => {
 		setView(view === "flow" ? "table" : "flow");
@@ -565,46 +578,39 @@ ${config.nodes
 		}
 	};
 
-        const ActionButtons = (params: any) => {
-                // Debug log to see the node data
-                console.log('Node data:', params.data);
+	const ActionButtons = (params: any) => {
+		// Debug log to see the node data
+		console.log("Node data:", params.data);
 
-                // Check if the project is premium and if the user has premium access
-                const isProjectPremium = localStorage.getItem("is_project_premium") === 'true';
-                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-                const isUserPremium = userData.is_premium === true;
-                const isDisabled = isProjectPremium && !isUserPremium;
+		// Check if the project is premium and if the user has premium access
+		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		const isUserPremium = userData.is_premium === true;
+		const isDisabled = isProjectPremium && !isUserPremium;
 
-                // Debug log to see the premium status
-                console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
+		// Debug log to see the premium status
+		console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
 
 		return (
 			<div>
-                                <Button
-                                        variant="dark"
-                                        size="sm"
-                                        className={isDisabled ? "disabled" : ""}
-                                        onClick={() => handleEdit(params.data)}
-                                        title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
-                                >
-                                        <i className="bi bi-pencil"></i>
-                                </Button>{" "}
-                                <Button
-                                        variant="danger"
-                                        size="sm"
-                                        className={isDisabled ? "disabled" : ""}
-                                        onClick={() => handleDelete(params.data)}
-                                        title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}
-                                >
-                                        <i className="bi bi-trash"></i>
-                                </Button>{" "}
+				<Button
+					variant="dark"
+					size="sm"
+					className={isDisabled ? "disabled" : ""}
+					onClick={() => handleEdit(params.data)}
+					title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}>
+					<i className="bi bi-pencil"></i>
+				</Button>{" "}
+				<Button
+					variant="danger"
+					size="sm"
+					className={isDisabled ? "disabled" : ""}
+					onClick={() => handleDelete(params.data)}
+					title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}>
+					<i className="bi bi-trash"></i>
+				</Button>{" "}
 				{params.data.is_starting_node && (
-					<Button 
-						variant="success" 
-						size="sm" 
-						onClick={() => handleRun(params.data)}
-						title="Run node"
-					>
+					<Button variant="success" size="sm" onClick={() => handleRun(params.data)} title="Run node">
 						<i className="bi bi-play">Run</i>
 					</Button>
 				)}
@@ -672,7 +678,7 @@ ${config.nodes
 			field: "node_key",
 			cellRenderer: (params: any) => <span className="badge badge-secondary">{params.value}</span>,
 			flex: 1,
-			minWidth: 80, // Prevents shrinking too much
+			minWidth: 120, // Prevents shrinking too much
 			resizable: true,
 		},
 		{
@@ -692,7 +698,7 @@ ${config.nodes
 			resizable: true,
 			cellRenderer: (params: any) => formatSchedule(params.data),
 		},
-		{ headerName: "Code", cellRenderer: ViewCodeButton, width: 160, minWidth: 120, resizable: true },
+		{ headerName: "Code", cellRenderer: ViewCodeButton, width: 140, minWidth: 120, resizable: true },
 		{ headerName: "Actions", cellRenderer: ActionButtons, width: 180, minWidth: 140, resizable: true },
 	];
 
@@ -714,20 +720,17 @@ ${config.nodes
 					<h3 className="translucent_white">Nodes</h3>
 					<div className="ms-auto d-flex">
 						<Button variant="dark" onClick={toggleView} className="ms-2" aria-label="Toggle view">
-							{
-								view === "flow" ? (
-									<span className="bi bi-table"> &nbsp; Table View </span> // shows table icon when in Flow, so click → Table
-								) : (
-									<span className="bi bi-diagram-2"> Flow View</span>
-								) // shows diagram icon when in Table, so click → Flow
-							}
+							{view === "flow" ? (
+								<span className="bi bi-table">{!isMobile && <>&nbsp; Table View</>}</span>
+							) : (
+								<span className="bi bi-diagram-2">{!isMobile && <> Flow View</>}</span>
+							)}
 						</Button>
-
 						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
-							<span className="bi bi-plus-lg"> Add Node</span>
+							<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
 						</Button>
 						<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
-							<span className="bi bi-cloud-download"></span>
+							<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
 						</Button>
 					</div>
 				</div>
@@ -1078,33 +1081,29 @@ ${config.nodes
 							<p>🎉 Your assistant was started and deployed! 🎉</p>
 						</div>
 					) : (
-                                                <Form>
-                                                        {wizardInputs.map((inp) => (
-                                                                <Form.Group className="mb-3" key={inp.key}>
-                                                                        <Form.Label>{inp.key}</Form.Label>
-                                                                        {Array.isArray(inp.options) && inp.options.length > 0 ? (
-                                                                                <Form.Select
-                                                                                        value={wizardValues[inp.key] || inp.options[0]}
-                                                                                        onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}>
-                                                                                        {inp.options.map((opt: string, idx: number) => (
-                                                                                                <option key={idx} value={opt}>
-                                                                                                        {opt}
-                                                                                                </option>
-                                                                                        ))}
-                                                                                </Form.Select>
-                                                                        ) : (
-                                                                                <Form.Control
-                                                                                        type="text"
-                                                                                        value={wizardValues[inp.key] || ""}
-                                                                                        onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}
-                                                                                />
-                                                                        )}
-                                                                        {inp.helper_message && (
-                                                                                <Form.Text className="text-secondary">{inp.helper_message}</Form.Text>
-                                                                        )}
-                                                                </Form.Group>
-                                                        ))}
-                                                </Form>
+						<Form>
+							{wizardInputs.map((inp) => (
+								<Form.Group className="mb-3" key={inp.key}>
+									<Form.Label>{inp.key}</Form.Label>
+									{Array.isArray(inp.options) && inp.options.length > 0 ? (
+										<Form.Select value={wizardValues[inp.key] || inp.options[0]} onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}>
+											{inp.options.map((opt: string, idx: number) => (
+												<option key={idx} value={opt}>
+													{opt}
+												</option>
+											))}
+										</Form.Select>
+									) : (
+										<Form.Control
+											type="text"
+											value={wizardValues[inp.key] || ""}
+											onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}
+										/>
+									)}
+									{inp.helper_message && <Form.Text className="text-secondary">{inp.helper_message}</Form.Text>}
+								</Form.Group>
+							))}
+						</Form>
 					)}
 				</Modal.Body>
 				<Modal.Footer>

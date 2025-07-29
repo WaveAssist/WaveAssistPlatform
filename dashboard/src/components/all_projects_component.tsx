@@ -14,10 +14,10 @@ import "./all_projects_component.css";
 import { usePostHog } from "posthog-js/react";
 
 interface Project {
-  project_key: string;
-  name: string;
-  is_premium?: boolean;
-  // Add other project properties as needed
+	project_key: string;
+	name: string;
+	is_premium?: boolean;
+	// Add other project properties as needed
 }
 
 const AllProjectsComponent: React.FC = () => {
@@ -53,7 +53,7 @@ const AllProjectsComponent: React.FC = () => {
 		// Get user's premium status from localStorage
 		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 		setIsUserPremium(userData.is_premium || false);
-		}, []);
+	}, []);
 
 	useEffect(() => {
 		if (!isProjectKeyEdited) {
@@ -84,11 +84,9 @@ const AllProjectsComponent: React.FC = () => {
 			if (data.project_array && data.project_array.length > 0) {
 				// Get the currently selected project key
 				const selectedProjectKey = localStorage.getItem("selected_project_key");
-				
+
 				// Find the selected project in the project array
-				const selectedProject = data.project_array.find(
-					(project: any) => project.project_key === selectedProjectKey
-				);
+				const selectedProject = data.project_array.find((project: any) => project.project_key === selectedProjectKey);
 
 				// If a project is selected, store its premium status in localStorage
 				if (selectedProject) {
@@ -162,17 +160,17 @@ const AllProjectsComponent: React.FC = () => {
 			showToast("Project created successfully", "success");
 			setShowAlert(false);
 			handleCloseModal();
-			
+
 			// Update projects array in localStorage
 			const existingProjects = JSON.parse(localStorage.getItem("projects_array") || "[]");
-			const newProject: Project = { 
-				name: newProjectName, 
+			const newProject: Project = {
+				name: newProjectName,
 				project_key: newProjectKey,
-				is_premium: false // New projects are not premium by default
+				is_premium: false, // New projects are not premium by default
 			};
 			existingProjects.push(newProject);
 			localStorage.setItem("projects_array", JSON.stringify(existingProjects));
-			
+
 			// Set selected project and premium status, then navigate
 			localStorage.setItem("selected_project_key", newProjectKey);
 			localStorage.setItem("is_project_premium", "false");
@@ -187,7 +185,7 @@ const AllProjectsComponent: React.FC = () => {
 	const handleViewDetails = (projectKey: string) => {
 		// Find the selected project in the project array
 		const selectedProject = projectArray.find((p: Project) => p.project_key === projectKey);
-		
+
 		// Store the project key and premium status in localStorage
 		localStorage.setItem("selected_project_key", projectKey);
 		if (selectedProject) {
@@ -199,28 +197,28 @@ const AllProjectsComponent: React.FC = () => {
 
 	return (
 		<div className="base_component">
-			<div className="dashboard-header row">
-				<div className="col-md-8 d-flex align-items-center">
+			<div className="dashboard-header row flex-md-nowrap">
+				<div className="col-6 d-flex align-items-center justify-content-start">
 					<div className="d-flex align-items-center mt-2" style={{ height: "100%" }}>
 						<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
 					</div>
 				</div>
-				<div className="col-md-4 d-flex justify-content-end align-items-center">
+				<div className="col-6 d-flex flex-row flex-nowrap justify-content-end align-items-center button-row">
 					<a
 						href="https://waveassist.io/assistants"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="btn btn-outline-secondary ms-2 use-template-button">
-						<i className="bi bi-copy me-1"></i>
-						Assistants
+						className="btn btn-outline-secondary btn-sm ms-2 use-template-button">
+						<i className="bi bi-copy"></i>
+						<span className="d-none d-md-inline ms-1">Assistants</span>
 					</a>
-					<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary ms-2">
-						<i className="bi bi-journal-text me-1"></i>
-						Docs
+					<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary btn-sm ms-2">
+						<i className="bi bi-journal-text"></i>
+						<span className="d-none d-md-inline ms-1">Docs</span>
 					</a>
-					<button className="btn btn-outline-secondary logout_button ms-2 me-2" onClick={handleLogout}>
-						<i className="bi bi-box-arrow-right me-1"></i>
-						Logout
+					<button className="btn btn-outline-secondary btn-sm logout_button ms-2 me-2" onClick={handleLogout}>
+						<i className="bi bi-box-arrow-right"></i>
+						<span className="d-none d-md-inline ms-1">Logout</span>
 					</button>
 				</div>
 			</div>
@@ -251,7 +249,9 @@ const AllProjectsComponent: React.FC = () => {
 										<div className="d-flex align-items-center">
 											<h5 className="card-title translucent_white fs-4 mb-0">{project.name}</h5>
 											{project.is_premium && (
-												<span className="badge bg-warning text-dark ms-2" style={{ fontSize: '0.6rem' }}>PREMIUM</span>
+												<span className="badge bg-warning text-dark ms-2" style={{ fontSize: "0.6rem" }}>
+													PREMIUM
+												</span>
 											)}
 										</div>
 										<h5 className="card-title translucent_white_more fs-6 mb-3">{project.project_key}</h5>
@@ -261,7 +261,6 @@ const AllProjectsComponent: React.FC = () => {
 												e.stopPropagation();
 												handleDeleteProject(project.project_key);
 											}}
-											disabled={project.is_premium && !isUserPremium}
 											title={project.is_premium && !isUserPremium ? "Premium projects cannot be deleted" : ""}>
 											<i className="bi bi-trash-fill"></i>
 										</button>

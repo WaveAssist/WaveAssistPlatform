@@ -85,11 +85,16 @@
 
 .project-card .card {
   width: 100%;
-  aspect-ratio: 2; /* Aspect ratio to make height 90% of width */
+  aspect-ratio: 2;
   position: relative;
   transition: transform 0.2s;;
   margin-top:10px;
   background-color: #1A2430 !important;
+  min-width: 220px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .project-card .card:hover {
@@ -115,6 +120,8 @@
 
 .card-title {
   margin-bottom: 5px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .delete-icon {
@@ -130,4 +137,28 @@
 
 .ag-cell {
   user-select: text !important;
+}
+
+.button-row {
+  gap: 0.5rem;
+  flex-wrap: nowrap !important;
+}
+
+@media (max-width: 767.98px) {
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .projects-row {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .projects-row {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
 }

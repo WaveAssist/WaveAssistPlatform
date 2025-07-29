@@ -21,6 +21,16 @@
     background-color: #1A2430 !important;
     width: 280px;
   }
+
+  @media (max-width: 767.98px) {
+    .side-div {
+      position: absolute;
+      z-index: 1050;
+      left: 0;
+      top: 0;
+      height: 100vh;
+    }
+  }
   
   .nav-pills .nav-link.active {
     --bs-nav-pills-link-active-bg: #2d3b52; 

@@ -1,5 +1,5 @@
 // src/Layout.tsx
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./sidebar";
 import NavbarComponent from "./navbar";
 import { Container } from "react-bootstrap";
@@ -10,7 +10,16 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-	const [shouldRefresh, setShouldRefresh] = useState(false);
+        const [shouldRefresh, setShouldRefresh] = useState(false);
+        const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
+
+        useEffect(() => {
+                const handleResize = () => {
+                        setSidebarOpen(window.innerWidth >= 768);
+                };
+                window.addEventListener("resize", handleResize);
+                return () => window.removeEventListener("resize", handleResize);
+        }, []);
 
 	// Function to trigger refresh
 	const triggerRefresh = () => {
@@ -19,10 +28,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
 	return (
 		<RefreshContext.Provider value={{ shouldRefresh, triggerRefresh }}>
-			<div className="d-flex vh-100">
-				<Sidebar />
-				<div className="d-flex flex-column flex-grow-1">
-					<NavbarComponent />
+                        <div className="d-flex vh-100 position-relative">
+                                <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                                <div className="d-flex flex-column flex-grow-1">
+                                        <NavbarComponent onToggleSidebar={() => setSidebarOpen((o) => !o)} />
 					<Container fluid className="flex-grow-1 p-3">
 						{children}
 					</Container>
