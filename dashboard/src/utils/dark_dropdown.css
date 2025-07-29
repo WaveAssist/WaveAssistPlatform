@@ -30,3 +30,13 @@
 .dropdown-item.active {
     background-color: #428d4f !important;
   }
+
+/* Styles for icon-only dropdown buttons */
+.icon-dropdown-btn.dropdown-toggle::after {
+  display: none;
+}
+
+.icon-dropdown-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+}

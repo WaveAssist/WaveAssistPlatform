@@ -5,3 +5,9 @@
     height:80px !important;
     border-bottom: 0.25px solid #2e3947;
   }
+
+  @media (max-width: 767.98px) {
+    .navbar-main {
+      height: 60px !important;
+    }
+  }

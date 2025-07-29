@@ -5,7 +5,11 @@ import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 import { useEffect, useState } from "react";
 import Joyride, { Step } from "react-joyride";
 
-const Sidebar = () => {
+interface SidebarProps {
+        isOpen: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [runTour, setRunTour] = useState(false);
@@ -76,8 +80,8 @@ const Sidebar = () => {
 		document.body.removeChild(link);
 	};
 
-	return (
-		<div className="side-div d-flex flex-column flex-shrink-0 p-3 vh-100">
+        return (
+                <div className={`side-div d-flex flex-column flex-shrink-0 p-3 vh-100 ${isOpen ? "" : "d-none d-md-flex"}`}>
 			<Joyride
 				steps={steps}
 				run={runTour}

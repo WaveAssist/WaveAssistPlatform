@@ -2,14 +2,15 @@ import React, { useState, useEffect } from "react";
 import "./dark_dropdown.css";
 
 interface DropdownProps {
-	items: string[];
-	keys?: string[];
-	defaultText?: string;
-	headerText: string;
-	onItemSelect: (item: string, key: string) => void;
+        items: string[];
+        keys?: string[];
+        defaultText?: string;
+        headerText: string;
+        onItemSelect: (item: string, key: string) => void;
+        icon?: string; // optional icon class for mobile view
 }
 
-const Dropdown: React.FC<DropdownProps> = ({ items, keys = items, defaultText, headerText, onItemSelect }) => {
+const Dropdown: React.FC<DropdownProps> = ({ items, keys = items, defaultText, headerText, onItemSelect, icon }) => {
 	const [selectedItem, setSelectedItem] = useState<string>(defaultText || items[0]);
 
 	useEffect(() => {
@@ -27,15 +28,15 @@ const Dropdown: React.FC<DropdownProps> = ({ items, keys = items, defaultText, h
 	};
 
 	return (
-		<div className="dropdown">
-			<button
-				className="btn btn-outline-secondary me-4 px-3 dropdown-toggle"
-				type="button"
-				id="dropdownMenuButton2"
-				data-bs-toggle="dropdown"
-				aria-expanded="false">
-				{selectedItem}
-			</button>
+                <div className="dropdown">
+                        <button
+                                className={`btn btn-outline-secondary me-2 px-3 dropdown-toggle ${icon ? "icon-dropdown-btn" : ""}`}
+                                type="button"
+                                id="dropdownMenuButton2"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                {icon ? <i className={`bi ${icon}`}></i> : selectedItem}
+                        </button>
 			<ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
 				<li className="text-header-dropdown">{headerText}</li>
 				<li>

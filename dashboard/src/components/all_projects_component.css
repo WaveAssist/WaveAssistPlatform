@@ -131,3 +131,15 @@
 .ag-cell {
   user-select: text !important;
 }
+
+@media (max-width: 767.98px) {
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .projects-row {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+}
