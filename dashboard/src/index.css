@@ -6,3 +6,17 @@
 body {
   font-family: 'Open Sans', sans-serif !important;
 }
+@media (max-width: 767.98px) {
+  /* Prevent AG Grid pagination controls from wrapping */
+  .ag-paging-panel {
+    flex-wrap: nowrap;
+  }
+  .ag-paging-row-summary-panel,
+  .ag-paging-page-summary-panel {
+    white-space: nowrap;
+  }
+  /* Hide page size selector on small screens */
+  .ag-paging-page-size {
+    display: none;
+  }
+}
