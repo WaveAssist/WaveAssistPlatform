@@ -6,7 +6,7 @@ import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_servi
 import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext"; // Import the custom hook
 interface NavbarProps {
-        onToggleSidebar?: () => void;
+	onToggleSidebar?: () => void;
 }
 
 const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
@@ -16,14 +16,14 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
 	const envKeys = environmentArray.map((env) => env.key);
-        const [showModal, setShowModal] = useState(false);
-        const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+	const [showModal, setShowModal] = useState(false);
+	const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-        useEffect(() => {
-                const handleResize = () => setIsMobile(window.innerWidth < 768);
-                window.addEventListener("resize", handleResize);
-                return () => window.removeEventListener("resize", handleResize);
-        }, []);
+	useEffect(() => {
+		const handleResize = () => setIsMobile(window.innerWidth < 768);
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
 
 	const selectedProjectKey = localStorage.getItem("selected_project_key");
 	const projectsArray = JSON.parse(localStorage.getItem("projects_array") || "[]");
@@ -62,26 +62,23 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 		}
 	};
 
-        const handleProjectChange = async (_project_name: string, project_key: string) => {
-                localStorage.setItem("selected_project_key", project_key);
+	const handleProjectChange = async (_project_name: string, project_key: string) => {
+		localStorage.setItem("selected_project_key", project_key);
 
-                // Retrieve the selected project's details so we can update
-                // the premium status flag used throughout the app
-                const selectedProject = projectsArray.find((p: any) => p.project_key === project_key);
-                if (selectedProject) {
-                        localStorage.setItem(
-                                "is_project_premium",
-                                selectedProject.is_premium ? "true" : "false"
-                        );
-                        localStorage.setItem("selected_project", JSON.stringify(selectedProject));
-                } else {
-                        localStorage.removeItem("is_project_premium");
-                        localStorage.removeItem("selected_project");
-                }
+		// Retrieve the selected project's details so we can update
+		// the premium status flag used throughout the app
+		const selectedProject = projectsArray.find((p: any) => p.project_key === project_key);
+		if (selectedProject) {
+			localStorage.setItem("is_project_premium", selectedProject.is_premium ? "true" : "false");
+			localStorage.setItem("selected_project", JSON.stringify(selectedProject));
+		} else {
+			localStorage.removeItem("is_project_premium");
+			localStorage.removeItem("selected_project");
+		}
 
-                await fetchEnvironments();
-                triggerRefresh(); // Trigger a refresh
-        };
+		await fetchEnvironments();
+		triggerRefresh(); // Trigger a refresh
+	};
 
 	const handleEnvChange = (env_name: string, env_key: string) => {
 		localStorage.setItem("selected_env_key", env_key);
@@ -122,64 +119,64 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 		}
 	};
 
-        return (
-                <Navbar variant="dark" expand="lg" className="px-3 navbar-main">
-                        {isMobile ? (
-                                <>
-                                        <Button variant="dark" className="me-2 text-white" onClick={onToggleSidebar}>
-                                                <i className="bi bi-list"></i>
-                                        </Button>
-                                        <div className="ms-auto d-flex align-items-center">
-                                                <DarkDropdown
-                                                        items={projectNames}
-                                                        keys={projectKeys}
-                                                        defaultText={getDefaultProjectName()}
-                                                        headerText="Select Project"
-                                                        onItemSelect={handleProjectChange}
-                                                        icon="bi-folder-fill"
-                                                />
-                                                <DarkDropdown
-                                                        items={envItems}
-                                                        keys={envKeys}
-                                                        defaultText={selectedEnvName}
-                                                        headerText="Select Environment"
-                                                        onItemSelect={handleEnvChange}
-                                                        icon="bi-stack"
-                                                />
-                                                <Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
-                                                        <i className="bi bi-cloud-arrow-up-fill"></i>
-                                                </Button>
-                                        </div>
-                                </>
-                        ) : (
-                                <>
-                                        <Navbar.Toggle aria-controls="navbar-nav" />
-                                        <Navbar.Collapse id="navbar-nav">
-                                                <Nav className="me-auto">
-                                                        <DarkDropdown
-                                                                items={projectNames}
-                                                                keys={projectKeys}
-                                                                defaultText={getDefaultProjectName()}
-                                                                headerText="Select Project"
-                                                                onItemSelect={handleProjectChange}
-                                                        />
-                                                        <DarkDropdown
-                                                                items={envItems}
-                                                                keys={envKeys}
-                                                                defaultText={selectedEnvName}
-                                                                headerText="Select Environment"
-                                                                onItemSelect={handleEnvChange}
-                                                        />
-                                                </Nav>
-                                                <Nav className="ms-auto">
-                                                        <Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
-                                                                <i className="bi bi-cloud-arrow-up-fill me-2"></i>
-                                                                Deploy
-                                                        </Button>
-                                                </Nav>
-                                        </Navbar.Collapse>
-                                </>
-                        )}
+	return (
+		<Navbar variant="dark" expand="lg" className="px-3 navbar-main">
+			{isMobile ? (
+				<>
+					<Button variant="dark" className="me-2 text-white" onClick={onToggleSidebar}>
+						<i className="bi bi-list"></i>
+					</Button>
+					<div className="ms-auto d-flex align-items-center">
+						<DarkDropdown
+							items={projectNames}
+							keys={projectKeys}
+							defaultText={getDefaultProjectName()}
+							headerText="Select Project"
+							onItemSelect={handleProjectChange}
+							icon="bi-folder-fill"
+						/>
+						<DarkDropdown
+							items={envItems}
+							keys={envKeys}
+							defaultText={selectedEnvName}
+							headerText="Select Environment"
+							onItemSelect={handleEnvChange}
+							icon="bi-stack"
+						/>
+						<Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
+							<i className="bi bi-cloud-arrow-up-fill"></i>
+						</Button>
+					</div>
+				</>
+			) : (
+				<>
+					<Navbar.Toggle aria-controls="navbar-nav" />
+					<Navbar.Collapse id="navbar-nav">
+						<Nav className="me-auto">
+							<DarkDropdown
+								items={projectNames}
+								keys={projectKeys}
+								defaultText={getDefaultProjectName()}
+								headerText="Select Project"
+								onItemSelect={handleProjectChange}
+							/>
+							<DarkDropdown
+								items={envItems}
+								keys={envKeys}
+								defaultText={selectedEnvName}
+								headerText="Select Environment"
+								onItemSelect={handleEnvChange}
+							/>
+						</Nav>
+						<Nav className="ms-auto">
+							<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
+								<i className="bi bi-cloud-arrow-up-fill me-2"></i>
+								Deploy
+							</Button>
+						</Nav>
+					</Navbar.Collapse>
+				</>
+			)}
 
 			<Modal show={showModal} onHide={handleCloseModal}>
 				<Modal.Header closeButton>
