@@ -28,14 +28,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
 	return (
 		<RefreshContext.Provider value={{ shouldRefresh, triggerRefresh }}>
-                        <div className="d-flex vh-100 position-relative">
+                        <div className="d-flex position-relative">
                                 <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-                                <div className="d-flex flex-column flex-grow-1">
+                                <div className="d-flex flex-column flex-grow-1 main-content">
                                         <NavbarComponent onToggleSidebar={() => setSidebarOpen((o) => !o)} />
-					<Container fluid className="flex-grow-1 p-3">
-						{children}
-					</Container>
-				</div>
+                                        <Container fluid className="flex-grow-1 p-3">
+                                                {children}
+                                        </Container>
+                                </div>
 			</div>
 		</RefreshContext.Provider>
 	);
