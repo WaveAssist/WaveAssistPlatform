@@ -8,6 +8,7 @@ import { Button } from "react-bootstrap";
 import NodeRunsComponent from "./node_runs_component";
 import "./project_components.css";
 import "../../utils/ag-theme-project.css";
+import LogsComponent from "./logs_component";
 
 const formatTimestamp = (timestamp: string) => {
 	if (!timestamp) return "";
@@ -143,19 +144,27 @@ const RunsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<div className="mt-3">
-				<div className="d-flex justify-content-between align-items-center mb-3">
-					<h3 className="translucent_white">Runs</h3>
+			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
+				<div style={{ flex: "0 0 50%", display: "flex", flexDirection: "column" }}>
+					<div className="d-flex justify-content-between align-items-center mb-3">
+						<h3 className="translucent_white mb-0">Runs</h3>
+					</div>
+					<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
+						<AgGridReact
+							rowData={runsArray}
+							columnDefs={columnDefs}
+							pagination={false}
+							paginationPageSize={10}
+							gridOptions={gridOptions}
+							defaultColDef={defaultColDef}
+						/>
+					</div>
 				</div>
-				<div className="ag-theme-custom grid-container">
-					<AgGridReact
-						rowData={runsArray}
-						columnDefs={columnDefs}
-						pagination={true}
-						paginationPageSize={10}
-						gridOptions={gridOptions}
-						defaultColDef={defaultColDef}
-					/>
+				<hr className="my-2" />
+				<div style={{ flex: "0 0 50%" }}>
+					<div>
+						<LogsComponent />
+					</div>
 				</div>
 			</div>
 

@@ -61,7 +61,7 @@
 .log-container {
   display: flex;
   flex-direction: column;
-  height: 72vh; /* Make it take the full viewport height */
+  height: 36vh; /* Reduced height to half */
 }
 
 .log-viewer {
