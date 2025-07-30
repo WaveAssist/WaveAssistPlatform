@@ -15,6 +15,34 @@ const DeployComponent: React.FC = () => {
 	const [templateData, setTemplateData] = useState<any>(null);
 	const [isDeploying, setIsDeploying] = useState(false);
 	const [showSuccessModal, setShowSuccessModal] = useState(false);
+	const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+
+	const deploymentMessages = [
+		"🚀 Initializing your AI assistant,This may take a minute.. ",
+		"🚀 Initializing your AI assistant, This may take a minute..",
+		"📦 Installing dependencies to power your workflow...",
+		"🔧 Configuring settings for peak performance...",
+		"⚡ Activating your customized assistant...",
+		"✨ Almost ready! Polishing the final touches...",
+	];
+
+	// Rotate messages every 2 seconds when deploying
+	useEffect(() => {
+		let interval: NodeJS.Timeout;
+		if (isDeploying) {
+			interval = setInterval(() => {
+				setCurrentMessageIndex((prevIndex) => (prevIndex < deploymentMessages.length - 1 ? prevIndex + 1 : prevIndex));
+			}, 2000);
+		} else {
+			setCurrentMessageIndex(0);
+		}
+
+		return () => {
+			if (interval) {
+				clearInterval(interval);
+			}
+		};
+	}, [isDeploying]);
 
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
@@ -65,25 +93,22 @@ const DeployComponent: React.FC = () => {
 			const response = await axios.post("https://api.waveassist.io/template/deploy_template/", formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
-                        if (response.data.success === "1") {
-                                setShowSuccessModal(true);
-                                localStorage.setItem("is_template_run", "true");
-                                // The project key might be in a different field in the response
-                                const projectKey = response.data.data?.project_key || response.data.project_key;
-                                if (projectKey) {
-                                        localStorage.setItem("selected_project_key", projectKey);
-                                        try {
-                                                const projectData = await fetchAllProjectsAPI();
-                                                localStorage.setItem(
-                                                        "projects_array",
-                                                        JSON.stringify(projectData.project_array)
-                                                );
-                                        } catch (err) {
-                                                console.error("Failed to refresh projects:", err);
-                                        }
-                                } else {
-                                        console.error("No project key found in response");
-                                }
+			if (response.data.success === "1") {
+				setShowSuccessModal(true);
+				localStorage.setItem("is_template_run", "true");
+				// The project key might be in a different field in the response
+				const projectKey = response.data.data?.project_key || response.data.project_key;
+				if (projectKey) {
+					localStorage.setItem("selected_project_key", projectKey);
+					try {
+						const projectData = await fetchAllProjectsAPI();
+						localStorage.setItem("projects_array", JSON.stringify(projectData.project_array));
+					} catch (err) {
+						console.error("Failed to refresh projects:", err);
+					}
+				} else {
+					console.error("No project key found in response");
+				}
 			} else {
 				alert("❌ Failed to deploy project, please try again.");
 			}
@@ -172,7 +197,7 @@ const DeployComponent: React.FC = () => {
 			<Modal show={isDeploying} centered backdrop="static" keyboard={false} dialogClassName="deploy-modal">
 				<Modal.Body className="text-center py-5">
 					<Spinner animation="border" role="status" className="mb-3" />
-					<h5>Deploying your assistant, this may take a minute...</h5>
+					<h5>{deploymentMessages[currentMessageIndex]}</h5>
 				</Modal.Body>
 			</Modal>
 			<Modal show={showSuccessModal} backdrop="static" keyboard={false} centered dialogClassName="deploy-modal">
@@ -181,22 +206,18 @@ const DeployComponent: React.FC = () => {
 				</Modal.Header>
 				<Modal.Body className="text-center">
 					<p className="pt-4">All set! Your project is ready to use.</p>
-                                        <Button
-                                                variant="success"
-                                                className="mt-3 px-4 py-2 fw-semibold"
-                                                onClick={() => {
-                                                        if (Array.isArray(templateData.input_array) && templateData.input_array.length > 0) {
-                                                                localStorage.setItem(
-                                                                        "wizard_input_array",
-                                                                        JSON.stringify(templateData.input_array)
-                                                                );
-                                                                localStorage.setItem("show_wizard", "true");
-                                                        }
-                                                        navigate(`/manage/nodes?project_key=${localStorage.getItem("selected_project_key")}`);
-                                                }}
-                                        >
-                                                Go to Assistant
-                                        </Button>
+					<Button
+						variant="success"
+						className="mt-3 px-4 py-2 fw-semibold"
+						onClick={() => {
+							if (Array.isArray(templateData.input_array) && templateData.input_array.length > 0) {
+								localStorage.setItem("wizard_input_array", JSON.stringify(templateData.input_array));
+								localStorage.setItem("show_wizard", "true");
+							}
+							navigate(`/manage/nodes?project_key=${localStorage.getItem("selected_project_key")}`);
+						}}>
+						Go to Assistant
+					</Button>
 				</Modal.Body>
 			</Modal>
 		</div>
