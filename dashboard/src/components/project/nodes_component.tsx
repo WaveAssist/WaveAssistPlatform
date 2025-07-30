@@ -1108,8 +1108,8 @@ ${config.nodes
 				</Modal.Body>
 				<Modal.Footer>
 					{wizardDone ? (
-						<Button variant="primary" onClick={() => navigate("/manage/logs")}>
-							View Logs
+						<Button variant="primary" onClick={() => navigate("/manage/runs")}>
+							View Runs
 						</Button>
 					) : (
 						<Button variant="success" className="w-100" onClick={handleRunAndDeploy} disabled={processingWizard}>
