@@ -108,6 +108,8 @@ const EnvironmentsComponent: React.FC = () => {
 			headerName: "Environment Name",
 			field: "name",
 			flex: 3,
+			minWidth: 150,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
@@ -115,6 +117,8 @@ const EnvironmentsComponent: React.FC = () => {
 			field: "key",
 			cellRenderer: (params: any) => <span className="badge badge-secondary">{params.value}</span>,
 			flex: 3,
+			minWidth: 120,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
@@ -124,12 +128,16 @@ const EnvironmentsComponent: React.FC = () => {
 				<span className={`badge ${params.value ? "badge-primary" : "badge-danger"}`}>{params.value ? "Enabled" : "Disabled"}</span>
 			),
 			flex: 2,
+			minWidth: 100,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
 			headerName: "Actions",
 			cellRenderer: ActionButtons,
 			flex: 2,
+			minWidth: 120,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 	];

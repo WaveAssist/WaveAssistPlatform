@@ -132,6 +132,7 @@ const DataViewComponent: React.FC = () => {
 									sortable: true,
 									filter: true,
 									resizable: true,
+									minWidth: 150,
 									cellStyle: { display: "flex", alignItems: "center" },
 								}}
 								onGridReady={(params) => params.api.sizeColumnsToFit()}

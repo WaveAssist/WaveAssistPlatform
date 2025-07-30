@@ -74,12 +74,16 @@ const RunsComponent: React.FC = () => {
 			headerName: "Run ID",
 			field: "run_id",
 			flex: 3,
+			minWidth: 120,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
 			headerName: "Started At",
 			field: "started_at",
 			flex: 3,
+			minWidth: 150,
+			resizable: true,
 			cellRenderer: (params: any) => formatTimestamp(params.value),
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
@@ -87,12 +91,16 @@ const RunsComponent: React.FC = () => {
 			headerName: "Finished At",
 			field: "finished_at",
 			flex: 3,
+			minWidth: 150,
+			resizable: true,
 			cellRenderer: (params: any) => formatTimestamp(params.value),
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
 			headerName: "Duration",
 			flex: 2,
+			minWidth: 100,
+			resizable: true,
 			cellRenderer: (params: any) => {
 				const { started_at, finished_at } = params.data;
 				if (started_at && finished_at) {
@@ -110,6 +118,8 @@ const RunsComponent: React.FC = () => {
 			headerName: "Status",
 			field: "status",
 			flex: 2,
+			minWidth: 100,
+			resizable: true,
 			cellRenderer: (params: any) => (
 				<span className={`badge ${params.value === "SUCCESS" ? "badge-primary" : params.value === "FAILED" ? "badge-danger" : "badge-secondary"}`}>
 					{params.value}
@@ -120,6 +130,8 @@ const RunsComponent: React.FC = () => {
 		{
 			headerName: "Actions",
 			flex: 2,
+			minWidth: 120,
+			resizable: true,
 			cellRenderer: (params: any) => (
 				<button className="btn btn-outline-success btn-sm" onClick={() => handleViewDetails(params.data)}>
 					View Details

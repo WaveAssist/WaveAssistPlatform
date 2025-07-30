@@ -77,12 +77,16 @@ const DeploymentsComponent: React.FC = () => {
 			headerName: "Deployment Key",
 			field: "key",
 			flex: 3,
+			minWidth: 150,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
 			headerName: "Version",
 			field: "version",
 			flex: 2,
+			minWidth: 100,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
@@ -92,12 +96,16 @@ const DeploymentsComponent: React.FC = () => {
 				<span className={`badge ${params.value ? "badge-primary" : "badge-secondary"}`}>{params.value ? "Running" : "Stopped"}</span>
 			),
 			flex: 2,
+			minWidth: 120,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
 			headerName: "Actions",
 			cellRenderer: ActionButtons,
 			flex: 2,
+			minWidth: 100,
+			resizable: true,
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 	];

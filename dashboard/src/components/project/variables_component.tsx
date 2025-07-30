@@ -280,6 +280,8 @@ const VariablesComponent: React.FC = () => {
 			headerName: "Variable Key",
 			field: "value",
 			flex: 1,
+			minWidth: 150,
+			resizable: true,
 			cellRenderer: (params: any) => (
 				<div className="d-flex align-items-center gap-2">
 					<span className="tit mr-2">{params.value}</span>
@@ -411,6 +413,7 @@ const VariablesComponent: React.FC = () => {
 											sortable: true,
 											filter: true,
 											resizable: true,
+											minWidth: 100,
 											cellStyle: { display: "flex", alignItems: "center" },
 										}}
 										onGridReady={(params) => params.api.sizeColumnsToFit()}

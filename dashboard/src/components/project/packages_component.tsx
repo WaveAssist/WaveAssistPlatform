@@ -141,10 +141,13 @@ const PackagesComponent: React.FC = () => {
 	};
 
 	const columnDefs = [
-		{ headerName: "Package Name", field: "package_name", flex: 3, resizable: true }, // Expands to fill space
+		{ headerName: "Package Name", field: "package_name", flex: 3, minWidth: 150, resizable: true }, // Expands to fill space
 		{
 			headerName: "Package Version",
 			field: "package_version",
+			flex: 2,
+			minWidth: 120,
+			resizable: true,
 			cellRenderer: (params: any) => <span className="badge badge-primary">{params.value}</span>,
 			cellStyle: { display: "flex", alignItems: "center" }, // Centering content vertically
 		},
