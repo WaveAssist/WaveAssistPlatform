@@ -160,7 +160,8 @@ const RunsComponent: React.FC = () => {
 						/>
 					</div>
 				</div>
-				<hr className="my-2" />
+				<hr className="text-white" style={{ marginTop: "3rem" }} />
+
 				<div style={{ flex: "0 0 50%" }}>
 					<div>
 						<LogsComponent />

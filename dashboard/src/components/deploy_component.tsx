@@ -18,8 +18,8 @@ const DeployComponent: React.FC = () => {
 	const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
 
 	const deploymentMessages = [
-		"🚀 Initializing your AI assistant,This may take a minute.. ",
-		"🚀 Initializing your AI assistant, This may take a minute..",
+		"🚀 Initializing your AI assistant, this may take a minute.. ",
+		"🚀 Initializing your AI assistant, this may take a minute..",
 		"📦 Installing dependencies to power your workflow...",
 		"🔧 Configuring settings for peak performance...",
 		"⚡ Activating your customized assistant...",
@@ -32,7 +32,7 @@ const DeployComponent: React.FC = () => {
 		if (isDeploying) {
 			interval = setInterval(() => {
 				setCurrentMessageIndex((prevIndex) => (prevIndex < deploymentMessages.length - 1 ? prevIndex + 1 : prevIndex));
-			}, 2000);
+			}, 3000);
 		} else {
 			setCurrentMessageIndex(0);
 		}

@@ -113,7 +113,7 @@ const LogsComponent: React.FC = () => {
 					</div>
 				</div>
 
-				<div className="log-container bg_color_dark">
+				<div className={`${location.pathname === "/manage/logs" ? "log-container" : "log-container-runs"} bg_color_dark`}>
 					<ScrollFollow
 						startFollowing={true}
 						render={({ follow, onScroll }) => (

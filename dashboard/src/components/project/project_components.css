@@ -61,6 +61,11 @@
 .log-container {
   display: flex;
   flex-direction: column;
+  height: 100%; /* Reduced height to half */
+}
+.log-container-runs {
+  display: flex;
+  flex-direction: column;
   height: 36vh; /* Reduced height to half */
 }
 
