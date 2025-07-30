@@ -28,7 +28,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
 	return (
 		<RefreshContext.Provider value={{ shouldRefresh, triggerRefresh }}>
-                        <div className="d-flex position-relative">
+                        <div className="d-flex vh-100 position-relative">
                                 <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
                                 <div className="d-flex flex-column flex-grow-1 main-content">
                                         <NavbarComponent onToggleSidebar={() => setSidebarOpen((o) => !o)} />
