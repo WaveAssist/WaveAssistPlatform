@@ -4,7 +4,7 @@ import { fetchDagRunsApi } from "../../services/runs_services";
 import { useToast } from "../../utils/toast_context";
 import { useRefresh } from "../../utils/RefreshContext";
 import Modal from "react-bootstrap/Modal";
-import { Button, Collapse } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import NodeRunsComponent from "./node_runs_component";
 import "./project_components.css";
 import "../../utils/ag-theme-project.css";
@@ -43,9 +43,8 @@ const RunsComponent: React.FC = () => {
 		fetchRuns();
 	}, [shouldRefresh]);
 
-        const [showRunModal, setShowRunModal] = useState(false);
-        const [selectedRunId, setSelectedRunId] = useState("");
-        const [showLogs, setShowLogs] = useState(true);
+	const [showRunModal, setShowRunModal] = useState(false);
+	const [selectedRunId, setSelectedRunId] = useState("");
 
 	const handleViewDetails = (run: any) => {
 		if (run && run.run_id) {
@@ -143,43 +142,33 @@ const RunsComponent: React.FC = () => {
 		},
 	];
 
-        return (
-                <div className="main-container">
-                        <div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
-                                <div style={{ flex: "0 0 60%", display: "flex", flexDirection: "column" }}>
-                                        <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h3 className="translucent_white mb-0">Runs</h3>
-                                        </div>
-                                        <div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
-                                                <AgGridReact
-                                                        rowData={runsArray}
-                                                        columnDefs={columnDefs}
-                                                        pagination={true}
-                                                        paginationPageSize={10}
-                                                        gridOptions={gridOptions}
-                                                        defaultColDef={defaultColDef}
-                                                />
-                                        </div>
-                                </div>
+	return (
+		<div className="main-container">
+			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
+				<div style={{ flex: "0 0 50%", display: "flex", flexDirection: "column" }}>
+					<div className="d-flex justify-content-between align-items-center mb-3">
+						<h3 className="translucent_white mb-0">Runs</h3>
+					</div>
+					<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
+						<AgGridReact
+							rowData={runsArray}
+							columnDefs={columnDefs}
+							pagination={false}
+							paginationPageSize={10}
+							gridOptions={gridOptions}
+							defaultColDef={defaultColDef}
+						/>
+					</div>
+				</div>
+				<hr className="my-2" />
+				<div style={{ flex: "0 0 50%" }}>
+					<div>
+						<LogsComponent />
+					</div>
+				</div>
+			</div>
 
-                                <div style={{ flex: "0 0 40%" }}>
-                                        <div
-                                                onClick={() => setShowLogs((s) => !s)}
-                                                style={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}
-                                                className="mb-3 mt-3"
-                                        >
-                                                <i className={`bi me-2 ${showLogs ? "bi-caret-down-fill" : "bi-caret-right-fill"}`} />
-                                                <h3 className="translucent_white mb-0">Logs</h3>
-                                        </div>
-                                        <Collapse in={showLogs}>
-                                                <div>
-                                                        <LogsComponent />
-                                                </div>
-                                        </Collapse>
-                                </div>
-                        </div>
-
-                        <Modal show={showRunModal} onHide={handleClose} size="lg" centered>
+			<Modal show={showRunModal} onHide={handleClose} size="lg" centered>
 				<Modal.Header closeButton>
 					<Modal.Title>Run Details</Modal.Title>
 				</Modal.Header>
