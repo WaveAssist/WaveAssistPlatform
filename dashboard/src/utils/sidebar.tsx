@@ -88,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         };
 
         return (
-                <div className={`side-div d-flex flex-column flex-shrink-0 p-3 vh-100 ${isOpen ? "" : "d-none d-md-flex"}`}>
+                <div className={`side-div d-flex flex-column flex-shrink-0 p-3 ${isOpen ? "" : "d-none d-md-flex"}`}>
 			<Joyride
 				steps={steps}
 				run={runTour}

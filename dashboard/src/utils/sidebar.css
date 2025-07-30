@@ -17,9 +17,15 @@
     overflow-y: hidden;
   }
 
-  .side-div{
+.side-div{
     background-color: #1A2430 !important;
     width: 280px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto;
+    height: 100vh;
   }
 
   @media (max-width: 767.98px) {
@@ -44,8 +50,20 @@
     margin-top: 15px;
     margin-bottom: 30px;
   }
-  .nav-link:hover {
-	background-color: rgba(255, 255, 255, 0.1);
-	border-radius: 6px;
-	transition: background-color 0.2s ease;
+.nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        transition: background-color 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .main-content {
+    margin-left: 280px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .main-content {
+    margin-left: 0;
+  }
 }
