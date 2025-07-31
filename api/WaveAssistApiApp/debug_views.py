@@ -26,8 +26,8 @@ import waveassist
 
 # Initialize the CloudWatch Logs client
 client = boto3.client('logs',
-                        aws_access_key_id='REMOVED_CREDENTIAL',
-                        aws_secret_access_key='REMOVED_CREDENTIAL',
+                        aws_access_key_id=AWSS3_ACCESS_KEY_VALUE,
+                        aws_secret_access_key=AWSS3_SECRET_KEY_VALUE,
                       region_name='us-east-1')  # Replace 'your-region' with the appropriate AWS region
 
 
