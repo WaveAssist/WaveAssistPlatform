@@ -7,7 +7,8 @@ export default function NodeCard({ data }: NodeProps) {
 
         const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
         const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-        const isUserPremium = userData.is_premium === true;
+        const isUserPremium =
+                localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
         const isDisabled = isProjectPremium && !isUserPremium;
 
         const disabledStyle = isDisabled ? { opacity: 0.5, cursor: "not-allowed" } : {};

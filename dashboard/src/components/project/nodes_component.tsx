@@ -256,16 +256,17 @@ const NodesComponent: React.FC = () => {
 	const [modalCode, setModalCode] = useState('print("Hello, world!")');
 	const [showNodeEditor, setShowNodeEditor] = useState(false);
 
-	const premiumBlocked = (): boolean => {
-		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-		const isUserPremium = userData.is_premium === true;
-		if (isProjectPremium && !isUserPremium) {
-			showToast("Upgrade to edit Premium template", "warning");
-			return true;
-		}
-		return false;
-	};
+        const premiumBlocked = (): boolean => {
+                const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+                const isUserPremium =
+                        localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+                if (isProjectPremium && !isUserPremium) {
+                        showToast("Upgrade to edit Premium template", "warning");
+                        return true;
+                }
+                return false;
+        };
 
 	const handleClose = () => {
 		setSelectedNodeKey("");
@@ -530,24 +531,29 @@ ${config.nodes
 
 		// Check if the project is premium and if the user has premium access
 		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-		const isUserPremium = userData.is_premium === true;
-		const isDisabled = isProjectPremium && !isUserPremium;
+                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+                const isUserPremium =
+                        localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+                const isDisabled = isProjectPremium && !isUserPremium;
 
 		// Debug log to see the premium status
 		console.log(
 			`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`
 		);
 
-		return (
-			<button
-				className={`btn btn-outline-success btn-sm ${isDisabled ? "disabled" : ""}`}
-				onClick={() => handleViewCode(params.data)}
-				title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}>
-				View Code
-			</button>
-		);
-	};
+                return (
+                        <button
+                                className="btn btn-outline-success btn-sm"
+                                disabled={isDisabled}
+                                onClick={() => {
+                                        if (!isDisabled) handleViewCode(params.data);
+                                }}
+                                title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
+                        >
+                                View Code
+                        </button>
+                );
+        };
 
 	const toggleView = () => {
 		setView(view === "flow" ? "table" : "flow");
@@ -583,32 +589,39 @@ ${config.nodes
 		console.log("Node data:", params.data);
 
 		// Check if the project is premium and if the user has premium access
-		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-		const isUserPremium = userData.is_premium === true;
-		const isDisabled = isProjectPremium && !isUserPremium;
+                const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+                const isUserPremium =
+                        localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+                const isDisabled = isProjectPremium && !isUserPremium;
 
 		// Debug log to see the premium status
 		console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
 
 		return (
 			<div>
-				<Button
-					variant="dark"
-					size="sm"
-					className={isDisabled ? "disabled" : ""}
-					onClick={() => handleEdit(params.data)}
-					title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}>
-					<i className="bi bi-pencil"></i>
-				</Button>{" "}
-				<Button
-					variant="danger"
-					size="sm"
-					className={isDisabled ? "disabled" : ""}
-					onClick={() => handleDelete(params.data)}
-					title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}>
-					<i className="bi bi-trash"></i>
-				</Button>{" "}
+                                <Button
+                                        variant="dark"
+                                        size="sm"
+                                        disabled={isDisabled}
+                                        onClick={() => {
+                                                if (!isDisabled) handleEdit(params.data);
+                                        }}
+                                        title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
+                                >
+                                        <i className="bi bi-pencil"></i>
+                                </Button>{" "}
+                                <Button
+                                        variant="danger"
+                                        size="sm"
+                                        disabled={isDisabled}
+                                        onClick={() => {
+                                                if (!isDisabled) handleDelete(params.data);
+                                        }}
+                                        title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}
+                                >
+                                        <i className="bi bi-trash"></i>
+                                </Button>{" "}
 				{params.data.is_starting_node && (
 					<Button variant="success" size="sm" onClick={() => handleRun(params.data)} title="Run node">
 						<i className="bi bi-play">Run</i>

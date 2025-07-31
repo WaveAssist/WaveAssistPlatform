@@ -51,8 +51,9 @@ const AllProjectsComponent: React.FC = () => {
 		fetchData();
 		registerPostHogUser();
 		// Get user's premium status from localStorage
-		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-		setIsUserPremium(userData.is_premium || false);
+                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+                const premiumLocal = localStorage.getItem("is_premium") === "true";
+                setIsUserPremium(premiumLocal || Boolean(userData.is_premium));
 	}, []);
 
 	useEffect(() => {

@@ -55,13 +55,17 @@ const LoginComponent: React.FC = () => {
 				method: "WaveAssist",
 			});
 
-			if (data.action === "PERFORM_GET_STARTED" || is_test) {
-				handleGetStarted();
-				return;
-			} else {
-				localStorage.setItem("user_data", JSON.stringify(data.user_data));
-				localStorage.setItem("projects_array", JSON.stringify(data.project_array));
-				localStorage.setItem("uid", data.user_data.uid);
+                        if (data.action === "PERFORM_GET_STARTED" || is_test) {
+                                handleGetStarted();
+                                return;
+                        } else {
+                                localStorage.setItem("user_data", JSON.stringify(data.user_data));
+                                localStorage.setItem("projects_array", JSON.stringify(data.project_array));
+                                localStorage.setItem("uid", data.user_data.uid);
+                                localStorage.setItem(
+                                        "is_premium",
+                                        data.user_data.is_premium ? "true" : "false"
+                                );
 				const storedRedirect = localStorage.getItem("postLoginRedirect");
 				if (isCLILogin) {
 					setCliLoginComplete(true);
@@ -87,10 +91,14 @@ const LoginComponent: React.FC = () => {
 			setLoaderMessage("Setting up your account, this may take a minute...");
 
 			const firebase_uid = localStorage.getItem("firebase_uid");
-			const data = await getStartedAPI(firebase_uid, is_test, session_id);
-			localStorage.setItem("user_data", JSON.stringify(data.user_data));
-			localStorage.setItem("projects_array", JSON.stringify(data.project_array));
-			localStorage.setItem("uid", data.user_data.uid);
+                        const data = await getStartedAPI(firebase_uid, is_test, session_id);
+                        localStorage.setItem("user_data", JSON.stringify(data.user_data));
+                        localStorage.setItem("projects_array", JSON.stringify(data.project_array));
+                        localStorage.setItem("uid", data.user_data.uid);
+                        localStorage.setItem(
+                                "is_premium",
+                                data.user_data.is_premium ? "true" : "false"
+                        );
 
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {
