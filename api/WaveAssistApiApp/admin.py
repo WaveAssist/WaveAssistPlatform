@@ -86,7 +86,7 @@ class DAGAdmin(admin.ModelAdmin):
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('id', 'account_name', 'is_working_running', 'account_uid','created_by_user','created_at')
+    list_display = ('id', 'account_name', 'is_working_running', 'is_premium', 'account_uid','created_by_user','created_at')
     search_fields = ('account_name',)
     list_filter = ('is_working_running', 'created_at',)
     readonly_fields = ('id', 'created_at')

@@ -77,6 +77,11 @@ class User(models.Model):
         user_dict['username'] = self.username
         user_dict['uid'] = self.uid
         user_dict['can_create_projects'] = self.can_create_projects
+
+        # ✅ Fetch related account (if any)
+        account = Account.objects.filter(created_by_user=self).first()
+        user_dict['is_premium'] = account.is_premium if account else False
+
         return user_dict
 
     def save(self, *args, **kwargs):
