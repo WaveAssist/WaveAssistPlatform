@@ -36,6 +36,35 @@ import { applyNodeChanges, NodeChange } from "reactflow";
 const NODE_WIDTH = 250;
 const NODE_HEIGHT = 50;
 
+// PaywallModal component
+
+interface PaywallModalProps {
+  show: boolean;
+  onHide: () => void;
+  onPay?: () => void;
+}
+
+const PaywallModal: React.FC<PaywallModalProps> = ({ show, onHide, onPay }) => (
+  <Modal show={show} onHide={onHide} centered>
+    <Modal.Header closeButton className="bg-dark text-white">
+      <Modal.Title>Premium Access Required</Modal.Title>
+    </Modal.Header>
+    <Modal.Body className="bg-dark text-white text-center">
+      <div style={{ fontSize: "1.0rem", marginBottom: 20 }}>
+	  Hey, to edit this premium template, you need a Growth or Pro plan for full Python tweaks and scalable agents.
+
+</div>
+      <Button
+        variant="outline-warning"
+        style={{ fontWeight: 600, fontSize: "1.1rem", minWidth: 120 }}
+        onClick={onPay}
+      >
+        Upgrade Now
+      </Button>
+    </Modal.Body>
+  </Modal>
+);
+
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
 	// const [isOpen, setIsOpen] = useState(false);
@@ -525,6 +554,11 @@ ${config.nodes
 		fetchNodes();
 	};
 
+	const handlePremiumBlocked = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		setShowPaywall(true);
+	};
+
 	const ViewCodeButton = (params: any) => {
 		// Debug log to see the node data
 		console.log("ViewCode Node data:", params.data);
@@ -544,10 +578,7 @@ ${config.nodes
                 return (
                         <button
                                 className="btn btn-outline-success btn-sm"
-                                disabled={isDisabled}
-                                onClick={() => {
-                                        if (!isDisabled) handleViewCode(params.data);
-                                }}
+                                onClick={ isDisabled ? handlePremiumBlocked : () => handleViewCode(params.data)}
                                 title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
                         >
                                 View Code
@@ -598,15 +629,13 @@ ${config.nodes
 		// Debug log to see the premium status
 		console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
 
+		
 		return (
 			<div>
                                 <Button
                                         variant="dark"
                                         size="sm"
-                                        disabled={isDisabled}
-                                        onClick={() => {
-                                                if (!isDisabled) handleEdit(params.data);
-                                        }}
+                                        onClick={isDisabled ? handlePremiumBlocked : () => handleEdit(params.data)}
                                         title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
                                 >
                                         <i className="bi bi-pencil"></i>
@@ -614,10 +643,7 @@ ${config.nodes
                                 <Button
                                         variant="danger"
                                         size="sm"
-                                        disabled={isDisabled}
-                                        onClick={() => {
-                                                if (!isDisabled) handleDelete(params.data);
-                                        }}
+                                        onClick={isDisabled ? handlePremiumBlocked : () => handleDelete(params.data)}
                                         title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}
                                 >
                                         <i className="bi bi-trash"></i>
@@ -717,6 +743,9 @@ ${config.nodes
 
 	const isStartingNode = watch("is_starting_node");
 	const scheduleType = watch("schedule_type") || "interval";
+
+	// Add state for paywall modal
+	const [showPaywall, setShowPaywall] = useState(false);
 
 	return (
 		<div className="main-container">
@@ -1169,6 +1198,15 @@ ${config.nodes
 						setRunTour(false);
 						localStorage.setItem("create_node_tour_completed", "true");
 					}
+				}}
+			/>
+
+			<PaywallModal
+				show={showPaywall}
+				onHide={() => setShowPaywall(false)}
+				onPay={() => {
+					window.open('https://your-payment-link.com', '_blank');
+					setShowPaywall(false);
 				}}
 			/>
 		</div>

@@ -191,6 +191,7 @@ const AllProjectsComponent: React.FC = () => {
 		localStorage.setItem("selected_project_key", projectKey);
 		if (selectedProject) {
 			localStorage.setItem("is_project_premium", selectedProject.is_premium ? "true" : "false");
+			localStorage.setItem("selected_project", JSON.stringify(selectedProject)); // <-- Ensure this is set
 		}
 
 		navigate(`/manage/nodes?project_key=${projectKey}`);

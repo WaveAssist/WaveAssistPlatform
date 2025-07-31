@@ -1,6 +1,32 @@
 // src/components/NodeCard.tsx
 import { Handle, Position, NodeProps } from "reactflow";
 import "./node_card.css";
+import React, { useState } from "react";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
+
+function PaywallModal({ show, onHide, onPay }: { show: boolean; onHide: () => void; onPay?: () => void }) {
+  return (
+    <Modal show={show} onHide={onHide} centered>
+      <Modal.Header closeButton className="bg-dark text-white">
+      <Modal.Title>Premium Access Required</Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="bg-dark text-white text-center">
+      <div style={{ fontSize: "1.0rem", marginBottom: 20 }}>
+	  Hey, to edit this premium template, you need a Growth or Pro plan for full Python tweaks and scalable agents.
+
+</div>
+        <Button
+          variant="warning"
+          style={{ fontWeight: 600, fontSize: "1.1rem", minWidth: 120 }}
+          onClick={onPay}
+        >
+          Upgrade Now
+        </Button>
+      </Modal.Body>
+    </Modal>
+  );
+}
 
 export default function NodeCard({ data }: NodeProps) {
         const { name, is_enabled, onEdit, onView, onRun, canRun } = data;
@@ -11,7 +37,14 @@ export default function NodeCard({ data }: NodeProps) {
                 localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
         const isDisabled = isProjectPremium && !isUserPremium;
 
+        const [showPaywall, setShowPaywall] = useState(false);
+
         const disabledStyle = isDisabled ? { opacity: 0.5, cursor: "not-allowed" } : {};
+
+        const handlePremiumBlocked = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                setShowPaywall(true);
+        };
 
         return (
                 <div className={`simple-node ${is_enabled ? "enabled" : "disabled"}`}>
@@ -21,13 +54,13 @@ export default function NodeCard({ data }: NodeProps) {
                                 <div className="node-actions">
                                         <i
                                                 className="bi bi-gear-fill"
-                                                onClick={!isDisabled ? onEdit : undefined}
+                                                onClick={isDisabled ? handlePremiumBlocked : onEdit}
                                                 title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
                                                 style={disabledStyle}
                                         />
                                         <i
                                                 className="bi bi-code-slash"
-                                                onClick={!isDisabled ? onView : undefined}
+                                                onClick={isDisabled ? handlePremiumBlocked : onView}
                                                 title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
                                                 style={disabledStyle}
                                         />
@@ -42,6 +75,14 @@ export default function NodeCard({ data }: NodeProps) {
                                 </div>
                         </div>
                         <Handle type="source" position={Position.Bottom} />
+                        <PaywallModal
+                                show={showPaywall}
+                                onHide={() => setShowPaywall(false)}
+                                onPay={() => {
+                                        window.open('https://your-payment-link.com', '_blank');
+                                        setShowPaywall(false);
+                                }}
+                        />
                 </div>
         );
 }
