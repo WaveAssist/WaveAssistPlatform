@@ -6,14 +6,15 @@ import { useEffect, useState } from "react";
 import Joyride, { Step } from "react-joyride";
 
 interface SidebarProps {
-        isOpen: boolean;
-        onClose: () => void;
+	isOpen: boolean;
+	onClose: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [runTour, setRunTour] = useState(false);
+	const [isPremium, setIsPremium] = useState(false);
 
 	useEffect(() => {
 		const isNewUser = localStorage.getItem("is_new_user");
@@ -24,6 +25,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 			localStorage.setItem("is_new_user", "false");
 			localStorage.setItem("modules_tour", "true");
 		}
+
+		// Check premium status
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		const premiumLocal = localStorage.getItem("is_premium") === "true";
+		setIsPremium(premiumLocal || Boolean(userData.is_premium));
 	}, []);
 
 	const steps: Step[] = [
@@ -54,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 		navigate("/login");
 	};
 
-        const handleDownloadKeys = () => {
+	const handleDownloadKeys = () => {
 		const userData = localStorage.getItem("user_data");
 		if (!userData) {
 			alert("No user data found.");
@@ -79,16 +85,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
-        };
+	};
 
-        const handleNavClick = () => {
-                if (window.innerWidth < 768) {
-                        onClose();
-                }
-        };
+	const handleNavClick = () => {
+		if (window.innerWidth < 768) {
+			onClose();
+		}
+	};
 
-        return (
-                <div className={`side-div d-flex flex-column flex-shrink-0 p-3 ${isOpen ? "" : "d-none d-md-flex"}`}>
+	return (
+		<div className={`side-div d-flex flex-column flex-shrink-0 p-3 ${isOpen ? "" : "d-none d-md-flex"}`}>
 			<Joyride
 				steps={steps}
 				run={runTour}
@@ -128,56 +134,84 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 				}}
 			/>
 
-                        <div className="d-flex align-items-center justify-content-between mb-4 me-md-auto w-100">
-                                <a href="/">
-                                        <img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
-                                </a>
-                                <button className="btn btn-outline-light d-md-none" onClick={onClose}>
-                                        <i className="bi bi-x-lg"></i>
-                                </button>
-                        </div>
+			<div className="d-flex align-items-center justify-content-between me-md-auto w-100">
+				<div className="d-flex flex-column align-items-start">
+					<a href="/">
+						<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
+					</a>
+					{isPremium && (
+						<div>
+							<span className="badge bg-warning text-dark px-2 py-1" style={{ fontSize: "10px", fontWeight: "600" }}>
+								PREMIUM
+							</span>
+						</div>
+					)}
+				</div>
+				<button className="btn btn-outline-light d-md-none" onClick={onClose}>
+					<i className="bi bi-x-lg"></i>
+				</button>
+			</div>
 
-			<ul className="nav nav-pills flex-column mb-4">
-                                <li className="nav-item">
-                                        <Link to="/manage/nodes" className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1`} onClick={handleNavClick}>
+			<ul className="nav nav-pills flex-column mb-4 mt-4">
+				<li className="nav-item">
+					<Link
+						to="/manage/nodes"
+						className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1`}
+						onClick={handleNavClick}>
 						<i className="bi bi-bezier2 me-2"></i>
 						Nodes
 					</Link>
 				</li>
 				<li className="nav-item">
-                                        <Link
-                                                to="/manage/variables"
-                                                className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1 variables-link`} onClick={handleNavClick}>
+					<Link
+						to="/manage/variables"
+						className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1 variables-link`}
+						onClick={handleNavClick}>
 						<i className="bi bi-table me-2"></i>
 						Variables
 					</Link>
 				</li>
 				<li className="nav-item">
-                                        <Link to="/manage/packages" className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link`} onClick={handleNavClick}>
+					<Link
+						to="/manage/packages"
+						className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link`}
+						onClick={handleNavClick}>
 						<i className="bi bi-box-fill me-2"></i>
 						Packages
 					</Link>
 				</li>
 				<li className="nav-item">
-                                        <Link to="/manage/runs" className={`nav-link ${location.pathname === "/manage/runs" ? "active" : "text-white"} mb-1`} onClick={handleNavClick}>
+					<Link
+						to="/manage/runs"
+						className={`nav-link ${location.pathname === "/manage/runs" ? "active" : "text-white"} mb-1`}
+						onClick={handleNavClick}>
 						<i className="bi bi-bar-chart-steps me-2"></i>
 						Runs
 					</Link>
 				</li>
 				<li className="nav-item">
-                                        <Link to="/manage/deployments" className={`nav-link ${location.pathname === "/manage/deployments" ? "active" : "text-white"} mb-1`} onClick={handleNavClick}>
+					<Link
+						to="/manage/deployments"
+						className={`nav-link ${location.pathname === "/manage/deployments" ? "active" : "text-white"} mb-1`}
+						onClick={handleNavClick}>
 						<i className="bi bi-cloud-arrow-up-fill me-2"></i>
 						Deployments
 					</Link>
 				</li>
 				<li className="nav-item">
-                                        <Link to="/manage/environments" className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`} onClick={handleNavClick}>
+					<Link
+						to="/manage/environments"
+						className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}
+						onClick={handleNavClick}>
 						<i className="bi bi-stack me-2"></i>
 						Environments
 					</Link>
 				</li>
 				<li className="nav-item">
-                                        <Link to="/manage/logs" className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 logs-link`} onClick={handleNavClick}>
+					<Link
+						to="/manage/logs"
+						className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 logs-link`}
+						onClick={handleNavClick}>
 						<i className="bi bi-file-text-fill me-2"></i>
 						Logs
 					</Link>
@@ -207,20 +241,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 				<hr className="text-white" />
 				<div className="row g-2">
 					<div className="col-6">
-                                                <Link to="/" className="btn btn-outline-light w-100" onClick={handleNavClick}>
+						<Link to="/" className="btn btn-outline-light w-100" onClick={handleNavClick}>
 							<i className="bi bi-chevron-left me-1"></i>
 							Home
 						</Link>
 					</div>
 					<div className="col-6">
-                                                <button className="btn btn-outline-light w-100 keys-link" onClick={() => { handleDownloadKeys(); handleNavClick(); }}>
+						<button
+							className="btn btn-outline-light w-100 keys-link"
+							onClick={() => {
+								handleDownloadKeys();
+								handleNavClick();
+							}}>
 							<i className="bi bi-download me-1"></i>
 							Keys
 						</button>
 					</div>
 
 					<div className="col-12">
-                                                <button className="btn btn-outline-light w-100" onClick={() => { handleLogout(); handleNavClick(); }}>
+						<button
+							className="btn btn-outline-light w-100"
+							onClick={() => {
+								handleLogout();
+								handleNavClick();
+							}}>
 							<i className="bi bi-box-arrow-right me-1"></i>
 							Logout
 						</button>

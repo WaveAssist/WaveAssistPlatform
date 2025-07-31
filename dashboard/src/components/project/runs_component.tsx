@@ -41,6 +41,11 @@ const RunsComponent: React.FC = () => {
 
 	useEffect(() => {
 		fetchRuns();
+		const intervalId = setInterval(() => {
+			fetchRuns();
+		}, 10000); // 10000ms = 10 seconds
+		// Clean up the interval when the component unmounts
+		return () => clearInterval(intervalId);
 	}, [shouldRefresh]);
 
 	const [showRunModal, setShowRunModal] = useState(false);
@@ -148,6 +153,9 @@ const RunsComponent: React.FC = () => {
 				<div style={{ flex: "0 0 50%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-between align-items-center mb-3">
 						<h3 className="translucent_white mb-0">Runs</h3>
+						<Button variant="dark" onClick={fetchRuns}>
+							<span className="bi bi-arrow-clockwise"></span>
+						</Button>
 					</div>
 					<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
 						<AgGridReact
