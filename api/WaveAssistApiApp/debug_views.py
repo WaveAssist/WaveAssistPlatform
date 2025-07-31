@@ -24,7 +24,6 @@ from urllib.parse import unquote
 from WaveAssistApiApp import deployment_views
 import waveassist
 
-
 # Initialize the CloudWatch Logs client
 client = boto3.client('logs',
                         aws_access_key_id='REMOVED_CREDENTIAL',
@@ -32,50 +31,40 @@ client = boto3.client('logs',
                       region_name='us-east-1')  # Replace 'your-region' with the appropriate AWS region
 
 
-def fetch_log_job_names(request): ##Test Case Pending
-    options_array = utils.get_all_loki_jobs()
-    output_data = { 'job_names': options_array  }
-    return ResponseParser.getParsedSuccessMessage(output_data, '200', 'Logs fetched successfully')
-
-
 def fetch_logs_from_aws(start_datetime, end_datetime, log_group_name, filter_pattern):
-
     log_array = []
     previous_next_token = ''
     while True:
-        # Fetch logs with filter pattern and pagination token
         params = {
             'logGroupName': log_group_name,
             'startTime': start_datetime,
             'endTime': end_datetime,
-            'filterPattern': filter_pattern,
+            'filterPattern': filter_pattern
         }
         if previous_next_token:
             params['nextToken'] = previous_next_token
 
         response = client.filter_log_events(**params)
-        # Process log events
         events = response['events']
         for event in events:
-            log_json = json.loads(event['message'])
-            log_array.append({
-                'timestamp': log_json['asctime'],
-                'log': log_json['message']
-            })
+            try:
+                log_json = json.loads(event['message'])
+                log_array.append({
+                    'timestamp': log_json['asctime'],
+                    'log': log_json['message']
+                })
+            except json.JSONDecodeError:
+                continue
 
-        # Check if there is a nextToken for pagination
         next_token = response.get('nextToken')
-        # print(f"Next Token: {next_token}")
         if not next_token or next_token == previous_next_token:
-            break  # No more logs to fetch, exit the loop
-        else:
-            previous_next_token = next_token
+            break
+        previous_next_token = next_token
 
-    log_array = sorted(log_array, key=lambda x: x['timestamp'], reverse=True)
     return log_array
 
+
 def fetch_logs(request):
-    # Validate user and project
     success, message, user_object, project_object = validator.validate_user_and_project(
         request, access_level_gte=READ_GTE
     )
@@ -88,26 +77,28 @@ def fetch_logs(request):
 
     filter_pattern = utils.generate_filter_pattern(node_key_csv, project_object)
 
-    next_token = None
-    all_logs_array = []
-    hours_to_fetch = 1
-
     try:
-        while True:
-            start_datetime = int((datetime.now(pytz.UTC) - timedelta(hours=hours_to_fetch)).timestamp() * 1000)
-            end_datetime = int((datetime.now(pytz.UTC) + timedelta(hours=hours_to_fetch)).timestamp() * 1000)
-            log_array = fetch_logs_from_aws(start_datetime, end_datetime, log_group_name, filter_pattern)
-            all_logs_array.extend(log_array)
-            if len(all_logs_array) <= 0:
-                hours_to_fetch += 6
-            else:
-                break
-            if hours_to_fetch >= 24:
-                break
+        now_utc = datetime.now(pytz.UTC)
+        end_datetime = int(now_utc.timestamp() * 1000)
+        current_start_datetime = end_datetime
+        all_logs_array = []
+        increment_minutes = 15
+        max_back_hours = 24
+        min_logs = 10
+        max_logs = 500
 
-        ##sort all_logs_array
-        all_logs_array = sorted(all_logs_array, key=lambda x: x['timestamp'], reverse=True)
-        all_logs_array = all_logs_array[:500]
+        while len(all_logs_array) < min_logs and (end_datetime - current_start_datetime) < (max_back_hours * 3600 * 1000):
+            increment_ms = increment_minutes * 60 * 1000
+            new_start_datetime = max(end_datetime - (max_back_hours * 3600 * 1000), current_start_datetime - increment_ms)
+            new_logs = fetch_logs_from_aws(new_start_datetime, current_start_datetime, log_group_name, filter_pattern)
+            if new_logs:
+                all_logs_array.extend(new_logs)
+            current_start_datetime = new_start_datetime
+            if not new_logs and increment_minutes < 60:
+                increment_minutes *= 2
+
+        # Sort and trim to max_logs after all fetching
+        all_logs_array = sorted(all_logs_array, key=lambda x: x['timestamp'], reverse=True)[:max_logs]
         output_dict = { 'logs': all_logs_array }
         return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Logs fetched successfully')
 
