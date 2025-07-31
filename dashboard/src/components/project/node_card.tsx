@@ -79,7 +79,7 @@ export default function NodeCard({ data }: NodeProps) {
                                 show={showPaywall}
                                 onHide={() => setShowPaywall(false)}
                                 onPay={() => {
-                                        window.open('https://your-payment-link.com', '_blank');
+                                        window.open('https://waveassist.io/pricing', '_blank');
                                         setShowPaywall(false);
                                 }}
                         />

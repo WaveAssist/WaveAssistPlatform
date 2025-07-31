@@ -1205,7 +1205,7 @@ ${config.nodes
 				show={showPaywall}
 				onHide={() => setShowPaywall(false)}
 				onPay={() => {
-					window.open('https://your-payment-link.com', '_blank');
+					window.open('https://waveassist.io/pricing', '_blank');
 					setShowPaywall(false);
 				}}
 			/>
