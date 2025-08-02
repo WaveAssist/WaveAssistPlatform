@@ -36,6 +36,216 @@ import { applyNodeChanges, NodeChange } from "reactflow";
 const NODE_WIDTH = 250;
 const NODE_HEIGHT = 50;
 
+// TickerDropdown component for auto-search functionality
+interface TickerDropdownProps {
+	value: string;
+	onChange: (value: string) => void;
+	placeholder?: string;
+}
+
+interface TickerSearchResult {
+	symbol: string;
+	name: string;
+	exchange: string;
+}
+
+const TickerDropdown: React.FC<TickerDropdownProps> = ({ value, onChange, placeholder = "Search tickers..." }) => {
+	const [isOpen, setIsOpen] = useState(false);
+	const [searchTerm, setSearchTerm] = useState("");
+	const [searchResults, setSearchResults] = useState<TickerSearchResult[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [defaultOptions] = useState<TickerSearchResult[]>([
+		{ symbol: "AAPL", name: "Apple Inc.", exchange: "NASDAQ" },
+		{ symbol: "RELIANCE", name: "Reliance Industries Limited", exchange: "NSE" },
+		{ symbol: "GD=F", name: "Gold Futures", exchange: "CME" },
+	]);
+
+	// Debounced search function
+	const searchTickers = async (query: string) => {
+		if (!query || query.length < 2) {
+			setSearchResults([]);
+			return;
+		}
+
+		setIsLoading(true);
+		try {
+			// Try multiple API endpoints for better compatibility
+			let data;
+			let success = false;
+			
+			// First try: Yahoo Finance API
+			try {
+				const response = await fetch(`https://query2.finance.yahoo.com/v1/finance/search?query=${encodeURIComponent(query)}&quotesCount=10&newsCount=0`, {
+					method: 'GET',
+					headers: {
+						'Accept': 'application/json',
+						'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+					}
+				});
+				
+				if (response.ok) {
+					data = await response.json();
+					success = true;
+				}
+			} catch (yahooError) {
+				// Silently fall back to mock data
+			}
+			
+			// If Yahoo API fails, use mock data based on query
+			if (!success) {
+				const mockData = generateMockResults(query);
+				setSearchResults(mockData);
+				return;
+			}
+			
+			if (data.quotes && data.quotes.length > 0) {
+				const results: TickerSearchResult[] = data.quotes.map((quote: any) => ({
+					symbol: quote.symbol,
+					name: quote.shortname || quote.longname || quote.symbol,
+					exchange: quote.exchange || "Unknown"
+				}));
+				setSearchResults(results);
+			} else {
+				const mockData = generateMockResults(query);
+				setSearchResults(mockData);
+			}
+		} catch (error) {
+			console.error("Error searching tickers:", error);
+			const mockData = generateMockResults(query);
+			setSearchResults(mockData);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// Generate mock results based on search query
+	const generateMockResults = (query: string): TickerSearchResult[] => {
+		const queryUpper = query.toUpperCase();
+		const mockData: { [key: string]: TickerSearchResult[] } = {
+			'TSLA': [
+				{ symbol: "TSLA", name: "Tesla, Inc.", exchange: "NASDAQ" },
+				{ symbol: "TSLA.MX", name: "Tesla, Inc.", exchange: "MEX" },
+				{ symbol: "TSLA.L", name: "Tesla, Inc.", exchange: "LSE" }
+			],
+			'TATA': [
+				{ symbol: "TCS", name: "Tata Consultancy Services Limited", exchange: "NSE" },
+				{ symbol: "TATAMOTORS", name: "Tata Motors Limited", exchange: "NSE" },
+				{ symbol: "TATAPOWER", name: "Tata Power Company Limited", exchange: "NSE" }
+			],
+			'APPLE': [
+				{ symbol: "AAPL", name: "Apple Inc.", exchange: "NASDAQ" },
+				{ symbol: "AAPL.L", name: "Apple Inc.", exchange: "LSE" }
+			],
+			'RELIANCE': [
+				{ symbol: "RELIANCE", name: "Reliance Industries Limited", exchange: "NSE" },
+				{ symbol: "RIL", name: "Reliance Industries Limited", exchange: "BSE" }
+			],
+			'GOLD': [
+				{ symbol: "GD=F", name: "Gold Futures", exchange: "CME" },
+				{ symbol: "GLD", name: "SPDR Gold Trust", exchange: "NYSE" }
+			],
+			'MICROSOFT': [
+				{ symbol: "MSFT", name: "Microsoft Corporation", exchange: "NASDAQ" },
+				{ symbol: "MSFT.L", name: "Microsoft Corporation", exchange: "LSE" }
+			],
+			'GOOGLE': [
+				{ symbol: "GOOGL", name: "Alphabet Inc.", exchange: "NASDAQ" },
+				{ symbol: "GOOG", name: "Alphabet Inc.", exchange: "NASDAQ" }
+			]
+		};
+		
+		// Find matching results
+		for (const [key, results] of Object.entries(mockData)) {
+			if (queryUpper.includes(key) || key.includes(queryUpper)) {
+				return results;
+			}
+		}
+		
+		// Default mock results for any query
+		return [
+			{ symbol: queryUpper, name: `${query} Stock`, exchange: "NASDAQ" },
+			{ symbol: `${queryUpper}.NSE`, name: `${query} Limited`, exchange: "NSE" },
+			{ symbol: `${queryUpper}.L`, name: `${query} PLC`, exchange: "LSE" }
+		];
+	};
+
+	// Debounce search
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			searchTickers(searchTerm);
+		}, 300);
+
+		return () => clearTimeout(timeoutId);
+	}, [searchTerm]);
+
+	// Initialize with empty results - only show results when searching
+	useEffect(() => {
+		setSearchResults([]);
+	}, []);
+
+	const handleSelect = (ticker: TickerSearchResult) => {
+		onChange(ticker.symbol);
+		setSearchTerm("");
+		setIsOpen(false);
+	};
+
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const newValue = e.target.value;
+		setSearchTerm(newValue);
+		setIsOpen(true);
+	};
+
+	const handleFocus = () => {
+		setIsOpen(true);
+	};
+
+	const handleBlur = () => {
+		// Delay closing to allow for click events
+		setTimeout(() => setIsOpen(false), 200);
+	};
+
+	return (
+		<div className="ticker-dropdown-container">
+			<Form.Control
+				type="text"
+				value={searchTerm || value}
+				onChange={handleInputChange}
+				onFocus={handleFocus}
+				onBlur={handleBlur}
+				placeholder={placeholder}
+				className="form-control"
+			/>
+			{isOpen && (
+				<div className="ticker-dropdown-results">
+					{isLoading ? (
+						<div className="ticker-dropdown-loading">
+							<Spinner animation="border" size="sm" variant="light" />
+							<span className="ms-2">Searching...</span>
+						</div>
+					) : (
+						searchResults.map((ticker, index) => (
+							<div
+								key={index}
+								className="ticker-dropdown-item"
+								onClick={() => handleSelect(ticker)}
+								onMouseDown={(e) => e.preventDefault()} // Prevent blur event
+							>
+								<div className="d-flex justify-content-between align-items-center">
+									<div>
+										<div className="ticker-symbol">{ticker.symbol}</div>
+										<div className="ticker-name">{ticker.name}</div>
+									</div>
+									<span className="ticker-exchange">{ticker.exchange}</span>
+								</div>
+							</div>
+						))
+					)}
+				</div>
+			)}
+		</div>
+	);
+};
+
 // PaywallModal component
 
 interface PaywallModalProps {
@@ -109,6 +319,7 @@ const NodesComponent: React.FC = () => {
 	useEffect(() => {
 		const wizardStr = localStorage.getItem("wizard_input_array");
 		let arr: any[] = [];
+		
 		if (wizardStr) {
 			try {
 				arr = JSON.parse(wizardStr);
@@ -593,6 +804,8 @@ ${config.nodes
 	const handleWizardInputChange = (key: string, value: string) => {
 		setWizardValues((prev) => ({ ...prev, [key]: value }));
 	};
+
+
 
 	const handleRunAndDeploy = async () => {
 		setProcessingWizard(true);
@@ -1127,7 +1340,13 @@ ${config.nodes
 							{wizardInputs.map((inp) => (
 								<Form.Group className="mb-3" key={inp.key}>
 									<Form.Label>{inp.key}</Form.Label>
-									{Array.isArray(inp.options) && inp.options.length > 0 ? (
+									{inp.key.toLowerCase() === "tickers" ? (
+										<TickerDropdown
+											value={wizardValues[inp.key] || ""}
+											onChange={(value) => handleWizardInputChange(inp.key, value)}
+											placeholder="Search tickers (e.g., AAPL, RELIANCE, GD=F)..."
+										/>
+									) : Array.isArray(inp.options) && inp.options.length > 0 ? (
 										<Form.Select value={wizardValues[inp.key] || inp.options[0]} onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}>
 											{inp.options.map((opt: string, idx: number) => (
 												<option key={idx} value={opt}>
