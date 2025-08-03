@@ -150,7 +150,7 @@ const RunsComponent: React.FC = () => {
 	return (
 		<div className="main-container">
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
-				<div style={{ flex: "0 0 50%", display: "flex", flexDirection: "column" }}>
+				<div style={{ flex: "0 0 40%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-between align-items-center mb-3">
 						<h3 className="translucent_white mb-0">Runs</h3>
 						<Button variant="dark" onClick={fetchRuns}>
@@ -170,7 +170,7 @@ const RunsComponent: React.FC = () => {
 				</div>
 				<hr className="text-white" style={{ marginTop: "3rem" }} />
 
-				<div style={{ flex: "0 0 50%" }}>
+				<div style={{ flex: "0 0 60%" }}>
 					<div>
 						<LogsComponent />
 					</div>
