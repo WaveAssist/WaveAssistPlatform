@@ -14,7 +14,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [runTour, setRunTour] = useState(false);
-	const [isPremium, setIsPremium] = useState(false);
 
 	useEffect(() => {
 		const isNewUser = localStorage.getItem("is_new_user");
@@ -25,11 +24,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 			localStorage.setItem("is_new_user", "false");
 			localStorage.setItem("modules_tour", "true");
 		}
-
-		// Check premium status
-		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-		const premiumLocal = localStorage.getItem("is_premium") === "true";
-		setIsPremium(premiumLocal || Boolean(userData.is_premium));
 	}, []);
 
 	const steps: Step[] = [
@@ -139,13 +133,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 					<a href="/">
 						<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
 					</a>
-					{isPremium && (
-						<div>
-							<span className="badge bg-warning text-dark px-2 py-1" style={{ fontSize: "10px", fontWeight: "600" }}>
-								PREMIUM
-							</span>
-						</div>
-					)}
 				</div>
 				<button className="btn btn-outline-light d-md-none" onClick={onClose}>
 					<i className="bi bi-x-lg"></i>

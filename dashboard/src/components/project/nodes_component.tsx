@@ -36,34 +36,28 @@ import { applyNodeChanges, NodeChange } from "reactflow";
 const NODE_WIDTH = 250;
 const NODE_HEIGHT = 50;
 
-
 // PaywallModal component
 
 interface PaywallModalProps {
-  show: boolean;
-  onHide: () => void;
-  onPay?: () => void;
+	show: boolean;
+	onHide: () => void;
+	onPay?: () => void;
 }
 
 const PaywallModal: React.FC<PaywallModalProps> = ({ show, onHide, onPay }) => (
-  <Modal show={show} onHide={onHide} centered>
-    <Modal.Header closeButton className="bg-dark text-white">
-      <Modal.Title>Premium Access Required</Modal.Title>
-    </Modal.Header>
-    <Modal.Body className="bg-dark text-white text-center">
-      <div style={{ fontSize: "1.0rem", marginBottom: 20 }}>
-	  Hey, to edit this premium template, you need a Growth or Pro plan for full Python tweaks and scalable agents.
-
-</div>
-      <Button
-        variant="outline-warning"
-        style={{ fontWeight: 600, fontSize: "1.1rem", minWidth: 120 }}
-        onClick={onPay}
-      >
-        Upgrade Now
-      </Button>
-    </Modal.Body>
-  </Modal>
+	<Modal show={show} onHide={onHide} centered>
+		<Modal.Header closeButton className="bg-dark text-white">
+			<Modal.Title>Premium Access Required</Modal.Title>
+		</Modal.Header>
+		<Modal.Body className="bg-dark text-white text-center">
+			<div style={{ fontSize: "1.0rem", marginBottom: 20 }}>
+				Hey, to edit this premium template, you need a Growth or Pro plan for full Python tweaks and scalable agents.
+			</div>
+			<Button variant="outline-warning" style={{ fontWeight: 600, fontSize: "1.1rem", minWidth: 120 }} onClick={onPay}>
+				Upgrade Now
+			</Button>
+		</Modal.Body>
+	</Modal>
 );
 
 const NodesComponent: React.FC = () => {
@@ -98,6 +92,14 @@ const NodesComponent: React.FC = () => {
 	const [processingWizard, setProcessingWizard] = useState(false);
 	const [wizardDone, setWizardDone] = useState(false);
 	const [startingNodeKey, setStartingNodeKey] = useState<string | null>(null);
+
+	// Stock search state
+	const [stockSearchQuery, setStockSearchQuery] = useState("");
+	const [stockSearchResults, setStockSearchResults] = useState<any[]>([]);
+	const [stockSearchLoading, setStockSearchLoading] = useState(false);
+	const [selectedStocks, setSelectedStocks] = useState<any[]>([]);
+	const [stockSearchTimeout, setStockSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+
 	const navigate = useNavigate();
 	const steps: Step[] = [
 		{
@@ -110,7 +112,6 @@ const NodesComponent: React.FC = () => {
 	useEffect(() => {
 		const wizardStr = localStorage.getItem("wizard_input_array");
 		let arr: any[] = [];
-		
 		if (wizardStr) {
 			try {
 				arr = JSON.parse(wizardStr);
@@ -137,6 +138,25 @@ const NodesComponent: React.FC = () => {
 	useEffect(() => {
 		localStorage.setItem("nodesView", view);
 	}, [view]);
+
+	// Cleanup stock search timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (stockSearchTimeout) {
+				clearTimeout(stockSearchTimeout);
+			}
+		};
+	}, [stockSearchTimeout]);
+
+	// Clear stock search state when wizard is closed
+	useEffect(() => {
+		if (!showWizard) {
+			setStockSearchQuery("");
+			setStockSearchResults([]);
+			setStockSearchLoading(false);
+			setSelectedStocks([]);
+		}
+	}, [showWizard]);
 
 	const handleNodesChange = (changes: NodeChange[]) => {
 		setRfNodes((nds) => applyNodeChanges(changes, nds));
@@ -287,17 +307,16 @@ const NodesComponent: React.FC = () => {
 	const [modalCode, setModalCode] = useState('print("Hello, world!")');
 	const [showNodeEditor, setShowNodeEditor] = useState(false);
 
-        const premiumBlocked = (): boolean => {
-                const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-                const isUserPremium =
-                        localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-                if (isProjectPremium && !isUserPremium) {
-                        showToast("Upgrade to edit Premium template", "warning");
-                        return true;
-                }
-                return false;
-        };
+	const premiumBlocked = (): boolean => {
+		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+		if (isProjectPremium && !isUserPremium) {
+			showToast("Upgrade to edit Premium template", "warning");
+			return true;
+		}
+		return false;
+	};
 
 	const handleClose = () => {
 		setSelectedNodeKey("");
@@ -567,26 +586,24 @@ ${config.nodes
 
 		// Check if the project is premium and if the user has premium access
 		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-                const isUserPremium =
-                        localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-                const isDisabled = isProjectPremium && !isUserPremium;
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+		const isDisabled = isProjectPremium && !isUserPremium;
 
 		// Debug log to see the premium status
 		console.log(
 			`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`
 		);
 
-                return (
-                        <button
-                                className="btn btn-outline-success btn-sm"
-                                onClick={ isDisabled ? handlePremiumBlocked : () => handleViewCode(params.data)}
-                                title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
-                        >
-                                View Code
-                        </button>
-                );
-        };
+		return (
+			<button
+				className="btn btn-outline-success btn-sm"
+				onClick={isDisabled ? handlePremiumBlocked : () => handleViewCode(params.data)}
+				title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}>
+				View Code
+			</button>
+		);
+	};
 
 	const toggleView = () => {
 		setView(view === "flow" ? "table" : "flow");
@@ -596,6 +613,78 @@ ${config.nodes
 		setWizardValues((prev) => ({ ...prev, [key]: value }));
 	};
 
+	// Stock search functions
+	const searchStocks = async (query: string) => {
+		if (!query.trim()) {
+			setStockSearchResults([]);
+			return;
+		}
+
+		setStockSearchLoading(true);
+		try {
+			const response = await fetch(`https://appsapi.waveassist.io/generic/search_stocks/${encodeURIComponent(query)}`);
+			const data = await response.json();
+
+			if (data.status === "success" && data.data.stocks) {
+				setStockSearchResults(data.data.stocks);
+			} else {
+				setStockSearchResults([]);
+			}
+		} catch (error) {
+			console.error("Stock search failed:", error);
+			setStockSearchResults([]);
+		} finally {
+			setStockSearchLoading(false);
+		}
+	};
+
+	const handleStockSearchChange = (query: string) => {
+		setStockSearchQuery(query);
+
+		// Clear existing timeout
+		if (stockSearchTimeout) {
+			clearTimeout(stockSearchTimeout);
+		}
+
+		// Set new timeout for debounced search
+		const timeout = setTimeout(() => {
+			searchStocks(query);
+		}, 250); // 0.25 seconds delay
+
+		setStockSearchTimeout(timeout);
+	};
+
+	const handleStockSelect = (stock: any, key: string) => {
+		// Check if stock is already selected
+		const isAlreadySelected = selectedStocks.some((s) => s._id === stock._id);
+		if (!isAlreadySelected) {
+			// Check if we already have 3 stocks selected
+			if (selectedStocks.length >= 3) {
+				showToast("Maximum 3 stocks allowed", "warning");
+				return;
+			}
+
+			const newSelectedStocks = [...selectedStocks, stock];
+			setSelectedStocks(newSelectedStocks);
+			// Update wizard values with selected stocks as CSV
+			const stockSymbols = newSelectedStocks.map((s) => s.symbol).join(",");
+			setWizardValues((prev) => ({ ...prev, [key]: stockSymbols }));
+			// Call handleWizardInputChange with CSV format
+			handleWizardInputChange(key, stockSymbols);
+		}
+		setStockSearchQuery("");
+		setStockSearchResults([]);
+	};
+
+	const handleStockRemove = (stockId: string, key: string) => {
+		const remainingStocks = selectedStocks.filter((s) => s._id !== stockId);
+		setSelectedStocks(remainingStocks);
+		// Update wizard values with remaining stocks as CSV
+		const stockSymbols = remainingStocks.map((s) => s.symbol).join(",");
+		setWizardValues((prev) => ({ ...prev, [key]: stockSymbols }));
+		// Call handleWizardInputChange with CSV format
+		handleWizardInputChange(key, stockSymbols);
+	};
 
 	const handleRunAndDeploy = async () => {
 		setProcessingWizard(true);
@@ -623,34 +712,30 @@ ${config.nodes
 		console.log("Node data:", params.data);
 
 		// Check if the project is premium and if the user has premium access
-                const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-                const isUserPremium =
-                        localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-                const isDisabled = isProjectPremium && !isUserPremium;
+		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+		const isDisabled = isProjectPremium && !isUserPremium;
 
 		// Debug log to see the premium status
 		console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
 
-		
 		return (
 			<div>
-                                <Button
-                                        variant="dark"
-                                        size="sm"
-                                        onClick={isDisabled ? handlePremiumBlocked : () => handleEdit(params.data)}
-                                        title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
-                                >
-                                        <i className="bi bi-pencil"></i>
-                                </Button>{" "}
-                                <Button
-                                        variant="danger"
-                                        size="sm"
-                                        onClick={isDisabled ? handlePremiumBlocked : () => handleDelete(params.data)}
-                                        title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}
-                                >
-                                        <i className="bi bi-trash"></i>
-                                </Button>{" "}
+				<Button
+					variant="dark"
+					size="sm"
+					onClick={isDisabled ? handlePremiumBlocked : () => handleEdit(params.data)}
+					title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}>
+					<i className="bi bi-pencil"></i>
+				</Button>{" "}
+				<Button
+					variant="danger"
+					size="sm"
+					onClick={isDisabled ? handlePremiumBlocked : () => handleDelete(params.data)}
+					title={isDisabled ? "Premium feature - upgrade to access" : "Delete node"}>
+					<i className="bi bi-trash"></i>
+				</Button>{" "}
 				{params.data.is_starting_node && (
 					<Button variant="success" size="sm" onClick={() => handleRun(params.data)} title="Run node">
 						<i className="bi bi-play">Run</i>
@@ -1115,24 +1200,84 @@ ${config.nodes
 				</Modal.Body>
 			</Modal>
 
-			<Modal show={showWizard} backdrop="static" keyboard={false} centered>
+			<Modal show={showWizard} backdrop="static" keyboard={false} centered size="lg">
 				<Modal.Header>
 					<Modal.Title>Setup Wizard</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
 					{wizardDone ? (
 						<div className="text-center">
-							<span className="badge bg-success mb-2">Deployed</span>
-							<p>🎉 Your assistant was started and deployed! 🎉</p>
+							<span className="badge bg-success mb-3 fs-6">Deployed</span>
+							<h5 className="mb-3">🎉 Your assistant has been successfully deployed! 🎉</h5>
+							<p className="translucent_white mb-2">You will receive an email notification in the next few minutes.</p>
+							<p className="translucent_white mb-0">
+								Your assistant will continue to run on its scheduled intervals automatically. No further action is required from you.
+							</p>
 						</div>
 					) : (
 						<Form>
-							{wizardInputs.map((inp) => (
-								<Form.Group className="mb-3" key={inp.key}>
-									<Form.Label>{inp.key}</Form.Label>
-									 {Array.isArray(inp.options) && inp.options.length > 0 ? (
-										<Form.Select value={wizardValues[inp.key] || inp.options[0]} onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}>
-											{inp.options.map((opt: string, idx: number) => (
+							{wizardInputs.map((input_dict) => (
+								<Form.Group className="mb-3" key={input_dict.key}>
+									<Form.Label>{input_dict.key}</Form.Label>
+									{input_dict.type === "stock" ? (
+										<div>
+											{/* Stock Search Input */}
+											<Form.Control
+												type="text"
+												placeholder="Search for stocks..."
+												value={stockSearchQuery}
+												onChange={(e) => handleStockSearchChange(e.target.value)}
+											/>
+
+											{/* Stock Search Results */}
+											{stockSearchLoading && (
+												<div className="mt-2">
+													<Spinner animation="border" size="sm" /> <span className="translucent_white">Loading...</span>
+												</div>
+											)}
+
+											{stockSearchResults.length > 0 && (
+												<div className="mt-2 stock-search-results-container p-2">
+													{stockSearchResults.map((stock) => (
+														<div
+															key={stock._id}
+															className="p-2 border-bottom stock-search-result"
+															onClick={() => handleStockSelect(stock, input_dict.key)}>
+															<div className="fw-bold text-white">{stock.symbol}</div>
+															<div className="translucent_white small">{stock.name}</div>
+															<div className="translucent_white small">
+																{stock.exchange} • {stock.country} • {stock.currency}
+															</div>
+														</div>
+													))}
+												</div>
+											)}
+
+											{/* Selected Stocks */}
+											<div className="mt-3">
+												<small className="translucent_white">Selected Stocks ({selectedStocks.length}/3):</small>
+												{selectedStocks.length > 0 && (
+													<div className="mt-2">
+														{selectedStocks.map((stock) => (
+															<span key={stock._id} className="badge stock-selected-badge">
+																{stock.symbol} - {stock.name}
+																<button
+																	type="button"
+																	className="btn-close btn-close-white"
+																	onClick={() => handleStockRemove(stock._id, input_dict.key)}>
+																	X
+																</button>
+															</span>
+														))}
+													</div>
+												)}
+											</div>
+										</div>
+									) : Array.isArray(input_dict.options) && input_dict.options.length > 0 ? (
+										<Form.Select
+											value={wizardValues[input_dict.key] || input_dict.options[0]}
+											onChange={(e) => handleWizardInputChange(input_dict.key, e.target.value)}>
+											{input_dict.options.map((opt: string, idx: number) => (
 												<option key={idx} value={opt}>
 													{opt}
 												</option>
@@ -1141,11 +1286,11 @@ ${config.nodes
 									) : (
 										<Form.Control
 											type="text"
-											value={wizardValues[inp.key] || ""}
-											onChange={(e) => handleWizardInputChange(inp.key, e.target.value)}
+											value={wizardValues[input_dict.key] || ""}
+											onChange={(e) => handleWizardInputChange(input_dict.key, e.target.value)}
 										/>
 									)}
-									{inp.helper_message && <Form.Text className="text-secondary">{inp.helper_message}</Form.Text>}
+									{input_dict.helper_message && <Form.Text className="text-secondary">{input_dict.helper_message}</Form.Text>}
 								</Form.Group>
 							))}
 						</Form>
@@ -1153,9 +1298,14 @@ ${config.nodes
 				</Modal.Body>
 				<Modal.Footer>
 					{wizardDone ? (
-						<Button variant="primary" onClick={() => navigate("/manage/runs")}>
-							View Runs
-						</Button>
+						<>
+							<Button variant="outline-secondary" onClick={() => setShowWizard(false)}>
+								Close
+							</Button>
+							<Button variant="outline-success" onClick={() => navigate("/manage/runs")}>
+								View Runs
+							</Button>
+						</>
 					) : (
 						<Button variant="success" className="w-100" onClick={handleRunAndDeploy} disabled={processingWizard}>
 							{processingWizard ? "Processing..." : "Run and Deploy"}
@@ -1208,7 +1358,7 @@ ${config.nodes
 				show={showPaywall}
 				onHide={() => setShowPaywall(false)}
 				onPay={() => {
-					window.open('https://waveassist.io/pricing', '_blank');
+					window.open("https://your-payment-link.com", "_blank");
 					setShowPaywall(false);
 				}}
 			/>
