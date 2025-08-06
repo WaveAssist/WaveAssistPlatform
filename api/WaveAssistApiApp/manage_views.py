@@ -195,6 +195,7 @@ def create_project(request): ##TCW
 
     project_key = request.POST.get('project_key', '')
     project_name = request.POST.get('project_name', '')
+    is_premium = bool(int(request.POST.get('is_premium', '0')))
     should_create_nodes = request.POST.get('should_create_nodes', '0')
     if project_key == '':
         return ResponseParser.getParsedErrorMessage('Project key not found.')
@@ -215,11 +216,6 @@ def create_project(request): ##TCW
             return ResponseParser.getParsedErrorMessage('Project key already exists.')
     except:
         pass
-
-    try:
-        is_premium = bool(int(request.POST.get('is_premium', '0')))
-    except:
-        is_premium = '1'
 
     try:
         project_object = Project.objects.create(project_key=project_key, name=project_name,
