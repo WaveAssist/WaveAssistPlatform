@@ -43,7 +43,6 @@ def deploy_template(request):
     try:
         get_template_data = json.loads(get_template_response.content)
         is_premium = get_template_data.get('data', {}).get('is_premium', False)
-        print(f"is_premium for template {repo_name}: {is_premium}")
     except Exception as e:
         is_premium = False
 

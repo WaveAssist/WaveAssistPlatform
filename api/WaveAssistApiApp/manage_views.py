@@ -19,6 +19,7 @@ knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.test import Client
 import json
 from WaveAssistApiApp.Utils.responseParser import ResponseParser
+from django_celery_beat.models import PeriodicTask
 
 client = Client()
 
@@ -418,10 +419,22 @@ def delete_project(request): ##ToDo: Write test cases. Check related deleted. Ch
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    
     try:
-        project_object.delete()
-    except:
-        return ResponseParser.getParsedErrorMessage('Project deletion failed.')
+        with transaction.atomic():
+            # Get all DAGs associated with this project through deployments
+            project_dags = DAG.objects.filter(parent_deployment__project_object=project_object)
+            
+            # Delete periodic tasks associated with the project's DAGs
+            for dag in project_dags:
+                if dag.periodic_task:
+                    dag.periodic_task.delete()
+            
+            # Delete the project (this will cascade delete all related objects)
+            project_object.delete()
+            
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Project deletion failed: ' + str(e))
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Project deleted successfully.')
 
