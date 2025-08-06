@@ -9,7 +9,6 @@ from .Utils.utils import run_knock_workflow
 import base64
 from WaveAssistApiApp import manage_views
 from django.views.decorators.cache import cache_page
-import yaml
 
 def deploy_template(request):
     request.POST = request.POST.copy()
