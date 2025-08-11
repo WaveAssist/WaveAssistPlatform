@@ -36,6 +36,120 @@ wp_logo {
 	transition: all 0.2s;
 }
 
+/* Email input styles */
+.email-input-container {
+	width: 100%;
+	max-width: 350px;
+	margin: 0 auto;
+}
+
+.email-input-container .form-control {
+	background: #1a1d2a;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 8px;
+	color: #ffffff;
+	padding: 0.75rem 1rem;
+	font-size: 1rem;
+	transition: all 0.2s;
+}
+
+.email-input-container .form-control:focus {
+	background: #1a1d2a;
+	border-color: #28a745;
+	box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+	color: #ffffff;
+}
+
+.email-input-container .form-control::placeholder {
+	color: rgba(255, 255, 255, 0.5);
+}
+
+.email-input-container .form-control.is-invalid {
+	border-color: #dc3545;
+}
+
+.email-input-container .invalid-feedback {
+	color: #dc3545;
+	font-size: 0.875rem;
+	margin-top: 0.25rem;
+}
+
+/* Divider styles */
+.divider-container {
+	display: flex;
+	align-items: center;
+	margin: 1rem 0;
+	width: 100%;
+	max-width: 350px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.divider {
+	flex: 1;
+	height: 1px;
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.divider-text {
+	color: rgba(255, 255, 255, 0.6);
+	padding: 0 1rem;
+	font-size: 0.875rem;
+}
+
+/* Email sent styles */
+.email-sent-container {
+	width: 100%;
+	max-width: 350px;
+	margin: 0 auto;
+}
+
+.text-muted {
+	color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* More specific selector to override Bootstrap */
+.wa-card .text-muted {
+	color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.email-sent-container .text-muted {
+	color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.text-success {
+	color: #28a745 !important;
+}
+
+.btn-outline-light {
+	color: #ffffff;
+	border-color: #ffffff;
+	background-color: transparent;
+	transition: all 0.2s;
+}
+
+.btn-outline-light:hover {
+	color: #000000;
+	background-color: #ffffff;
+	border-color: #ffffff;
+}
+
+.btn-primary {
+	background-color: #28a745;
+	border-color: #28a745;
+	color: #ffffff;
+}
+
+.btn-primary:hover {
+	background-color: #218838;
+	border-color: #1e7e34;
+}
+
+.btn-primary:disabled {
+	background-color: #6c757d;
+	border-color: #6c757d;
+}
+
 .wp_logo_login {
 	height: auto;
 	margin-bottom: 1.5rem;

@@ -4,7 +4,7 @@ import WALogo from "../assets/Logo/Wave_Predict_W_Logo.png";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../components/firebase";
 // import { xProvider } from "../components/firebase";
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, getRedirectResult, sendSignInLinkToEmail } from "firebase/auth";
 import { loginAPI, getStartedAPI } from "../services/login_services";
 import { Spinner } from "react-bootstrap";
 import ReactGA from "react-ga4";
@@ -25,6 +25,9 @@ const LoginComponent: React.FC = () => {
 
 	const [loading, setLoading] = useState<boolean>(false);
 	const [loaderMessage, setLoaderMessage] = useState("");
+	const [email, setEmail] = useState<string>("");
+	const [emailSent, setEmailSent] = useState<boolean>(false);
+	const [emailError, setEmailError] = useState<string | null>(null);
 	const is_test = false; // ALWAYS KEEP as FALSE
 
 	useEffect(() => {
@@ -161,6 +164,48 @@ const LoginComponent: React.FC = () => {
 		}
 	};
 
+	const handleEmailSignIn = async () => {
+		if (!email || !email.trim()) {
+			setEmailError("Please enter a valid email address");
+			return;
+		}
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(email)) {
+			setEmailError("Please enter a valid email address");
+			return;
+		}
+
+		try {
+			setLoading(true);
+			setEmailError(null);
+
+			// Configure email link settings
+			const actionCodeSettings = {
+				url: `${window.location.origin}/finish-signin${window.location.search}`,
+				handleCodeInApp: true,
+			};
+
+			// Send the sign-in link
+			await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+
+			// Save the email for later use
+			localStorage.setItem("emailForSignIn", email);
+
+			setEmailSent(true);
+			setLoading(false);
+
+			// ✅ Fire GA4 event for email link sent
+			ReactGA.event("email_link_sent", {
+				method: "WaveAssist",
+			});
+		} catch (error: any) {
+			console.error("Email sign-in failed:", error);
+			setEmailError("Failed to send sign-in link. Please try again.");
+			setLoading(false);
+		}
+	};
+
 	// const handleXSignIn = async () => {
 	// 	try {
 	// 		setLoading(true);
@@ -203,14 +248,67 @@ const LoginComponent: React.FC = () => {
 					</div>
 				)}
 
-				<div className="login-buttons">
-					<button onClick={handleGoogleSignIn} className="btn btn-light w-100 mb-3">
-						<i className="bi bi-google me-2"></i> Continue with Google
-					</button>
-					{/* <button onClick={handleXSignIn} className="btn btn-dark w-100 mb-3">
-						<i className="bi bi-twitter-x me-2"></i> Continue with X
-					</button> */}
-				</div>
+				{!emailSent ? (
+					<>
+						<div className="email-input-container mb-3">
+							<input
+								type="email"
+								className={`form-control ${emailError ? "is-invalid" : ""}`}
+								placeholder="Enter your email address"
+								value={email}
+								onChange={(e) => {
+									setEmail(e.target.value);
+									if (emailError) setEmailError(null);
+								}}
+								onKeyPress={(e) => {
+									if (e.key === "Enter") {
+										handleEmailSignIn();
+									}
+								}}
+							/>
+							{emailError && <div className="invalid-feedback">{emailError}</div>}
+						</div>
+
+						<div className="login-buttons">
+							<button onClick={handleEmailSignIn} className="btn btn-primary w-100 mb-3" disabled={loading}>
+								<i className="bi bi-envelope me-2"></i> Continue with Email
+							</button>
+
+							<div className="divider-container">
+								<div className="divider"></div>
+								<span className="divider-text">or</span>
+								<div className="divider"></div>
+							</div>
+
+							<button onClick={handleGoogleSignIn} className="btn btn-light w-100 mb-3" disabled={loading}>
+								<i className="bi bi-google me-2"></i> Continue with Google
+							</button>
+							{/* <button onClick={handleXSignIn} className="btn btn-dark w-100 mb-3">
+								<i className="bi bi-twitter-x me-2"></i> Continue with X
+							</button> */}
+						</div>
+					</>
+				) : (
+					<div className="email-sent-container text-center">
+						<div className="email-sent-icon mb-3">
+							<i className="bi bi-envelope-check text-success" style={{ fontSize: "3rem" }}></i>
+						</div>
+						<h4 className="text-success mb-3">Check your email!</h4>
+						<p className="text-muted mb-3">
+							We've sent a sign-in link to <strong>{email}</strong>
+						</p>
+						<p className="text-muted small mb-4">Click the link in your email to complete the sign-in.</p>
+						<button
+							onClick={() => {
+								setEmailSent(false);
+								setEmail("");
+								setEmailError(null);
+							}}
+							className="btn btn-outline-light">
+							Try a different email
+						</button>
+					</div>
+				)}
 
 				{cliLoginComplete && (
 					<div className="text-center mt-4">
