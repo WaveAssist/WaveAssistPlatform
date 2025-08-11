@@ -367,7 +367,8 @@ def fetch_nodes(request):  # TCW
     node_dict_array = []
     for node_object in node_array:
         node_dict_array.append(node_object.get_dict())
-    data_dict = {'node_array': node_dict_array}
+    data_dict = {'node_array': node_dict_array,
+                 'is_premium': project_object.is_premium}
     return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Nodes fetched successfully.')
 
 
