@@ -1,0 +1,28 @@
+/* Import the base login styles */
+@import "./login_component.css";
+
+/* Additional styles specific to finish signin */
+.loader-container {
+	min-height: 120px;
+}
+
+.text-danger {
+	color: #dc3545 !important;
+}
+
+.text-success {
+	color: #28a745 !important;
+}
+
+.btn-outline-light {
+	color: #ffffff;
+	border-color: #ffffff;
+	background-color: transparent;
+	transition: all 0.2s;
+}
+
+.btn-outline-light:hover {
+	color: #000000;
+	background-color: #ffffff;
+	border-color: #ffffff;
+}

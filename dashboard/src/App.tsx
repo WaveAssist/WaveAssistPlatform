@@ -2,6 +2,7 @@
 import "./index.css";
 import AllProjectsComponent from "./components/all_projects_component";
 import LoginComponent from "./components/login_component";
+import FinishSignInComponent from "./components/finish_signin_component";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./utils/private_route";
@@ -65,6 +66,7 @@ function App() {
 				<section>
 					<Routes>
 						<Route path="/login" element={<LoginComponent />} />
+						<Route path="/finish-signin" element={<FinishSignInComponent />} />
 						<Route path="/test" element={<TestComponent />} />
 
 						<Route path="/" element={<PrivateRoute component={AllProjectsComponent} />} />
