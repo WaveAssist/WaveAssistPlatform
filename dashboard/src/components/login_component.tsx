@@ -11,6 +11,28 @@ import ReactGA from "react-ga4";
 // import Button from "react-bootstrap/Button";
 // import Modal from "react-bootstrap/Modal";
 
+// Safari detection utility
+const isSafari = () => {
+	const userAgent = navigator.userAgent.toLowerCase();
+	// More comprehensive Safari detection including iOS Safari
+	return (
+		(userAgent.includes("safari") && !userAgent.includes("chrome")) ||
+		userAgent.includes("iphone") ||
+		userAgent.includes("ipad") ||
+		userAgent.includes("ipod")
+	);
+};
+
+// Get the current domain for Safari compatibility
+const getCurrentDomain = () => {
+	// For Safari, we need to be more explicit about the domain
+	if (isSafari()) {
+		// Use the full origin including protocol
+		return window.location.origin;
+	}
+	return window.location.origin;
+};
+
 const LoginComponent: React.FC = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -180,13 +202,27 @@ const LoginComponent: React.FC = () => {
 			setLoading(true);
 			setEmailError(null);
 
-			// Configure email link settings
+			const currentDomain = getCurrentDomain();
+			const searchParams = window.location.search;
+
+			console.log("Safari detected:", isSafari());
+			console.log("Current domain:", currentDomain);
+			console.log("Search params:", searchParams);
+
+			// Safari-specific configuration for email link settings
 			const actionCodeSettings = {
-				url: `${window.location.origin}/finish-signin${window.location.search}`,
+				url: `${currentDomain}/finish-signin${searchParams}`,
 				handleCodeInApp: true,
+				// Safari-specific settings to ensure compatibility
+				...(isSafari() && {
+					// Use a more explicit URL format for Safari
+					url: `${window.location.protocol}//${window.location.host}/finish-signin${searchParams}`,
+				}),
 			};
 
-			// Send the sign-in link
+			console.log("Action code settings:", actionCodeSettings);
+
+			// Send the sign-in link with Safari-specific error handling
 			await sendSignInLinkToEmail(auth, email, actionCodeSettings);
 
 			// Save the email for later use
@@ -201,6 +237,69 @@ const LoginComponent: React.FC = () => {
 			});
 		} catch (error: any) {
 			console.error("Email sign-in failed:", error);
+			console.error("Error code:", error.code);
+			console.error("Error message:", error.message);
+
+			// Safari-specific error handling with multiple fallback strategies
+			if (isSafari()) {
+				console.log("Attempting Safari fallback strategies...");
+
+				// Try multiple fallback strategies for Safari
+				const fallbackStrategies = [
+					// Strategy 1: Simplified settings with current domain
+					{
+						url: `${getCurrentDomain()}/finish-signin${window.location.search}`,
+						handleCodeInApp: true,
+					},
+					// Strategy 2: Absolute URL without search params
+					{
+						url: `${getCurrentDomain()}/finish-signin`,
+						handleCodeInApp: true,
+					},
+					// Strategy 3: Protocol-relative URL
+					{
+						url: `//${window.location.host}/finish-signin${window.location.search}`,
+						handleCodeInApp: true,
+					},
+					// Strategy 4: Full URL with protocol
+					{
+						url: `${window.location.protocol}//${window.location.host}/finish-signin${window.location.search}`,
+						handleCodeInApp: true,
+					},
+					// Strategy 5: Minimal settings
+					{
+						url: `${window.location.origin}/finish-signin`,
+						handleCodeInApp: true,
+					},
+				];
+
+				for (let i = 0; i < fallbackStrategies.length; i++) {
+					try {
+						console.log(`Trying Safari fallback strategy ${i + 1}:`, fallbackStrategies[i]);
+						await sendSignInLinkToEmail(auth, email, fallbackStrategies[i]);
+						localStorage.setItem("emailForSignIn", email);
+						setEmailSent(true);
+						setLoading(false);
+
+						console.log(`Safari fallback strategy ${i + 1} succeeded!`);
+
+						ReactGA.event("email_link_sent", {
+							method: "WaveAssist",
+						});
+						return;
+					} catch (retryError: any) {
+						console.error(`Safari fallback strategy ${i + 1} failed:`, retryError);
+						console.error(`Retry error code:`, retryError.code);
+						console.error(`Retry error message:`, retryError.message);
+
+						if (i === fallbackStrategies.length - 1) {
+							// All fallback strategies failed
+							console.error("All Safari fallback strategies failed");
+						}
+					}
+				}
+			}
+
 			setEmailError("Failed to send sign-in link. Please try again.");
 			setLoading(false);
 		}
