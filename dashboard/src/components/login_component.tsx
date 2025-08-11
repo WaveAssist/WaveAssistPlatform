@@ -18,6 +18,7 @@ const LoginComponent: React.FC = () => {
 	const redirect = searchParams.get("redirect") || "/manage";
 
 	const session_id = searchParams.get("session_id");
+	const uid = searchParams.get("uid");
 	const isCLILogin = !!session_id;
 
 	const [cliLoginComplete, setCliLoginComplete] = useState(false);
@@ -27,9 +28,22 @@ const LoginComponent: React.FC = () => {
 	const is_test = false; // ALWAYS KEEP as FALSE
 
 	useEffect(() => {
-		if (isCLILogin) return; // skip redirect if CLI login
-		const uid = localStorage.getItem("uid");
+		// Handle uid parameter from URL
 		if (uid) {
+			localStorage.setItem("uid", uid);
+			const storedRedirect = localStorage.getItem("postLoginRedirect");
+			if (storedRedirect) {
+				localStorage.removeItem("postLoginRedirect");
+				navigate(storedRedirect);
+			} else {
+				navigate(redirect);
+			}
+			return;
+		}
+
+		if (isCLILogin) return; // skip redirect if CLI login
+		const storedUid = localStorage.getItem("uid");
+		if (storedUid) {
 			const storedRedirect = localStorage.getItem("postLoginRedirect");
 			if (storedRedirect) {
 				localStorage.removeItem("postLoginRedirect");
@@ -38,7 +52,7 @@ const LoginComponent: React.FC = () => {
 				navigate(redirect);
 			}
 		}
-	}, [navigate, redirect, isCLILogin]);
+	}, [navigate, redirect, isCLILogin, uid]);
 
 	const handleSuccessfulSignIn = async (user: any) => {
 		try {
@@ -55,17 +69,14 @@ const LoginComponent: React.FC = () => {
 				method: "WaveAssist",
 			});
 
-                        if (data.action === "PERFORM_GET_STARTED" || is_test) {
-                                handleGetStarted();
-                                return;
-                        } else {
-                                localStorage.setItem("user_data", JSON.stringify(data.user_data));
-                                localStorage.setItem("projects_array", JSON.stringify(data.project_array));
-                                localStorage.setItem("uid", data.user_data.uid);
-                                localStorage.setItem(
-                                        "is_premium",
-                                        data.user_data.is_premium ? "true" : "false"
-                                );
+			if (data.action === "PERFORM_GET_STARTED" || is_test) {
+				handleGetStarted();
+				return;
+			} else {
+				localStorage.setItem("user_data", JSON.stringify(data.user_data));
+				localStorage.setItem("projects_array", JSON.stringify(data.project_array));
+				localStorage.setItem("uid", data.user_data.uid);
+				localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
 				const storedRedirect = localStorage.getItem("postLoginRedirect");
 				if (isCLILogin) {
 					setCliLoginComplete(true);
@@ -91,14 +102,11 @@ const LoginComponent: React.FC = () => {
 			setLoaderMessage("Setting up your account, this may take a minute...");
 
 			const firebase_uid = localStorage.getItem("firebase_uid");
-                        const data = await getStartedAPI(firebase_uid, is_test, session_id);
-                        localStorage.setItem("user_data", JSON.stringify(data.user_data));
-                        localStorage.setItem("projects_array", JSON.stringify(data.project_array));
-                        localStorage.setItem("uid", data.user_data.uid);
-                        localStorage.setItem(
-                                "is_premium",
-                                data.user_data.is_premium ? "true" : "false"
-                        );
+			const data = await getStartedAPI(firebase_uid, is_test, session_id);
+			localStorage.setItem("user_data", JSON.stringify(data.user_data));
+			localStorage.setItem("projects_array", JSON.stringify(data.project_array));
+			localStorage.setItem("uid", data.user_data.uid);
+			localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
 
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {
