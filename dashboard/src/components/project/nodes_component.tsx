@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useRef } from "react";
 import Joyride, { Step } from "react-joyride";
 import { Node as RFNode, Edge as RFEdge } from "reactflow";
 import {
@@ -99,6 +99,7 @@ const NodesComponent: React.FC = () => {
 	const [stockSearchLoading, setStockSearchLoading] = useState(false);
 	const [selectedStocks, setSelectedStocks] = useState<any[]>([]);
 	const [stockSearchTimeout, setStockSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+	const stockSearchAbortController = useRef<AbortController | null>(null);
 
 	const navigate = useNavigate();
 	const steps: Step[] = [
@@ -620,9 +621,19 @@ ${config.nodes
 			return;
 		}
 
+		// Cancel previous request if it exists
+		if (stockSearchAbortController.current) {
+			stockSearchAbortController.current.abort();
+		}
+
+		// Create new abort controller for this request
+		stockSearchAbortController.current = new AbortController();
+
 		setStockSearchLoading(true);
 		try {
-			const response = await fetch(`https://appsapi.waveassist.io/generic/search_stocks/${encodeURIComponent(query)}`);
+			const response = await fetch(`https://appsapi.waveassist.io/generic/search_stocks/${encodeURIComponent(query)}`, {
+				signal: stockSearchAbortController.current.signal,
+			});
 			const data = await response.json();
 
 			if (data.status === "success" && data.data.stocks) {
@@ -630,9 +641,12 @@ ${config.nodes
 			} else {
 				setStockSearchResults([]);
 			}
-		} catch (error) {
-			console.error("Stock search failed:", error);
-			setStockSearchResults([]);
+		} catch (error: any) {
+			// Don't log error if it was aborted
+			if (error.name !== "AbortError") {
+				console.error("Stock search failed:", error);
+				setStockSearchResults([]);
+			}
 		} finally {
 			setStockSearchLoading(false);
 		}
@@ -649,7 +663,7 @@ ${config.nodes
 		// Set new timeout for debounced search
 		const timeout = setTimeout(() => {
 			searchStocks(query);
-		}, 250); // 0.25 seconds delay
+		}, 350); // 0.35 seconds delay
 
 		setStockSearchTimeout(timeout);
 	};
