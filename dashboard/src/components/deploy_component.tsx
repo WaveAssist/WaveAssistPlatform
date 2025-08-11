@@ -86,6 +86,7 @@ const DeployComponent: React.FC = () => {
 		try {
 			const formData = new FormData();
 			formData.append("repo_url", templateData.repo_url);
+			formData.append("template_key", searchParams.get("template_key") || "");
 			formData.append("uid", uid);
 			formData.append("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
 			const isPremium = searchParams.get("is_premium") === "true";
