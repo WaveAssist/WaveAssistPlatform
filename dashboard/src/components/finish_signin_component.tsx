@@ -121,10 +121,10 @@ const FinishSignInComponent: React.FC = () => {
 
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {
-				method: "Email Link",
+				method: "WaveAssist",
 			});
 			ReactGA.event("conversion_event_purchase", {
-				method: "Email Link",
+				method: "WaveAssist",
 			});
 
 			setLoading(false);

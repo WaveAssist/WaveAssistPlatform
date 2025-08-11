@@ -105,7 +105,16 @@ wp_logo {
 }
 
 .text-muted {
-	color: rgba(255, 255, 255, 0.6) !important;
+	color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* More specific selector to override Bootstrap */
+.wa-card .text-muted {
+	color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.email-sent-container .text-muted {
+	color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .text-success {

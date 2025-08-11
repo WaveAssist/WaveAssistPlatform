@@ -297,7 +297,7 @@ const LoginComponent: React.FC = () => {
 						<p className="text-muted mb-3">
 							We've sent a sign-in link to <strong>{email}</strong>
 						</p>
-						<p className="text-muted small mb-4">Click the link in your email to complete the sign-in process.</p>
+						<p className="text-muted small mb-4">Click the link in your email to complete the sign-in.</p>
 						<button
 							onClick={() => {
 								setEmailSent(false);
