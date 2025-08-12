@@ -701,6 +701,18 @@ ${config.nodes
 	};
 
 	const handleRunAndDeploy = async () => {
+		// Validate that all required inputs have values
+		const emptyInputs = wizardInputs.filter((input) => {
+			const value = wizardValues[input.key];
+			// Check if value is empty, null, undefined, or just whitespace
+			return !value || value.trim() === "";
+		});
+
+		if (emptyInputs.length > 0) {
+			showToast("Please provide input values for all required fields", "warning");
+			return;
+		}
+
 		setProcessingWizard(true);
 		try {
 			for (const input of wizardInputs) {
@@ -710,7 +722,8 @@ ${config.nodes
 				const env = localStorage.getItem("selected_env_key") || "";
 				await runDAGApi(startingNodeKey, env);
 			}
-			await deployProjectApi("1.0.0");
+			var version_code_string = `0.${Math.floor(Math.random() * 101)}.${Math.floor(Math.random() * 101)}`;
+			await deployProjectApi(version_code_string);
 			setWizardDone(true);
 			localStorage.setItem("show_wizard", "false");
 		} catch (error) {
