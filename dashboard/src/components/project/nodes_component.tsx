@@ -9,9 +9,10 @@ import {
 	deleteNodeApi,
 	runDAGApi,
 	setDataForKeyApi,
+	fetchTemplateApi,
 } from "../../services/project_services";
 import { deployProjectApi } from "../../services/navbar_services";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../utils/toast_context";
 import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap";
 import "./project_components.css";
@@ -62,8 +63,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ show, onHide, onPay }) => (
 
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
-	// const [isOpen, setIsOpen] = useState(false);
-	// const [url, setUrl] = useState("");
+	const location = useLocation();
 	const [showWebhook, setShowWebhook] = useState(false);
 	const [showEmailWebhook, setShowEmailWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
@@ -92,6 +92,8 @@ const NodesComponent: React.FC = () => {
 	const [processingWizard, setProcessingWizard] = useState(false);
 	const [wizardDone, setWizardDone] = useState(false);
 	const [startingNodeKey, setStartingNodeKey] = useState<string | null>(null);
+	const [allowDismiss, setAllowDismiss] = useState(false);
+	const [wizardLoading, setWizardLoading] = useState(false);
 
 	// Stock search state
 	const [stockSearchQuery, setStockSearchQuery] = useState("");
@@ -100,6 +102,13 @@ const NodesComponent: React.FC = () => {
 	const [selectedStocks, setSelectedStocks] = useState<any[]>([]);
 	const [stockSearchTimeout, setStockSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 	const stockSearchAbortController = useRef<AbortController | null>(null);
+
+	// Simple checks for premium status
+	const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+	const showAddNodeButton = !(isProjectPremium && !isUserPremium);
+	const showDownloadButton = !(isProjectPremium && !isUserPremium);
 
 	const navigate = useNavigate();
 	const steps: Step[] = [
@@ -110,32 +119,33 @@ const NodesComponent: React.FC = () => {
 			locale: { last: "Ok" },
 		},
 	];
-	useEffect(() => {
-		const wizardStr = localStorage.getItem("wizard_input_array");
-		let arr: any[] = [];
-		if (wizardStr) {
-			try {
-				arr = JSON.parse(wizardStr);
-				setWizardInputs(arr);
-				const defaults: Record<string, string> = {};
-				arr.forEach((i: any) => {
-					if (i.default_value !== undefined) {
-						defaults[i.key] = i.default_value;
-					} else if (Array.isArray(i.options) && i.options.length > 0) {
-						defaults[i.key] = i.options[0];
-					} else {
-						defaults[i.key] = "";
-					}
-				});
-				setWizardValues(defaults);
-			} catch (e) {
-				console.error("Failed to parse wizard input array", e);
-			}
+
+	const fetch_wizard_inputs = async (template_key: string) => {
+		setWizardLoading(true);
+		try {
+			const template_data = await fetchTemplateApi(template_key);
+			const input_array = template_data.input_array;
+			setWizardInputs(input_array);
+			const defaults: Record<string, string> = {};
+			input_array.forEach((i: any) => {
+				if (i.default_value !== undefined) {
+					defaults[i.key] = i.default_value;
+				} else if (Array.isArray(i.options) && i.options.length > 0) {
+					defaults[i.key] = i.options[0];
+				} else {
+					defaults[i.key] = "";
+				}
+			});
+			setWizardValues(defaults);
+		} catch (err) {
+			console.error("Error fetching assistant:", err);
+			showToast("Could not find anything to configure.", "warning");
+			setShowWizard(false); // Dismiss the wizard modal
+		} finally {
+			setWizardLoading(false);
 		}
-		if (Array.isArray(arr) && arr.length > 0 && localStorage.getItem("show_wizard") === "true") {
-			setShowWizard(true);
-		}
-	}, []);
+	};
+
 	useEffect(() => {
 		localStorage.setItem("nodesView", view);
 	}, [view]);
@@ -162,6 +172,34 @@ const NodesComponent: React.FC = () => {
 	const handleNodesChange = (changes: NodeChange[]) => {
 		setRfNodes((nds) => applyNodeChanges(changes, nds));
 	};
+
+	useEffect(() => {
+		// Check if the state contains openWizard: true
+		if (location.state?.openWizard) {
+			// Get template key and fetch wizard inputs immediately
+			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
+			let templateKey = projectData.template_key || location.state?.templateKey || localStorage.getItem("template_key") || "";
+
+			if (templateKey === "") {
+				//ToDo: Temporary. Remove this once we have a way to set the template key in the project data.
+				// Determine template key based on project type
+				if (projectData.project_key?.includes("wavepredict")) {
+					templateKey = "wavepredict_template";
+				} else if (projectData.project_key?.includes("patternanalyser")) {
+					templateKey = "patternanalyser-template";
+				} else if (projectData.project_key?.includes("sentimentradar")) {
+					templateKey = "sentimentradar-template";
+				} else {
+					templateKey = "default_template";
+				}
+			}
+			fetch_wizard_inputs(templateKey);
+			setShowWizard(true);
+			if (location.state?.allowDismiss) {
+				setAllowDismiss(true);
+			}
+		}
+	}, [location.state]);
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
@@ -430,7 +468,6 @@ ${config.nodes
 
 		// Base64 URL-safe encode
 		const b64url = (str: string): string => btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-		console.log("b64url", b64url);
 		const uuidNoDash = uid.replace(/-/g, "");
 		const emailLocal = [uuidNoDash, b64url(projectId), b64url(nodeId), b64url(envId)].join(".");
 
@@ -485,7 +522,6 @@ ${config.nodes
 	const fetchNodes = async () => {
 		try {
 			const data = await fetchNodesApi();
-			console.log("API Response:", data); // Debug log to see the API response
 
 			// Ensure project premium status is set in localStorage
 			// Prefer API response is_premium; fallback to selected_project or legacy field
@@ -500,7 +536,6 @@ ${config.nodes
 			}
 
 			var nodes_array = data.node_array;
-			console.log("Nodes array:", nodes_array); // Debug log to see the nodes array
 			//Sort to keep the starting node at the top
 			nodes_array.sort((a: any, b: any) => {
 				if (a.is_starting_node && !b.is_starting_node) return -1;
@@ -587,19 +622,11 @@ ${config.nodes
 	};
 
 	const ViewCodeButton = (params: any) => {
-		// Debug log to see the node data
-		console.log("ViewCode Node data:", params.data);
-
 		// Check if the project is premium and if the user has premium access
 		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 		const isDisabled = isProjectPremium && !isUserPremium;
-
-		// Debug log to see the premium status
-		console.log(
-			`ViewCode Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`
-		);
 
 		return (
 			<button
@@ -740,7 +767,6 @@ ${config.nodes
 			var version_code_string = `0.${Math.floor(Math.random() * 101)}.${Math.floor(Math.random() * 101)}`;
 			await deployProjectApi(version_code_string);
 			setWizardDone(true);
-			localStorage.setItem("show_wizard", "false");
 		} catch (error) {
 			console.error("Wizard run failed:", error);
 			showToast("" + error, "danger");
@@ -750,17 +776,11 @@ ${config.nodes
 	};
 
 	const ActionButtons = (params: any) => {
-		// Debug log to see the node data
-		console.log("Node data:", params.data);
-
 		// Check if the project is premium and if the user has premium access
 		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 		const isDisabled = isProjectPremium && !isUserPremium;
-
-		// Debug log to see the premium status
-		console.log(`Node: ${params.data.name}, isProjectPremium: ${isProjectPremium}, isUserPremium: ${isUserPremium}, isDisabled: ${isDisabled}`);
 
 		return (
 			<div>
@@ -898,12 +918,18 @@ ${config.nodes
 								<span className="bi bi-diagram-2">{!isMobile && <> Flow View</>}</span>
 							)}
 						</Button>
-						<Button variant="dark" onClick={handleCreateNode} className="ms-2">
-							<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
-						</Button>
-						<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
-							<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
-						</Button>
+						{/* Check premium status for Add Node button */}
+						{showAddNodeButton && (
+							<Button variant="dark" onClick={handleCreateNode} className="ms-2">
+								<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
+							</Button>
+						)}
+						{/* Check premium status for Download button */}
+						{showDownloadButton && (
+							<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
+								<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
+							</Button>
+						)}
 					</div>
 				</div>
 
@@ -1242,8 +1268,8 @@ ${config.nodes
 				</Modal.Body>
 			</Modal>
 
-			<Modal show={showWizard} backdrop="static" keyboard={false} centered size="lg">
-				<Modal.Header>
+			<Modal show={showWizard} backdrop="static" keyboard={false} centered size="lg" onHide={() => setShowWizard(false)}>
+				<Modal.Header closeButton={allowDismiss}>
 					<Modal.Title>Setup Wizard</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
@@ -1255,6 +1281,13 @@ ${config.nodes
 							<p className="translucent_white mb-0">
 								Your assistant will continue to run on its scheduled intervals automatically. No further action is required from you.
 							</p>
+						</div>
+					) : wizardLoading ? (
+						<div className="text-center">
+							<Spinner animation="border" role="status" variant="success">
+								<span className="visually-hidden">Loading...</span>
+							</Spinner>
+							<p className="translucent_white mt-3">Loading configuration...</p>
 						</div>
 					) : (
 						<Form>
@@ -1349,8 +1382,8 @@ ${config.nodes
 							</Button>
 						</>
 					) : (
-						<Button variant="success" className="w-100" onClick={handleRunAndDeploy} disabled={processingWizard}>
-							{processingWizard ? "Processing..." : "Run and Deploy"}
+						<Button variant="success" className="w-100" onClick={handleRunAndDeploy} disabled={processingWizard || wizardLoading}>
+							{processingWizard ? "Processing..." : wizardLoading ? "Loading..." : "Run and Deploy"}
 						</Button>
 					)}
 				</Modal.Footer>

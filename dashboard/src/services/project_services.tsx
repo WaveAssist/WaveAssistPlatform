@@ -247,3 +247,9 @@ export const runDAGApi = async (nodeKey: string, selected_env: string): Promise<
 	});
 	return callApi(path, body);
 };
+
+// fetchTemplateApi
+export const fetchTemplateApi = async (template_key: string): Promise<any> => {
+	const path = `templates/${template_key}/`;
+	return callGetApi(path, new URLSearchParams());
+};

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navbar, Nav, Button, Modal } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import "./navbar.css";
 import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
@@ -12,6 +13,7 @@ interface NavbarProps {
 const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
+	const navigate = useNavigate();
 
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
@@ -31,6 +33,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const projectNames = projectsArray.map((project: any) => project.name + " - " + project.project_key);
 	const [selectedEnvName, setSelectedEnvName] = useState("Default");
 	const [versionCode, setVersionCode] = useState("1.0.0");
+
+	// Simple checks for premium status
+	const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+	const showDeployButton = !(isProjectPremium && !isUserPremium);
 
 	useEffect(() => {
 		fetchEnvironments();
@@ -91,12 +99,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 		return selectedProject ? selectedProject.name + " - " + selectedProject.project_key : "Select Project";
 	};
 
-	// const getDefaultEnvironmentName = (): string => {
-	// 	const selectedEnvKey = localStorage.getItem("selected_env_key");
-	// 	const selectedEnv = environmentArray.find((env: any) => env.key === selectedEnvKey);
-	// 	return selectedEnv ? selectedEnv.name : "Select Environment";
-	// };
-
 	const handleOpenModal = () => {
 		setShowModal(true);
 	};
@@ -117,6 +119,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 			console.error("Deploy Project Failed:", error);
 			showToast("" + error, "danger");
 		}
+	};
+
+	const handleReconfigureClick = async () => {
+		navigate("/manage/nodes", { state: { openWizard: true, allowDismiss: true } });
 	};
 
 	return (
@@ -143,9 +149,14 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 							onItemSelect={handleEnvChange}
 							icon="bi-stack"
 						/>
-						<Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
-							<i className="bi bi-cloud-arrow-up-fill"></i>
-						</Button>
+						<button className="btn btn-outline-success btn-sm ms-2" onClick={handleReconfigureClick} title="Reconfigure">
+							<i className="bi bi-gear-fill"></i>
+						</button>
+						{showDeployButton && (
+							<Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
+								<i className="bi bi-cloud-arrow-up-fill"></i>
+							</Button>
+						)}
 					</div>
 				</>
 			) : (
@@ -169,10 +180,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 							/>
 						</Nav>
 						<Nav className="ms-auto">
-							<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
-								<i className="bi bi-cloud-arrow-up-fill me-2"></i>
-								Deploy
-							</Button>
+							<button className="btn btn-outline-success btn-sm me-2" onClick={handleReconfigureClick}>
+								<i className="bi bi-gear-fill me-2"></i>
+								Reconfigure
+							</button>
+							{showDeployButton && (
+								<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
+									<i className="bi bi-cloud-arrow-up-fill me-2"></i>
+									Deploy
+								</Button>
+							)}
 						</Nav>
 					</Navbar.Collapse>
 				</>

@@ -109,6 +109,7 @@ const LoginComponent: React.FC = () => {
 				}
 				if (storedRedirect) {
 					localStorage.removeItem("postLoginRedirect");
+					// Navigate to the stored redirect URL which should preserve all parameters
 					navigate(storedRedirect);
 				} else {
 					navigate(redirect);
@@ -152,6 +153,7 @@ const LoginComponent: React.FC = () => {
 			}
 			if (storedRedirect) {
 				localStorage.removeItem("postLoginRedirect");
+				// Navigate to the stored redirect URL which should preserve all parameters
 				navigate(storedRedirect);
 			} else {
 				navigate(redirect);
@@ -204,11 +206,6 @@ const LoginComponent: React.FC = () => {
 
 			const currentDomain = getCurrentDomain();
 			const searchParams = window.location.search;
-
-			console.log("Safari detected:", isSafari());
-			console.log("Current domain:", currentDomain);
-			console.log("Search params:", searchParams);
-
 			// Safari-specific configuration for email link settings
 			const actionCodeSettings = {
 				url: `${currentDomain}/finish-signin${searchParams}`,
