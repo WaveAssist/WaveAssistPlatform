@@ -60,8 +60,8 @@ const LogsComponent: React.FC = () => {
 				.join("\n");
 			setLogString(logsAsString);
 		} catch (error) {
-			console.error("fetchEnvironmentsApi failed:", error);
-			showToast("Something went wrong with loading environments, please try again.", "danger");
+			console.error("fetchLogsApi failed:", error);
+			showToast("Something went wrong with loading logs, trying again...", "warning");
 		}
 	};
 
