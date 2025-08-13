@@ -248,9 +248,9 @@ const LoginComponent: React.FC = () => {
 						url: `${getCurrentDomain()}/finish-signin${window.location.search}`,
 						handleCodeInApp: true,
 					},
-					// Strategy 2: Absolute URL without search params
+					// Strategy 2: Absolute URL with search params
 					{
-						url: `${getCurrentDomain()}/finish-signin`,
+						url: `${getCurrentDomain()}/finish-signin${window.location.search}`,
 						handleCodeInApp: true,
 					},
 					// Strategy 3: Protocol-relative URL
@@ -263,9 +263,9 @@ const LoginComponent: React.FC = () => {
 						url: `${window.location.protocol}//${window.location.host}/finish-signin${window.location.search}`,
 						handleCodeInApp: true,
 					},
-					// Strategy 5: Minimal settings
+					// Strategy 5: Minimal settings with search params
 					{
-						url: `${window.location.origin}/finish-signin`,
+						url: `${window.location.origin}/finish-signin${window.location.search}`,
 						handleCodeInApp: true,
 					},
 				];
