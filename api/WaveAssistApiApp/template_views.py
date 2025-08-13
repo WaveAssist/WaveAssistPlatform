@@ -25,6 +25,10 @@ def deploy_template(request):
     if not repo_url:
         return ResponseParser.getParsedErrorMessage("Missing template Repo URL in request")
 
+    template_key = request.POST.get('template_key', '')
+    if not template_key:
+        return ResponseParser.getParsedErrorMessage("Missing template key in request")
+
     timezone = request.POST.get('timezone', 'UTC')
 
     repo_parts = repo_url.replace('.git', '').rstrip('/').split('/')
@@ -34,6 +38,13 @@ def deploy_template(request):
     else:
         owner = GITHUB_USERNAME
         repo_name = repo_parts[-1]
+
+    get_template_response = get_template(request, template_key)
+    try:
+        get_template_data = json.loads(get_template_response.content)
+        is_premium = get_template_data.get('data', {}).get('is_premium', False)
+    except Exception as e:
+        is_premium = False
 
     yaml_config = get_config_yaml_from_github(repo_name, owner)
     is_valid, message =  validate_yaml_config(yaml_config)
@@ -47,7 +58,7 @@ def deploy_template(request):
 
     request.POST['project_key'] = project_key
     request.POST['project_name'] = project_name
-    ##ToDo: Can also pass is_premium here, instead from request.
+    request.POST['is_premium'] = is_premium
     create_project_response = manage_views.create_project(request)
     response_data = json.loads(create_project_response.content)
     

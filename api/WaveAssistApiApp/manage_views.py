@@ -19,6 +19,7 @@ knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.test import Client
 import json
 from WaveAssistApiApp.Utils.responseParser import ResponseParser
+from django_celery_beat.models import PeriodicTask
 
 client = Client()
 
@@ -195,6 +196,7 @@ def create_project(request): ##TCW
 
     project_key = request.POST.get('project_key', '')
     project_name = request.POST.get('project_name', '')
+    is_premium = bool(int(request.POST.get('is_premium', '0')))
     should_create_nodes = request.POST.get('should_create_nodes', '0')
 
     if project_key == '':
@@ -218,11 +220,6 @@ def create_project(request): ##TCW
         pass
 
     template_key = request.POST.get('template_key', '')
-    try:
-        is_premium = bool(int(request.POST.get('is_premium', '0')))
-    except:
-        is_premium = '1'
-
     try:
         project_object = Project.objects.create(project_key=project_key, name=project_name,
                                                 is_premium=is_premium, template_key=template_key)
@@ -372,7 +369,8 @@ def fetch_nodes(request):  # TCW
     node_dict_array = []
     for node_object in node_array:
         node_dict_array.append(node_object.get_dict())
-    data_dict = {'node_array': node_dict_array}
+    data_dict = {'node_array': node_dict_array,
+                 'is_premium': project_object.is_premium}
     return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Nodes fetched successfully.')
 
 
@@ -424,10 +422,22 @@ def delete_project(request): ##ToDo: Write test cases. Check related deleted. Ch
     success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    
     try:
-        project_object.delete()
-    except:
-        return ResponseParser.getParsedErrorMessage('Project deletion failed.')
+        with transaction.atomic():
+            # Get all DAGs associated with this project through deployments
+            project_dags = DAG.objects.filter(parent_deployment__project_object=project_object)
+            
+            # Delete periodic tasks associated with the project's DAGs
+            for dag in project_dags:
+                if dag.periodic_task:
+                    dag.periodic_task.delete()
+            
+            # Delete the project (this will cascade delete all related objects)
+            project_object.delete()
+            
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage('Project deletion failed: ' + str(e))
 
     return ResponseParser.getParsedSuccessMessage({}, '200', 'Project deleted successfully.')
 
