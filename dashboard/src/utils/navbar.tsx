@@ -6,7 +6,6 @@ import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
 import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext"; // Import the custom hook
-import { useWizard } from "./WizardContext"; // Import the wizard hook
 interface NavbarProps {
 	onToggleSidebar?: () => void;
 }
@@ -14,7 +13,6 @@ interface NavbarProps {
 const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
-	const { triggerWizard } = useWizard();
 	const navigate = useNavigate();
 	const location = useLocation();
 
