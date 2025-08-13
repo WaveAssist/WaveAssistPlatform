@@ -713,8 +713,20 @@ ${config.nodes
 			return !value || value.trim() === "";
 		});
 
+		// Additional validation for stock-type inputs
+		const stockInputs = wizardInputs.filter((input) => input.type === "stock");
+		const invalidStockInputs = stockInputs.filter((input) => {
+			// Check if no stocks are selected for stock-type inputs
+			return selectedStocks.length === 0;
+		});
+
 		if (emptyInputs.length > 0) {
 			showToast("Please provide input values for all required fields", "warning");
+			return;
+		}
+
+		if (invalidStockInputs.length > 0) {
+			showToast("Please select at least one stock from the dropdown", "warning");
 			return;
 		}
 
