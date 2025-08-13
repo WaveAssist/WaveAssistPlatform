@@ -179,30 +179,27 @@ const NodesComponent: React.FC = () => {
 			if (location.state?.allowDismiss) {
 				setAllowDismiss(true);
 			}
-		}
-	}, [location.state]);
 
-	// Call fetch_wizard_inputs when showWizard becomes true
-	useEffect(() => {
-		if (showWizard) {
-			// Get template key from project_data, location state, localStorage, or use a default
+			// Get template key and fetch wizard inputs immediately
 			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
-			var templateKey = projectData.template_key || location.state?.templateKey || localStorage.getItem("template_key") || "";
+			let templateKey = projectData.template_key || location.state?.templateKey || localStorage.getItem("template_key") || "";
+
 			if (templateKey === "") {
-				// if projectData's project_key contains wavepredict, then template_key is wavepredict_template
-				if (projectData.project_key.includes("wavepredict")) {
+				// Determine template key based on project type
+				if (projectData.project_key?.includes("wavepredict")) {
 					templateKey = "wavepredict_template";
-				} else if (projectData.project_key.includes("patternanalyser")) {
+				} else if (projectData.project_key?.includes("patternanalyser")) {
 					templateKey = "patternanalyser-template";
-				} else if (projectData.project_key.includes("sentimentradar")) {
+				} else if (projectData.project_key?.includes("sentimentradar")) {
 					templateKey = "sentimentradar-template";
 				} else {
 					templateKey = "default_template";
 				}
 			}
+
 			fetch_wizard_inputs(templateKey);
 		}
-	}, [showWizard, location.state]);
+	}, [location.state]);
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
