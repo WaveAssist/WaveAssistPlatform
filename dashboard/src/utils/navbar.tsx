@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Navbar, Nav, Button, Modal } from "react-bootstrap";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./navbar.css";
 import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
 import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext"; // Import the custom hook
+import { useWizard } from "./WizardContext"; // Import the wizard hook
 interface NavbarProps {
 	onToggleSidebar?: () => void;
 }
@@ -12,6 +14,9 @@ interface NavbarProps {
 const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
+	const { triggerWizard } = useWizard();
+	const navigate = useNavigate();
+	const location = useLocation();
 
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
@@ -119,6 +124,26 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 		}
 	};
 
+	const handleReconfigureClick = () => {
+		// Check if we're on the nodes page
+		if (location.pathname === "/manage/nodes") {
+			// If on nodes page, trigger the wizard directly
+			triggerWizard();
+		} else {
+			// If on other pages, navigate to nodes page first
+			navigate("/manage/nodes");
+			// Set a flag to trigger wizard after navigation
+			setTimeout(() => {
+				triggerWizard();
+			}, 100);
+		}
+	};
+
+	const handleWizardClose = () => {
+		// Dispatch event to close wizard
+		window.dispatchEvent(new CustomEvent('closeWizard'));
+	};
+
 	return (
 		<Navbar variant="dark" expand="lg" className="px-3 navbar-main">
 			{isMobile ? (
@@ -143,9 +168,21 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 							onItemSelect={handleEnvChange}
 							icon="bi-stack"
 						/>
-						<Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
-							<i className="bi bi-cloud-arrow-up-fill"></i>
-						</Button>
+						<button className="btn btn-outline-success btn-sm ms-2" onClick={handleReconfigureClick} title="Reconfigure">
+							<i className="bi bi-gear-fill"></i>
+						</button>
+						{(() => {
+							const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+							const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+							const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+							const isDisabled = isProjectPremium && !isUserPremium;
+							
+							return !isDisabled && (
+								<Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
+									<i className="bi bi-cloud-arrow-up-fill"></i>
+								</Button>
+							);
+						})()}
 					</div>
 				</>
 			) : (
@@ -169,10 +206,23 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 							/>
 						</Nav>
 						<Nav className="ms-auto">
-							<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
-								<i className="bi bi-cloud-arrow-up-fill me-2"></i>
-								Deploy
-							</Button>
+							<button className="btn btn-outline-success btn-sm me-2" onClick={handleReconfigureClick}>
+								<i className="bi bi-gear-fill me-2"></i>
+								Reconfigure
+							</button>
+							{(() => {
+								const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+								const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+								const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+								const isDisabled = isProjectPremium && !isUserPremium;
+								
+								return !isDisabled && (
+									<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
+										<i className="bi bi-cloud-arrow-up-fill me-2"></i>
+										Deploy
+									</Button>
+								);
+							})()}
 						</Nav>
 					</Navbar.Collapse>
 				</>
