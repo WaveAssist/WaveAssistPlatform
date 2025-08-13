@@ -109,6 +109,7 @@ const LoginComponent: React.FC = () => {
 				}
 				if (storedRedirect) {
 					localStorage.removeItem("postLoginRedirect");
+					// Navigate to the stored redirect URL which should preserve all parameters
 					navigate(storedRedirect);
 				} else {
 					navigate(redirect);
@@ -152,6 +153,7 @@ const LoginComponent: React.FC = () => {
 			}
 			if (storedRedirect) {
 				localStorage.removeItem("postLoginRedirect");
+				// Navigate to the stored redirect URL which should preserve all parameters
 				navigate(storedRedirect);
 			} else {
 				navigate(redirect);

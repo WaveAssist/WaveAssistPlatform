@@ -16,6 +16,7 @@ const DeployComponent: React.FC = () => {
 	const [isDeploying, setIsDeploying] = useState(false);
 	const [showSuccessModal, setShowSuccessModal] = useState(false);
 	const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+	const [hasAutoDeployed, setHasAutoDeployed] = useState(false); // New flag to prevent re-triggers
 
 	const deploymentMessages = [
 		"🚀 Initializing your AI assistant, this may take a minute.. ",
@@ -45,8 +46,19 @@ const DeployComponent: React.FC = () => {
 	}, [isDeploying]);
 
 	useEffect(() => {
+		const autoDeploy = searchParams.get("auto_deploy") === "true";
+		if (templateData && autoDeploy && !hasAutoDeployed) {
+			setHasAutoDeployed(true); // Mark as triggered to avoid repeats
+			handleDeploy();
+		}
+	}, [templateData, searchParams]); // Depend on templateData to trigger after update
+
+	useEffect(() => {
 		const uid = localStorage.getItem("uid");
 		const templateKey = searchParams.get("template_key");
+		const autoDeploy = searchParams.get("auto_deploy") === "true";
+		console.log("searchParams", searchParams);
+		console.log("autoDeploy", autoDeploy);
 
 		if (!templateKey) {
 			alert("Missing template_key in URL.");
@@ -55,7 +67,9 @@ const DeployComponent: React.FC = () => {
 		}
 
 		if (!uid) {
-			const redirectUrl = `/deploy?template_key=${templateKey}`;
+			// Preserve all URL parameters when redirecting to login
+			const currentParams = new URLSearchParams(searchParams);
+			const redirectUrl = `/deploy?${currentParams.toString()}`;
 			localStorage.setItem("postLoginRedirect", redirectUrl);
 			navigate(`/login`);
 			return;
@@ -154,6 +168,7 @@ const DeployComponent: React.FC = () => {
 			</div>
 
 			<div className="separator"></div>
+
 			<div className="row w-100">
 				<div className="col-lg-8 order-2 order-lg-1">
 					<div className="deploy-card">
@@ -170,8 +185,8 @@ const DeployComponent: React.FC = () => {
 							<div className="markdown-body mb-4 mt-4">
 								<ReactMarkdown>{templateData.markdown}</ReactMarkdown>
 							</div>
-							<Button variant="success" className="w-100 mb-2  py-2" onClick={handleDeploy} disabled={isDeploying}>
-								🚀 Deploy Now
+							<Button variant="success" className="w-100 mb-2 py-2" onClick={handleDeploy} disabled={isDeploying}>
+								{isDeploying ? "Deploying..." : "Deploy Now"}
 							</Button>
 						</div>
 					</div>
@@ -186,8 +201,8 @@ const DeployComponent: React.FC = () => {
 							<h4>{templateData.title}</h4>
 							<p className="description">{templateData.description}</p>
 
-							<Button variant="success" className="w-100 mb-2  mt-4 py-2" onClick={handleDeploy} disabled={isDeploying}>
-								Deploy Now
+							<Button variant="success" className="w-100 mb-2 mt-4 py-2" onClick={handleDeploy} disabled={isDeploying}>
+								{isDeploying ? "Deploying..." : "Deploy Now"}
 							</Button>
 						</div>
 					</div>

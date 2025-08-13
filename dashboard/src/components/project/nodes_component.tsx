@@ -139,7 +139,8 @@ const NodesComponent: React.FC = () => {
 			setWizardValues(defaults);
 		} catch (err) {
 			console.error("Error fetching assistant:", err);
-			alert("Could not fetch assistant data.");
+			showToast("Could not find anything to configure.", "warning");
+			setShowWizard(false); // Dismiss the wizard modal
 		} finally {
 			setWizardLoading(false);
 		}
@@ -175,16 +176,12 @@ const NodesComponent: React.FC = () => {
 	useEffect(() => {
 		// Check if the state contains openWizard: true
 		if (location.state?.openWizard) {
-			setShowWizard(true);
-			if (location.state?.allowDismiss) {
-				setAllowDismiss(true);
-			}
-
 			// Get template key and fetch wizard inputs immediately
 			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
 			let templateKey = projectData.template_key || location.state?.templateKey || localStorage.getItem("template_key") || "";
 
 			if (templateKey === "") {
+				//ToDo: Temporary. Remove this once we have a way to set the template key in the project data.
 				// Determine template key based on project type
 				if (projectData.project_key?.includes("wavepredict")) {
 					templateKey = "wavepredict_template";
@@ -196,8 +193,11 @@ const NodesComponent: React.FC = () => {
 					templateKey = "default_template";
 				}
 			}
-
 			fetch_wizard_inputs(templateKey);
+			setShowWizard(true);
+			if (location.state?.allowDismiss) {
+				setAllowDismiss(true);
+			}
 		}
 	}, [location.state]);
 
@@ -767,13 +767,11 @@ ${config.nodes
 			var version_code_string = `0.${Math.floor(Math.random() * 101)}.${Math.floor(Math.random() * 101)}`;
 			await deployProjectApi(version_code_string);
 			setWizardDone(true);
-			localStorage.setItem("show_wizard", "false");
 		} catch (error) {
 			console.error("Wizard run failed:", error);
 			showToast("" + error, "danger");
 		} finally {
 			setProcessingWizard(false);
-			localStorage.setItem("show_wizard", "false");
 		}
 	};
 
