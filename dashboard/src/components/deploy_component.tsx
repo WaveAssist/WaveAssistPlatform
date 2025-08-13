@@ -104,6 +104,10 @@ const DeployComponent: React.FC = () => {
 					try {
 						const projectData = await fetchAllProjectsAPI();
 						localStorage.setItem("projects_array", JSON.stringify(projectData.project_array));
+						const selectedProject = projectData.project_array.find((p: any) => p.project_key === projectKey);
+						if (selectedProject) {
+							localStorage.setItem("selected_project", JSON.stringify(selectedProject));
+						}
 					} catch (err) {
 						console.error("Failed to refresh projects:", err);
 					}
@@ -183,7 +187,7 @@ const DeployComponent: React.FC = () => {
 							<p className="description">{templateData.description}</p>
 
 							<Button variant="success" className="w-100 mb-2  mt-4 py-2" onClick={handleDeploy} disabled={isDeploying}>
-								🚀 Deploy Now
+								Deploy Now
 							</Button>
 						</div>
 					</div>
@@ -211,11 +215,9 @@ const DeployComponent: React.FC = () => {
 						variant="success"
 						className="mt-3 px-4 py-2 fw-semibold"
 						onClick={() => {
-							if (Array.isArray(templateData.input_array) && templateData.input_array.length > 0) {
-								localStorage.setItem("wizard_input_array", JSON.stringify(templateData.input_array));
-								localStorage.setItem("show_wizard", "true");
-							}
-							navigate(`/manage/nodes?project_key=${localStorage.getItem("selected_project_key")}`);
+							navigate(`/manage/nodes?project_key=${localStorage.getItem("selected_project_key")}`, {
+								state: { openWizard: true, allowDismiss: false },
+							});
 						}}>
 						Go to Assistant
 					</Button>

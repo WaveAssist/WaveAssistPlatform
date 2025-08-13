@@ -122,7 +122,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	};
 
 	const handleReconfigureClick = async () => {
-		navigate("/manage/nodes", { state: { openWizard: true } });
+		navigate("/manage/nodes", { state: { openWizard: true, allowDismiss: true } });
 	};
 
 	return (
