@@ -102,6 +102,13 @@ const NodesComponent: React.FC = () => {
 	const [stockSearchTimeout, setStockSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 	const stockSearchAbortController = useRef<AbortController | null>(null);
 
+	// Simple checks for premium status
+	const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+	const showAddNodeButton = !(isProjectPremium && !isUserPremium);
+	const showDownloadButton = !(isProjectPremium && !isUserPremium);
+
 	const navigate = useNavigate();
 	const steps: Step[] = [
 		{
@@ -900,35 +907,17 @@ ${config.nodes
 							)}
 						</Button>
 						{/* Check premium status for Add Node button */}
-						{(() => {
-							const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-							const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-							const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-							const isDisabled = isProjectPremium && !isUserPremium;
-
-							return (
-								!isDisabled && (
-									<Button variant="dark" onClick={handleCreateNode} className="ms-2">
-										<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
-									</Button>
-								)
-							);
-						})()}
+						{showAddNodeButton && (
+							<Button variant="dark" onClick={handleCreateNode} className="ms-2">
+								<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
+							</Button>
+						)}
 						{/* Check premium status for Download button */}
-						{(() => {
-							const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-							const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-							const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-							const isDisabled = isProjectPremium && !isUserPremium;
-
-							return (
-								!isDisabled && (
-									<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
-										<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
-									</Button>
-								)
-							);
-						})()}
+						{showDownloadButton && (
+							<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
+								<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
+							</Button>
+						)}
 					</div>
 				</div>
 
