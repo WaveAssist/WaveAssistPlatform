@@ -196,6 +196,7 @@ def create_project(request): ##TCW
     project_key = request.POST.get('project_key', '')
     project_name = request.POST.get('project_name', '')
     should_create_nodes = request.POST.get('should_create_nodes', '0')
+
     if project_key == '':
         return ResponseParser.getParsedErrorMessage('Project key not found.')
 
@@ -216,6 +217,7 @@ def create_project(request): ##TCW
     except:
         pass
 
+    template_key = request.POST.get('template_key', '')
     try:
         is_premium = bool(int(request.POST.get('is_premium', '0')))
     except:
@@ -223,7 +225,7 @@ def create_project(request): ##TCW
 
     try:
         project_object = Project.objects.create(project_key=project_key, name=project_name,
-                                                is_premium=is_premium)
+                                                is_premium=is_premium, template_key=template_key)
         project_object.save()
 
         ##Add a default datarun to project

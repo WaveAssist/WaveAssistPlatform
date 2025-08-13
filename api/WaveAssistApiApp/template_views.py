@@ -47,6 +47,7 @@ def deploy_template(request):
 
     request.POST['project_key'] = project_key
     request.POST['project_name'] = project_name
+    ##ToDo: Can also pass is_premium here, instead from request.
     create_project_response = manage_views.create_project(request)
     response_data = json.loads(create_project_response.content)
     

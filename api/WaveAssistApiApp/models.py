@@ -183,7 +183,7 @@ class Project(models.Model):
     project_key = models.CharField(max_length=255, unique=True)
     integration_array = models.ManyToManyField('Integrations', blank=True)
     is_premium = models.BooleanField(default=False)  # True if the project is premium, False if free
-
+    template_key = models.CharField(max_length=255, default="", null=True)  # Used for templates
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -197,6 +197,7 @@ class Project(models.Model):
         project_dict['name'] = self.name
         project_dict['project_key'] = self.project_key
         project_dict['is_premium'] = self.is_premium
+        project_dict['template_key'] = self.template_key
 
         for integration_object in self.integration_array.all():
             project_dict['integration_array'] = integration_object.get_dict()
