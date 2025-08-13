@@ -157,28 +157,8 @@ const NodesComponent: React.FC = () => {
 			setStockSearchResults([]);
 			setStockSearchLoading(false);
 			setSelectedStocks([]);
-			setWizardOpenedFromReconfigure(false);
 		}
 	}, [showWizard]);
-
-	// Listen for wizard trigger event from navbar
-	useEffect(() => {
-		const handleTriggerWizard = () => {
-			setWizardOpenedFromReconfigure(true);
-			setShowWizard(true);
-		};
-
-		const handleCloseWizard = () => {
-			setShowWizard(false);
-		};
-
-		window.addEventListener('triggerWizard', handleTriggerWizard);
-		window.addEventListener('closeWizard', handleCloseWizard);
-		return () => {
-			window.removeEventListener('triggerWizard', handleTriggerWizard);
-			window.removeEventListener('closeWizard', handleCloseWizard);
-		};
-	}, []);
 
 	const handleNodesChange = (changes: NodeChange[]) => {
 		setRfNodes((nds) => applyNodeChanges(changes, nds));
@@ -925,11 +905,13 @@ ${config.nodes
 							const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 							const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 							const isDisabled = isProjectPremium && !isUserPremium;
-							
-							return !isDisabled && (
-								<Button variant="dark" onClick={handleCreateNode} className="ms-2">
-									<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
-								</Button>
+
+							return (
+								!isDisabled && (
+									<Button variant="dark" onClick={handleCreateNode} className="ms-2">
+										<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
+									</Button>
+								)
 							);
 						})()}
 						{/* Check premium status for Download button */}
@@ -938,11 +920,13 @@ ${config.nodes
 							const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 							const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 							const isDisabled = isProjectPremium && !isUserPremium;
-							
-							return !isDisabled && (
-								<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
-									<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
-								</Button>
+
+							return (
+								!isDisabled && (
+									<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
+										<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
+									</Button>
+								)
 							);
 						})()}
 					</div>
@@ -1283,18 +1267,7 @@ ${config.nodes
 				</Modal.Body>
 			</Modal>
 
-			<Modal 
-				show={showWizard} 
-				backdrop="static" 
-				keyboard={false} 
-				centered 
-				size="lg"
-				onHide={() => {
-					if (wizardOpenedFromReconfigure) {
-						setShowWizard(false);
-					}
-				}}
-			>
+			<Modal show={showWizard} backdrop="static" keyboard={false} centered size="lg">
 				<Modal.Header closeButton={wizardOpenedFromReconfigure}>
 					<Modal.Title>Setup Wizard</Modal.Title>
 				</Modal.Header>

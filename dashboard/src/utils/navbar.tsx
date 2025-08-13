@@ -37,6 +37,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const [selectedEnvName, setSelectedEnvName] = useState("Default");
 	const [versionCode, setVersionCode] = useState("1.0.0");
 
+	// Simple checks for premium status
+	const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
+	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
+	const showDeployButton = !(isProjectPremium && !isUserPremium);
+
 	useEffect(() => {
 		fetchEnvironments();
 	}, []);
@@ -96,12 +102,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 		return selectedProject ? selectedProject.name + " - " + selectedProject.project_key : "Select Project";
 	};
 
-	// const getDefaultEnvironmentName = (): string => {
-	// 	const selectedEnvKey = localStorage.getItem("selected_env_key");
-	// 	const selectedEnv = environmentArray.find((env: any) => env.key === selectedEnvKey);
-	// 	return selectedEnv ? selectedEnv.name : "Select Environment";
-	// };
-
 	const handleOpenModal = () => {
 		setShowModal(true);
 	};
@@ -124,24 +124,17 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 		}
 	};
 
-	const handleReconfigureClick = () => {
+	const handleReconfigureClick = async () => {
 		// Check if we're on the nodes page
 		if (location.pathname === "/manage/nodes") {
 			// If on nodes page, trigger the wizard directly
 			triggerWizard();
 		} else {
 			// If on other pages, navigate to nodes page first
-			navigate("/manage/nodes");
-			// Set a flag to trigger wizard after navigation
-			setTimeout(() => {
-				triggerWizard();
-			}, 100);
+			await navigate("/manage/nodes");
+			// Trigger wizard after navigation is complete
+			triggerWizard();
 		}
-	};
-
-	const handleWizardClose = () => {
-		// Dispatch event to close wizard
-		window.dispatchEvent(new CustomEvent('closeWizard'));
 	};
 
 	return (
@@ -171,18 +164,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 						<button className="btn btn-outline-success btn-sm ms-2" onClick={handleReconfigureClick} title="Reconfigure">
 							<i className="bi bi-gear-fill"></i>
 						</button>
-						{(() => {
-							const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-							const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-							const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-							const isDisabled = isProjectPremium && !isUserPremium;
-							
-							return !isDisabled && (
-								<Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
-									<i className="bi bi-cloud-arrow-up-fill"></i>
-								</Button>
-							);
-						})()}
+						{showDeployButton && (
+							<Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
+								<i className="bi bi-cloud-arrow-up-fill"></i>
+							</Button>
+						)}
 					</div>
 				</>
 			) : (
@@ -210,19 +196,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 								<i className="bi bi-gear-fill me-2"></i>
 								Reconfigure
 							</button>
-							{(() => {
-								const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
-								const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-								const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-								const isDisabled = isProjectPremium && !isUserPremium;
-								
-								return !isDisabled && (
-									<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
-										<i className="bi bi-cloud-arrow-up-fill me-2"></i>
-										Deploy
-									</Button>
-								);
-							})()}
+							{showDeployButton && (
+								<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
+									<i className="bi bi-cloud-arrow-up-fill me-2"></i>
+									Deploy
+								</Button>
+							)}
 						</Nav>
 					</Navbar.Collapse>
 				</>
