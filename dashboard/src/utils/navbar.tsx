@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navbar, Nav, Button, Modal } from "react-bootstrap";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./navbar.css";
 import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
@@ -14,7 +14,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
 	const navigate = useNavigate();
-	const location = useLocation();
 
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
@@ -123,16 +122,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	};
 
 	const handleReconfigureClick = async () => {
-		// Check if we're on the nodes page
-		if (location.pathname === "/manage/nodes") {
-			// If on nodes page, trigger the wizard directly
-			triggerWizard();
-		} else {
-			// If on other pages, navigate to nodes page first
-			await navigate("/manage/nodes");
-			// Trigger wizard after navigation is complete
-			triggerWizard();
-		}
+		navigate("/manage/nodes", { state: { openWizard: true } });
 	};
 
 	return (

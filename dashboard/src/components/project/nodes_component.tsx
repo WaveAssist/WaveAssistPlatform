@@ -11,7 +11,7 @@ import {
 	setDataForKeyApi,
 } from "../../services/project_services";
 import { deployProjectApi } from "../../services/navbar_services";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../utils/toast_context";
 import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap";
 import "./project_components.css";
@@ -62,8 +62,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ show, onHide, onPay }) => (
 
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
-	// const [isOpen, setIsOpen] = useState(false);
-	// const [url, setUrl] = useState("");
+	const location = useLocation();
 	const [showWebhook, setShowWebhook] = useState(false);
 	const [showEmailWebhook, setShowEmailWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
@@ -118,6 +117,7 @@ const NodesComponent: React.FC = () => {
 			locale: { last: "Ok" },
 		},
 	];
+
 	useEffect(() => {
 		const wizardStr = localStorage.getItem("wizard_input_array");
 		let arr: any[] = [];
@@ -170,6 +170,15 @@ const NodesComponent: React.FC = () => {
 	const handleNodesChange = (changes: NodeChange[]) => {
 		setRfNodes((nds) => applyNodeChanges(changes, nds));
 	};
+
+	useEffect(() => {
+		// Check if the state contains openModal: true
+		if (location.state?.openModal) {
+			setShowWizard(true);
+			setWizardOpenedFromReconfigure(true);
+			delete location.state?.openModal;
+		}
+	}, [location.state]);
 
 	// Setup react-hook-form
 	const defaultValuesDict: NodeType = {
