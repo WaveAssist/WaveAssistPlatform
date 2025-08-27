@@ -71,6 +71,7 @@ def send_email(request):
                 To=to_email,
                 Subject=subject,
                 HtmlBody=html_content,
+                TrackOpens=True,
                 Attachments=attachments if attachments else None
             )
             return ResponseParser.getParsedSuccessMessage(
