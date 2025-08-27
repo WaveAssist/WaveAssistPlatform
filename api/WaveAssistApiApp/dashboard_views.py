@@ -78,6 +78,55 @@ def login(request): ##TCW
     return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
 
 
+def fetch_openrouter_credits(request, uid):
+    try:
+        user_object = User.objects.get(uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage('User not found.')
+
+    try:
+        account_object = Account.objects.get(created_by_user=user_object)
+        open_router_key = account_object.open_router_key
+    except:
+        return ResponseParser.getParsedErrorMessage('Account not found.')
+
+    credit_data = {
+        'limit': 0,
+        'usage': 0,
+        'limit_remaining': 0,
+    }
+    
+    if open_router_key:
+        try:
+            # Fetch credits from OpenRouter
+            headers = {
+                "Authorization": f"Bearer {open_router_key}",
+                "Content-Type": "application/json",
+            }
+            
+            # Get credits information
+            credits_url = "https://openrouter.ai/api/v1/key"
+            credits_response = requests.get(credits_url, headers=headers, timeout=10)
+            if credits_response.status_code == 200:
+                credits_info = credits_response.json()
+                data = credits_info.get('data', {})
+                credit_data['limit'] = data.get('limit', 0)
+                credit_data['usage'] = data.get('usage', 0)
+                credit_data['limit_remaining'] = data.get('limit_remaining', 0)
+            else:
+                print(f"OpenRouter credits API returned status {credits_response.status_code}")
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Network error fetching OpenRouter credits: {str(e)}")
+            return ResponseParser.getParsedErrorMessage(f'Network error: {str(e)}')
+        except Exception as e:
+            print(f"Error fetching OpenRouter credits: {str(e)}")
+            return ResponseParser.getParsedErrorMessage(f'Error fetching credits: {str(e)}')
+    else:
+        return ResponseParser.getParsedErrorMessage('OpenRouter key not found.')
+    
+    return ResponseParser.getParsedSuccessMessage(credit_data, '200', 'OpenRouter credits fetched successfully.')
+
 
 
 def handle_cli_session(request, user_data):
