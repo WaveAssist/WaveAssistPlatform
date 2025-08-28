@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { auth } from '../components/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 interface PrivateRouteProps {
   component: React.ComponentType<any>;
@@ -8,7 +10,29 @@ interface PrivateRouteProps {
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, layout: Layout, ...rest }) => {
   const location = useLocation();
-  const isAuthenticated = !!localStorage.getItem('uid');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setIsAuthenticated(!!user);
+      
+      // Sync with localStorage for backward compatibility
+      if (user) {
+        localStorage.setItem('uid', user.uid);
+      } else {
+        localStorage.removeItem('uid');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Show loading while checking authentication
+  if (isAuthenticated === null) {
+    return <div>Loading...</div>;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} />;
