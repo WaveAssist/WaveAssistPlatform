@@ -200,12 +200,14 @@ const LoginComponent: React.FC = () => {
 			return;
 		}
 
-		// Prepare search parameters with redirect
+		// Prepare search parameters with redirect and email
 		const searchParams = new URLSearchParams(window.location.search);
 		const storedRedirect = localStorage.getItem("postLoginRedirect");
 		if (storedRedirect) {
 			searchParams.set("redirect", storedRedirect);
 		}
+		// Add email as URL parameter for better cross-browser compatibility
+		searchParams.set("email", encodeURIComponent(email));
 		const searchParamsString = searchParams.toString();
 		const finalSearchParams = searchParamsString ? `?${searchParamsString}` : "";
 
@@ -230,9 +232,6 @@ const LoginComponent: React.FC = () => {
 
 			// Send the sign-in link with Safari-specific error handling
 			await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-
-			// Save the email for later use
-			localStorage.setItem("emailForSignIn", email);
 
 			setEmailSent(true);
 			setLoading(false);
@@ -283,7 +282,6 @@ const LoginComponent: React.FC = () => {
 					try {
 						console.log(`Trying Safari fallback strategy ${i + 1}:`, fallbackStrategies[i]);
 						await sendSignInLinkToEmail(auth, email, fallbackStrategies[i]);
-						localStorage.setItem("emailForSignIn", email);
 						setEmailSent(true);
 						setLoading(false);
 

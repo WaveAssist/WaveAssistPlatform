@@ -25,10 +25,11 @@ const FinishSignInComponent: React.FC = () => {
 					return;
 				}
 
-				// Get the email from localStorage (set during the initial sign-in attempt)
-				const emailForSignIn = localStorage.getItem("emailForSignIn");
+				// Get the email from URL parameters (more reliable than localStorage)
+				const searchParams = new URLSearchParams(window.location.search);
+				const emailForSignIn = searchParams.get("email");
 				if (!emailForSignIn) {
-					setError("Email not found. Please try signing in again.");
+					setError("Email not found in URL. Please try signing in again.");
 					setLoading(false);
 					return;
 				}
@@ -37,9 +38,6 @@ const FinishSignInComponent: React.FC = () => {
 
 				// Complete the sign-in process
 				const result = await signInWithEmailLink(auth, emailForSignIn, window.location.href);
-
-				// Clear the email from localStorage
-				localStorage.removeItem("emailForSignIn");
 
 				// Handle successful sign-in using existing logic
 				await handleSuccessfulSignIn(result.user);
