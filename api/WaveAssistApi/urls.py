@@ -30,6 +30,7 @@ urlpatterns = [
     path("login/", csrf_exempt(dashboard_views.login), name="login"),
     path("cli_login/session/<str:session_id>/status", csrf_exempt(dashboard_views.cli_login_status), name="cli_login_status_view"),
     path("fetch_openrouter_credits/<str:uid>/", csrf_exempt(dashboard_views.fetch_openrouter_credits), name="fetch_openrouter_credits"),
+    path("fetch_assistant/<str:assistant_key>/", csrf_exempt(dashboard_views.fetch_assistant), name="fetch_assistant"),
 
     ##Manage URL's
     path("manage/get_started/", csrf_exempt(manage_views.get_started), name="get_started"),

@@ -161,3 +161,13 @@ def cli_login_status(request, session_id):
     if data:
         return ResponseParser.getParsedSuccessMessage(data,200, "CLI login status success")
     return ResponseParser.getParsedErrorMessage("Not yet authenticated", 404)
+
+
+def fetch_assistant(request, assistant_key):
+    try:
+        assistant = Assistants.objects.get(assistant_key=assistant_key)
+        return ResponseParser.getParsedSuccessMessage(assistant.get_dict(), '200', 'Assistant found successfully.')
+    except Assistants.DoesNotExist:
+        return ResponseParser.getParsedErrorMessage('Assistant not found.', 404)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(f'Error fetching assistant: {str(e)}', 500)

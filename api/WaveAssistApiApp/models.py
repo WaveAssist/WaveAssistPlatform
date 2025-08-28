@@ -156,6 +156,31 @@ class Integrations(models.Model):
         verbose_name = 'Integration'
         verbose_name_plural = 'Integrations'
 
+class Assistants(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255, default="", null=True)
+    assistant_key = models.CharField(max_length=255, unique=True)
+    github_url = models.CharField(max_length=255, default="", null=True)
+    credits_needed_per_unit = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Assistants: {self.id} ({self.name})"
+
+    def get_dict(self):
+        assistants_dict = {}
+        assistants_dict['id'] = self.id
+        assistants_dict['name'] = self.name
+        assistants_dict['assistant_key'] = self.assistant_key
+        assistants_dict['github_url'] = self.github_url
+        assistants_dict['credits_needed_per_unit'] = self.credits_needed_per_unit
+        return assistants_dict
+
+    class Meta:
+        db_table = "WaveAssist_Assistants"
+        verbose_name = 'Assistant'
+        verbose_name_plural = 'Assistants'
+
 class DataKey(models.Model):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(max_length=255, unique=True)

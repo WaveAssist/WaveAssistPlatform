@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import User, AccessProvided, Integrations, DataKey, Project, DataRuns, Nodes, DashboardSection, DAG, \
-    Deployments, Account
+    Deployments, Account, Assistants
 
 
 @admin.register(User)
@@ -89,5 +89,12 @@ class AccountAdmin(admin.ModelAdmin):
     list_display = ('id', 'account_name', 'is_working_running', 'is_premium', 'account_uid','created_by_user','created_at')
     search_fields = ('account_name',)
     list_filter = ('is_working_running', 'created_at',)
+    readonly_fields = ('id', 'created_at')
+
+@admin.register(Assistants)
+class AssistantsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'assistant_key', 'github_url', 'credits_needed_per_unit', 'created_at')
+    search_fields = ('name', 'assistant_key', 'github_url')
+    list_filter = ('credits_needed_per_unit', 'created_at')
     readonly_fields = ('id', 'created_at')
 
