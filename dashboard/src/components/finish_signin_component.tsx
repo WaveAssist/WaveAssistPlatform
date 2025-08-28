@@ -63,7 +63,11 @@ const FinishSignInComponent: React.FC = () => {
 			// Get URL parameters
 			const searchParams = new URLSearchParams(location.search);
 			const session_id = searchParams.get("session_id");
-			const redirect = searchParams.get("redirect") || "/manage";
+			const urlRedirect = searchParams.get("redirect");
+			const storedRedirect = localStorage.getItem("postLoginRedirect");
+
+			// Prioritize URL parameter over localStorage, fallback to default
+			const redirect = urlRedirect || storedRedirect || "/manage";
 			const isCLILogin = !!session_id;
 			const is_test = false;
 
@@ -84,18 +88,19 @@ const FinishSignInComponent: React.FC = () => {
 				localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
 				localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
-				const storedRedirect = localStorage.getItem("postLoginRedirect");
+
+				// Clean up localStorage if we used the stored redirect
+				if (storedRedirect) {
+					localStorage.removeItem("postLoginRedirect");
+				}
+
 				if (isCLILogin) {
 					// Handle CLI login completion
 					return;
 				}
-				if (storedRedirect) {
-					localStorage.removeItem("postLoginRedirect");
-					// Navigate to the stored redirect URL which should preserve all parameters
-					navigate(storedRedirect);
-				} else {
-					navigate(redirect);
-				}
+
+				// Navigate to the determined redirect URL
+				navigate(redirect);
 			}
 		} catch (error) {
 			console.error("Login failed:", error);
@@ -109,7 +114,11 @@ const FinishSignInComponent: React.FC = () => {
 			setLoading(true);
 			const searchParams = new URLSearchParams(location.search);
 			const session_id = searchParams.get("session_id");
-			const redirect = searchParams.get("redirect") || "/manage";
+			const urlRedirect = searchParams.get("redirect");
+			const storedRedirectGetStarted = localStorage.getItem("postLoginRedirect");
+
+			// Prioritize URL parameter over localStorage, fallback to default
+			const redirect = urlRedirect || storedRedirectGetStarted || "/manage";
 			const isCLILogin = !!session_id;
 			const is_test = false;
 
@@ -129,19 +138,19 @@ const FinishSignInComponent: React.FC = () => {
 			});
 
 			setLoading(false);
-			const storedRedirect = localStorage.getItem("postLoginRedirect");
+
+			// Clean up localStorage if we used the stored redirect
+			if (storedRedirectGetStarted) {
+				localStorage.removeItem("postLoginRedirect");
+			}
 
 			if (isCLILogin) {
 				// Handle CLI login completion
 				return;
 			}
-			if (storedRedirect) {
-				localStorage.removeItem("postLoginRedirect");
-				// Navigate to the stored redirect URL which should preserve all parameters
-				navigate(storedRedirect);
-			} else {
-				navigate(redirect);
-			}
+
+			// Navigate to the determined redirect URL
+			navigate(redirect);
 		} catch (error) {
 			console.error("Get Started Failed:", error);
 			setError("Something went wrong creating your account, please try again.");

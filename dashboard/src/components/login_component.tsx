@@ -200,20 +200,29 @@ const LoginComponent: React.FC = () => {
 			return;
 		}
 
+		// Prepare search parameters with redirect
+		const searchParams = new URLSearchParams(window.location.search);
+		const storedRedirect = localStorage.getItem("postLoginRedirect");
+		if (storedRedirect) {
+			searchParams.set("redirect", storedRedirect);
+		}
+		const searchParamsString = searchParams.toString();
+		const finalSearchParams = searchParamsString ? `?${searchParamsString}` : "";
+
 		try {
 			setLoading(true);
 			setEmailError(null);
 
 			const currentDomain = getCurrentDomain();
-			const searchParams = window.location.search;
+
 			// Safari-specific configuration for email link settings
 			const actionCodeSettings = {
-				url: `${currentDomain}/finish-signin${searchParams}`,
+				url: `${currentDomain}/finish-signin${finalSearchParams}`,
 				handleCodeInApp: true,
 				// Safari-specific settings to ensure compatibility
 				...(isSafari() && {
 					// Use a more explicit URL format for Safari
-					url: `${window.location.protocol}//${window.location.host}/finish-signin${searchParams}`,
+					url: `${window.location.protocol}//${window.location.host}/finish-signin${finalSearchParams}`,
 				}),
 			};
 
@@ -245,27 +254,27 @@ const LoginComponent: React.FC = () => {
 				const fallbackStrategies = [
 					// Strategy 1: Simplified settings with current domain
 					{
-						url: `${getCurrentDomain()}/finish-signin${window.location.search}`,
+						url: `${getCurrentDomain()}/finish-signin${finalSearchParams}`,
 						handleCodeInApp: true,
 					},
 					// Strategy 2: Absolute URL with search params
 					{
-						url: `${getCurrentDomain()}/finish-signin${window.location.search}`,
+						url: `${getCurrentDomain()}/finish-signin${finalSearchParams}`,
 						handleCodeInApp: true,
 					},
 					// Strategy 3: Protocol-relative URL
 					{
-						url: `//${window.location.host}/finish-signin${window.location.search}`,
+						url: `//${window.location.host}/finish-signin${finalSearchParams}`,
 						handleCodeInApp: true,
 					},
 					// Strategy 4: Full URL with protocol
 					{
-						url: `${window.location.protocol}//${window.location.host}/finish-signin${window.location.search}`,
+						url: `${window.location.protocol}//${window.location.host}/finish-signin${finalSearchParams}`,
 						handleCodeInApp: true,
 					},
 					// Strategy 5: Minimal settings with search params
 					{
-						url: `${window.location.origin}/finish-signin${window.location.search}`,
+						url: `${window.location.origin}/finish-signin${finalSearchParams}`,
 						handleCodeInApp: true,
 					},
 				];
