@@ -22,7 +22,7 @@ def deploy_template(request):
         return ResponseParser.getParsedErrorMessage('You do not have access to create projects.')
 
     repo_url = request.POST.get('repo_url', '')
-    should_install_requirements = request.POST.get('should_install_requirements', "1")
+    should_install_requirements = request.POST.get('should_install_requirements', "0")
     
     if not repo_url:
         return ResponseParser.getParsedErrorMessage("Missing template Repo URL in request")
