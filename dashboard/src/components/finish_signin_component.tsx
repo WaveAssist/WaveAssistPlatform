@@ -27,7 +27,19 @@ const FinishSignInComponent: React.FC = () => {
 
 				// Get the email from URL parameters (more reliable than localStorage)
 				const searchParams = new URLSearchParams(window.location.search);
-				const emailForSignIn = searchParams.get("email");
+				let emailForSignIn = searchParams.get("email");
+				// Some providers double-encode query params; decode defensively
+				if (emailForSignIn) {
+					try {
+						// decode twice at most, then trim
+						const once = decodeURIComponent(emailForSignIn);
+						const twice = decodeURIComponent(once);
+						emailForSignIn = twice.trim();
+					} catch (_) {
+						// Fallback: best-effort sanitize
+						emailForSignIn = emailForSignIn.trim();
+					}
+				}
 				if (!emailForSignIn) {
 					setError("Email not found in URL. Please try signing in again.");
 					setLoading(false);

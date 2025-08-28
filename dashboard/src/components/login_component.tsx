@@ -239,7 +239,7 @@ const LoginComponent: React.FC = () => {
 			searchParams.set("redirect", storedRedirect);
 		}
 		// Add email as URL parameter for better cross-browser compatibility
-		searchParams.set("email", encodeURIComponent(email));
+		searchParams.set("email", email);
 		const searchParamsString = searchParams.toString();
 		const finalSearchParams = searchParamsString ? `?${searchParamsString}` : "";
 
