@@ -22,12 +22,10 @@ def deploy_template(request):
         return ResponseParser.getParsedErrorMessage('You do not have access to create projects.')
 
     repo_url = request.POST.get('repo_url', '')
+    should_install_requirements = request.POST.get('should_install_requirements', "1")
+    
     if not repo_url:
         return ResponseParser.getParsedErrorMessage("Missing template Repo URL in request")
-
-    template_key = request.POST.get('template_key', '')
-    if not template_key:
-        return ResponseParser.getParsedErrorMessage("Missing template key in request")
 
     timezone = request.POST.get('timezone', 'UTC')
 
@@ -38,13 +36,6 @@ def deploy_template(request):
     else:
         owner = GITHUB_USERNAME
         repo_name = repo_parts[-1]
-
-    get_template_response = get_template(request, template_key)
-    try:
-        get_template_data = json.loads(get_template_response.content)
-        is_premium = get_template_data.get('data', {}).get('is_premium', False)
-    except Exception as e:
-        is_premium = False
 
     yaml_config = get_config_yaml_from_github(repo_name, owner)
     is_valid, message =  validate_yaml_config(yaml_config)
@@ -58,7 +49,7 @@ def deploy_template(request):
 
     request.POST['project_key'] = project_key
     request.POST['project_name'] = project_name
-    request.POST['is_premium'] = is_premium
+    request.POST['is_premium'] = False
     create_project_response = manage_views.create_project(request)
     response_data = json.loads(create_project_response.content)
     
@@ -69,13 +60,14 @@ def deploy_template(request):
         else:
             return ResponseParser.getParsedErrorMessage("Project creation failed: " + response_data.get("message", "Unknown error"))
 
-        install_requirements_from_yaml(request, yaml_config, project_key)
+        if should_install_requirements == "1":  
+            install_requirements_from_yaml(request, yaml_config, project_key)
+            configure_variables(uid, project_key, yaml_config)
+
         node_files = get_nodes_from_github(repo_name, owner)
         file_map = {n["node_name"]: n["content"] for n in node_files}
-
         created_nodes = create_nodes_from_yaml(project_object, nodes, file_map, timezone)
         link_node_dependencies(yaml_config, created_nodes)
-        configure_variables(uid, project_key, yaml_config)
     except Exception as e:
         print(f"❌ Error creating project or nodes: {str(e)}")
         return ResponseParser.getParsedErrorMessage("Project was not created")
