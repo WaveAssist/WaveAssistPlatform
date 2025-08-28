@@ -6,12 +6,14 @@ import Modal from "react-bootstrap/Modal";
 import Alert from "react-bootstrap/Alert";
 import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchAllProjectsAPI, createProjectAPI, deleteProjectApi } from "../services/all_projects_services";
 import { useToast } from "../utils/toast_context";
 import "./all_projects_component.css";
 
 import { usePostHog } from "posthog-js/react";
+import Spinner from "react-bootstrap/Spinner";
+import axios from "axios";
 
 interface Project {
 	project_key: string;
@@ -31,6 +33,7 @@ const AllProjectsComponent: React.FC = () => {
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const posthog = usePostHog();
+	const [searchParams] = useSearchParams();
 
 	const [runTour, setRunTour] = useState(false);
 	const steps: Step[] = [
@@ -47,6 +50,32 @@ const AllProjectsComponent: React.FC = () => {
 		},
 	];
 
+	const [isDeploying, setIsDeploying] = useState(false);
+	const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+	const [hasAutoDeployed, setHasAutoDeployed] = useState(false);
+	const deploymentMessages = [
+		"🚀 Initializing your AI assistant, this may take a minute.. ",
+		"🚀 Initializing your AI assistant, this may take a minute..",
+		"📦 Installing dependencies to power your workflow...",
+		"🔧 Configuring settings for peak performance...",
+		"⚡ Activating your customized assistant...",
+		"✨ Almost ready! Polishing the final touches...",
+	];
+
+	useEffect(() => {
+		let interval: NodeJS.Timeout;
+		if (isDeploying) {
+			interval = setInterval(() => {
+				setCurrentMessageIndex((prev) => (prev < deploymentMessages.length - 1 ? prev + 1 : prev));
+			}, 3000);
+		} else {
+			setCurrentMessageIndex(0);
+		}
+		return () => {
+			if (interval) clearInterval(interval);
+		};
+	}, [isDeploying]);
+
 	useEffect(() => {
 		fetchData();
 		registerPostHogUser();
@@ -55,6 +84,75 @@ const AllProjectsComponent: React.FC = () => {
                 const premiumLocal = localStorage.getItem("is_premium") === "true";
                 setIsUserPremium(premiumLocal || Boolean(userData.is_premium));
 	}, []);
+
+	useEffect(() => {
+		// Auto-deploy flow: when redirected here with params, run deployment with overlay
+		const autoDeploy = searchParams.get("auto_deploy") === "true";
+		const templateKey = searchParams.get("template_key");
+		if (!autoDeploy || !templateKey || hasAutoDeployed) return;
+
+		const uid = localStorage.getItem("uid");
+		if (!uid) {
+			const currentParams = new URLSearchParams(searchParams);
+			localStorage.setItem("postLoginRedirect", `/deploy?${currentParams.toString()}`);
+			navigate("/login");
+			return;
+		}
+
+		const run = async () => {
+			setHasAutoDeployed(true);
+			setIsDeploying(true);
+			try {
+				// 1) Fetch template info
+				const res = await axios.get(`https://api.waveassist.io/templates/${templateKey}/`);
+				if (res.data.success !== "1") throw new Error("Failed to fetch assistant");
+				const templateData = res.data.data;
+
+				// 2) Deploy
+				const formData = new FormData();
+				formData.append("repo_url", templateData.repo_url);
+				formData.append("template_key", templateKey);
+				formData.append("uid", uid);
+				formData.append("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+				const isPremium = searchParams.get("is_premium") === "true";
+				formData.append("is_premium", isPremium ? "1" : "0");
+				const response = await axios.post("https://api.waveassist.io/template/deploy_template/", formData, {
+					headers: { "Content-Type": "multipart/form-data" },
+				});
+				if (response.data.success === "1") {
+					localStorage.setItem("is_template_run", "true");
+					const projectKey = response.data.data?.project_key || response.data.project_key;
+					if (projectKey) {
+						localStorage.setItem("selected_project_key", projectKey);
+						try {
+							const projectData = await fetchAllProjectsAPI();
+							localStorage.setItem("projects_array", JSON.stringify(projectData.project_array));
+							const selectedProject = projectData.project_array.find((p: any) => p.project_key === projectKey);
+							if (selectedProject) {
+								localStorage.setItem("selected_project", JSON.stringify(selectedProject));
+							}
+						} catch (err) {
+							console.error("Failed to refresh projects:", err);
+						}
+						// Navigate to nodes directly after deploy
+						navigate(`/manage/nodes?project_key=${projectKey}`, { state: { openWizard: true, allowDismiss: false } });
+						return;
+					}
+					throw new Error("No project key returned");
+				} else {
+					alert("❌ Failed to deploy project, please try again.");
+				}
+			} catch (error) {
+				console.error("Auto-deploy failed:", error);
+				alert("❌ Something went wrong while deploying. Please try again.");
+			} finally {
+				setIsDeploying(false);
+			}
+		};
+
+		run();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [searchParams, hasAutoDeployed]);
 
 	useEffect(() => {
 		if (!isProjectKeyEdited) {
@@ -378,6 +476,14 @@ const AllProjectsComponent: React.FC = () => {
 					},
 				}}
 			/>
+
+			{/* Loader Overlay for auto-deploy */}
+			<Modal show={isDeploying} centered backdrop="static" keyboard={false}>
+				<Modal.Body className="text-center py-5">
+					<Spinner animation="border" role="status" className="mb-3" />
+					<h5>{deploymentMessages[currentMessageIndex]}</h5>
+				</Modal.Body>
+			</Modal>
 		</div>
 	);
 };
