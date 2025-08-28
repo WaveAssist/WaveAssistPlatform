@@ -253,7 +253,7 @@ def get_data_and_dependencies_for_dag(project_object, node_array, uid):
 
 def fetch_account_object_for_user(user_object):
     try:
-        account_object = Account.objects.get(user_object=user_object)
+        account_object = Account.objects.get(created_by_user=user_object)
     except:
         return None
     return account_object
