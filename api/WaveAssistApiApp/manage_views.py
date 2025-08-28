@@ -27,6 +27,8 @@ client = Client()
 def get_started(request): #TCW
     firebase_token = request.POST.get('firebase_token', '')
     is_test = int(request.POST.get('is_test', 0)) == 1
+    is_operator_account = int(request.POST.get('is_operator_account', 1)) == 1
+
     try:
         firebase_uid, decoded_dict = get_firebase_uid(firebase_token)
     except Exception as e:
@@ -76,7 +78,10 @@ def get_started(request): #TCW
             ##Create Account
             account_name = request.POST.get('account_name', user_object.name)
             account_uid = user_object.uid
-            celery_queue = 'queue_' + str(account_uid)
+            if is_operator_account: 
+                celery_queue = SHARED_OPERATOR_QUEUE
+            else:
+                celery_queue = 'queue_' + str(account_uid)
             account_object = Account.objects.create(account_name=account_name, account_uid=account_uid, created_by_user=user_object, celery_queue=celery_queue)
             account_object.save()
         else:
@@ -96,7 +101,7 @@ def get_started(request): #TCW
             print("Mongo url creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage('Mongo url creation failed.' + str(e))
 
-    if account_object.worker_service_arn == '' and not is_test:
+    if account_object.worker_service_arn == '' and not is_test and not is_operator_account:
         ##Create Worker
         try:
             worker_service_arn = aws_manager.create_worker(user_object.uid)

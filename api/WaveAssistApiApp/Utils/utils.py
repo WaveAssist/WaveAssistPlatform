@@ -229,25 +229,34 @@ def get_code_for_node(node_object,project_key):
     python_code += "    " + node_python_code.replace("\n", "\n    ") + "\n\n"
     return python_code
 
-def get_task_dict_for_node(node_object):
+def get_task_dict_for_node(node_object, uid):
     task_dict = {
         "node_key": node_object.node_key,
         "project_key": node_object.project_object.project_key,
+        "uid": uid,
     }
     return task_dict
 
-def get_data_and_dependencies_for_dag(project_object, node_array):
+def get_data_and_dependencies_for_dag(project_object, node_array, uid):
     dependency_dict = {}
     data_dict = {}
     # for each node in dag_object
     for node_object in node_array:
         node_code = get_code_for_node(node_object, project_object.project_key)
-        node_task_dict = get_task_dict_for_node(node_object)
+        node_task_dict = get_task_dict_for_node(node_object, uid)
         node_task_dict["code_to_run"] = node_code
         data_dict[node_object.node_key] =  node_task_dict
         dependency_dict[node_object.node_key] = [node.node_key for node in node_object.run_after_nodes_array.all()]
     return data_dict, dependency_dict
 
+
+
+def fetch_account_object_for_user(user_object):
+    try:
+        account_object = Account.objects.get(user_object=user_object)
+    except:
+        return None
+    return account_object
 
 from graphviz import Digraph
 from io import BytesIO

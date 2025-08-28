@@ -71,8 +71,11 @@ def deploy_project(request): ##TCW
         is_starting_node=True,
         is_enabled=True
     ).exclude(schedule_type='none')
-
-    queue_name = 'queue_' + str(user_object.uid)
+    
+    account_object = utils.fetch_account_object_for_user(user_object)
+    if not account_object:
+        return ResponseParser.getParsedErrorMessage('Account not found for the user.')
+    queue_name = account_object.celery_queue
 
     #Check if there are any starting nodes
     if len(starting_nodes) == 0:
@@ -132,7 +135,7 @@ def deploy_project(request): ##TCW
                 dag_object.node_array.set(node_list)
                 dag_object.save()
 
-                data_dict, dependency_dict = utils.get_data_and_dependencies_for_dag(project_object, node_list)
+                data_dict, dependency_dict = utils.get_data_and_dependencies_for_dag(project_object, node_list, user_object.uid)
                 dag_kwargs = json.dumps({
                     'dependencies_dict': dependency_dict,
                     'data_dict': data_dict,
@@ -202,6 +205,7 @@ def run_code(request: object) -> JsonResponse:
         'node_key': node_key,
         'code_to_run': code_to_run,
         'task_key': node_key,
+        'uid': user_object.uid,
     }
 
     task_kwargs = {
@@ -210,7 +214,11 @@ def run_code(request: object) -> JsonResponse:
         'task_key': node_key,
     }
 
-    queue_name = 'queue_' + str(user_object.uid)
+    account_object = utils.fetch_account_object_for_user(user_object)
+    if not account_object:
+        return ResponseParser.getParsedErrorMessage('Account not found for the user.')
+    queue_name = account_object.celery_queue
+
     task_run = app.send_task(RUN_TASK, kwargs=task_kwargs, queue=queue_name)
     try:
         timeout = int(request.POST.get('timeout', 10))
@@ -256,14 +264,19 @@ def run_dag(request): ##TCW
     dag_object.node_array.set(node_list)
     dag_object.save()
 
-    data_dict, dependency_dict = utils.get_data_and_dependencies_for_dag(project_object, node_list)
+    data_dict, dependency_dict = utils.get_data_and_dependencies_for_dag(project_object, node_list, user_object.uid)
     dag_kwargs = {
         'dependencies_dict': dependency_dict,
         'data_dict': data_dict,
         'collection_key': data_run_object.data_run_key,
         'dag_key': dag_key,
     }
-    queue_name = 'queue_' + str(user_object.uid)
+
+    account_object = utils.fetch_account_object_for_user(user_object)
+    if not account_object:
+        return ResponseParser.getParsedErrorMessage('Account not found for the user.')
+    queue_name = account_object.celery_queue
+
     print("Sending task: " + str(dag_kwargs) + ", queue: " + queue_name)
     result = app.send_task(DAG_TASK, kwargs=dag_kwargs, queue=queue_name)
     # result = app.send_task(DAG_TASK, kwargs=dag_kwargs)
