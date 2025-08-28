@@ -53,6 +53,19 @@ const LoginComponent: React.FC = () => {
 	const is_test = false; // ALWAYS KEEP as FALSE
 
 	useEffect(() => {
+		// Handle Google OAuth redirect result
+		const handleRedirectResult = async () => {
+			try {
+				const result = await getRedirectResult(auth);
+				if (result) {
+					await handleSuccessfulSignIn(result.user);
+					return;
+				}
+			} catch (error) {
+				console.error("Redirect result handling failed:", error);
+			}
+		};
+
 		// Handle uid parameter from URL
 		if (uid) {
 			localStorage.setItem("uid", uid);
@@ -67,6 +80,10 @@ const LoginComponent: React.FC = () => {
 		}
 
 		if (isCLILogin) return; // skip redirect if CLI login
+
+		// Check for redirect result first
+		handleRedirectResult();
+
 		const storedUid = localStorage.getItem("uid");
 		if (storedUid) {
 			const storedRedirect = localStorage.getItem("postLoginRedirect");
@@ -102,18 +119,24 @@ const LoginComponent: React.FC = () => {
 				localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
 				localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
+
+				// Get current URL parameters for better cross-browser compatibility
+				const currentSearchParams = new URLSearchParams(window.location.search);
+				const urlRedirect = currentSearchParams.get("redirect");
 				const storedRedirect = localStorage.getItem("postLoginRedirect");
+				const finalRedirect = urlRedirect || storedRedirect || redirect;
+
 				if (isCLILogin) {
 					setCliLoginComplete(true);
 					return;
 				}
-				if (storedRedirect) {
+
+				// Clean up localStorage if we used the stored redirect
+				if (storedRedirect && !urlRedirect) {
 					localStorage.removeItem("postLoginRedirect");
-					// Navigate to the stored redirect URL which should preserve all parameters
-					navigate(storedRedirect);
-				} else {
-					navigate(redirect);
 				}
+
+				navigate(finalRedirect);
 			}
 		} catch (error) {
 			console.error("Login failed:", error);
@@ -144,20 +167,29 @@ const LoginComponent: React.FC = () => {
 
 			setLoading(false);
 			setLoaderMessage("");
+
+			// Get current URL parameters for better cross-browser compatibility
+			const currentSearchParams = new URLSearchParams(window.location.search);
+			const urlRedirect = currentSearchParams.get("redirect");
 			const storedRedirect = localStorage.getItem("postLoginRedirect");
+			const finalRedirect = urlRedirect || storedRedirect || redirect;
+
 			console.log("Stored Redirect:", storedRedirect);
+			console.log("URL Redirect:", urlRedirect);
+			console.log("Final Redirect:", finalRedirect);
+
 			// If CLI login, just set the flag and return
 			if (isCLILogin) {
 				setCliLoginComplete(true);
 				return;
 			}
-			if (storedRedirect) {
+
+			// Clean up localStorage if we used the stored redirect
+			if (storedRedirect && !urlRedirect) {
 				localStorage.removeItem("postLoginRedirect");
-				// Navigate to the stored redirect URL which should preserve all parameters
-				navigate(storedRedirect);
-			} else {
-				navigate(redirect);
 			}
+
+			navigate(finalRedirect);
 		} catch (error) {
 			console.error("Get Started Failed:", error);
 			alert("Something went wrong creating your account, please try again.");
