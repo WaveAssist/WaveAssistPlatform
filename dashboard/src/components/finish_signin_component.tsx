@@ -87,10 +87,16 @@ const FinishSignInComponent: React.FC = () => {
 			const data = await loginAPI(firebase_token, session_id);
 			setLoading(false);
 
-			// ✅ Fire GA4 sign_up event
-			ReactGA.event("login", {
-				method: "Email Link",
-			});
+			// PostHog identify with uid as distinct_id and properties
+			try {
+				const uid = data.user_data.uid;
+				const email = data.user_data.username || "";
+				const name = data.user_data.name || "";
+				if (uid && posthog) {
+					posthog.identify(uid, { email, name, uid });
+					posthog.capture("login_succeeded", { method: "Email Link" });
+				}
+			} catch (_err) {}
 
 			if (data.action === "PERFORM_GET_STARTED" || is_test) {
 				await handleGetStarted();
@@ -100,17 +106,6 @@ const FinishSignInComponent: React.FC = () => {
 				localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
 				localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
-
-				// PostHog identify with uid as distinct_id and properties
-				try {
-					const uid = data.user_data.uid;
-					const email = data.user_data.username || "";
-					const name = data.user_data.name || "";
-					if (uid && posthog) {
-						posthog.identify(uid, { email, name, uid });
-						posthog.capture("login_succeeded", { method: "Email Link" });
-					}
-				} catch (_err) {}
 
 				// Clean up localStorage if we used the stored redirect
 				if (storedRedirect) {
@@ -152,23 +147,11 @@ const FinishSignInComponent: React.FC = () => {
 			localStorage.setItem("uid", data.user_data.uid);
 			localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
 
-			// PostHog identify for new accounts
-			try {
-				const uid = data.user_data.uid;
-				const email = data.user_data.username || "";
-				const name = data.user_data.name || "";
-				if (uid && posthog) {
-					posthog.identify(uid, { email, name, uid });
-					posthog.capture("signup_completed", { method: "WaveAssist" });
-				}
-			} catch (_err) {}
-
+			setLoading(false);
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {
 				method: "WaveAssist",
 			});
-
-			setLoading(false);
 
 			// Clean up localStorage if we used the stored redirect
 			if (storedRedirectGetStarted) {

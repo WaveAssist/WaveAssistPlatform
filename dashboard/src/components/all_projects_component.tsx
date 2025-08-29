@@ -78,7 +78,6 @@ const AllProjectsComponent: React.FC = () => {
 
 	useEffect(() => {
 		fetchData();
-		registerPostHogUser();
 		// Get user's premium status from localStorage
 		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 		const premiumLocal = localStorage.getItem("is_premium") === "true";
@@ -160,22 +159,6 @@ const AllProjectsComponent: React.FC = () => {
 			setNewProjectKey(generatedKey);
 		}
 	}, [newProjectName]);
-	const registerPostHogUser = () => {
-		const uid = localStorage.getItem("uid");
-		if (!uid) return;
-
-		const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
-		const user_id = uid;
-		const email = user_data.username || "default@waveassist.io"; // fallback if not present
-		const name = user_data.name || "";
-		// Identify user for PostHog
-		try {
-			posthog.identify(user_id, { email, name, uid: user_id });
-			posthog.capture("user_logged_in", {
-				email,
-			});
-		} catch (_err) {}
-	};
 
 	const fetchData = async () => {
 		try {
