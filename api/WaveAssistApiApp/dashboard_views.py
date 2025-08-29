@@ -75,6 +75,17 @@ def login(request): ##TCW
     if not account_object.is_working_running:
         utils.run_knock_workflow(str(user_object.uid), 'restart')
 
+    ##Track PostHog event
+    utils.track_posthog(
+        uid=str(user_object.uid),
+        event='user_login',
+        props={
+            'user_id': str(user_object.uid),
+            'username': user_object.username,
+            'company_name': user_object.company_name,
+        }
+    )
+
     return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Login successful.')
 
 

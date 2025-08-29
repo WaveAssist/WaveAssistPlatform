@@ -81,6 +81,16 @@ def deploy_template(request):
     except:
         pass
 
+    ##Track PostHog event
+    utils.track_posthog(
+        uid=str(user_object.uid),
+        event='template_deployed',
+        props={
+            'template_name': project_name,
+            'project_key': project_key,
+        }
+    )
+
     return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
 
 

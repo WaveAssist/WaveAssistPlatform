@@ -22,10 +22,13 @@ knockapi==1.0.0
 sendgrid==6.12.3
 waveassist>=0.1.7
 postmarker==1.0
+posthog==6.7.0
+
+
+
 opentelemetry-distro==0.43b0
 opentelemetry-exporter-otlp==1.22.0
 opentelemetry-instrumentation-django==0.43b0
-
 ##Libraries
 opentelemetry-instrumentation-mysqlclient==0.43b0
 opentelemetry-instrumentation-pymongo==0.43b0

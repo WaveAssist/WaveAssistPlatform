@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-
+import posthog
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'posthog.integrations.django.PosthogContextMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -163,3 +164,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 FIREBASE_ADMIN_CREDENTIALS = os.path.join(BASE_DIR, 'firebase_admin.json')
 
+
+POSTHOG_API_KEY = os.getenv('POSTHOG_API_KEY', 'REMOVED_CREDENTIAL')
+POSTHOG_HOST = os.getenv('POSTHOG_HOST', 'https://app.posthog.com')
+
+# Configure PostHog Python client
+posthog.api_key = POSTHOG_API_KEY
+posthog.host = POSTHOG_HOST

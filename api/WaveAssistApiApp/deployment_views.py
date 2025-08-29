@@ -171,6 +171,17 @@ def deploy_project(request): ##TCW
         pass
 
     output_dict = {'deployment': deployment_object.get_dict()}
+    
+    ##Track PostHog event
+    utils.track_posthog(
+        uid=str(user_object.uid),
+        event='project_deployed',
+        props={
+            'project_key': project_object.project_key,
+            'version': version
+        }
+    )
+    
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully deployed the project')
 
 
@@ -185,6 +196,16 @@ def stop_deployment(request): ##TCW
         return ResponseParser.getParsedErrorMessage('Error in stopping the project: ' + str(e))
 
     output_dict = {'deployment': deployment_object.get_dict()}
+
+    ##Track PostHog event
+    utils.track_posthog(
+        uid=str(user_object.uid),
+        event='deployment_stopped',
+        props={
+            'project_key': deployment_object.project_object.project_key,
+            'version': deployment_object.version
+        }
+    )
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully stopped the deployment.')
 
@@ -226,6 +247,15 @@ def run_code(request: object) -> JsonResponse:
         output_dict = {'task_id': task_run.id, 'result': result}
     except TimeoutError:
         output_dict = {'task_id': task_run.id, 'result': "Running"}
+
+    ##Track PostHog event
+    utils.track_posthog(
+        uid=str(user_object.uid),
+        event='code_run',
+        props={
+            'project_key': project_key,
+        }
+    )
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully ran the code')
 
@@ -283,6 +313,16 @@ def run_dag(request): ##TCW
 
     output_dict = {'dag': dag_object.get_dict()}
     output_dict['run_id'] = result.id
+
+    ##Track PostHog event
+    utils.track_posthog(
+        uid=str(user_object.uid),
+        event='dag_run_started',
+        props={
+            'project_key': project_object.project_key,
+            'start_node_key': start_node_key
+        }
+    )
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully started the DAG')
 

@@ -23,7 +23,10 @@ import requests
 from knockapi import Knock
 knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.db.models.functions import Lower
-
+import posthog
+from django.conf import settings
+posthog.api_key = settings.POSTHOG_API_KEY
+posthog.host = settings.POSTHOG_HOST
 import json
 
 def get_param(request, key: str, default=None):
@@ -607,3 +610,14 @@ def decode_email_webhook_token(token: str) -> dict:
         "node_id": node_id,
         "env_id": env_id,
     }
+
+
+def track_posthog(uid, event, props):
+    try:
+        posthog.capture(
+            distinct_id=str(uid),
+            event=event,
+            properties=props or {}
+        )
+    except:
+        pass

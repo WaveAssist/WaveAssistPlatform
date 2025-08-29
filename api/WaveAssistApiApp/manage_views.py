@@ -296,6 +296,15 @@ def create_project(request): ##TCW
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Project access creation failed: ' + str(e))
 
+    ##Track PostHog event
+    utils.track_posthog(
+        uid=str(user_object.uid),
+        event='project_created',
+        props={
+            'project_key': project_key,
+        }
+    )
+
     return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
 
 
@@ -508,6 +517,8 @@ waveassist.init()
             #     raise Exception("Invalid DAG: " + message)
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Something went wrong while creating Node: ' + str(e))
+
+
 
     return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Node updated successfully.')
 
