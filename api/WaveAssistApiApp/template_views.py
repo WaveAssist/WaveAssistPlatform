@@ -5,7 +5,7 @@ from .Utils.responseParser import ResponseParser
 from .models import *
 from .Utils.projectSetup import *
 from .Utils.constants import *
-from .Utils.utils import run_knock_workflow
+from .Utils.utils import run_knock_workflow, track_posthog
 import base64
 from WaveAssistApiApp import manage_views
 from django.views.decorators.cache import cache_page
@@ -82,7 +82,7 @@ def deploy_template(request):
         pass
 
     ##Track PostHog event
-    utils.track_posthog(
+    track_posthog(
         uid=str(user_object.uid),
         event='template_deployed',
         props={

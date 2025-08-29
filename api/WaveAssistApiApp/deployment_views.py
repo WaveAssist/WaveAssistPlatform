@@ -178,7 +178,6 @@ def deploy_project(request): ##TCW
         event='project_deployed',
         props={
             'project_key': project_object.project_key,
-            'version': version
         }
     )
     
@@ -196,16 +195,6 @@ def stop_deployment(request): ##TCW
         return ResponseParser.getParsedErrorMessage('Error in stopping the project: ' + str(e))
 
     output_dict = {'deployment': deployment_object.get_dict()}
-
-    ##Track PostHog event
-    utils.track_posthog(
-        uid=str(user_object.uid),
-        event='deployment_stopped',
-        props={
-            'project_key': deployment_object.project_object.project_key,
-            'version': deployment_object.version
-        }
-    )
 
     return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Successfully stopped the deployment.')
 

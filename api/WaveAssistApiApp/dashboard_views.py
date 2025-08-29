@@ -81,8 +81,8 @@ def login(request): ##TCW
         event='user_login',
         props={
             'user_id': str(user_object.uid),
-            'username': user_object.username,
-            'company_name': user_object.company_name,
+            'email': user_object.username,
+            'name': user_object.name,
         }
     )
 
