@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import User, AccessProvided, Integrations, DataKey, Project, DataRuns, Nodes, DashboardSection, DAG, \
-    Deployments, Account, Assistants
+    Deployments, Account, Assistants, Payment
 
 
 @admin.register(User)
@@ -98,3 +98,11 @@ class AssistantsAdmin(admin.ModelAdmin):
     list_filter = ('credits_needed_per_unit', 'created_at')
     readonly_fields = ('id', 'created_at')
 
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'account', 'provider', 'amount', 'currency', 'credits_in_usd', 'status', 'provider_payment_id', 'credits_granted', 'created_at')
+    search_fields = ('provider_payment_id', 'account__account_name', 'description')
+    list_filter = ('provider', 'status', 'currency', 'credits_granted', 'created_at')
+    readonly_fields = ('id', 'created_at')
+    list_editable = ('status', 'credits_granted')
