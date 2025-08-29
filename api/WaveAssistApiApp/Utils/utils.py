@@ -483,7 +483,7 @@ def create_openrouter_token(uid, grant_usd=2):
             "Content-Type": "application/json",
         }
         payload = {
-            "name": f"Token for {uid}",
+            "name": f"{uid}",
             "label": str(uid),
             "limit": grant_usd
         }

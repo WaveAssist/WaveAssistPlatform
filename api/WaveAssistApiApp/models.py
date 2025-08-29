@@ -479,3 +479,43 @@ class NodeRuns(models.Model):
             'finished_at':  self.finished_at,
             'traceback':    self.traceback,
         }
+
+
+class Payment(models.Model):
+    id = models.AutoField(primary_key=True)
+    account = models.ForeignKey('Account', on_delete=models.CASCADE)
+    provider = models.CharField(max_length=20, choices=[('razorpay', 'RazorPay'), ('paypal', 'PayPal')])
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='USD')
+    credits_in_usd = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded')
+    ], default='pending')
+    provider_payment_id = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    credits_granted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Payment: {self.provider_payment_id} ({self.provider})"
+    
+    def get_dict(self):
+        return {
+            'id': self.id,
+            'provider': self.provider,
+            'amount': self.amount,
+            'currency': self.currency,
+            'status': self.status,
+            'provider_payment_id': self.provider_payment_id,
+            'description': self.description,
+            'credits_in_usd': self.credits_in_usd,
+            'credits_granted': self.credits_granted,
+        }
+    
+    class Meta:
+        db_table = "WaveAssist_Payment"
+        verbose_name = 'Payment'
+        verbose_name_plural = 'Payments'

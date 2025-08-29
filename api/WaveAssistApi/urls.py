@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from WaveAssistApiApp import (dashboard_views, data_views, deployment_views, debug_views, worker_views, template_views,
-                              cli_views, sdk_views, run_views)
+                              cli_views, sdk_views, run_views, payment_views)
 
 from django.views.decorators.csrf import csrf_exempt
 from WaveAssistApiApp import manage_views
@@ -100,6 +100,11 @@ urlpatterns = [
     ##Runs URL's
     path("runs/fetch_dag_runs/", csrf_exempt(run_views.fetch_dag_runs), name="fetch_dag_runs"),
     path("runs/fetch_node_runs/", csrf_exempt(run_views.fetch_node_runs), name="fetch_node_runs"),
+
+    ##Payment URL's
+    path("payment/create_payment_order/", csrf_exempt(payment_views.create_payment_order), name="create_payment_order"),
+    path("payment/verify_payment/", csrf_exempt(payment_views.verify_payment), name="verify_payment"),
+    path("payment/get_payment_history/", csrf_exempt(payment_views.get_payment_history), name="get_payment_history"),
 
 ]
 
