@@ -80,9 +80,9 @@ const AllProjectsComponent: React.FC = () => {
 		fetchData();
 		registerPostHogUser();
 		// Get user's premium status from localStorage
-                const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-                const premiumLocal = localStorage.getItem("is_premium") === "true";
-                setIsUserPremium(premiumLocal || Boolean(userData.is_premium));
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		const premiumLocal = localStorage.getItem("is_premium") === "true";
+		setIsUserPremium(premiumLocal || Boolean(userData.is_premium));
 	}, []);
 
 	useEffect(() => {
@@ -167,11 +167,14 @@ const AllProjectsComponent: React.FC = () => {
 		const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
 		const user_id = uid;
 		const email = user_data.username || "default@waveassist.io"; // fallback if not present
+		const name = user_data.name || "";
 		// Identify user for PostHog
-		posthog.identify(user_id, { email });
-		posthog.capture("user_logged_in", {
-			email,
-		});
+		try {
+			posthog.identify(user_id, { email, name, uid: user_id });
+			posthog.capture("user_logged_in", {
+				email,
+			});
+		} catch (_err) {}
 	};
 
 	const fetchData = async () => {
@@ -291,6 +294,19 @@ const AllProjectsComponent: React.FC = () => {
 			localStorage.setItem("is_project_premium", selectedProject.is_premium ? "true" : "false");
 			localStorage.setItem("selected_project", JSON.stringify(selectedProject)); // <-- Ensure this is set
 		}
+
+		// Track project viewed and contextual pageview
+		try {
+			posthog?.capture("project_viewed", {
+				project_id: projectKey,
+				page_category: "project_detail",
+			});
+			posthog?.capture("$pageview", {
+				page_category: "project_detail",
+				project_id: projectKey,
+				environment: localStorage.getItem("selected_env_key") || undefined,
+			});
+		} catch (_err) {}
 
 		navigate(`/manage/nodes?project_key=${projectKey}`);
 	};

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { AgGridReact } from "ag-grid-react";
 import { fetchDagRunsApi } from "../../services/runs_services";
 import { useToast } from "../../utils/toast_context";
@@ -28,6 +29,7 @@ const RunsComponent: React.FC = () => {
 	const [runsArray, setRunsArray] = useState<any[]>([]);
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
+	const posthog = usePostHog();
 
 	const fetchRuns = async () => {
 		try {
@@ -48,6 +50,17 @@ const RunsComponent: React.FC = () => {
 		return () => clearInterval(intervalId);
 	}, [shouldRefresh]);
 
+	useEffect(() => {
+		// Pageview context for runs list
+		try {
+			posthog?.capture("$pageview", {
+				page_category: "runs",
+				project_id: localStorage.getItem("selected_project_key") || undefined,
+				environment: localStorage.getItem("selected_env_key") || undefined,
+			});
+		} catch (_err) {}
+	}, []);
+
 	const [showRunModal, setShowRunModal] = useState(false);
 	const [selectedRunId, setSelectedRunId] = useState("");
 
@@ -55,6 +68,13 @@ const RunsComponent: React.FC = () => {
 		if (run && run.run_id) {
 			setSelectedRunId(run.run_id);
 			setShowRunModal(true);
+			try {
+				posthog?.capture("run_viewed", {
+					project_id: localStorage.getItem("selected_project_key") || undefined,
+					environment: localStorage.getItem("selected_env_key") || undefined,
+					run_id: run.run_id,
+				});
+			} catch (_err) {}
 		}
 	};
 

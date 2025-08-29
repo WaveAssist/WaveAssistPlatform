@@ -8,6 +8,7 @@ import { signInWithPopup, signInWithRedirect, getRedirectResult, sendSignInLinkT
 import { loginAPI, getStartedAPI } from "../services/login_services";
 import { Spinner } from "react-bootstrap";
 import ReactGA from "react-ga4";
+import { usePostHog } from "posthog-js/react";
 // import Button from "react-bootstrap/Button";
 // import Modal from "react-bootstrap/Modal";
 
@@ -34,6 +35,7 @@ const getCurrentDomain = () => {
 };
 
 const LoginComponent: React.FC = () => {
+	const posthog = usePostHog();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
@@ -120,6 +122,17 @@ const LoginComponent: React.FC = () => {
 				localStorage.setItem("uid", data.user_data.uid);
 				localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
 
+				// PostHog identify with uid as distinct_id and properties
+				try {
+					const uid = data.user_data.uid;
+					const email = data.user_data.username || "";
+					const name = data.user_data.name || "";
+					if (uid && posthog) {
+						posthog.identify(uid, { email, name, uid });
+						posthog.capture("login_succeeded", { method: "WaveAssist" });
+					}
+				} catch (_err) {}
+
 				// Get current URL parameters for better cross-browser compatibility
 				const currentSearchParams = new URLSearchParams(window.location.search);
 				const urlRedirect = currentSearchParams.get("redirect");
@@ -157,11 +170,19 @@ const LoginComponent: React.FC = () => {
 			localStorage.setItem("uid", data.user_data.uid);
 			localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
 
+			// PostHog identify for new accounts as well
+			try {
+				const uid = data.user_data.uid;
+				const email = data.user_data.username || "";
+				const name = data.user_data.name || "";
+				if (uid && posthog) {
+					posthog.identify(uid, { email, name, uid });
+					posthog.capture("signup_completed", { method: "WaveAssist" });
+				}
+			} catch (_err) {}
+
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {
-				method: "WaveAssist",
-			});
-			ReactGA.event("conversion_event_purchase", {
 				method: "WaveAssist",
 			});
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { fetchDeploymentsApi, stopDeploymentApi } from "../../services/deployment_services";
 import { useToast } from "../../utils/toast_context";
 import { Button } from "react-bootstrap";
@@ -11,6 +12,7 @@ const DeploymentsComponent: React.FC = () => {
 	const [deploymentsArray, setDeploymentsArray] = useState<any[]>([]);
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
+	const posthog = usePostHog();
 
 	const fetchDeployments = async () => {
 		try {
@@ -43,6 +45,14 @@ const DeploymentsComponent: React.FC = () => {
 
 	useEffect(() => {
 		fetchDeployments();
+		// Pageview context for deployments list
+		try {
+			posthog?.capture("$pageview", {
+				page_category: "deployments",
+				project_id: localStorage.getItem("selected_project_key") || undefined,
+				environment: localStorage.getItem("selected_env_key") || undefined,
+			});
+		} catch (_err) {}
 	}, [shouldRefresh]);
 
 	const ActionButtons = (params: any) => {

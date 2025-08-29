@@ -1,4 +1,5 @@
 import React, { useEffect, useState, Suspense, useRef } from "react";
+import { usePostHog } from "posthog-js/react";
 import Joyride, { Step } from "react-joyride";
 import { Node as RFNode, Edge as RFEdge } from "reactflow";
 import {
@@ -64,6 +65,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ show, onHide, onPay }) => (
 const NodesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
 	const location = useLocation();
+	const posthog = usePostHog();
 	const [showWebhook, setShowWebhook] = useState(false);
 	const [showEmailWebhook, setShowEmailWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
@@ -568,6 +570,17 @@ ${config.nodes
 		fetchNodes();
 	}, [shouldRefresh]);
 
+	useEffect(() => {
+		// Pageview context for nodes
+		try {
+			posthog?.capture("$pageview", {
+				page_category: "nodes",
+				project_id: localStorage.getItem("selected_project_key") || undefined,
+				environment: localStorage.getItem("selected_env_key") || undefined,
+			});
+		} catch (_err) {}
+	}, []);
+
 	const handleViewCode = (node: any) => {
 		if (premiumBlocked()) return;
 		setModalCode(node.python_code);
@@ -607,6 +620,13 @@ ${config.nodes
 			setLoading(true);
 			await runDAGApi(node.node_key, current_env);
 			showToast("Node & connected nodes started running successfully.", "success");
+			try {
+				posthog?.capture("run_started", {
+					project_id: localStorage.getItem("selected_project_key") || undefined,
+					environment: current_env,
+					node_key: node.node_key,
+				});
+			} catch (_err) {}
 		} catch (error) {
 			console.error("Running nodes failed:", error);
 			showToast("" + error, "danger");

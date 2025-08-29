@@ -75,10 +75,10 @@ function App() {
 						<Route path="/manage/nodes" element={<PrivateRoute component={NodesComponent} layout={Layout} />} />
 						<Route path="/manage/variables" element={<PrivateRoute component={VariablesComponent} layout={Layout} />} />
 						<Route path="/manage/packages" element={<PrivateRoute component={PackagesComponent} layout={Layout} />} />
-                                                <Route path="/manage/environments" element={<PrivateRoute component={EnvironmentsComponent} layout={Layout} />} />
-                                                <Route path="/manage/runs" element={<PrivateRoute component={RunsComponent} layout={Layout} />} />
-                                                <Route path="/manage/runs/:runId" element={<PrivateRoute component={RunDetailsComponent} layout={Layout} />} />
-                                                <Route path="/manage/deployments" element={<PrivateRoute component={DeploymentsComponent} layout={Layout} />} />
+						<Route path="/manage/environments" element={<PrivateRoute component={EnvironmentsComponent} layout={Layout} />} />
+						<Route path="/manage/runs" element={<PrivateRoute component={RunsComponent} layout={Layout} />} />
+						<Route path="/manage/runs/:runId" element={<PrivateRoute component={RunDetailsComponent} layout={Layout} />} />
+						<Route path="/manage/deployments" element={<PrivateRoute component={DeploymentsComponent} layout={Layout} />} />
 						<Route path="/manage/data-view" element={<PrivateRoute component={DataViewComponent} layout={Layout} />} />
 						<Route path="/manage/logs" element={<PrivateRoute component={LogsComponent} layout={Layout} />} />
 						<Route path="/deploy" element={<DeployComponent />} />

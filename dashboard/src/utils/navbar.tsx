@@ -6,6 +6,7 @@ import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
 import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext"; // Import the custom hook
+import { usePostHog } from "posthog-js/react";
 interface NavbarProps {
 	onToggleSidebar?: () => void;
 }
@@ -14,6 +15,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
 	const navigate = useNavigate();
+	const posthog = usePostHog();
 
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
@@ -84,6 +86,19 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 			localStorage.removeItem("selected_project");
 		}
 
+		// Track environment list refresh due to project switch and pageview context
+		try {
+			posthog?.capture("project_switched", {
+				project_id: project_key,
+				page_category: "project_detail",
+			});
+			posthog?.capture("$pageview", {
+				page_category: "project_detail",
+				project_id: project_key,
+				environment: localStorage.getItem("selected_env_key") || undefined,
+			});
+		} catch (_err) {}
+
 		await fetchEnvironments();
 		triggerRefresh(); // Trigger a refresh
 	};
@@ -91,6 +106,14 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const handleEnvChange = (env_name: string, env_key: string) => {
 		localStorage.setItem("selected_env_key", env_key);
 		setSelectedEnvName(env_name);
+		// Track environment switched
+		try {
+			posthog?.capture("environment_switched", {
+				project_id: localStorage.getItem("selected_project_key") || undefined,
+				environment: env_key,
+				page_category: "project_detail",
+			});
+		} catch (_err) {}
 		triggerRefresh(); // Trigger a refresh
 	};
 
@@ -114,6 +137,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 			console.log("Deploying project with version code:", versionCode);
 			await deployProjectApi(versionCode);
 			showToast("Project deployed successfully", "success");
+			try {
+				posthog?.capture("deployment_triggered", {
+					project_id: localStorage.getItem("selected_project_key") || undefined,
+					environment: localStorage.getItem("selected_env_key") || undefined,
+					version: versionCode,
+				});
+			} catch (_err) {}
 			handleCloseModal();
 		} catch (error) {
 			console.error("Deploy Project Failed:", error);
