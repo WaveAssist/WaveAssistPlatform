@@ -84,9 +84,9 @@ def deploy_template(request):
     ##Track PostHog event
     track_posthog(
         uid=str(user_object.uid),
-        event='template_deployed',
+        event='assistant_deployed',
         props={
-            'template_name': project_name,
+            'assistant_name': project_name,
             'project_key': project_key,
         }
     )
