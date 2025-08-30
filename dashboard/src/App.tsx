@@ -23,6 +23,7 @@ import "./App.css";
 import DeploymentsComponent from "./components/project/deployments_component";
 import LogsComponent from "./components/project/logs_component";
 import DeployComponent from "./components/deploy_component";
+import CreditsComponent from "./components/project/credits_component";
 import { useEffect } from "react";
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-RHQ9VZRVXH");
@@ -78,6 +79,7 @@ function App() {
 						<Route path="/manage/environments" element={<PrivateRoute component={EnvironmentsComponent} layout={Layout} />} />
 						<Route path="/manage/runs" element={<PrivateRoute component={RunsComponent} layout={Layout} />} />
 						<Route path="/manage/runs/:runId" element={<PrivateRoute component={RunDetailsComponent} layout={Layout} />} />
+						<Route path="/manage/credits" element={<PrivateRoute component={CreditsComponent} layout={Layout} />} />
 						<Route path="/manage/deployments" element={<PrivateRoute component={DeploymentsComponent} layout={Layout} />} />
 						<Route path="/manage/data-view" element={<PrivateRoute component={DataViewComponent} layout={Layout} />} />
 						<Route path="/manage/logs" element={<PrivateRoute component={LogsComponent} layout={Layout} />} />

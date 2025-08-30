@@ -196,6 +196,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 				</li>
 				<li className="nav-item">
 					<Link
+						to="/manage/credits"
+						className={`nav-link ${location.pathname === "/manage/credits" ? "active" : "text-white"} mb-1`}
+						onClick={handleNavClick}>
+						<i className="bi bi-credit-card me-2"></i>
+						Credits
+					</Link>
+				</li>
+				<li className="nav-item">
+					<Link
 						to="/manage/logs"
 						className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 logs-link`}
 						onClick={handleNavClick}>
