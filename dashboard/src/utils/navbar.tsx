@@ -179,7 +179,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 							onItemSelect={handleEnvChange}
 							icon="bi-stack"
 						/>
-						<button className="btn btn-outline-success btn-sm ms-2" onClick={handleReconfigureClick} title="Reconfigure">
+						<button className="btn btn-outline-secondary btn-sm ms-2" onClick={handleReconfigureClick} title="Reconfigure">
 							<i className="bi bi-gear-fill"></i>
 						</button>
 						{showDeployButton && (
@@ -210,7 +210,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 							/>
 						</Nav>
 						<Nav className="ms-auto">
-							<button className="btn btn-outline-success btn-sm me-2" onClick={handleReconfigureClick}>
+							<button className="btn btn-outline-secondary btn-sm me-2" onClick={handleReconfigureClick}>
 								<i className="bi bi-gear-fill me-2"></i>
 								Reconfigure
 							</button>

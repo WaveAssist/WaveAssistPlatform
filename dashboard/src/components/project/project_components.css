@@ -98,8 +98,73 @@
 .grid-container {
   flex: 1; /* Makes each grid take equal width */
   min-width: 45%; /* Prevents shrinking too much */
-  width: 100%; /* Ensures full width in smaller screens */
-  height: 100%; /* Ensures full height in smaller screens */
+}
+
+.output-content {  
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.output-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.output-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.output-content table, .output-content th, .output-content td {
+  border: 1px solid #2b3548;
+}
+
+.output-content th, .output-content td {
+  padding: 8px 12px;
+  text-align: left;
+  color: #e2e8f0;
+}
+
+.output-content th {
+  background-color: #2b3548;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* Additional dark theme styling for HTML content */
+.output-content h1, .output-content h2, .output-content h3, 
+.output-content h4, .output-content h5, .output-content h6 {
+  color: #ffffff;
+}
+
+.output-content p {
+  color: #e2e8f0;
+}
+
+.output-content a {
+  color: #60a5fa;
+}
+
+.output-content a:hover {
+  color: #93c5fd;
+}
+
+.output-content code {
+  background-color: #374151;
+  color: #f3f4f6;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.output-content pre {
+  background-color: #374151;
+  color: #f3f4f6;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
 }
 
 .trigger-text {

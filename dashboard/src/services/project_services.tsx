@@ -111,13 +111,20 @@ export const downloadVariablesApi = async (variableKey: string): Promise<any> =>
 };
 
 // fetchDataForKeyAPI
-export const fetchDataForKeyAPI = async (variableKey: string): Promise<any> => {
+export const fetchDataForKeyAPI = async (variableKey: string, runId?: string): Promise<any> => {
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
 		data_key: variableKey,
 		data_run_key: localStorage.getItem("selected_env_key") || "",
 	});
+
+	// Add run_id and run_based parameters if runId is provided
+	if (runId) {
+		body.append("run_id", runId);
+		body.append("run_based", "1");
+	}
+
 	var path = "data/fetch_data_for_key/";
 	return callGetApi(path, body);
 };

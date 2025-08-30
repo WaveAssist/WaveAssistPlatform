@@ -55,29 +55,27 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId }) => {
 
 	const columnDefs = [
 		{
+			headerName: "Status",
+			field: "status",
+			flex: 2,
+			minWidth: 100,
+			resizable: true,
+			cellRenderer: (params: any) => {
+				const status = params.value === "STARTED" ? "RUNNING" : params.value;
+				return (
+					<span className={`badge ${status === "SUCCESS" ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}>
+						{status}
+					</span>
+				);
+			},
+			cellStyle: { display: "flex", alignItems: "center" },
+		},
+		{
 			headerName: "Node Name",
 			field: "node_name",
 			flex: 3,
-			minWidth: 120,
+			minWidth: 140,
 			resizable: true,
-			cellStyle: { display: "flex", alignItems: "center" },
-		},
-		{
-			headerName: "Started At",
-			field: "started_at",
-			flex: 3,
-			minWidth: 150,
-			resizable: true,
-			cellRenderer: (params: any) => formatTimestamp(params.value),
-			cellStyle: { display: "flex", alignItems: "center" },
-		},
-		{
-			headerName: "Finished At",
-			field: "finished_at",
-			flex: 3,
-			minWidth: 150,
-			resizable: true,
-			cellRenderer: (params: any) => formatTimestamp(params.value),
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
@@ -99,16 +97,21 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId }) => {
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
-			headerName: "Status",
-			field: "status",
-			flex: 2,
-			minWidth: 100,
+			headerName: "Started At",
+			field: "started_at",
+			flex: 3,
+			minWidth: 150,
 			resizable: true,
-			cellRenderer: (params: any) => (
-				<span className={`badge ${params.value === "SUCCESS" ? "badge-primary" : params.value === "FAILED" ? "badge-danger" : "badge-secondary"}`}>
-					{params.value}
-				</span>
-			),
+			cellRenderer: (params: any) => formatTimestamp(params.value),
+			cellStyle: { display: "flex", alignItems: "center" },
+		},
+		{
+			headerName: "Finished At",
+			field: "finished_at",
+			flex: 3,
+			minWidth: 150,
+			resizable: true,
+			cellRenderer: (params: any) => formatTimestamp(params.value),
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 	];
