@@ -83,6 +83,11 @@ const RunsComponent: React.FC = () => {
 		setShowRunModal(false);
 	};
 
+	const handleViewOutput = (runId: string) => {
+		console.log("View Output clicked for run ID:", runId);
+		// TODO: Add logic for viewing output
+	};
+
 	const gridOptions = {
 		suppressCellFocus: true,
 	};
@@ -99,9 +104,44 @@ const RunsComponent: React.FC = () => {
 		{
 			headerName: "Run ID",
 			field: "run_id",
-			flex: 3,
-			minWidth: 120,
+			flex: 2,
+			minWidth: 80,
 			resizable: true,
+			cellStyle: { display: "flex", alignItems: "center" },
+		},
+		{
+			headerName: "Status",
+			field: "status",
+			flex: 2,
+			minWidth: 100,
+			resizable: true,
+			cellRenderer: (params: any) => {
+				const status = params.value === "STARTED" ? "RUNNING" : params.value;
+				return (
+					<span className={`badge ${status === "SUCCESS" ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}>
+						{status}
+					</span>
+				);
+			},
+			cellStyle: { display: "flex", alignItems: "center" },
+		},
+		{
+			headerName: "Actions",
+			flex: 3,
+			minWidth: 150,
+			resizable: true,
+			cellRenderer: (params: any) => (
+				<div className="d-flex gap-1 flex-wrap">
+					{params.data.status === "SUCCESS" && (
+						<button className="btn btn-outline-info btn-sm" onClick={() => handleViewOutput(params.data.run_id)} title="View Output">
+							View Output
+						</button>
+					)}
+					<button className="btn btn-outline-success btn-sm" onClick={() => handleViewDetails(params.data)} title="View Details">
+						View Details
+					</button>
+				</div>
+			),
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 		{
@@ -138,31 +178,6 @@ const RunsComponent: React.FC = () => {
 				}
 				return "NA";
 			},
-			cellStyle: { display: "flex", alignItems: "center" },
-		},
-		{
-			headerName: "Status",
-			field: "status",
-			flex: 2,
-			minWidth: 100,
-			resizable: true,
-			cellRenderer: (params: any) => (
-				<span className={`badge ${params.value === "SUCCESS" ? "badge-primary" : params.value === "FAILED" ? "badge-danger" : "badge-secondary"}`}>
-					{params.value}
-				</span>
-			),
-			cellStyle: { display: "flex", alignItems: "center" },
-		},
-		{
-			headerName: "Actions",
-			flex: 2,
-			minWidth: 120,
-			resizable: true,
-			cellRenderer: (params: any) => (
-				<button className="btn btn-outline-success btn-sm" onClick={() => handleViewDetails(params.data)}>
-					View Details
-				</button>
-			),
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 	];

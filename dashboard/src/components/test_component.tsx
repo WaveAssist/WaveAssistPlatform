@@ -1,34 +1,75 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+
+declare global {
+	interface Window {
+		Razorpay: any;
+	}
+}
 
 const TestComponent: React.FC = () => {
-	const [logs, setLogs] = useState<string>("");
+	const orderId = "order_RBCIwgt9UMKvpT";
 
 	useEffect(() => {
-		const fetchLogs = async () => {
-			try {
-				const response = await fetch('http://localhost/loki/api/v1/query_range?query={job="all-docker-logs"}&limit=100');
-				const data = await response.json();
+		// Load Razorpay script
+		const script = document.createElement("script");
+		script.src = "https://checkout.razorpay.com/v1/checkout.js";
+		script.async = true;
+		document.body.appendChild(script);
 
-				// Parse the response from Loki to extract the log lines
-				const parsedLogs = data.data.result.map((logEntry: any) => logEntry.values.map((value: any) => value[1]).join("\n")).join("\n");
-
-				setLogs(parsedLogs);
-			} catch (error) {
-				console.error("Error fetching logs:", error);
-			}
+		return () => {
+			document.body.removeChild(script);
 		};
-
-		// Fetch logs every 2 seconds
-		const intervalId = setInterval(fetchLogs, 2000);
-
-		// Clean up the interval when the component unmounts
-		return () => clearInterval(intervalId);
 	}, []);
 
+	const openRazorpayModal = () => {
+		if (window.Razorpay) {
+			const options = {
+				key: "rzp_live_RBBftuzZGRsYIz", // Replace with your actual Razorpay test key
+				amount: 500, // Amount in paise (500 INR)
+				currency: "INR",
+				name: "WaveAssist",
+				description: "Test Payment",
+				order_id: orderId,
+				handler: function (response: any) {
+					console.log("Payment successful:", response);
+					alert("Payment successful! Payment ID: " + response.razorpay_payment_id);
+				},
+				prefill: {
+					name: "Test User",
+					email: "test@example.com",
+					contact: "9999999999",
+				},
+				theme: {
+					color: "#3399cc",
+				},
+			};
+
+			const rzp = new window.Razorpay(options);
+			rzp.open();
+		} else {
+			alert("Razorpay script not loaded");
+		}
+	};
+
 	return (
-		<div style={{ height: "600px", border: "1px solid black" }}>
-			{/* display all data in table.  */}
-			<p className="text-white">{logs}</p>
+		<div style={{ padding: "20px", textAlign: "center" }}>
+			<h2 style={{ color: "white", marginBottom: "20px" }}>Razorpay Payment Test</h2>
+			<p style={{ color: "white", marginBottom: "20px" }}>
+				Order ID: <strong>{orderId}</strong>
+			</p>
+			<button
+				onClick={openRazorpayModal}
+				style={{
+					padding: "12px 24px",
+					fontSize: "16px",
+					backgroundColor: "#3399cc",
+					color: "white",
+					border: "none",
+					borderRadius: "5px",
+					cursor: "pointer",
+				}}>
+				Open Razorpay Modal
+			</button>
 		</div>
 	);
 };
