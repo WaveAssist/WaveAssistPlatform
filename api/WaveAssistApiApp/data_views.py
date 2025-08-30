@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from httplib2.auth import params
+import json
 
 from .models import *
 from .Utils.responseParser import ResponseParser
@@ -49,14 +50,14 @@ def upload_data_file(request):
 @require_GET
 def fetch_data(request, uid, project_key, data_run_key, data_key):
     """Fetch data for a given key from the user's environment."""
-    params = {
+    request_params = {
         'uid': uid,
         'project_key': project_key,
         'data_run_key': data_run_key,
         'data_key': data_key
     }
     request.GET = request.GET.copy()
-    request.GET.update(params)
+    request.GET.update(request_params)
     response = fetch_data_for_key(request)
     ## process response, check for success
     if response.status_code != 200:
@@ -83,6 +84,14 @@ def fetch_data_for_key(request):
 
     data_run_key = get_param(request, 'data_run_key', None) or get_param(request, 'environment_key', None)
     data_key = get_param(request, 'data_key', '')
+    
+    # Handle run-based parameters
+    run_based = get_param(request, 'run_based', '0')
+    run_id = get_param(request, 'run_id', None)
+    
+    # Modify data_key if run_based is enabled and run_id is provided
+    if run_based == '1' and run_id:
+        data_key = f"{data_key}_{run_id}"
 
     if not data_key:
         return ResponseParser.getParsedErrorMessage("Missing 'data_key' in request")
@@ -125,6 +134,14 @@ def set_data_for_key(request):
     data_key = get_param(request, 'data_key')
     data_type = get_param(request, 'data_type', 'json')
     data = get_param(request, 'data')
+    
+    # Handle run-based parameters
+    run_based = get_param(request, 'run_based', '0')
+    run_id = get_param(request, 'run_id', None)
+    
+    # Modify data_key if run_based is enabled and run_id is provided
+    if run_based == '1' and run_id:
+        data_key = f"{data_key}_{run_id}"
 
     if not data_key or data_key=='':
         return ResponseParser.getParsedErrorMessage("Missing 'data_key' in request.")
