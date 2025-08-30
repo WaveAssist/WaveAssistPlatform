@@ -117,7 +117,7 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId }) => {
 	];
 
 	return (
-		<div className="ag-theme-custom grid-container" style={{ fontSize: "12px" }}>
+		<div className="ag-theme-custom grid-container" style={{ fontSize: "12px", height: "100%", width: "100%" }}>
 			<AgGridReact
 				rowData={nodeRunsArray}
 				columnDefs={columnDefs}

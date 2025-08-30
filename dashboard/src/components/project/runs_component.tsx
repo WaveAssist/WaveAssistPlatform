@@ -307,12 +307,7 @@ const RunsComponent: React.FC = () => {
 				<Modal.Header closeButton>
 					<Modal.Title>Run Details</Modal.Title>
 				</Modal.Header>
-				<Modal.Body>
-					{/* {selectedRunId && <NodeRunsComponent dagRunId={selectedRunId} />} */}
-					<div style={{ height: "400px", width: "100%" }} className="ag-theme-custom">
-						{selectedRunId && <NodeRunsComponent dagRunId={selectedRunId} />}
-					</div>
-				</Modal.Body>
+				<Modal.Body style={{ height: "400px", padding: "0" }}>{selectedRunId && <NodeRunsComponent dagRunId={selectedRunId} />}</Modal.Body>
 				<Modal.Footer>
 					<Button variant="secondary" onClick={handleClose}>
 						Close
