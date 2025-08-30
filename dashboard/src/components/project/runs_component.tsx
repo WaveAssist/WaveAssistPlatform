@@ -9,7 +9,6 @@ import { Button } from "react-bootstrap";
 import NodeRunsComponent from "./node_runs_component";
 import "./project_components.css";
 import "../../utils/ag-theme-project.css";
-import LogsComponent from "./logs_component";
 
 const formatTimestamp = (timestamp: string) => {
 	if (!timestamp) return "";
