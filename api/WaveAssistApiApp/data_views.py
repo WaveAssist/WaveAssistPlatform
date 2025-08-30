@@ -86,7 +86,7 @@ def fetch_data_for_key(request):
     data_key = get_param(request, 'data_key', '')
     
     # Handle run-based parameters
-    run_based = get_param(request, 'run_based', '0')
+    run_based = str(get_param(request, 'run_based', '0'))
     run_id = get_param(request, 'run_id', None)
     
     # Modify data_key if run_based is enabled and run_id is provided
@@ -136,7 +136,7 @@ def set_data_for_key(request):
     data = get_param(request, 'data')
     
     # Handle run-based parameters
-    run_based = get_param(request, 'run_based', '0')
+    run_based = str(get_param(request, 'run_based', '0'))
     run_id = get_param(request, 'run_id', None)
     
     # Modify data_key if run_based is enabled and run_id is provided
