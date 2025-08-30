@@ -188,13 +188,7 @@ const RunsComponent: React.FC = () => {
 						/>
 					</div>
 				</div>
-				<hr className="text-white" style={{ marginTop: "3rem" }} />
-
-				<div style={{ flex: "0 0 60%" }}>
-					<div>
-						<LogsComponent />
-					</div>
-				</div>
+				
 			</div>
 
 			<Modal show={showRunModal} onHide={handleClose} size="lg" centered>
