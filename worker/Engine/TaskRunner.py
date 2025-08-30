@@ -12,7 +12,7 @@ class TaskRunner(object):
             self.code_to_run = task_dict['code_to_run']
             self.uid = task_dict.get('uid', ACCOUNT_ID)
             self.environment_key = environment_key
-            self.run_id = run_id
+            self.run_id = str(run_id)
             self.extra_dict = {"node_key": self.node_key, "project_key": self.project_key, "environment_key": self.environment_key, IS_SYSTEM_TASK: True, "run_id": self.run_id, "uid": self.uid}
             self.extra_dict_exec = {"node_key": self.node_key, "project_key": self.project_key, "environment_key": self.environment_key, IS_SYSTEM_TASK: False, "run_id": self.run_id, "uid": self.uid}
 
@@ -25,7 +25,7 @@ class TaskRunner(object):
             namespace = {}
             try:
                 import waveassist
-                waveassist.set_worker_defaults(self.uid, self.project_key, self.environment_key)
+                waveassist.set_worker_defaults(self.uid, self.project_key, self.environment_key, self.run_id)
 
                 # Inject the custom print function into the namespace
                 namespace['print'] = self.custom_print
