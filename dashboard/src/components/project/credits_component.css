@@ -351,14 +351,7 @@
     padding: 1rem 0;
 }
 
-.credit-package-card {
-    border: 1px solid #28a745;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    position: relative;
-    background-color: #f8f9fa;
-}
+
 
 .package-header {
     display: flex;
@@ -438,7 +431,7 @@
 }
 
 .purchase-summary {
-    background-color: #f8f9fa;
+    background-color: #1f2633;
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 1rem;
@@ -476,6 +469,70 @@
 .purchase-btn:hover {
     background-color: #5a32a3;
     border-color: #5a32a3;
+}
+
+.payment-buttons {
+    padding: 0;
+}
+
+.payment-buttons-row {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.payment-btn {
+    flex: 0 1 auto;
+    min-width: 200px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.payment-btn:hover::before {
+    left: 100%;
+}
+
+.razorpay-btn {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    color: #ffffff;
+}
+
+.razorpay-btn:hover {
+    background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(13, 110, 253, 0.3);
+}
+
+.paypal-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: #ffffff;
+}
+
+.paypal-btn:hover {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
 }
 
 /* Dark theme overrides for modal */

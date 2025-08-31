@@ -227,60 +227,13 @@ const CreditsComponent: React.FC = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <div className="purchase-modal-content">
-                        {/* Credit Package Selection */}
-                        <div className="credit-package-card">
-                            <div className="package-header">
-                                <span className="package-name">LINK</span>
-                                <button className="remove-package-btn">
-                                    <i className="bi bi-trash"></i>
-                                </button>
-                            </div>
-                            <div className="package-details">
-                                <i className="bi bi-check-circle-fill text-success"></i>
-                                <span className="package-date">Fri Jun 20 2025</span>
-                            </div>
-                            <button className="add-package-btn">
-                                <i className="bi bi-plus"></i>
-                            </button>
-                        </div>
-
-                        {/* Amount Input */}
-                        <div className="amount-section">
-                            <label className="form-label">Amount</label>
-                            <Form.Control
-                                type="number"
-                                value={purchaseAmount}
-                                onChange={(e) => setPurchaseAmount(Number(e.target.value))}
-                                min="1"
-                                className="amount-input"
-                            />
-                        </div>
-
-                        {/* Billing Options */}
-                        <div className="billing-options">
-                            <div className="billing-option">
-                                <span>Billing address</span>
-                                <i className="bi bi-chevron-right"></i>
-                            </div>
-                            <div className="billing-option">
-                                <span>Edit Tax ID</span>
-                                <i className="bi bi-chevron-right"></i>
-                            </div>
-                            <div className="billing-option">
-                                <span>Send me invoices</span>
-                                <div className="d-flex align-items-center">
-                                    <i className="bi bi-info-circle me-2"></i>
-                                    <Form.Check
-                                        type="switch"
-                                        checked={sendInvoices}
-                                        onChange={(e) => setSendInvoices(e.target.checked)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
+                        
                         {/* Purchase Summary */}
                         <div className="purchase-summary">
+                            <div className="summary-row">
+                                <span>Amount</span>
+                                <span>${purchaseAmount}</span>
+                            </div>
                             <div className="summary-row">
                                 <span>Service fees</span>
                                 <span>${calculateServiceFees().toFixed(2)}</span>
@@ -296,17 +249,29 @@ const CreditsComponent: React.FC = () => {
                         </div>
                     </div>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseModal}>
-                        Cancel
-                    </Button>
-                    <Button 
-                        variant="primary" 
-                        onClick={handlePurchase}
-                        className="purchase-btn"
-                    >
-                        Purchase
-                    </Button>
+                <Modal.Footer className="payment-buttons">
+                    <div className="payment-buttons-row">
+                        <Button 
+                            variant="outline-primary" 
+                            onClick={() => {
+                                showToast("RazorPay payment initiated!", "info");
+                                setShowPurchaseModal(false);
+                            }}
+                            className="payment-btn razorpay-btn"
+                        >
+                            Pay with RazorPay
+                        </Button>
+                        <Button 
+                            variant="outline-primary" 
+                            onClick={() => {
+                                showToast("PayPal payment initiated!", "info");
+                                setShowPurchaseModal(false);
+                            }}
+                            className="payment-btn paypal-btn"
+                        >
+                            Pay with PayPal
+                        </Button>
+                    </div>
                 </Modal.Footer>
             </Modal>
         </div>
