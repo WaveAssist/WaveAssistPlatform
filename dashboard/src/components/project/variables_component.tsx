@@ -119,11 +119,12 @@ const VariablesComponent: React.FC = () => {
 			);
 
 			setVariablesArray(rowData);
+			setLoading(false);
 		} catch (error) {
 			console.error("fetchVariablesApi failed:", error);
 			showToast("Something went wrong with loading variables, please try again.", "danger");
+			setLoading(false);
 		}
-		setLoading(false);
 	};
 
 	const handleShowVariableEditor = () => {
@@ -328,32 +329,38 @@ const VariablesComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			{loading && (
-				<div className="my-3">
-					<Spinner animation="border" role="status" variant="success">
-						<span className="visually-hidden">Loading...</span>
-					</Spinner>
-				</div>
-			)}
-
-			<div className="mt-3">
-				<div className="d-flex justify-content-between align-items-center mb-3 ">
-					<h3 className="translucent_white">Variables</h3>
-					<div>
-						<Button variant="dark" onClick={handleShowVariableEditor}>
-							<span className="bi bi-plus-lg"></span>
-						</Button>{" "}
+			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
+				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
+					<div className="d-flex justify-content-between align-items-center mb-3 ">
+						<h3 className="translucent_white">Variables</h3>
+						<div>
+							<Button variant="dark" onClick={handleShowVariableEditor}>
+								<span className="bi bi-plus-lg"></span>
+							</Button>{" "}
+						</div>
 					</div>
-				</div>
-				<div className="ag-theme-custom grid-container">
-					<AgGridReact
-						rowData={variablesArray}
-						columnDefs={columnDefs}
-						pagination={true}
-						paginationPageSize={10}
-						gridOptions={gridOptions}
-						defaultColDef={defaultColDef}
-					/>
+
+					{loading && variablesArray.length === 0 ? (
+						<div className="d-flex justify-content-center align-items-center" style={{ flex: 1, minHeight: "400px" }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading variables...</div>
+							</div>
+						</div>
+					) : (
+						<div className="ag-theme-custom grid-container">
+							<AgGridReact
+								rowData={variablesArray}
+								columnDefs={columnDefs}
+								pagination={true}
+								paginationPageSize={10}
+								gridOptions={gridOptions}
+								defaultColDef={defaultColDef}
+							/>
+						</div>
+					)}
 				</div>
 			</div>
 

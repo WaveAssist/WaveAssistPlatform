@@ -340,7 +340,7 @@ const NodesComponent: React.FC = () => {
 	};
 
 	const [nodesArray, setNodesArray] = useState<any[]>([]);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 
 	const { showToast } = useToast();
 	const [showCodeModal, setShowCodeModal] = useState(false);
@@ -556,9 +556,11 @@ ${config.nodes
 				setRunTour(true);
 				localStorage.setItem("run_node_tour", "true");
 			}
+			setLoading(false);
 		} catch (error) {
 			console.error("FetchNodesApi failed:", error);
 			showToast("Something went wrong with loading Nodes, please try again.", "danger");
+			setLoading(false);
 		}
 	};
 
@@ -919,47 +921,54 @@ ${config.nodes
 
 	return (
 		<div className="main-container">
-			{loading && (
-				<div className="my-3">
-					<Spinner animation="border" role="status" variant="success">
-						<span className="visually-hidden">Loading...</span>
-					</Spinner>
-				</div>
-			)}
-
-			<div className="mt-3">
-				<div className="d-flex justify-content-start align-items-center mb-3">
-					<h3 className="translucent_white">Nodes</h3>
-					<div className="ms-auto d-flex">
-						<Button variant="dark" onClick={toggleView} className="ms-2" aria-label="Toggle view">
-							{view === "flow" ? (
-								<span className="bi bi-table">{!isMobile && <>&nbsp; Table View</>}</span>
-							) : (
-								<span className="bi bi-diagram-2">{!isMobile && <> Flow View</>}</span>
+			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
+				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
+					<div className="d-flex justify-content-start align-items-center mb-3">
+						<h3 className="translucent_white">Nodes</h3>
+						<div className="ms-auto d-flex">
+							<Button variant="dark" onClick={toggleView} className="ms-2" aria-label="Toggle view">
+								{view === "flow" ? (
+									<span className="bi bi-table">{!isMobile && <>&nbsp; Table View</>}</span>
+								) : (
+									<span className="bi bi-diagram-2">{!isMobile && <> Flow View</>}</span>
+								)}
+							</Button>
+							{/* Check premium status for Add Node button */}
+							{showAddNodeButton && (
+								<Button variant="dark" onClick={handleCreateNode} className="ms-2">
+									<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
+								</Button>
 							)}
-						</Button>
-						{/* Check premium status for Add Node button */}
-						{showAddNodeButton && (
-							<Button variant="dark" onClick={handleCreateNode} className="ms-2">
-								<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
-							</Button>
-						)}
-						{/* Check premium status for Download button */}
-						{showDownloadButton && (
-							<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
-								<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
-							</Button>
-						)}
+							{/* Check premium status for Download button */}
+							{showDownloadButton && (
+								<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
+									<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
+								</Button>
+							)}
+						</div>
 					</div>
-				</div>
 
-				{view === "table" ? (
-					<NodeTableView rowData={nodesArray} columnDefs={columnDefs} gridOptions={gridOptions} defaultColDef={defaultColDef} />
-				) : (
-					<Suspense fallback={<Spinner animation="border" />}>
-						<NodeFlowView nodes={rfNodes} edges={rfEdges} onNodesChange={handleNodesChange} />
-					</Suspense>
-				)}
+					{loading && nodesArray.length === 0 ? (
+						<div className="d-flex justify-content-center align-items-center" style={{ flex: 1, minHeight: "400px" }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading nodes...</div>
+							</div>
+						</div>
+					) : (
+						<>
+							{view === "table" ? (
+								<NodeTableView rowData={nodesArray} columnDefs={columnDefs} gridOptions={gridOptions} defaultColDef={defaultColDef} />
+							) : (
+								<Suspense fallback={<Spinner animation="border" />}>
+									<NodeFlowView nodes={rfNodes} edges={rfEdges} onNodesChange={handleNodesChange} />
+								</Suspense>
+							)}
+						</>
+					)}
+				</div>
 			</div>
 
 			{/* <Modal show={isOpen} onHide={handleClose} size="lg" centered>

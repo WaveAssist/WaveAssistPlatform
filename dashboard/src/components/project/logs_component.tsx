@@ -11,6 +11,7 @@ import { Button } from "react-bootstrap";
 const LogsComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
 	const [logString, setLogString] = useState<string>("");
+	const [loading, setLoading] = useState(true);
 	const { showToast } = useToast();
 	const [nodesArray, setNodesArray] = useState<any[]>([]);
 	const [selectedSystemKey, _] = useState("celery-worker");
@@ -43,9 +44,11 @@ const LogsComponent: React.FC = () => {
 		try {
 			const data = await fetchNodesApi();
 			setNodesArray(data.node_array);
+			setLoading(false);
 		} catch (error) {
 			console.error("FetchNodesApi failed:", error);
 			showToast("Something went wrong with loading Nodes, please try again.", "danger");
+			setLoading(false);
 		}
 	};
 
@@ -82,52 +85,65 @@ const LogsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<div className="mt-3">
-				<div className="d-flex justify-content-start align-items-center mb-3">
-					<h3 className="translucent_white">Logs</h3>
-					<div className="ms-auto d-flex">
-						{/* <DarkDropdown
-							items={systemName}
-							keys={systemKeys}
-							defaultText={getSelectedSystemName()}
-							headerText="Select System"
-							onItemSelect={handleSystemChange}
-						/> */}
-						{selectedSystemKey === "celery-worker" && (
-							<DarkDropdown
-								items={["All Nodes", ...nodesArray.map((node) => node.name), "Raw Logs"]}
-								keys={[
-									"All", // CSV of all node keys for "All Nodes"
-									...nodesArray.map((node) => node.node_key),
-									"",
-								]}
-								defaultText={getSelectedNodeName()}
-								headerText="Select Node"
-								onItemSelect={handleNodeChange}
-							/>
-						)}
+			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
+				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
+					<div className="d-flex justify-content-start align-items-center mb-3">
+						<h3 className="translucent_white">Logs</h3>
+						<div className="ms-auto d-flex">
+							{/* <DarkDropdown
+								items={systemName}
+								keys={systemKeys}
+								defaultText={getSelectedSystemName()}
+								headerText="Select System"
+								onItemSelect={handleSystemChange}
+							/> */}
+							{selectedSystemKey === "celery-worker" && (
+								<DarkDropdown
+									items={["All Nodes", ...nodesArray.map((node) => node.name), "Raw Logs"]}
+									keys={[
+										"All", // CSV of all node keys for "All Nodes"
+										...nodesArray.map((node) => node.node_key),
+										"",
+									]}
+									defaultText={getSelectedNodeName()}
+									headerText="Select Node"
+									onItemSelect={handleNodeChange}
+								/>
+							)}
 
-						<Button variant="dark" onClick={fetchLogs}>
-							<span className="bi bi-arrow-clockwise"></span>
-						</Button>
+							<Button variant="dark" onClick={fetchLogs}>
+								<span className="bi bi-arrow-clockwise"></span>
+							</Button>
+						</div>
 					</div>
-				</div>
 
-				<div className={`${location.pathname === "/manage/logs" ? "log-container" : "log-container-runs"} bg_color_dark`}>
-					<ScrollFollow
-						startFollowing={true}
-						render={({ follow, onScroll }) => (
-							<LazyLog
-								text={logString || "...................."}
-								enableSearch
-								caseInsensitive
-								extraLines={2}
-								selectableLines={true}
-								follow={follow}
-								onScroll={onScroll}
+					{loading && nodesArray.length === 0 ? (
+						<div className="d-flex justify-content-center align-items-center" style={{ flex: 1, minHeight: "400px" }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading logs...</div>
+							</div>
+						</div>
+					) : (
+						<div className={`${location.pathname === "/manage/logs" ? "log-container" : "log-container-runs"} bg_color_dark`}>
+							<ScrollFollow
+								startFollowing={true}
+								render={({ follow, onScroll }) => (
+									<LazyLog
+										text={logString || "...................."}
+										enableSearch
+										caseInsensitive
+										extraLines={2}
+										selectableLines={true}
+										follow={follow}
+										onScroll={onScroll}
+									/>
+								)}
 							/>
-						)}
-					/>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

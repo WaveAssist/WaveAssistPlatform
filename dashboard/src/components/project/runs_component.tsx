@@ -30,6 +30,7 @@ const formatTimestamp = (timestamp: string) => {
 
 const RunsComponent: React.FC = () => {
 	const [runsArray, setRunsArray] = useState<any[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
 	const posthog = usePostHog();
@@ -38,9 +39,11 @@ const RunsComponent: React.FC = () => {
 		try {
 			const data = await fetchDagRunsApi();
 			setRunsArray(data.dag_run_array || []);
+			setIsLoading(false);
 		} catch (error) {
 			console.error("fetchDagRunsApi failed:", error);
 			showToast("Something went wrong with loading runs, please try again.", "danger");
+			setIsLoading(false);
 		}
 	};
 
@@ -290,16 +293,28 @@ const RunsComponent: React.FC = () => {
 							<span className="bi bi-arrow-clockwise"></span>
 						</Button>
 					</div>
-					<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
-						<AgGridReact
-							rowData={runsArray}
-							columnDefs={columnDefs}
-							pagination={true}
-							paginationPageSize={10}
-							gridOptions={gridOptions}
-							defaultColDef={defaultColDef}
-						/>
-					</div>
+
+					{isLoading && runsArray.length === 0 ? (
+						<div className="d-flex justify-content-center align-items-center" style={{ flex: 1, minHeight: "400px" }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading runs...</div>
+							</div>
+						</div>
+					) : (
+						<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
+							<AgGridReact
+								rowData={runsArray}
+								columnDefs={columnDefs}
+								pagination={true}
+								paginationPageSize={10}
+								gridOptions={gridOptions}
+								defaultColDef={defaultColDef}
+							/>
+						</div>
+					)}
 				</div>
 			</div>
 
