@@ -7,6 +7,8 @@ from .Utils.projectSetup import *
 from .Utils.constants import *
 from .Utils.utils import run_knock_workflow, track_posthog, get_repo_parts_from_url
 import base64
+import requests
+import yaml
 from WaveAssistApiApp import manage_views
 from django.views.decorators.cache import cache_page
 
@@ -199,3 +201,70 @@ def list_templates(request):
 
     # Step 4: Return list of template metadata
     return ResponseParser.getParsedSuccessMessage(templates, '200', 'Templates fetched successfully.')
+
+@cache_page(60 * 60)  # Cache for 1 hr
+def list_assistants(request):
+    # Step 1: Authenticate with Netlify Identity
+    identity_url = "https://waveassist.io/.netlify/identity/token"
+    payload = {
+        "grant_type": "password",
+        "username": IDENTITY_USERNAME,  # Changed from "email" to "username" to match curl
+        "password": IDENTITY_PASSWORD  # Password should be securely stored/retrieved
+    }
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "*/*",
+    }
+
+    auth_resp = requests.post(identity_url, data=payload, headers=headers)
+    if auth_resp.status_code != 200:
+        return ResponseParser.getParsedErrorMessage("Failed to authenticate with Netlify Identity")
+    jwt = auth_resp.json().get("access_token")
+
+    # Step 2: List all assistant files via Git Gateway
+    dir_url = "https://waveassist.io/.netlify/git/github/contents/content/assistants"
+    headers = {"Authorization": f"Bearer {jwt}"}
+    list_resp = requests.get(dir_url, headers=headers)
+    if list_resp.status_code != 200:
+        return ResponseParser.getParsedErrorMessage("Failed to fetch assistants list")
+
+    items = list_resp.json()
+    assistants = []
+
+    # Step 3: For each YAML file, fetch and parse content
+    for item in items:
+        if item.get("type") == "file" and item.get("name", "").endswith(".yml"):
+            slug = item["name"][:-4]  # remove .yml
+            file_url = f"https://waveassist.io/.netlify/git/github/contents/content/assistants/{slug}.yml"
+            file_resp = requests.get(file_url, headers=headers)
+            if file_resp.status_code != 200:
+                continue
+
+            data = file_resp.json()
+            raw = base64.b64decode(data.get("content", "")).decode("utf-8")
+
+            try:
+                meta = yaml.safe_load(raw) or {}
+            except yaml.YAMLError:
+                meta = {}
+
+            # Normalize thumbnail URL
+            if "thumbnail" in meta:
+                meta["thumbnail"] = meta["thumbnail"].replace(
+                    "/images/templates/",
+                    "https://waveassist.io/images/templates/"
+                )
+
+            # Normalize primary_image URL if it exists
+            if "primary_image" in meta:
+                meta["primary_image"] = meta["primary_image"].replace(
+                    "/images/templates/",
+                    "https://waveassist.io/images/templates/"
+                )
+
+            meta["slug"] = slug
+            assistants.append(meta)
+
+    # Step 4: Return list of assistant metadata
+    return ResponseParser.getParsedSuccessMessage(assistants, '200', 'Assistants fetched successfully.')

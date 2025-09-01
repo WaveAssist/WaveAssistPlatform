@@ -86,6 +86,9 @@ urlpatterns = [
     path("templates/list_templates/", csrf_exempt(template_views.list_templates), name="list_templates"),
     path("templates/<slug:slug>/", csrf_exempt(template_views.get_template), name="get_template"),
 
+    ##Assistant URL's
+    path("assistants/list_assistants/", csrf_exempt(template_views.list_assistants), name="list_assistants"),
+
     ##CLI URL's
     path("cli/project/<str:project_id>/push_bundle/", csrf_exempt(cli_views.push_bundle), name="push_bundle"),
     path("cli/project/<str:project_id>/pull_bundle/", csrf_exempt(cli_views.pull_bundle), name="pull_bundle"),
