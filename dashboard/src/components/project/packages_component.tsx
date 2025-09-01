@@ -156,32 +156,38 @@ const PackagesComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			{loading && (
-				<div className="my-3">
-					<Spinner animation="border" role="status" variant="success">
-						<span className="visually-hidden">Loading...</span>
-					</Spinner>
-				</div>
-			)}
-
-			<div className="mt-3">
-				<div className="d-flex justify-content-between align-items-center mb-3 ">
-					<h3 className="translucent_white">Packages</h3>
-					<div>
-						<Button variant="dark" onClick={handleShowVariableEditor}>
-							<span className="bi bi-plus-lg"></span>
-						</Button>{" "}
+			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
+				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
+					<div className="d-flex justify-content-between align-items-center mb-3 ">
+						<h3 className="translucent_white">Packages</h3>
+						<div>
+							<Button variant="dark" onClick={handleShowVariableEditor}>
+								<span className="bi bi-plus-lg"></span>
+							</Button>{" "}
+						</div>
 					</div>
-				</div>
-				<div className="ag-theme-balham-dark grid-container full-screen">
-					<AgGridReact
-						rowData={packagesArray}
-						columnDefs={columnDefs}
-						pagination={true}
-						paginationPageSize={10}
-						gridOptions={gridOptions}
-						defaultColDef={defaultColDef}
-					/>
+
+					{loading && packagesArray.length === 0 ? (
+						<div className="d-flex justify-content-center align-items-center" style={{ flex: 1, minHeight: "400px" }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading packages...</div>
+							</div>
+						</div>
+					) : (
+						<div className="ag-theme-balham-dark grid-container full-screen">
+							<AgGridReact
+								rowData={packagesArray}
+								columnDefs={columnDefs}
+								pagination={true}
+								paginationPageSize={10}
+								gridOptions={gridOptions}
+								defaultColDef={defaultColDef}
+							/>
+						</div>
+					)}
 				</div>
 			</div>
 

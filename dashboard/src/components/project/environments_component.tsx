@@ -15,6 +15,7 @@ const EnvironmentsComponent: React.FC = () => {
 	const [environmentData, setEnvironmentData] = useState({ name: "", is_enabled: false });
 	const [editingEnvironmentKey, setEditingEnvironmentKey] = useState("");
 	const { shouldRefresh } = useRefresh();
+	const [loading, setLoading] = useState(true);
 
 	const handleCloseEnvironmentEditor = () => {
 		setShowEnvironmentEditor(false);
@@ -23,12 +24,15 @@ const EnvironmentsComponent: React.FC = () => {
 	};
 
 	const fetchEnvironments = async () => {
+		setLoading(true);
 		try {
 			const data = await fetchEnvironmentsApi();
 			setEnvironmentsArray(data.environment_array);
 		} catch (error) {
 			console.error("fetchEnvironmentsApi failed:", error);
 			showToast("Something went wrong with loading environments, please try again.", "danger");
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -144,24 +148,38 @@ const EnvironmentsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<div className="mt-3">
-				<div className="d-flex justify-content-between align-items-center mb-3">
-					<h3 className="translucent_white">Environments</h3>
-					<div>
-						<Button variant="dark" onClick={() => handleShowEnvironmentEditor()}>
-							<span className="bi bi-plus-lg"></span>
-						</Button>
+			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
+				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
+					<div className="d-flex justify-content-between align-items-center mb-3">
+						<h3 className="translucent_white">Environments</h3>
+						<div>
+							<Button variant="dark" onClick={() => handleShowEnvironmentEditor()}>
+								<span className="bi bi-plus-lg"></span>
+							</Button>
+						</div>
 					</div>
-				</div>
-				<div className="ag-theme-custom grid-container">
-					<AgGridReact
-						rowData={environmentsArray}
-						columnDefs={columnDefs}
-						pagination={true}
-						paginationPageSize={10}
-						gridOptions={gridOptions}
-						defaultColDef={defaultColDef}
-					/>
+
+					{loading && environmentsArray.length === 0 ? (
+						<div className="d-flex justify-content-center align-items-center" style={{ flex: 1, minHeight: "400px" }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading environments...</div>
+							</div>
+						</div>
+					) : (
+						<div className="ag-theme-custom grid-container">
+							<AgGridReact
+								rowData={environmentsArray}
+								columnDefs={columnDefs}
+								pagination={true}
+								paginationPageSize={10}
+								gridOptions={gridOptions}
+								defaultColDef={defaultColDef}
+							/>
+						</div>
+					)}
 				</div>
 			</div>
 

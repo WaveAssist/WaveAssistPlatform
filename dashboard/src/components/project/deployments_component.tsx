@@ -10,6 +10,7 @@ import { useRefresh } from "../../utils/RefreshContext";
 
 const DeploymentsComponent: React.FC = () => {
 	const [deploymentsArray, setDeploymentsArray] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
 	const posthog = usePostHog();
@@ -18,9 +19,11 @@ const DeploymentsComponent: React.FC = () => {
 		try {
 			const data = await fetchDeploymentsApi();
 			setDeploymentsArray(data.deployment_array);
+			setLoading(false);
 		} catch (error) {
 			console.error("fetchDeploymentsApi failed:", error);
 			showToast("Something went wrong with loading deployments, please try again.", "danger");
+			setLoading(false);
 		}
 	};
 
@@ -122,19 +125,33 @@ const DeploymentsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<div className="mt-3">
-				<div className="d-flex justify-content-between align-items-center mb-3">
-					<h3 className="translucent_white">Deployments</h3>
-				</div>
-				<div className="ag-theme-custom grid-container">
-					<AgGridReact
-						rowData={deploymentsArray}
-						columnDefs={columnDefs}
-						pagination={true}
-						paginationPageSize={10}
-						gridOptions={gridOptions}
-						defaultColDef={defaultColDef}
-					/>
+			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
+				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
+					<div className="d-flex justify-content-between align-items-center mb-3">
+						<h3 className="translucent_white">Deployments</h3>
+					</div>
+
+					{loading && deploymentsArray.length === 0 ? (
+						<div className="d-flex justify-content-center align-items-center" style={{ flex: 1, minHeight: "400px" }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading deployments...</div>
+							</div>
+						</div>
+					) : (
+						<div className="ag-theme-custom grid-container">
+							<AgGridReact
+								rowData={deploymentsArray}
+								columnDefs={columnDefs}
+								pagination={true}
+								paginationPageSize={10}
+								gridOptions={gridOptions}
+								defaultColDef={defaultColDef}
+							/>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>
