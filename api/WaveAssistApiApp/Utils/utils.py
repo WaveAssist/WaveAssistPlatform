@@ -28,6 +28,8 @@ from django.conf import settings
 posthog.api_key = settings.POSTHOG_API_KEY
 posthog.host = settings.POSTHOG_HOST
 import json
+from .constants import GITHUB_USERNAME
+
 
 def get_param(request, key: str, default=None):
     # Check GET params first
@@ -610,6 +612,19 @@ def decode_email_webhook_token(token: str) -> dict:
         "node_id": node_id,
         "env_id": env_id,
     }
+    
+    
+
+def get_repo_parts_from_url(repo_url):
+    repo_parts = repo_url.replace('.git', '').rstrip('/').split('/')
+    if len(repo_parts) >= 2:
+        owner = repo_parts[-2]
+        repo_name = repo_parts[-1]
+    else:
+        owner = GITHUB_USERNAME
+        repo_name = repo_parts[-1]
+
+    return owner, repo_name
 
 
 def track_posthog(uid, event, props):

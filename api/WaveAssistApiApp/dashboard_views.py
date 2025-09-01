@@ -2,6 +2,8 @@ from .models import *
 from .Utils.responseParser import ResponseParser
 from WaveAssistApiApp.Utils.MongoManager import MongoManager
 from .Utils.constants import *
+from .Utils.utils import get_repo_parts_from_url
+from .Utils.projectSetup import get_config_yaml_from_github, validate_yaml_config
 from django.core.cache import cache
 import WaveAssistApiApp.Utils.utils as utils
 import requests
@@ -175,10 +177,27 @@ def cli_login_status(request, session_id):
 
 
 def fetch_assistant(request, assistant_key):
-    try:
-        assistant = Assistants.objects.get(assistant_key=assistant_key)
-        return ResponseParser.getParsedSuccessMessage(assistant.get_dict(), '200', 'Assistant found successfully.')
-    except Assistants.DoesNotExist:
-        return ResponseParser.getParsedErrorMessage('Assistant not found.', 404)
+    try: 
+        try:
+            assistant = Assistants.objects.get(assistant_key=assistant_key)
+        except Exception as e:
+            return ResponseParser.getParsedErrorMessage('Assistant not found.', 404)
+    
+        owner, repo_name = get_repo_parts_from_url(assistant.github_url)
+        yaml_config = get_config_yaml_from_github(repo_name, owner)
+        is_valid, message =  validate_yaml_config(yaml_config)
+
+        if not is_valid:
+            return ResponseParser.getParsedErrorMessage("Error with yaml: " + str(message))
+        variables = yaml_config.get("variables", [])
+
+
+        ##Show optional variables
+        optional_variables = [v for v in variables if v.get('is_optional', True) == True]
+        variables = [v for v in variables if v.get('is_optional', True) == False]
+        assistant_dict = assistant.get_dict()
+        assistant_dict['input_array'] = variables
+        assistant_dict['optional_input_array'] = optional_variables
+        return ResponseParser.getParsedSuccessMessage(assistant_dict, '200', 'Assistant found successfully.')
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f'Error fetching assistant: {str(e)}', 500)

@@ -5,7 +5,7 @@ from .Utils.responseParser import ResponseParser
 from .models import *
 from .Utils.projectSetup import *
 from .Utils.constants import *
-from .Utils.utils import run_knock_workflow, track_posthog
+from .Utils.utils import run_knock_workflow, track_posthog, get_repo_parts_from_url
 import base64
 from WaveAssistApiApp import manage_views
 from django.views.decorators.cache import cache_page
@@ -29,14 +29,8 @@ def deploy_template(request):
 
     timezone = request.POST.get('timezone', 'UTC')
 
-    repo_parts = repo_url.replace('.git', '').rstrip('/').split('/')
-    if len(repo_parts) >= 2:
-        owner = repo_parts[-2]
-        repo_name = repo_parts[-1]
-    else:
-        owner = GITHUB_USERNAME
-        repo_name = repo_parts[-1]
 
+    owner, repo_name = get_repo_parts_from_url(repo_url)
     yaml_config = get_config_yaml_from_github(repo_name, owner)
     is_valid, message =  validate_yaml_config(yaml_config)
     if not is_valid:
