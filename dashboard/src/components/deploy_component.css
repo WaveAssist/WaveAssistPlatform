@@ -1,87 +1,40 @@
-.deploy-container {
-  background-color: #141721;
+/* Deploy loading page - matching login page styling */
+.deploy-loading-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
-  padding: 40px 10%;
+  background: #0b0d14;
+  padding: 2rem;
   color: white;
 }
 
-.deploy-card {
-  background-color: #1A2430;
-  border-radius: 10px;
+.deploy-loading-container {
   width: 100%;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  margin-bottom: 2rem;
-}
-
-
-.deploy-image img {
-  width: 100%;
-  height: 160px;
-  object-fit: contain;
-  background-color: #0f1117;
-  padding: 1rem;
-}
-
-.deploy-content {
-  padding: 2rem;
-}
-
-.deploy-content h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.deploy-content h4 {
-  font-size: 1.25rem;
-  margin-bottom: 0.75rem;
-}
-
-.description {
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 1rem;
-  line-height: 1.6;
-}
-
-.repo-info {
-  background-color: #2e3c4f;
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.repo-info h3 {
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.repo-info a {
-  word-break: break-all;
-  text-decoration: none;
-}
-
-.repo-info a:hover {
-  text-decoration: underline;
-}
-
-.badge {
-  font-size: 0.75rem;
-  border-radius: 999px;
-}
-
-
-
-.separator {
-  border-top: 1px solid #fff;
-  margin-top: 10px;
-  margin-bottom: 40px;
-  width: 100%;
-}
-
-.deploy-modal .modal-content {
-  background-color: #1A2430;
+  max-width: 420px;
+  background: #131621;
+  border-radius: 1rem;
+  padding: 2.5rem;
   text-align: center;
-  border-radius: 12px;
-  padding: 2rem;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.deploy-logo {
+  height: auto;
+  margin-bottom: 2rem;
+  max-width: 200px;
+}
+
+.deploy-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.deploy-message {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin-top: 1rem;
+  font-family: 'Roboto', sans-serif;
 }
