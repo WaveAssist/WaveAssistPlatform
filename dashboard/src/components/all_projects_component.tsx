@@ -6,7 +6,7 @@ import Modal from "react-bootstrap/Modal";
 import Alert from "react-bootstrap/Alert";
 import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { fetchAllProjectsAPI, createProjectAPI, deleteProjectApi } from "../services/all_projects_services";
 import { useToast } from "../utils/toast_context";
 import "./all_projects_component.css";

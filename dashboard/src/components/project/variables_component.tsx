@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { fetchVariablesApi, fetchDataForKeyAPI, createVariableApi, setDataForKeyApi, getDataUrl } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
-import { Form, Button, Spinner, DropdownButton, Dropdown, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Form, Button, DropdownButton, Dropdown, OverlayTrigger, Tooltip } from "react-bootstrap";
 import Papa from "papaparse";
 import { AgGridReact } from "ag-grid-react"; // for JSX
 import type { AgGridReact as AgGridReactType } from "ag-grid-react"; // for typing

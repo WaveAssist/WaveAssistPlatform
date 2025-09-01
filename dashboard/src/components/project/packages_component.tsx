@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchPackagesApi, removePackageApi, reinstallPackageApi, installPackageApi } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
-import { Button, Spinner } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import { AgGridReact } from "ag-grid-react";
 import "./project_components.css";
 import "../../utils/ag-theme-project.css";
