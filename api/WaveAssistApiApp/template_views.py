@@ -11,6 +11,8 @@ import requests
 import yaml
 from WaveAssistApiApp import manage_views
 from django.views.decorators.cache import cache_page
+from django.core.cache import cache
+from django.http import HttpResponse
 
 def deploy_template(request):
     request.POST = request.POST.copy()
@@ -202,7 +204,7 @@ def list_templates(request):
     # Step 4: Return list of template metadata
     return ResponseParser.getParsedSuccessMessage(templates, '200', 'Templates fetched successfully.')
 
-@cache_page(60 * 60)  # Cache for 1 hr
+@cache_page(60 * 60 * 24 * 7)  # Cache for 1 week
 def list_assistants(request):
     # Step 1: Authenticate with Netlify Identity
     identity_url = "https://waveassist.io/.netlify/identity/token"
@@ -268,3 +270,39 @@ def list_assistants(request):
 
     # Step 4: Return list of assistant metadata
     return ResponseParser.getParsedSuccessMessage(assistants, '200', 'Assistants fetched successfully.')
+
+
+def refresh_assistants_cache(request, token):
+    STATIC_CACHE_TOKEN = "waveassist_cache_reset_token"
+
+    # Check if the provided token matches
+    if token != STATIC_CACHE_TOKEN:
+        return ResponseParser.getParsedErrorMessage("Unauthorized")
+
+    try:
+        # Clear the cache for the list_assistants view
+        # The cache key for @cache_page is typically based on the request path
+        cache_key = f"views.decorators.cache.cache_page.{request.META['HTTP_HOST']}.GET./assistants/list_assistants/"
+        cache.delete(cache_key)
+
+        # Also try to delete with alternative cache key patterns
+        cache.delete("views.decorators.cache.cache_page.GET./assistants/list_assistants/")
+        cache.delete("cache_page.GET./assistants/list_assistants/")
+
+        # Clear all cache as fallback (more aggressive but ensures cache is cleared)
+        cache.clear()
+
+        # Refresh the cache by calling list_assistants
+        # Create a mock request object for the list_assistants function
+        from django.http import HttpRequest
+        mock_request = HttpRequest()
+        mock_request.method = 'GET'
+        mock_request.META = request.META.copy()
+
+        # Call list_assistants to refresh the cache
+        result = list_assistants(mock_request)
+
+        return ResponseParser.getParsedSuccessMessage({}, '200', 'Cache refreshed successfully.')
+
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(f"Error refreshing cache: {str(e)}")

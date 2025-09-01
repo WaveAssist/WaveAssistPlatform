@@ -88,6 +88,7 @@ urlpatterns = [
 
     ##Assistant URL's
     path("assistants/list_assistants/", csrf_exempt(template_views.list_assistants), name="list_assistants"),
+    path("assistants/refresh_assistants_cache/<str:token>/", csrf_exempt(template_views.refresh_assistants_cache), name="refresh_assistants_cache"),
 
     ##CLI URL's
     path("cli/project/<str:project_id>/push_bundle/", csrf_exempt(cli_views.push_bundle), name="push_bundle"),
