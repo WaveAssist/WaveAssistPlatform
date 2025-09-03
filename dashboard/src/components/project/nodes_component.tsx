@@ -105,6 +105,9 @@ const NodesComponent: React.FC = () => {
 	const [stockSearchTimeout, setStockSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 	const stockSearchAbortController = useRef<AbortController | null>(null);
 
+	// Maximum allowed stocks constant
+	const MAX_SELECTED_STOCKS = 5;
+
 	// Simple checks for premium status
 	const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
@@ -726,9 +729,9 @@ ${config.nodes
 		// Check if stock is already selected
 		const isAlreadySelected = selectedStocks.some((s) => s._id === stock._id);
 		if (!isAlreadySelected) {
-			// Check if we already have 3 stocks selected
-			if (selectedStocks.length >= 3) {
-				showToast("Maximum 3 stocks allowed", "warning");
+			// Check if we already have maximum stocks selected
+			if (selectedStocks.length >= MAX_SELECTED_STOCKS) {
+				showToast(`Maximum ${MAX_SELECTED_STOCKS} stocks allowed`, "warning");
 				return;
 			}
 
@@ -1359,7 +1362,9 @@ ${config.nodes
 
 											{/* Selected Stocks */}
 											<div className="mt-3">
-												<small className="translucent_white">Selected Stocks ({selectedStocks.length}/3):</small>
+												<small className="translucent_white">
+													Selected Stocks ({selectedStocks.length}/{MAX_SELECTED_STOCKS}):
+												</small>
 												{selectedStocks.length > 0 && (
 													<div className="mt-2">
 														{selectedStocks.map((stock) => (
