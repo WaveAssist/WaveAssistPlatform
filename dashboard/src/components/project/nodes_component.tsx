@@ -1322,87 +1322,99 @@ ${config.nodes
 							<p className="translucent_white mt-3">Loading configuration...</p>
 						</div>
 					) : (
-						<Form>
-							{wizardInputs.map((input_dict) => (
-								<Form.Group className="mb-3" key={input_dict.key}>
-									<Form.Label>{input_dict.key}</Form.Label>
-									{input_dict.type === "stock" ? (
-										<div>
-											{/* Stock Search Input */}
-											<Form.Control
-												type="text"
-												placeholder="Search for stocks..."
-												value={stockSearchQuery}
-												onChange={(e) => handleStockSearchChange(e.target.value)}
-											/>
+						<>
+							{wizardInputs.length === 0 ? (
+								<div className="text-center py-4">
+									<div className="mb-3">
+										<i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
+									</div>
+									<h5 className="text-white mb-3">Ready to run!</h5>
+									<p className="translucent_white mb-0">Your agent is ready to go. No additional configuration is needed.</p>
+								</div>
+							) : (
+								<Form>
+									{wizardInputs.map((input_dict) => (
+										<Form.Group className="mb-3" key={input_dict.key}>
+											<Form.Label>{input_dict.key}</Form.Label>
+											{input_dict.type === "stock" ? (
+												<div>
+													{/* Stock Search Input */}
+													<Form.Control
+														type="text"
+														placeholder="Search for stocks..."
+														value={stockSearchQuery}
+														onChange={(e) => handleStockSearchChange(e.target.value)}
+													/>
 
-											{/* Stock Search Results */}
-											{stockSearchLoading && (
-												<div className="mt-2">
-													<Spinner animation="border" size="sm" /> <span className="translucent_white">Loading...</span>
-												</div>
-											)}
-
-											{stockSearchResults.length > 0 && (
-												<div className="mt-2 stock-search-results-container p-2">
-													{stockSearchResults.map((stock) => (
-														<div
-															key={stock._id}
-															className="p-2 border-bottom stock-search-result"
-															onClick={() => handleStockSelect(stock, input_dict.key)}>
-															<div className="fw-bold text-white">{stock.symbol}</div>
-															<div className="translucent_white small">{stock.name}</div>
-															<div className="translucent_white small">
-																{stock.exchange} • {stock.country} • {stock.currency}
-															</div>
+													{/* Stock Search Results */}
+													{stockSearchLoading && (
+														<div className="mt-2">
+															<Spinner animation="border" size="sm" /> <span className="translucent_white">Loading...</span>
 														</div>
-													))}
-												</div>
-											)}
+													)}
 
-											{/* Selected Stocks */}
-											<div className="mt-3">
-												<small className="translucent_white">
-													Selected Stocks ({selectedStocks.length}/{MAX_SELECTED_STOCKS}):
-												</small>
-												{selectedStocks.length > 0 && (
-													<div className="mt-2">
-														{selectedStocks.map((stock) => (
-															<span key={stock._id} className="badge stock-selected-badge">
-																{stock.symbol} - {stock.name}
-																<button
-																	type="button"
-																	className="btn-close btn-close-white"
-																	onClick={() => handleStockRemove(stock._id, input_dict.key)}>
-																	X
-																</button>
-															</span>
-														))}
+													{stockSearchResults.length > 0 && (
+														<div className="mt-2 stock-search-results-container p-2">
+															{stockSearchResults.map((stock) => (
+																<div
+																	key={stock._id}
+																	className="p-2 border-bottom stock-search-result"
+																	onClick={() => handleStockSelect(stock, input_dict.key)}>
+																	<div className="fw-bold text-white">{stock.symbol}</div>
+																	<div className="translucent_white small">{stock.name}</div>
+																	<div className="translucent_white small">
+																		{stock.exchange} • {stock.country} • {stock.currency}
+																	</div>
+																</div>
+															))}
+														</div>
+													)}
+
+													{/* Selected Stocks */}
+													<div className="mt-3">
+														<small className="translucent_white">
+															Selected Stocks ({selectedStocks.length}/{MAX_SELECTED_STOCKS}):
+														</small>
+														{selectedStocks.length > 0 && (
+															<div className="mt-2">
+																{selectedStocks.map((stock) => (
+																	<span key={stock._id} className="badge stock-selected-badge">
+																		{stock.symbol} - {stock.name}
+																		<button
+																			type="button"
+																			className="btn-close btn-close-white"
+																			onClick={() => handleStockRemove(stock._id, input_dict.key)}>
+																			X
+																		</button>
+																	</span>
+																))}
+															</div>
+														)}
 													</div>
-												)}
-											</div>
-										</div>
-									) : Array.isArray(input_dict.options) && input_dict.options.length > 0 ? (
-										<Form.Select
-											value={wizardValues[input_dict.key] || input_dict.options[0]}
-											onChange={(e) => handleWizardInputChange(input_dict.key, e.target.value)}>
-											{input_dict.options.map((opt: string, idx: number) => (
-												<option key={idx} value={opt}>
-													{opt}
-												</option>
-											))}
-										</Form.Select>
-									) : (
-										<Form.Control
-											type="text"
-											value={wizardValues[input_dict.key] || ""}
-											onChange={(e) => handleWizardInputChange(input_dict.key, e.target.value)}
-										/>
-									)}
-									{input_dict.helper_message && <Form.Text className="text-secondary">{input_dict.helper_message}</Form.Text>}
-								</Form.Group>
-							))}
-						</Form>
+												</div>
+											) : Array.isArray(input_dict.options) && input_dict.options.length > 0 ? (
+												<Form.Select
+													value={wizardValues[input_dict.key] || input_dict.options[0]}
+													onChange={(e) => handleWizardInputChange(input_dict.key, e.target.value)}>
+													{input_dict.options.map((opt: string, idx: number) => (
+														<option key={idx} value={opt}>
+															{opt}
+														</option>
+													))}
+												</Form.Select>
+											) : (
+												<Form.Control
+													type="text"
+													value={wizardValues[input_dict.key] || ""}
+													onChange={(e) => handleWizardInputChange(input_dict.key, e.target.value)}
+												/>
+											)}
+											{input_dict.helper_message && <Form.Text className="text-secondary">{input_dict.helper_message}</Form.Text>}
+										</Form.Group>
+									))}
+								</Form>
+							)}
+						</>
 					)}
 				</Modal.Body>
 				<Modal.Footer>
