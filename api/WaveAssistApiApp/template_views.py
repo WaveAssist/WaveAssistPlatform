@@ -70,14 +70,6 @@ def deploy_template(request):
         print(f"❌ Error creating project or nodes: {str(e)}")
         return ResponseParser.getParsedErrorMessage("Project was not created")
 
-    try:
-        data = {
-            'template_name': str(project_name.lower()),
-            'project_key': str(project_key),
-        }
-        run_knock_workflow(str(uid), 'template', data)
-    except:
-        pass
 
     ##Track PostHog event
     track_posthog(

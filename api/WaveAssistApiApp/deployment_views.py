@@ -159,17 +159,6 @@ def deploy_project(request): ##TCW
     except Exception as e:
         return ResponseParser.getParsedErrorMessage('Error in deploying the project: ' + str(e))
 
-    ##Schedule email
-    try:
-        knock_data = {
-            'project_name': project_object.name,
-            'version_code': version,
-            'deployment_key': deployment_object.key,
-        }
-        utils.run_knock_workflow(str(user_object.uid), 'deployed', knock_data)
-    except:
-        pass
-
     output_dict = {'deployment': deployment_object.get_dict()}
     
     ##Track PostHog event
