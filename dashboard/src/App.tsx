@@ -23,43 +23,10 @@ import "./App.css";
 import DeploymentsComponent from "./components/project/deployments_component";
 import LogsComponent from "./components/project/logs_component";
 import DeployComponent from "./components/deploy_component";
-import { useEffect } from "react";
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-RHQ9VZRVXH");
 
-declare global {
-	interface Window {
-		tidioChatApi?: {
-			setVisitorData: (data: { name?: string; email?: string; phone?: string; tags?: string[] }) => void;
-		};
-	}
-}
-
 function App() {
-	useEffect(() => {
-		const script = document.createElement("script");
-		script.src = "//code.tidio.co/hwxpzkyjj2n6zse0gjmf9efyub8uwyx1.js";
-		script.async = true;
-
-		script.onload = () => {
-			const uid = localStorage.getItem("uid");
-
-			if (uid) {
-				const interval = setInterval(() => {
-					if (window.tidioChatApi) {
-						clearInterval(interval);
-						window.tidioChatApi.setVisitorData({
-							name: `User ${uid}`,
-							tags: ["waveassist-user"],
-						});
-					}
-				}, 500);
-			}
-		};
-
-		document.body.appendChild(script);
-	}, []);
-
 	return (
 		<Router>
 			<div>
