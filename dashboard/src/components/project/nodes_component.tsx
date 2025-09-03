@@ -724,9 +724,9 @@ ${config.nodes
 		// Check if stock is already selected
 		const isAlreadySelected = selectedStocks.some((s) => s._id === stock._id);
 		if (!isAlreadySelected) {
-			// Check if we already have 3 stocks selected
-			if (selectedStocks.length >= 3) {
-				showToast("Maximum 3 stocks allowed", "warning");
+			// Check if we already have 10 stocks selected
+			if (selectedStocks.length >= 10) {
+				showToast("Maximum 10 stocks allowed", "warning");
 				return;
 			}
 
@@ -1350,7 +1350,7 @@ ${config.nodes
 
 											{/* Selected Stocks */}
 											<div className="mt-3">
-												<small className="translucent_white">Selected Stocks ({selectedStocks.length}/3):</small>
+												<small className="translucent_white">Selected Stocks ({selectedStocks.length}/10):</small>
 												{selectedStocks.length > 0 && (
 													<div className="mt-2">
 														{selectedStocks.map((stock) => (

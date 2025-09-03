@@ -144,6 +144,7 @@
 .credit-amount-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
     gap: 0.5rem;
     margin-top: 0.5rem;
 }
@@ -161,32 +162,68 @@
 
 .credit-amount-btn:hover {
     background-color: #f8f9fa;
-    border-color: #408558;
 }
 
 .credit-amount-btn.active {
-    background-color: #408558;
+    background-color: #f8f9fa;
     border-color: #408558;
-    color: #ffffff;
+    color: #333;
 }
 
 .custom-amount-input {
-    grid-column: 2;
-    grid-row: 2;
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    background-color: #ffffff;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+}
+
+.custom-amount-input:hover {
+    background-color: #f8f9fa;
+    border-color: #333;
+}
+
+.custom-amount-input.active {
+    background-color: #f8f9fa;
+    border-color: #408558;
+    color: #333;
 }
 
 .custom-amount-input input {
     width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #dee2e6;
+    padding: 0;
     border-radius: 6px;
     text-align: center;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-weight: inherit;
+    font-size: inherit;
 }
 
 .custom-amount-input input:focus {
     border-color: #408558;
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(64, 133, 88, 0.25);
+}
+
+.dollar-sign {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-right: 0.25rem;
+    user-select: none;
+}
+
+.custom-amount-input.active .dollar-sign {
+    color: #6c757d;
 }
 
 @media (max-width: 767px) {
@@ -348,7 +385,7 @@
 
 /* Purchase Modal Styles */
 .purchase-modal-content {
-    padding: 1rem 0;
+    padding: 0.5rem 0;
 }
 
 
@@ -434,7 +471,7 @@
     background-color: #1f2633;
     border-radius: 8px;
     padding: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.2rem;
 }
 
 .summary-row {
@@ -450,15 +487,28 @@
 
 .total-row {
     border-top: 1px solid #dee2e6;
-    padding-top: 0.5rem;
-    margin-top: 0.5rem;
+    padding-top: 0.7rem;
+    margin-top: 0.9rem;
     font-weight: 600;
+}
+
+.total-amount-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
 }
 
 .total-amount {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #007bff;
+    color: #28a745;
+}
+
+.indian-currency-amount {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 500;
 }
 
 .purchase-btn {
@@ -472,7 +522,7 @@
 }
 
 .payment-buttons {
-    padding: 0;
+    padding: 1rem 0 1.5rem 0;
 }
 
 .payment-buttons-row {
@@ -496,6 +546,12 @@
     overflow: hidden;
 }
 
+/* Common background color for both payment buttons */
+.payment-btn {
+    background-color: #152037;
+    color: #ffffff;
+}
+
 .payment-btn::before {
     content: '';
     position: absolute;
@@ -511,28 +567,58 @@
     left: 100%;
 }
 
-.razorpay-btn {
-    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-    color: #ffffff;
-}
-
-.razorpay-btn:hover {
-    background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+/* Keep hover consistent for both */
+.payment-btn:hover {
+    background-color: #1a2b4d;
     color: #ffffff;
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(13, 110, 253, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
-.paypal-btn {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: #ffffff;
+/* Inline content and logo sizes */
+.payment-btn-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.paypal-btn:hover {
-    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
-    color: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+.payment-logo {
+    height: 18px;
+    width: auto;
+    display: inline-block;
+}
+
+/* Primary vs Secondary buttons */
+.payment-btn.primary {
+    min-width: 220px;
+}
+
+.payment-btn.secondary {
+    min-width: 150px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.secondary-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.secondary-note {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    max-width: 320px;
+}
+
+.payment-link {
+    color: #7fb8ff;
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 /* Dark theme overrides for modal */
@@ -583,6 +669,10 @@
     border-top-color: #2b3548;
 }
 
+.main-container .indian-currency-amount {
+    color: rgba(255, 255, 255, 0.6);
+}
+
 .main-container .form-label {
     color: #ffffff;
 }
@@ -608,25 +698,48 @@
 
 .main-container .credit-amount-btn:hover {
     background-color: #1f2633;
-    border-color: #408558;
 }
 
 .main-container .credit-amount-btn.active {
-    background-color: #408558;
+    background-color: #1f2633;
     border-color: #408558;
     color: #ffffff;
 }
 
-.main-container .custom-amount-input input {
+/* Dark theme for custom amount input */
+.main-container .custom-amount-input {
     background-color: #2b3548;
     border-color: #2b3548;
     color: #ffffff;
 }
 
-.main-container .custom-amount-input input:focus {
-    background-color: #2b3548;
+.main-container .custom-amount-input:hover {
+    background-color: #1f2633;
+}
+
+.main-container .custom-amount-input.active {
+    background-color: #1f2633;
     border-color: #408558;
     color: #ffffff;
+}
+
+.main-container .custom-amount-input input {
+    background: transparent;
+    border: none;
+    color: inherit;
+}
+
+.main-container .custom-amount-input input:focus {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    color: inherit;
+}
+
+/* Brighter placeholder for dark theme */
+.main-container .custom-amount-input input::placeholder {
+    color: rgba(255, 255, 255, 0.75);
 }
 
 
