@@ -294,48 +294,41 @@ def verify_razorpay_payment(payment, provider_payment_id, signature, razorpay_pa
             'razorpay_signature': signature
         }
         
-        logger.info(f"Verifying RazorPay signature with params: {params_dict}")
         razorpay_client.utility.verify_payment_signature(params_dict)
         
         # Get payment details
         payment_details = razorpay_client.payment.fetch(razorpay_payment_id)
-        logger.info(f"Payment details fetched: {payment_details}")
         
         if payment_details['status'] == 'captured':
-            logger.info(f"Payment captured successfully. Updating payment status to completed for payment ID: {payment.id}")
             payment.status = 'completed'
             payment.save()
             
             # Add credits to OpenRouter if credits were purchased and haven't been granted yet
-            logger.info(f"Checking credits for payment ID: {payment.id}, credits_in_usd: {payment.credits_in_usd}, credits_granted: {payment.credits_granted}")
             if payment.credits_in_usd > 0 and not payment.credits_granted:
-                logger.info(f"Attempting to add {payment.credits_in_usd} USD credits to OpenRouter for account: {payment.account.account_uid}")
                 credits_added = add_credits_to_openrouter(payment.account, payment.credits_in_usd)
                 if credits_added:
-                    logger.info(f"Successfully added credits to OpenRouter. Updating payment.credits_granted to True for payment ID: {payment.id}")
+                    logger.info(f"Successfully added credits to OpenRouter.")
                     payment.credits_granted = True
                     payment.save()
                 else:
-                    logger.error(f"Failed to add credits to OpenRouter for payment ID: {payment.id}, account: {payment.account.account_uid}")
-                    print(f"Warning: Failed to add credits to OpenRouter for payment {payment.id}")
+                    logger.error(f"Failed to add credits to OpenRouter.")
             else:
-                logger.info(f"Skipping credits addition - credits_in_usd: {payment.credits_in_usd}, credits_granted: {payment.credits_granted}")
+                logger.info(f"Skipping credits addition.")
             
-            logger.info(f"RazorPay payment verification completed successfully for payment ID: {payment.id}")
             return ResponseParser.getParsedSuccessMessage(
                 payment.get_dict(), 
                 'success', 
                 'Payment verified successfully'
             )
         else:
-            logger.warning(f"Payment not captured. Status: {payment_details['status']} for payment ID: {payment.id}")
+            logger.info(f"Payment not captured.")
             payment.status = 'failed'
             payment.save()
             
             return ResponseParser.getParsedErrorMessage('Payment verification failed')
             
     except Exception as e:
-        logger.error(f"Exception during RazorPay payment verification for payment ID: {payment.id}: {str(e)}", exc_info=True)
+        logger.error(f"Exception during RazorPay payment verification: {str(e)}")
         payment.status = 'failed'
         payment.save()
         return ResponseParser.getParsedErrorMessage(f'Payment verification failed: {str(e)}')
@@ -344,68 +337,54 @@ def verify_razorpay_payment(payment, provider_payment_id, signature, razorpay_pa
 def verify_paypal_payment(payment, provider_payment_id, payer_id):
     """Verify PayPal payment"""
     
-    logger.info(f"Starting PayPal payment verification for payment ID: {payment.id}, provider_payment_id: {provider_payment_id}, payer_id: {payer_id}")
     
     try:
         # Get payment details from PayPal
-        logger.info(f"Fetching PayPal payment details for provider_payment_id: {provider_payment_id}")
         paypal_payment = paypalrestsdk.Payment.find(provider_payment_id)
-        logger.info(f"PayPal payment state: {paypal_payment.state}")
         
         # Check if payment is in 'created' state (user approved but not executed)
         if paypal_payment.state == 'created':
-            logger.info("PayPal payment is in 'created' state, attempting to execute")
             if not payer_id:
                 logger.error("PayerID is required to execute PayPal payment")
                 return ResponseParser.getParsedErrorMessage('PayerID is required to execute PayPal payment')
             
             # Execute the payment to complete the transaction
-            logger.info(f"Executing PayPal payment with payer_id: {payer_id}")
             if paypal_payment.execute({'payer_id': payer_id}):
-                logger.info("PayPal payment executed successfully, fetching updated payment details")
                 # Payment executed successfully, now state should be 'approved'
                 paypal_payment = paypalrestsdk.Payment.find(provider_payment_id)
-                logger.info(f"PayPal payment state after execution: {paypal_payment.state}")
             else:
-                logger.error(f"PayPal payment execution failed: {paypal_payment.error}")
                 payment.status = 'failed'
                 payment.save()
                 return ResponseParser.getParsedErrorMessage(f'Payment execution failed: {paypal_payment.error}')
         
         if paypal_payment.state == 'approved':
-            logger.info(f"PayPal payment approved. Updating payment status to completed for payment ID: {payment.id}")
             payment.status = 'completed'
             payment.save()
             
             # Add credits to OpenRouter if credits were purchased and haven't been granted yet
-            logger.info(f"Checking credits for payment ID: {payment.id}, credits_in_usd: {payment.credits_in_usd}, credits_granted: {payment.credits_granted}")
             if payment.credits_in_usd > 0 and not payment.credits_granted:
-                logger.info(f"Attempting to add {payment.credits_in_usd} USD credits to OpenRouter for account: {payment.account.account_uid}")
                 credits_added = add_credits_to_openrouter(payment.account, payment.credits_in_usd)
                 if credits_added:
-                    logger.info(f"Successfully added credits to OpenRouter. Updating payment.credits_granted to True for payment ID: {payment.id}")
                     payment.credits_granted = True
                     payment.save()
                 else:
-                    logger.error(f"Failed to add credits to OpenRouter for payment ID: {payment.id}, account: {payment.account.account_uid}")
-                    print(f"Warning: Failed to add credits to OpenRouter for payment {payment.id}")
+                    logger.info(f"Warning: Failed to add credits to OpenRouter.")
             else:
-                logger.info(f"Skipping credits addition - credits_in_usd: {payment.credits_in_usd}, credits_granted: {payment.credits_granted}")
+                logger.info(f"Skipping credits addition.")
             
-            logger.info(f"PayPal payment verification completed successfully for payment ID: {payment.id}")
             return ResponseParser.getParsedSuccessMessage(
                 payment.get_dict(), 
                 'success', 
                 'Payment verified successfully'
             )
         else:
-            logger.warning(f"PayPal payment not approved. State: {paypal_payment.state} for payment ID: {payment.id}")
+            logger.warning(f"PayPal payment not approved.")
             payment.status = 'failed'
             payment.save()
-            return ResponseParser.getParsedErrorMessage(f'Payment verification failed. State: {paypal_payment.state}')
+            return ResponseParser.getParsedErrorMessage(f'Payment verification failed.')
             
     except Exception as e:
-        logger.error(f"Exception during PayPal payment verification for payment ID: {payment.id}: {str(e)}", exc_info=True)
+        logger.error(f"Exception during PayPal payment verification: {str(e)}")
         payment.status = 'failed'
         payment.save()
         return ResponseParser.getParsedErrorMessage(f'Payment verification failed: {str(e)}')
@@ -488,7 +467,6 @@ def add_credits_to_openrouter(account_object, credits_in_usd):
         }
         
         logger.info(f"Making GET request to OpenRouter API: {url}")
-        logger.info(f"Using authorization header with key: {OPENROUTER_PROVISIONING_KEY[:10]}...")
         
         # First, get the current key details
         response = requests.get(url, headers=headers, timeout=10)
@@ -503,7 +481,6 @@ def add_credits_to_openrouter(account_object, credits_in_usd):
         logger.info(f"Searching for key with name: {account_object.account_uid}")
         
         for key in keys_data.get('data', []):
-            logger.info(f"Checking key: {key}")
             if key.get('name') == account_object.account_uid:
                 user_key = key
                 logger.info(f"Found matching key: {user_key}")
@@ -534,13 +511,7 @@ def add_credits_to_openrouter(account_object, credits_in_usd):
         
         logger.info(f"Successfully added {credits_in_usd} USD credits to OpenRouter for account: {account_object.account_uid}")
         return True
-        
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request exception while adding credits to OpenRouter for account {account_object.account_uid}: {str(e)}")
-        logger.error(f"Response status: {getattr(e.response, 'status_code', 'N/A') if hasattr(e, 'response') else 'N/A'}")
-        logger.error(f"Response content: {getattr(e.response, 'text', 'N/A') if hasattr(e, 'response') else 'N/A'}")
-        return False
+
     except Exception as e:
-        logger.error(f"Unexpected error adding credits to OpenRouter for account {account_object.account_uid}: {str(e)}", exc_info=True)
-        print(f"Error adding credits to OpenRouter: {str(e)}")
+        logger.error(f"Unexpected error adding credits to OpenRouter for account {account_object.account_uid}: {str(e)}")
         return False
