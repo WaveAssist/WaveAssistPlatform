@@ -1,0 +1,745 @@
+.credits-container {
+    background-color: #151720;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.credits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.credits-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #000000;
+    margin: 0;
+}
+
+.refresh-button {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    border-radius: 10%;
+    transition: background-color 0.2s ease;
+}
+
+.refresh-button:hover {
+    background-color: #f8f9fa;
+}
+
+.available-credits-card {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+    .available-credits-card {
+        margin-bottom: 0;
+    }
+}
+
+.credit-details {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.credit-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.credit-detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.credit-detail-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.credit-detail-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.credit-detail-value.total {
+    color: #28a745;
+}
+
+.credit-detail-value.used {
+    color: #ffc107;
+}
+
+.credit-balance-amount {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #000000;
+    text-align: center;
+    margin: 0;
+    line-height: 1;
+}
+
+.credit-balance-label {
+    text-align: center;
+    color: #6c757d;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+.info-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: #6c757d;
+    cursor: pointer;
+}
+
+.buy-credits-card {
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.buy-credits-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.add-credits-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.view-usage-section {
+    margin-top: auto;
+    text-align: center;
+}
+
+.credit-amount-section {
+    margin-bottom: 1.5rem;
+}
+
+.credit-amount-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.credit-amount-btn {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    background-color: #ffffff;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.credit-amount-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.credit-amount-btn.active {
+    background-color: #f8f9fa;
+    border-color: #408558;
+    color: #333;
+}
+
+.custom-amount-input {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    background-color: #ffffff;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+}
+
+.custom-amount-input:hover {
+    background-color: #f8f9fa;
+    border-color: #333;
+}
+
+.custom-amount-input.active {
+    background-color: #f8f9fa;
+    border-color: #408558;
+    color: #333;
+}
+
+.custom-amount-input input {
+    width: 100%;
+    padding: 0;
+    border-radius: 6px;
+    text-align: center;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+}
+
+.custom-amount-input input:focus {
+    border-color: #408558;
+    outline: none;
+}
+
+.dollar-sign {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-right: 0.25rem;
+    user-select: none;
+}
+
+.custom-amount-input.active .dollar-sign {
+    color: #6c757d;
+}
+
+@media (max-width: 767px) {
+    .buy-credits-card {
+        height: auto;
+        min-height: 200px;
+    }
+    
+    .available-credits-card {
+        height: auto;
+        min-height: 250px;
+    }
+    
+    .credits-container .row {
+        margin: 0 -0.5rem;
+    }
+    
+    .credits-container .col-md-6 {
+        padding: 0 0.5rem;
+    }
+}
+
+.buy-credits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.buy-credits-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #000000;
+    margin: 0;
+}
+
+.crypto-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.crypto-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background-color: #e9ecef;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.toggle-switch.active {
+    background-color: #007bff;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.toggle-switch.active::after {
+    transform: translateX(20px);
+}
+
+.add-credits-button {
+    width: 100%;
+    background-color: #408558;
+    border: none;
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.add-credits-button:hover {
+    background-color: #408558;
+    color: #ffffff;
+}
+
+.view-usage-link {
+    color: #408558;
+    text-decoration: none;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.view-usage-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+
+
+/* Dark theme overrides for the project */
+.main-container .credits-container {
+    background-color: #101219;
+    color: #ffffff;
+}
+
+.main-container .credits-title {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.main-container .available-credits-card {
+    background-color: #1f2633;
+    border: 1px solid #2b3548;
+}
+
+.main-container .credit-balance-amount {
+    color: #ffffff;
+}
+
+.main-container .credit-balance-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.main-container .credit-details {
+    border-top-color: #2b3548;
+}
+
+.main-container .credit-detail-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.main-container .credit-detail-value {
+    color: #ffffff;
+}
+
+.main-container .buy-credits-card {
+    background-color: #1f2633;
+    border: 1px solid #2b3548;
+}
+
+.main-container .buy-credits-title {
+    color: #ffffff;
+}
+
+.main-container .crypto-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Purchase Modal Styles */
+.purchase-modal-content {
+    padding: 0.5rem 0;
+}
+
+
+
+.package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.package-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.remove-package-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+.package-details {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.package-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.add-package-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #007bff;
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.amount-section {
+    margin-bottom: 1.5rem;
+}
+
+.amount-input {
+    max-width: 200px;
+}
+
+.billing-options {
+    margin-bottom: 1.5rem;
+}
+
+.billing-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+}
+
+.billing-option:last-child {
+    border-bottom: none;
+}
+
+.billing-option:hover {
+    background-color: #f8f9fa;
+}
+
+.purchase-summary {
+    background-color: #1f2633;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.summary-row:last-child {
+    margin-bottom: 0;
+}
+
+.total-row {
+    border-top: 1px solid #dee2e6;
+    padding-top: 0.7rem;
+    margin-top: 0.9rem;
+    font-weight: 600;
+}
+
+.total-amount-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+}
+
+.total-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.indian-currency-amount {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 500;
+}
+
+.purchase-btn {
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+}
+
+.purchase-btn:hover {
+    background-color: #5a32a3;
+    border-color: #5a32a3;
+}
+
+.payment-buttons {
+    padding: 1rem 0 1.5rem 0;
+}
+
+.payment-buttons-row {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.payment-btn {
+    flex: 0 1 auto;
+    min-width: 200px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Common background color for both payment buttons */
+.payment-btn {
+    background-color: #152037;
+    color: #ffffff;
+}
+
+.payment-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.payment-btn:hover::before {
+    left: 100%;
+}
+
+/* Keep hover consistent for both */
+.payment-btn:hover {
+    background-color: #1a2b4d;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Inline content and logo sizes */
+.payment-btn-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.payment-logo {
+    height: 18px;
+    width: auto;
+    display: inline-block;
+}
+
+/* Primary vs Secondary buttons */
+.payment-btn.primary {
+    min-width: 220px;
+}
+
+.payment-btn.secondary {
+    min-width: 150px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.secondary-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.secondary-note {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    max-width: 320px;
+}
+
+.payment-link {
+    color: #7fb8ff;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Dark theme overrides for modal */
+.main-container .modal-content {
+    background-color: #1f2633;
+    border: 1px solid #2b3548;
+}
+
+.main-container .modal-header {
+    border-bottom-color: #2b3548;
+}
+
+.main-container .modal-footer {
+    border-top-color: #2b3548;
+}
+
+.main-container .modal-title {
+    color: #ffffff;
+}
+
+.main-container .credit-package-card {
+    background-color: #2b3548;
+    border-color: #28a745;
+}
+
+.main-container .package-name {
+    color: #ffffff;
+}
+
+.main-container .package-date {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.main-container .billing-option {
+    border-bottom-color: #2b3548;
+    color: #ffffff;
+}
+
+.main-container .billing-option:hover {
+    background-color: #2b3548;
+}
+
+.main-container .purchase-summary {
+    background-color: #2b3548;
+}
+
+.main-container .total-row {
+    border-top-color: #2b3548;
+}
+
+.main-container .indian-currency-amount {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.main-container .form-label {
+    color: #ffffff;
+}
+
+.main-container .form-control {
+    background-color: #2b3548;
+    border-color: #2b3548;
+    color: #ffffff;
+}
+
+.main-container .form-control:focus {
+    background-color: #2b3548;
+    border-color: #007bff;
+    color: #ffffff;
+}
+
+/* Dark theme for credit amount buttons */
+.main-container .credit-amount-btn {
+    background-color: #2b3548;
+    border-color: #2b3548;
+    color: #ffffff;
+}
+
+.main-container .credit-amount-btn:hover {
+    background-color: #1f2633;
+}
+
+.main-container .credit-amount-btn.active {
+    background-color: #1f2633;
+    border-color: #408558;
+    color: #ffffff;
+}
+
+/* Dark theme for custom amount input */
+.main-container .custom-amount-input {
+    background-color: #2b3548;
+    border-color: #2b3548;
+    color: #ffffff;
+}
+
+.main-container .custom-amount-input:hover {
+    background-color: #1f2633;
+}
+
+.main-container .custom-amount-input.active {
+    background-color: #1f2633;
+    border-color: #408558;
+    color: #ffffff;
+}
+
+.main-container .custom-amount-input input {
+    background: transparent;
+    border: none;
+    color: inherit;
+}
+
+.main-container .custom-amount-input input:focus {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    color: inherit;
+}
+
+/* Brighter placeholder for dark theme */
+.main-container .custom-amount-input input::placeholder {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+
