@@ -474,7 +474,6 @@ def add_credits_to_openrouter(account_object, credits_in_usd):
         
         response.raise_for_status()
         keys_data = response.json()
-        logger.info(f"OpenRouter API response data: {keys_data}")
         
         # Find the user's key
         user_key = None
@@ -494,9 +493,11 @@ def add_credits_to_openrouter(account_object, credits_in_usd):
         # Update the key with additional credits
         key_hash = user_key.get('hash')
         current_limit = user_key.get('limit', 0)
-        new_limit = current_limit + credits_in_usd
+        # Convert Decimal to float for JSON serialization
+        credits_float = float(credits_in_usd)
+        new_limit = float(current_limit + credits_float)
         
-        logger.info(f"Key details - hash: {key_hash}, current_limit: {current_limit}, new_limit: {new_limit}")
+        logger.info(f"Key details - hash: {key_hash}, current_limit: {current_limit}, credits_float: {credits_float}, new_limit: {new_limit}")
         
         update_payload = {
             "limit": new_limit
@@ -511,6 +512,7 @@ def add_credits_to_openrouter(account_object, credits_in_usd):
         
         logger.info(f"Successfully added {credits_in_usd} USD credits to OpenRouter for account: {account_object.account_uid}")
         return True
+
 
     except Exception as e:
         logger.error(f"Unexpected error adding credits to OpenRouter for account {account_object.account_uid}: {str(e)}")
