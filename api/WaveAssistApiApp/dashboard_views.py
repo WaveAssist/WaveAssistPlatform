@@ -33,7 +33,7 @@ def login(request): ##TCW
         ##check if account_object has everything.
         if account_object.mongo_db_url == '':
             should_get_started = True
-        if account_object.worker_service_arn == '':
+        if account_object.celery_queue == '':
             should_get_started = True
     except:
         should_get_started = True
