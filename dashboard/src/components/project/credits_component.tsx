@@ -19,6 +19,9 @@ interface CreditsData {
 }
 
 const CreditsComponent: React.FC = () => {
+	// TEMPORARY: Disable Add Credits functionality - set to false to re-enable
+	const ADD_CREDITS_ENABLED = false;
+
 	// INR conversion rate (USD * 88)
 	const INR_CONVERSION_RATE = 88;
 
@@ -363,8 +366,15 @@ const CreditsComponent: React.FC = () => {
 								</div>
 
 								<div className="add-credits-section">
-									<button className="add-credits-button" onClick={handleAddCredits}>
-										Add Credits
+									<button
+										className="add-credits-button"
+										onClick={ADD_CREDITS_ENABLED ? handleAddCredits : undefined}
+										disabled={!ADD_CREDITS_ENABLED}
+										style={{
+											opacity: ADD_CREDITS_ENABLED ? 1 : 0.6,
+											cursor: ADD_CREDITS_ENABLED ? "pointer" : "not-allowed",
+										}}>
+										{ADD_CREDITS_ENABLED ? "Add Credits" : "Add Credits (Coming Soon)"}
 									</button>
 								</div>
 
