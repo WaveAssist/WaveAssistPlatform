@@ -205,15 +205,22 @@ def create_paypal_order(account_object, amount, currency, description, credits_i
         payment = paypalrestsdk.Payment(payment_data)
         
         if payment.create():
-            # Get approval URL
+            # Get approval URL and extract token
             approval_url = None
+            token = None
             for link in payment.links:
                 if link.rel == "approval_url":
                     approval_url = link.href
+                    # Extract token (EC_ID) from approval URL
+                    if 'token=' in approval_url:
+                        token = approval_url.split('token=')[1]
                     break
             
             if not approval_url:
                 return ResponseParser.getParsedErrorMessage('Failed to get PayPal approval URL')
+            
+            if not token:
+                return ResponseParser.getParsedErrorMessage('Failed to extract token from PayPal approval URL')
             
             # Create payment record in database
             db_payment = Payment.objects.create(
@@ -230,6 +237,7 @@ def create_paypal_order(account_object, amount, currency, description, credits_i
             # Return payment details for frontend
             response_data = {
                 'payment_id': payment.id,
+                'order_id': token,  # EC_ID for PayPal (extracted from approval URL)
                 'approval_url': approval_url,
                 'amount': str(amount),
                 'currency': currency,
