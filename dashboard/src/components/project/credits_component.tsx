@@ -7,6 +7,7 @@ import { useRefresh } from "../../utils/RefreshContext";
 import { Button, Modal } from "react-bootstrap";
 import { Spinner } from "react-bootstrap";
 import { useRazorpay } from "react-razorpay";
+import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import "./project_components.css";
 import "./credits_component.css";
 import paypalLogo from "../../assets/uploads/paypal.png";
@@ -20,7 +21,7 @@ interface CreditsData {
 
 const CreditsComponent: React.FC = () => {
 	// TEMPORARY: Disable Add Credits functionality - set to false to re-enable
-	const ADD_CREDITS_ENABLED = false;
+	const ADD_CREDITS_ENABLED = true;
 
 	// INR conversion rate (USD * 88)
 	const INR_CONVERSION_RATE = 88;
@@ -35,11 +36,117 @@ const CreditsComponent: React.FC = () => {
 	const [isCustomSelected, setIsCustomSelected] = useState(false);
 	const [isIndia, setIsIndia] = useState<boolean | null>(null);
 	const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+	const [loadPayPalSDK, setLoadPayPalSDK] = useState(false);
 
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
 	const posthog = usePostHog();
 	const { Razorpay } = useRazorpay();
+
+	// PayPal Button Component
+	const PayPalButtonComponent: React.FC = () => {
+		const [{ isPending }] = usePayPalScriptReducer();
+
+		const createOrder = async () => {
+			try {
+				const uid = localStorage.getItem("uid");
+				if (!uid) {
+					showToast("User not authenticated. Please login again.", "danger");
+					throw new Error("User not authenticated");
+				}
+
+				const orderData = await createPaymentOrder("paypal", Number(calculateTotal()).toFixed(2).toString(), "USD", uid, purchaseAmount.toString());
+
+				if (orderData.success !== "1") {
+					throw new Error(orderData.message || "Failed to create PayPal order");
+				}
+
+				return orderData.data.order_id;
+			} catch (error) {
+				console.error("PayPal order creation failed:", error);
+				showToast("Failed to create payment order. Please try again.", "danger");
+				throw error;
+			}
+		};
+
+		const onApprove = async (data: any) => {
+			try {
+				const uid = localStorage.getItem("uid");
+				if (!uid) {
+					showToast("User not authenticated. Please login again.", "danger");
+					return;
+				}
+
+				const verificationData = await verifyPayment(
+					"paypal",
+					Number(calculateTotal()).toFixed(2).toString(),
+					"USD",
+					uid,
+					data.orderID, // provider_payment_id (PayPal order ID)
+					"", // signature (empty for PayPal)
+					"", // razorpay_payment_id (empty for PayPal)
+					data.payerID // paypal_payer_id
+				);
+
+				if (verificationData.success === "1") {
+					showToast("Payment verified successfully! Credits will be added shortly.", "success");
+					await fetchCredits();
+					setShowPurchaseModal(false);
+
+					// Track successful payment
+					try {
+						posthog?.capture("paypal_payment_success", {
+							project_id: localStorage.getItem("selected_project_key") || undefined,
+							environment: localStorage.getItem("selected_env_key") || undefined,
+							amount: purchaseAmount,
+							total_amount: calculateTotal(),
+							payment_id: data.orderID,
+						});
+					} catch (_err) {}
+				} else {
+					showToast("Payment verification failed. Please contact support.", "danger");
+				}
+			} catch (error) {
+				console.error("PayPal payment verification failed:", error);
+				showToast("Payment verification failed. Please contact support.", "danger");
+			}
+		};
+
+		const onError = (err: any) => {
+			console.error("PayPal payment error:", err);
+			showToast("Payment failed. Please try again.", "danger");
+		};
+
+		const onCancel = () => {
+			showToast("Payment cancelled", "warning");
+		};
+
+		if (isPending) {
+			return (
+				<Button disabled className="payment-btn paypal-btn">
+					<span className="payment-btn-content">
+						<Spinner animation="border" size="sm" className="me-2" />
+						<span>Loading PayPal...</span>
+					</span>
+				</Button>
+			);
+		}
+
+		return (
+			<PayPalButtons
+				createOrder={createOrder}
+				onApprove={onApprove}
+				onError={onError}
+				onCancel={onCancel}
+				style={{
+					layout: "vertical",
+					color: "blue",
+					shape: "rect",
+					label: "paypal",
+				}}
+			/>
+		);
+	};
 
 	const fetchCredits = async () => {
 		try {
@@ -77,7 +184,7 @@ const CreditsComponent: React.FC = () => {
 				if (!response.ok) throw new Error("geo lookup failed");
 				const data = await response.json();
 				const countryCode = String(data?.country_code || "").toUpperCase();
-				setIsIndia(countryCode === "IN");
+				setIsIndia(countryCode === "INN");
 			} catch (_err) {
 				// Default to non-India on failure
 				setIsIndia(false);
@@ -202,25 +309,7 @@ const CreditsComponent: React.FC = () => {
 
 	const handlePayPalPayment = async () => {
 		try {
-			setIsPaymentLoading(true);
-
-			const uid = localStorage.getItem("uid");
-			if (!uid) {
-				showToast("User not authenticated. Please login again.", "danger");
-				return;
-			}
-
-			const orderData = await createPaymentOrder("paypal", Number(calculateTotal()).toFixed(2).toString(), "USD", uid, purchaseAmount.toString());
-
-			if (orderData.success !== "1") {
-				throw new Error(orderData.message || "Failed to create PayPal order");
-			}
-
-			const approvalUrl = orderData?.data?.approval_url || orderData?.approval_url;
-			if (!approvalUrl) {
-				throw new Error("Approval URL not found in PayPal response");
-			}
-
+			// Track payment initiation
 			try {
 				posthog?.capture("paypal_payment_initiated", {
 					project_id: localStorage.getItem("selected_project_key") || undefined,
@@ -230,19 +319,18 @@ const CreditsComponent: React.FC = () => {
 				});
 			} catch (_err) {}
 
-			setShowPurchaseModal(false);
-			window.location.assign(approvalUrl);
+			// Load PayPal SDK
+			setLoadPayPalSDK(true);
 		} catch (error) {
 			console.error("PayPal payment failed:", error);
 			showToast("Payment failed. Please try again.", "danger");
-		} finally {
-			setIsPaymentLoading(false);
 		}
 	};
 
 	const handleCloseModal = () => {
 		setShowPurchaseModal(false);
 		setPurchaseAmount(10); // Reset to default
+		setLoadPayPalSDK(false); // Reset PayPal SDK loading
 	};
 
 	const calculateServiceFees = () => {
@@ -449,26 +537,49 @@ const CreditsComponent: React.FC = () => {
 									<br />
 									PayPal does not accept Indian cards.
 								</p>
+								{loadPayPalSDK && (
+									<div className="mt-3">
+										<PayPalScriptProvider
+											options={{
+												clientId: "YOUR_PAYPAL_CLIENT_ID", // Replace with your actual PayPal client ID
+												currency: "USD",
+												intent: "capture",
+											}}>
+											<PayPalButtonComponent />
+										</PayPalScriptProvider>
+									</div>
+								)}
 							</div>
 						</>
 					) : (
 						<>
 							<div className="payment-buttons-row">
-								<Button onClick={handlePayPalPayment} disabled={isPaymentLoading} className="payment-btn paypal-btn">
-									<span className="payment-btn-content">
-										{isPaymentLoading ? (
-											<>
-												<Spinner animation="border" size="sm" className="me-2" />
-												<span>Creating Order...</span>
-											</>
-										) : (
-											<>
-												<span>Pay with</span>
-												<img src={paypalLogo} alt="PayPal" className="payment-logo" />
-											</>
-										)}
-									</span>
-								</Button>
+								{loadPayPalSDK ? (
+									<PayPalScriptProvider
+										options={{
+											clientId: "YOUR_PAYPAL_CLIENT_ID", // Replace with your actual PayPal client ID
+											currency: "USD",
+											intent: "capture",
+										}}>
+										<PayPalButtonComponent />
+									</PayPalScriptProvider>
+								) : (
+									<Button onClick={handlePayPalPayment} disabled={isPaymentLoading} className="payment-btn paypal-btn">
+										<span className="payment-btn-content">
+											{isPaymentLoading ? (
+												<>
+													<Spinner animation="border" size="sm" className="me-2" />
+													<span>Creating Order...</span>
+												</>
+											) : (
+												<>
+													<span>Pay with</span>
+													<img src={paypalLogo} alt="PayPal" className="payment-logo" />
+												</>
+											)}
+										</span>
+									</Button>
+								)}
 							</div>
 							<br />
 							<div className="secondary-option payment-buttons-row">
