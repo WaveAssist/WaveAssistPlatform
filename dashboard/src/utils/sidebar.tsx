@@ -194,7 +194,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 						Environments
 					</Link>
 				</li>
-				<li className="nav-item">
+				{/* <li className="nav-item">
 					<Link
 						to="/manage/credits"
 						className={`nav-link ${location.pathname === "/manage/credits" ? "active" : "text-white"} mb-1`}
@@ -202,7 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 						<i className="bi bi-credit-card me-2"></i>
 						Credits
 					</Link>
-				</li>
+				</li> */}
 				<li className="nav-item">
 					<Link
 						to="/manage/logs"
