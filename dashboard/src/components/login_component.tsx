@@ -127,6 +127,10 @@ const LoginComponent: React.FC = () => {
 				localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
 				localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
+				// Store plan_name for sidebar visibility control
+				if (data.user_data.plan_name) {
+					localStorage.setItem("plan_name", data.user_data.plan_name);
+				}
 
 				// PostHog identify with uid as distinct_id and properties
 
@@ -166,6 +170,10 @@ const LoginComponent: React.FC = () => {
 			localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 			localStorage.setItem("uid", data.user_data.uid);
 			localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
+			// Store plan_name for sidebar visibility control
+			if (data.user_data.plan_name) {
+				localStorage.setItem("plan_name", data.user_data.plan_name);
+			}
 
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {

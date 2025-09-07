@@ -161,7 +161,11 @@ const AllProjectsComponent: React.FC = () => {
 			// Set selected project and premium status, then navigate
 			localStorage.setItem("selected_project_key", newProjectKey);
 			localStorage.setItem("is_project_premium", "false");
-			navigate(`/manage/nodes?project_key=${newProjectKey}`);
+			
+			// Check user's plan to determine navigation destination
+			const planName = localStorage.getItem("plan_name");
+			const destination = planName === "operator" ? "runs" : "nodes";
+			navigate(`/manage/${destination}?project_key=${newProjectKey}`);
 		} catch (error) {
 			console.error("FetchAllProjects failed:", error);
 			var error_message = "Something went wrong creating the project: " + error;
@@ -193,7 +197,10 @@ const AllProjectsComponent: React.FC = () => {
 			});
 		} catch (_err) {}
 
-		navigate(`/manage/nodes?project_key=${projectKey}`);
+		// Check user's plan to determine navigation destination
+		const planName = localStorage.getItem("plan_name");
+		const destination = planName === "operator" ? "runs" : "nodes";
+		navigate(`/manage/${destination}?project_key=${projectKey}`);
 	};
 
 	return (
@@ -229,16 +236,16 @@ const AllProjectsComponent: React.FC = () => {
 			<div className="admin-panel">
 				<div className="content projects-row">
 					<div className="header">
-						<h2 className="admin-title mb-3 translucent_white">All Projects</h2>
+						<h2 className="admin-title mb-3 translucent_white">All Assistants</h2>
 					</div>
 
 					<div className="row ">
-						<div className="col-sm-4 project-card  " onClick={handleOpenModal}>
+						<div className="col-sm-4 project-card  " onClick={() => window.open("https://waveassist.io/assistants", "_blank")}>
 							<div className="card text-white bg-dark mb-3 ml-5 mr-5 add-project-card">
 								<div className="card-body d-flex align-items-center justify-content-center">
 									<div className="text-center">
 										<i className="bi bi-plus-lg add-icon translucent_blue fs-3"></i>
-										<p className="add-text translucent_blue">Add Project</p>
+										<p className="add-text translucent_blue">Add Assistant</p>
 									</div>
 								</div>
 							</div>

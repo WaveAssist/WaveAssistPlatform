@@ -4,16 +4,33 @@ import "./sidebar.css";
 import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 import { useEffect, useState } from "react";
 import Joyride, { Step } from "react-joyride";
+import { useToast } from "./toast_context";
 
 interface SidebarProps {
 	isOpen: boolean;
 	onClose: () => void;
+	planName?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName }) => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [runTour, setRunTour] = useState(false);
+	const { showToast } = useToast();
+
+	// Get plan name from localStorage if not provided as prop
+	const currentPlanName = planName || localStorage.getItem("plan_name") || "operator";
+	
+	// Determine which sections should be visible based on plan
+	const isBuilderOrEditorPlan = currentPlanName === "builder" || currentPlanName === "editor";
+	const isOperatorPlan = currentPlanName === "operator";
+
+	// Handle locked section clicks for operators
+	const handleLockedSectionClick = (sectionName: string) => {
+		if (isOperatorPlan) {
+			showToast(`Upgrade to Builder or Editor plan to access ${sectionName}`, "warning");
+		}
+	};
 
 	useEffect(() => {
 		const isNewUser = localStorage.getItem("is_new_user");
@@ -140,33 +157,73 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 			</div>
 
 			<ul className="nav nav-pills flex-column mb-4 mt-4">
+				{/* Nodes - Locked for operators, visible for builder/editor plans */}
 				<li className="nav-item">
-					<Link
-						to="/manage/nodes"
-						className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1`}
-						onClick={handleNavClick}>
-						<i className="bi bi-bezier2 me-2"></i>
-						Nodes
-					</Link>
+					{isBuilderOrEditorPlan ? (
+						<Link
+							to="/manage/nodes"
+							className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1`}
+							onClick={handleNavClick}>
+							<i className="bi bi-bezier2 me-2"></i>
+							Nodes
+						</Link>
+					) : (
+						<div
+							className="nav-link text-white-50 mb-1 disabled-link"
+							onClick={() => handleLockedSectionClick("Nodes")}
+							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
+							<i className="bi bi-bezier2 me-2"></i>
+							Nodes
+							<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
+						</div>
+					)}
 				</li>
+				
+				{/* Variables - Locked for operators, visible for builder/editor plans */}
 				<li className="nav-item">
-					<Link
-						to="/manage/variables"
-						className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1 variables-link`}
-						onClick={handleNavClick}>
-						<i className="bi bi-table me-2"></i>
-						Variables
-					</Link>
+					{isBuilderOrEditorPlan ? (
+						<Link
+							to="/manage/variables"
+							className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1 variables-link`}
+							onClick={handleNavClick}>
+							<i className="bi bi-table me-2"></i>
+							Variables
+						</Link>
+					) : (
+						<div
+							className="nav-link text-white-50 mb-1 disabled-link"
+							onClick={() => handleLockedSectionClick("Variables")}
+							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
+							<i className="bi bi-table me-2"></i>
+							Variables
+							<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
+						</div>
+					)}
 				</li>
+				
+				{/* Packages - Locked for operators, visible for builder/editor plans */}
 				<li className="nav-item">
-					<Link
-						to="/manage/packages"
-						className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link`}
-						onClick={handleNavClick}>
-						<i className="bi bi-box-fill me-2"></i>
-						Packages
-					</Link>
+					{isBuilderOrEditorPlan ? (
+						<Link
+							to="/manage/packages"
+							className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link`}
+							onClick={handleNavClick}>
+							<i className="bi bi-box-fill me-2"></i>
+							Packages
+						</Link>
+					) : (
+						<div
+							className="nav-link text-white-50 mb-1 disabled-link"
+							onClick={() => handleLockedSectionClick("Packages")}
+							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
+							<i className="bi bi-box-fill me-2"></i>
+							Packages
+							<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
+						</div>
+					)}
 				</li>
+				
+				{/* Runs - Visible for all plans */}
 				<li className="nav-item">
 					<Link
 						to="/manage/runs"
@@ -176,6 +233,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 						Runs
 					</Link>
 				</li>
+				
+				{/* Deployments - Visible for all plans */}
 				<li className="nav-item">
 					<Link
 						to="/manage/deployments"
@@ -185,15 +244,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 						Deployments
 					</Link>
 				</li>
+				
+				{/* Environments - Locked for operators, visible for builder/editor plans */}
 				<li className="nav-item">
-					<Link
-						to="/manage/environments"
-						className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}
-						onClick={handleNavClick}>
-						<i className="bi bi-stack me-2"></i>
-						Environments
-					</Link>
+					{isBuilderOrEditorPlan ? (
+						<Link
+							to="/manage/environments"
+							className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1`}
+							onClick={handleNavClick}>
+							<i className="bi bi-stack me-2"></i>
+							Environments
+						</Link>
+					) : (
+						<div
+							className="nav-link text-white-50 mb-1 disabled-link"
+							onClick={() => handleLockedSectionClick("Environments")}
+							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
+							<i className="bi bi-stack me-2"></i>
+							Environments
+							<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
+						</div>
+					)}
 				</li>
+				
+				{/* Credits - Visible for all plans */}
 				<li className="nav-item">
 					<Link
 						to="/manage/credits"
@@ -203,14 +277,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 						Credits
 					</Link>
 				</li>
+				
+				{/* Logs - Locked for operators, visible for builder/editor plans */}
 				<li className="nav-item">
-					<Link
-						to="/manage/logs"
-						className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 logs-link`}
-						onClick={handleNavClick}>
-						<i className="bi bi-file-text-fill me-2"></i>
-						Logs
-					</Link>
+					{isBuilderOrEditorPlan ? (
+						<Link
+							to="/manage/logs"
+							className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 logs-link`}
+							onClick={handleNavClick}>
+							<i className="bi bi-file-text-fill me-2"></i>
+							Logs
+						</Link>
+					) : (
+						<div
+							className="nav-link text-white-50 mb-1 disabled-link"
+							onClick={() => handleLockedSectionClick("Logs")}
+							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
+							<i className="bi bi-file-text-fill me-2"></i>
+							Logs
+							<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
+						</div>
+					)}
 				</li>
 
 				<li className="nav-item mb-1 text-uppercase small ps-2 pt-3" style={{ color: "#ffffff80", fontSize: "11px", letterSpacing: "0.05em" }}>
