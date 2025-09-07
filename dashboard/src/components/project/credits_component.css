@@ -527,7 +527,7 @@
 
 .payment-buttons-row {
     display: flex;
-    gap: 1rem;
+    gap: 5rem;
     width: 100%;
     justify-content: center;
 }
@@ -740,6 +740,29 @@
 /* Brighter placeholder for dark theme */
 .main-container .custom-amount-input input::placeholder {
     color: rgba(255, 255, 255, 0.75);
+}
+
+
+
+.paypal-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    z-index: 10;
+    backdrop-filter: blur(2px);
+}
+
+/* Dark theme for PayPal loading overlay */
+.main-container .paypal-loading-overlay {
+    background-color: rgba(31, 38, 51, 0.9);
+    color: #ffffff;
 }
 
 
