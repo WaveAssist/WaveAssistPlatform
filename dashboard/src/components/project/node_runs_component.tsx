@@ -7,6 +7,7 @@ import "../../utils/ag-theme-project.css";
 
 interface Props {
 	dagRunId: string;
+	onLoadingComplete?: () => void;
 }
 
 const formatTimestamp = (timestamp: string) => {
@@ -23,7 +24,7 @@ const formatTimestamp = (timestamp: string) => {
 	return `${datePart} ${timePart}.${milliseconds}`;
 };
 
-const NodeRunsComponent: React.FC<Props> = ({ dagRunId }) => {
+const NodeRunsComponent: React.FC<Props> = ({ dagRunId, onLoadingComplete }) => {
 	const [nodeRunsArray, setNodeRunsArray] = useState<any[]>([]);
 	const { showToast } = useToast();
 
@@ -34,6 +35,9 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId }) => {
 		} catch (error) {
 			console.error("fetchNodeRunsApi failed:", error);
 			showToast("Something went wrong with loading node runs, please try again.", "danger");
+		} finally {
+			console.log("Calling onLoadingComplete callback");
+			onLoadingComplete?.();
 		}
 	};
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { usePostHog } from "posthog-js/react";
 import { AgGridReact } from "ag-grid-react";
 import { fetchDagRunsApi } from "../../services/runs_services";
@@ -72,9 +72,18 @@ const RunsComponent: React.FC = () => {
 	const [showOutputModal, setShowOutputModal] = useState(false);
 	const [outputHtmlContent, setOutputHtmlContent] = useState("");
 	const [outputDisplayMode, setOutputDisplayMode] = useState<"html" | "iframe">("iframe");
+	const [loadingOutputRunId, setLoadingOutputRunId] = useState<string | null>(null);
+	const [isLoadingRunDetails, setIsLoadingRunDetails] = useState(false);
+
+	const handleLoadingComplete = useCallback(() => {
+		console.log("onLoadingComplete called, setting isLoadingRunDetails to false");
+		setIsLoadingRunDetails(false);
+	}, []);
 
 	const handleViewDetails = (run: any) => {
 		if (run && run.run_id) {
+			console.log("Opening View Status modal for run:", run.run_id);
+			setIsLoadingRunDetails(true);
 			setSelectedRunId(run.run_id);
 			setShowRunModal(true);
 			fetchRuns(); // Refresh data when popup is opened
@@ -91,11 +100,13 @@ const RunsComponent: React.FC = () => {
 	const handleClose = () => {
 		setSelectedRunId("");
 		setShowRunModal(false);
+		setIsLoadingRunDetails(false);
 		fetchRuns(); // Refresh data when popup is dismissed
 	};
 
 	const handleViewOutput = async (runId: string) => {
 		try {
+			setLoadingOutputRunId(runId);
 			console.log("View Output clicked for run ID:", runId);
 			const response = await fetchDataForKeyAPI("display_output", runId);
 			console.log("Output data:", response);
@@ -110,6 +121,8 @@ const RunsComponent: React.FC = () => {
 		} catch (error) {
 			console.error("Error fetching output:", error);
 			showToast("Output data not available here. Check your email or output target for results.", "warning");
+		} finally {
+			setLoadingOutputRunId(null);
 		}
 	};
 
@@ -219,15 +232,23 @@ const RunsComponent: React.FC = () => {
 			resizable: true,
 			cellRenderer: (params: any) => {
 				const isSuccess = params.data.status === "SUCCESS";
-				const isDisabled = params.data.status === "STARTED" || params.data.status === "RUNNING" || params.data.status === "FAILED";
+				const isThisRunLoading = loadingOutputRunId === params.data.run_id;
+				const isDisabled = params.data.status === "STARTED" || params.data.status === "RUNNING" || params.data.status === "FAILED" || isThisRunLoading;
 
 				return (
 					<button
 						className={`btn btn-sm ${isSuccess ? "btn-outline-success" : "btn-outline-secondary"}`}
-						onClick={() => isSuccess && handleViewOutput(params.data.run_id)}
+						onClick={() => isSuccess && !isThisRunLoading && handleViewOutput(params.data.run_id)}
 						disabled={isDisabled}
-						title={isSuccess ? "View Output" : "Output not available"}>
-						View Output
+						title={isSuccess ? (isThisRunLoading ? "Loading..." : "View Output") : "Output not available"}>
+						{isThisRunLoading ? (
+							<>
+								<span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+								Loading...
+							</>
+						) : (
+							"View Output"
+						)}
 					</button>
 				);
 			},
@@ -322,7 +343,19 @@ const RunsComponent: React.FC = () => {
 				<Modal.Header closeButton>
 					<Modal.Title>Run Details</Modal.Title>
 				</Modal.Header>
-				<Modal.Body style={{ height: "400px", padding: "0" }}>{selectedRunId && <NodeRunsComponent dagRunId={selectedRunId} />}</Modal.Body>
+				<Modal.Body style={{ height: "400px", padding: "0" }}>
+					{isLoadingRunDetails && (
+						<div className="d-flex justify-content-center align-items-center" style={{ height: "400px", position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.8)", zIndex: 1000 }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading run details...</div>
+							</div>
+						</div>
+					)}
+					{selectedRunId && <NodeRunsComponent dagRunId={selectedRunId} onLoadingComplete={handleLoadingComplete} />}
+				</Modal.Body>
 				<Modal.Footer>
 					<Button variant="secondary" onClick={handleClose}>
 						Close
@@ -335,37 +368,50 @@ const RunsComponent: React.FC = () => {
 					<Modal.Title>Run Output</Modal.Title>
 				</Modal.Header>
 				<Modal.Body style={{ maxHeight: "80vh", overflow: "auto" }}>
-					{/* Display Mode Toggle Buttons */}
-					<div className="d-flex justify-content-end gap-2 mb-3">
-						<Button variant="outline-success" size="sm" onClick={handleDisplayModeChange}>
-							{outputDisplayMode === "iframe" ? "Reader View" : "Default View"}
-						</Button>
-						<Button variant="outline-success" size="sm" onClick={handleDownloadPDF} title="Download as PDF">
-							<span className="bi bi-download me-1"></span>
-							Download
-						</Button>
-					</div>
-
-					{/* Content Display */}
-					{outputDisplayMode === "html" && <div className="output-content">{outputHtmlContent && parse(DOMPurify.sanitize(outputHtmlContent))}</div>}
-
-					{outputDisplayMode === "iframe" && (
-						<div className="output-content">
-							{outputHtmlContent && (
-								<iframe
-									srcDoc={outputHtmlContent}
-									style={{
-										width: "100%",
-										height: "60vh",
-										border: "1px solid #ddd",
-										borderRadius: "4px",
-										backgroundColor: "white",
-									}}
-									title="Run Output"
-									sandbox="allow-same-origin allow-scripts"
-								/>
-							)}
+					{loadingOutputRunId ? (
+						<div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+							<div className="text-center">
+								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+									<span className="visually-hidden">Loading...</span>
+								</div>
+								<div className="text-white">Loading output content...</div>
+							</div>
 						</div>
+					) : (
+						<>
+							{/* Display Mode Toggle Buttons */}
+							<div className="d-flex justify-content-end gap-2 mb-3">
+								<Button variant="outline-success" size="sm" onClick={handleDisplayModeChange}>
+									{outputDisplayMode === "iframe" ? "Reader View" : "Default View"}
+								</Button>
+								<Button variant="outline-success" size="sm" onClick={handleDownloadPDF} title="Download as PDF">
+									<span className="bi bi-download me-1"></span>
+									Download
+								</Button>
+							</div>
+
+							{/* Content Display */}
+							{outputDisplayMode === "html" && <div className="output-content">{outputHtmlContent && parse(DOMPurify.sanitize(outputHtmlContent))}</div>}
+
+							{outputDisplayMode === "iframe" && (
+								<div className="output-content">
+									{outputHtmlContent && (
+										<iframe
+											srcDoc={outputHtmlContent}
+											style={{
+												width: "100%",
+												height: "60vh",
+												border: "1px solid #ddd",
+												borderRadius: "4px",
+												backgroundColor: "white",
+											}}
+											title="Run Output"
+											sandbox="allow-same-origin allow-scripts"
+										/>
+									)}
+								</div>
+							)}
+						</>
 					)}
 				</Modal.Body>
 				<Modal.Footer>
