@@ -29,6 +29,7 @@ posthog.api_key = settings.POSTHOG_API_KEY
 posthog.host = settings.POSTHOG_HOST
 import json
 from .constants import GITHUB_USERNAME
+from django.db import transaction
 
 
 def get_param(request, key: str, default=None):
