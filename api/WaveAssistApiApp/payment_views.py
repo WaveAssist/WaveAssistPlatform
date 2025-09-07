@@ -30,15 +30,15 @@ except:
 def get_paypal_access_token():
     """Get PayPal V2 API access token using OAuth2 client credentials flow"""
     try:
-        url = f"https://api-m.{os.environ.get('PAYPAL_MODE', 'sandbox')}.paypal.com/v1/oauth2/token"
+        url = f"https://api-m.paypal.com/v1/oauth2/token"
         headers = {
             "Accept": "application/json",
             "Accept-Language": "en_US",
         }
         data = {"grant_type": "client_credentials"}
         auth = (
-            os.environ.get("PAYPAL_CLIENT_ID", PAYPAL_SANDBOX_CLIENT_ID),
-            os.environ.get("PAYPAL_CLIENT_SECRET", PAYPAL_SANDBOX_CLIENT_SECRET),
+            os.environ.get("PAYPAL_CLIENT_ID", PAYPAL_CLIENT_ID),
+            os.environ.get("PAYPAL_CLIENT_SECRET", PAYPAL_CLIENT_SECRET),
         )
         response = requests.post(url, headers=headers, data=data, auth=auth, timeout=10)
         response.raise_for_status()
@@ -194,7 +194,7 @@ def create_paypal_order(account_object, amount, currency, description, credits_i
                 "Failed to authenticate with PayPal"
             )
 
-        url = f"https://api-m.{os.environ.get('PAYPAL_MODE', 'sandbox')}.paypal.com/v2/checkout/orders"
+        url = f"https://api-m.paypal.com/v2/checkout/orders"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {access_token}",
@@ -354,7 +354,7 @@ def verify_paypal_payment(payment, provider_payment_id, payer_id):
                 "Failed to authenticate with PayPal"
             )
 
-        url = f"https://api-m.{os.environ.get('PAYPAL_MODE', 'sandbox')}.paypal.com/v2/checkout/orders/{provider_payment_id}/capture"
+        url = f"https://api-m.paypal.com/v2/checkout/orders/{provider_payment_id}/capture"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {access_token}",
