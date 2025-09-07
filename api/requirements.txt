@@ -24,7 +24,6 @@ waveassist>=0.1.7
 postmarker==1.0
 posthog==6.7.0
 razorpay==1.4.2
-paypalrestsdk==1.13.3
 
 
 
