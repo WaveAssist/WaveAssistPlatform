@@ -1,10 +1,7 @@
 from django.db import models
 from django.db.models.functions import Lower
-from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
-from django.core.exceptions import ValidationError
-import uuid
+from django_celery_beat.models import IntervalSchedule, CrontabSchedule
 from django.contrib.auth.hashers import make_password, is_password_usable
-from django.db import transaction
 import json
 
 SCHEDULE_TYPE_CHOICES = [
@@ -19,7 +16,7 @@ class Account(models.Model):
     account_name = models.CharField(max_length=255, default="", null=True)
     account_uid = models.CharField(editable=False, unique=True,max_length=255)
     created_by_user = models.ForeignKey('User', on_delete=models.CASCADE)
-    plan_name = models.CharField(max_length=255, default="free", null=True)
+    plan_name = models.CharField(max_length=255, default="operator", null=True)
     mongo_db_url = models.CharField(max_length=255, default="", null=True)
     db_name = models.CharField(max_length=255, default="", null=True)
     celery_queue = models.CharField(max_length=255, default="", null=True)
@@ -80,7 +77,7 @@ class User(models.Model):
 
         # ✅ Fetch related account (if any)
         account = Account.objects.filter(created_by_user=self).first()
-        user_dict['is_premium'] = account.is_premium if account else False
+        user_dict['plan_name'] = account.plan_name if account else "operator"
 
         return user_dict
 
