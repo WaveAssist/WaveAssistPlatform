@@ -244,14 +244,16 @@ export const deleteNodeApi = async (nodeKey: string): Promise<any> => {
 	return callApi(path, body);
 };
 
-export const runDAGApi = async (nodeKey: string, selected_env: string): Promise<any> => {
+export const runDAGApi = async (nodeKey: string | null, selected_env: string): Promise<any> => {
 	var path = "deploy/run_dag/";
 	const body = new URLSearchParams({
 		uid: localStorage.getItem("uid") || "",
 		project_key: localStorage.getItem("selected_project_key") || "",
-		start_node_key: nodeKey,
 		data_run_key: selected_env,
 	});
+	if (nodeKey) {
+		body.append("start_node_key", nodeKey);
+	}
 	return callApi(path, body);
 };
 

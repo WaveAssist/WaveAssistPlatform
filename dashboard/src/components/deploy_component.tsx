@@ -120,7 +120,7 @@ const DeployComponent: React.FC = () => {
 					console.error("No project key found in response");
 				}
 				// Navigate to the project after successful deployment
-				navigate(`/manage/nodes?project_key=${projectKey}`, {
+				navigate(`/manage/assistant?project_key=${projectKey}`, {
 					state: { openWizard: true, allowDismiss: false },
 				});
 			} else {

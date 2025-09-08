@@ -75,7 +75,7 @@ const NodesComponent: React.FC = () => {
 	const [view, setView] = useState<"flow" | "table">(() => {
 		const saved = localStorage.getItem("nodesView");
 		if (saved === "flow" || saved === "table") return saved;
-		return "table";
+		return "flow";
 	});
 	const [rfNodes, setRfNodes] = useState<RFNode[]>([]);
 	const [rfEdges, setRfEdges] = useState<RFEdge[]>([]);

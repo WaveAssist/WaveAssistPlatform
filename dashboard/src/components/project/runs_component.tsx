@@ -233,7 +233,8 @@ const RunsComponent: React.FC = () => {
 			cellRenderer: (params: any) => {
 				const isSuccess = params.data.status === "SUCCESS";
 				const isThisRunLoading = loadingOutputRunId === params.data.run_id;
-				const isDisabled = params.data.status === "STARTED" || params.data.status === "RUNNING" || params.data.status === "FAILED" || isThisRunLoading;
+				const isDisabled =
+					params.data.status === "STARTED" || params.data.status === "RUNNING" || params.data.status === "FAILED" || isThisRunLoading;
 
 				return (
 					<button
@@ -293,15 +294,6 @@ const RunsComponent: React.FC = () => {
 			cellRenderer: (params: any) => formatTimestamp(params.value),
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
-		{
-			headerName: "Finished At",
-			field: "finished_at",
-			flex: 3,
-			minWidth: 150,
-			resizable: true,
-			cellRenderer: (params: any) => formatTimestamp(params.value),
-			cellStyle: { display: "flex", alignItems: "center" },
-		},
 	];
 
 	return (
@@ -345,7 +337,18 @@ const RunsComponent: React.FC = () => {
 				</Modal.Header>
 				<Modal.Body style={{ height: "400px", padding: "0" }}>
 					{isLoadingRunDetails && (
-						<div className="d-flex justify-content-center align-items-center" style={{ height: "400px", position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.8)", zIndex: 1000 }}>
+						<div
+							className="d-flex justify-content-center align-items-center"
+							style={{
+								height: "400px",
+								position: "absolute",
+								top: 0,
+								left: 0,
+								right: 0,
+								bottom: 0,
+								backgroundColor: "rgba(0,0,0,0.8)",
+								zIndex: 1000,
+							}}>
 							<div className="text-center">
 								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
 									<span className="visually-hidden">Loading...</span>
@@ -391,7 +394,9 @@ const RunsComponent: React.FC = () => {
 							</div>
 
 							{/* Content Display */}
-							{outputDisplayMode === "html" && <div className="output-content">{outputHtmlContent && parse(DOMPurify.sanitize(outputHtmlContent))}</div>}
+							{outputDisplayMode === "html" && (
+								<div className="output-content">{outputHtmlContent && parse(DOMPurify.sanitize(outputHtmlContent))}</div>
+							)}
 
 							{outputDisplayMode === "iframe" && (
 								<div className="output-content">

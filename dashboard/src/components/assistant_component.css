@@ -1,0 +1,336 @@
+/* Assistant Container - Match Credits Design */
+.assistant-container {
+    background-color: #151720;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.assistant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.assistant-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #000000;
+    margin: 0;
+}
+
+/* Status Card - Left Side (Similar to Available Credits Card) */
+.assistant-status-card {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+    .assistant-status-card {
+        margin-bottom: 0;
+    }
+}
+
+.assistant-status-text {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #000000;
+    text-align: center;
+    margin: 0;
+    line-height: 1;
+}
+
+.assistant-status-label {
+    text-align: center;
+    color: #6c757d;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+.assistant-details {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.assistant-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.assistant-detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.assistant-detail-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.assistant-detail-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.assistant-detail-value.success {
+    color: #28a745;
+}
+
+.assistant-detail-value.pending {
+    color: #ffc107;
+}
+
+/* Configuration Card - Right Side (Similar to Buy Credits Card) */
+.assistant-config-card {
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.assistant-config-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.assistant-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.assistant-config-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #000000;
+    margin: 0;
+}
+
+.assistant-config-footer {
+    margin-top: auto;
+    text-align: center;
+}
+
+.assistant-deploy-button {
+    width: 100%;
+    background-color: #408558;
+    border: none;
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.assistant-deploy-button:hover {
+    background-color: #408558;
+    color: #ffffff;
+}
+
+/* Stock Search Styles */
+.stock-search-results-container {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.stock-search-result {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.stock-search-result:hover {
+    background-color: #e9ecef;
+}
+
+/* Dark theme for stock search */
+.main-container .stock-search-results-container {
+    background: #2b3548;
+    border-color: #2b3548;
+}
+
+.main-container .stock-search-result {
+    color: #ffffff;
+    border-bottom-color: #2b3548;
+}
+
+.main-container .stock-search-result:hover {
+    background-color: #1f2633;
+}
+
+.main-container .stock-search-result .fw-bold {
+    color: #ffffff;
+}
+
+.main-container .stock-search-result .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.stock-selected-badge {
+    background: #28a745;
+    color: white;
+    margin: 2px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+}
+
+.stock-selected-badge .btn-close {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 16px;
+    height: 16px;
+    background: #dc3545;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Form Styles */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 10px 12px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #408558;
+    box-shadow: 0 0 0 0.2rem rgba(64, 133, 88, 0.25);
+}
+
+/* Dark theme overrides for the project */
+.main-container .assistant-container {
+    background-color: #101219;
+    color: #ffffff;
+}
+
+.main-container .assistant-title {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.main-container .assistant-status-card {
+    background-color: #1f2633;
+    border: 1px solid #2b3548;
+}
+
+.main-container .assistant-status-text {
+    color: #ffffff;
+}
+
+.main-container .assistant-status-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.main-container .assistant-details {
+    border-top-color: #2b3548;
+}
+
+.main-container .assistant-detail-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.main-container .assistant-detail-value {
+    color: #ffffff;
+}
+
+.main-container .assistant-config-card {
+    background-color: #1f2633;
+    border: 1px solid #2b3548;
+}
+
+.main-container .assistant-config-title {
+    color: #ffffff;
+}
+
+.main-container .form-label {
+    color: #ffffff;
+}
+
+.main-container .form-control {
+    background-color: #2b3548;
+    border-color: #2b3548;
+    color: #ffffff;
+}
+
+.main-container .form-control:focus {
+    background-color: #2b3548;
+    border-color: #408558;
+    color: #ffffff;
+}
+
+.main-container .form-select {
+    background-color: #2b3548;
+    border-color: #2b3548;
+    color: #ffffff;
+}
+
+.main-container .form-select:focus {
+    background-color: #2b3548;
+    border-color: #408558;
+    color: #ffffff;
+}
+
+/* Dark theme for form text and placeholders */
+.main-container .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.main-container .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.main-container .form-text {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+    .assistant-config-card {
+        height: auto;
+        min-height: 200px;
+    }
+    
+    .assistant-status-card {
+        height: auto;
+        min-height: 250px;
+    }
+    
+    .assistant-container .row {
+        margin: 0 -0.5rem;
+    }
+    
+    .assistant-container .col-md-6 {
+        padding: 0 0.5rem;
+    }
+}

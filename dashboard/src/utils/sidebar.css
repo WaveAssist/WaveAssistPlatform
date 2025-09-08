@@ -50,6 +50,12 @@
     margin-top: 15px;
     margin-bottom: 30px;
   }
+
+  /* Remove top margin when logo is in header to align with button */
+  .d-flex.align-items-center .wp_logo {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
 .nav-link:hover {
         background-color: rgba(255, 255, 255, 0.1);
         border-radius: 6px;
@@ -66,4 +72,105 @@
   .main-content {
     margin-left: 0;
   }
+}
+
+/* Collapsed sidebar styles - only for desktop */
+@media (min-width: 768px) {
+  .sidebar-collapsed {
+    width: 104px !important;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar-collapsed .wp_logo_collapsed {
+    height: 20px;
+    width: auto;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar-collapsed .nav-link {
+    padding: 8px 4px !important;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar-collapsed .nav-pills {
+    margin-top: 15px;
+    transition: margin-top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar-collapsed .nav-icon {
+    margin-bottom: 2px;
+    transition: margin-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar-collapsed .nav-icon i {
+    font-size: 1.1rem;
+    transition: font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar-collapsed .nav-link span {
+    font-size: 0.6rem;
+    line-height: 1;
+    margin-top: 2px;
+    text-align: center;
+    word-break: break-word;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar-collapsed .collapsed-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+
+
+  /* Main content adjustment for collapsed sidebar */
+  .main-content.sidebar-collapsed {
+    margin-left: 104px;
+  }
+}
+
+/* Smooth transitions */
+.side-div {
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-content {
+  transition: margin-left 0.4s ease;
+}
+
+/* Add smooth transitions to all nav elements */
+.nav-link {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-icon {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-icon i {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link span {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth transitions for logo */
+.wp_logo {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wp_logo_collapsed {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }

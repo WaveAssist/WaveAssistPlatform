@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Navbar, Nav, Button, Modal } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import "./navbar.css";
 import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
@@ -14,7 +13,6 @@ interface NavbarProps {
 const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
-	const navigate = useNavigate();
 	const posthog = usePostHog();
 
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
@@ -40,7 +38,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-	const showDeployButton = !(isProjectPremium && !isUserPremium);
+
+	// Get plan name to determine if user is on operator plan
+	const currentPlanName = localStorage.getItem("plan_name") || "operator";
+	const isOperatorPlan = currentPlanName === "operator";
+
+	const showDeployButton = !(isProjectPremium && !isUserPremium) && !isOperatorPlan;
 
 	useEffect(() => {
 		fetchEnvironments();
@@ -151,10 +154,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 		}
 	};
 
-	const handleReconfigureClick = async () => {
-		navigate("/manage/nodes", { state: { openWizard: true, allowDismiss: true } });
-	};
-
 	return (
 		<Navbar variant="dark" expand="lg" className="px-3 navbar-main">
 			{isMobile ? (
@@ -167,24 +166,29 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 							items={projectNames}
 							keys={projectKeys}
 							defaultText={getDefaultProjectName()}
-							headerText="Select Project"
+							headerText="Select Assistant"
 							onItemSelect={handleProjectChange}
-							icon="bi-folder-fill"
+							icon="bi-bullseye"
 						/>
-						<DarkDropdown
-							items={envItems}
-							keys={envKeys}
-							defaultText={selectedEnvName}
-							headerText="Select Environment"
-							onItemSelect={handleEnvChange}
-							icon="bi-stack"
-						/>
-						<button className="btn btn-outline-secondary btn-sm ms-2" onClick={handleReconfigureClick} title="Reconfigure">
-							<i className="bi bi-gear-fill"></i>
-						</button>
+						{!isOperatorPlan && (
+							<DarkDropdown
+								items={envItems}
+								keys={envKeys}
+								defaultText={selectedEnvName}
+								headerText="Select Environment"
+								onItemSelect={handleEnvChange}
+								icon="bi-stack"
+							/>
+						)}
+
 						{showDeployButton && (
 							<Button variant="dark" className="ms-2 icon-dropdown-btn text-white" onClick={handleOpenModal}>
 								<i className="bi bi-cloud-arrow-up-fill"></i>
+							</Button>
+						)}
+						{isOperatorPlan && (
+							<Button variant="outline-secondary" onClick={() => window.open("https://waveassist.io/pricing", "_blank")}>
+								<i className="bi bi-star"></i>
 							</Button>
 						)}
 					</div>
@@ -198,26 +202,30 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 								items={projectNames}
 								keys={projectKeys}
 								defaultText={getDefaultProjectName()}
-								headerText="Select Project"
+								headerText="Select Assistant"
 								onItemSelect={handleProjectChange}
 							/>
-							<DarkDropdown
-								items={envItems}
-								keys={envKeys}
-								defaultText={selectedEnvName}
-								headerText="Select Environment"
-								onItemSelect={handleEnvChange}
-							/>
+							{!isOperatorPlan && (
+								<DarkDropdown
+									items={envItems}
+									keys={envKeys}
+									defaultText={selectedEnvName}
+									headerText="Select Environment"
+									onItemSelect={handleEnvChange}
+								/>
+							)}
 						</Nav>
 						<Nav className="ms-auto">
-							<button className="btn btn-outline-secondary btn-sm me-2" onClick={handleReconfigureClick}>
-								<i className="bi bi-gear-fill me-2"></i>
-								Reconfigure
-							</button>
 							{showDeployButton && (
 								<Button variant="dark" className="px-3 text-white" onClick={handleOpenModal}>
 									<i className="bi bi-cloud-arrow-up-fill me-2"></i>
 									Deploy
+								</Button>
+							)}
+							{isOperatorPlan && (
+								<Button variant="outline-secondary" onClick={() => window.open("https://waveassist.io/pricing", "_blank")}>
+									<i className="bi bi-star me-2"></i>
+									Upgrade
 								</Button>
 							)}
 						</Nav>

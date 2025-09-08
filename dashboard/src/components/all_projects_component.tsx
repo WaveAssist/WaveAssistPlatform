@@ -109,14 +109,6 @@ const AllProjectsComponent: React.FC = () => {
 		}
 	};
 
-	const handleOpenModal = () => {
-		setShowAlert(false);
-		setNewProjectName("");
-		setNewProjectKey("");
-		setIsProjectKeyEdited(false);
-		setShowModal(true);
-	};
-
 	const handleCloseModal = () => {
 		setShowModal(false);
 	};
@@ -161,7 +153,7 @@ const AllProjectsComponent: React.FC = () => {
 			// Set selected project and premium status, then navigate
 			localStorage.setItem("selected_project_key", newProjectKey);
 			localStorage.setItem("is_project_premium", "false");
-			
+
 			// Check user's plan to determine navigation destination
 			const planName = localStorage.getItem("plan_name");
 			const destination = planName === "operator" ? "runs" : "nodes";
@@ -197,15 +189,12 @@ const AllProjectsComponent: React.FC = () => {
 			});
 		} catch (_err) {}
 
-		// Check user's plan to determine navigation destination
-		const planName = localStorage.getItem("plan_name");
-		const destination = planName === "operator" ? "runs" : "nodes";
-		navigate(`/manage/${destination}?project_key=${projectKey}`);
+		navigate(`/manage/assistant?project_key=${projectKey}`);
 	};
 
 	return (
 		<div className="base_component">
-			<div className="dashboard-header row flex-md-nowrap">
+			<div className="dashboard-header row flex-md-nowrap py-3 px-3">
 				<div className="col-6 d-flex align-items-center justify-content-start">
 					<div className="d-flex align-items-center mt-2" style={{ height: "100%" }}>
 						<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
@@ -230,8 +219,6 @@ const AllProjectsComponent: React.FC = () => {
 					</button>
 				</div>
 			</div>
-
-			<div className="separator"></div>
 
 			<div className="admin-panel">
 				<div className="content projects-row">

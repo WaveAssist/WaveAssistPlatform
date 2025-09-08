@@ -12,13 +12,19 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
 	const [shouldRefresh, setShouldRefresh] = useState(false);
 	const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
-	
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth >= 768);
+
 	// Get plan name from localStorage
 	const planName = localStorage.getItem("plan_name") || undefined;
 
 	useEffect(() => {
 		const handleResize = () => {
-			setSidebarOpen(window.innerWidth >= 768);
+			const isDesktop = window.innerWidth >= 768;
+			setSidebarOpen(isDesktop);
+			// On mobile, always show expanded sidebar when open
+			if (!isDesktop) {
+				setSidebarCollapsed(false);
+			}
 		};
 		window.addEventListener("resize", handleResize);
 		return () => window.removeEventListener("resize", handleResize);
@@ -32,8 +38,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 	return (
 		<RefreshContext.Provider value={{ shouldRefresh, triggerRefresh }}>
 			<div className="d-flex vh-100 position-relative">
-				<Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} planName={planName} />
-				<div className="d-flex flex-column flex-grow-1 main-content">
+				<Sidebar
+					isOpen={sidebarOpen}
+					onClose={() => setSidebarOpen(false)}
+					planName={planName}
+					isCollapsed={sidebarCollapsed}
+					onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+				/>
+				<div className={`d-flex flex-column flex-grow-1 main-content ${sidebarCollapsed && window.innerWidth >= 768 ? "sidebar-collapsed" : ""}`}>
 					<NavbarComponent onToggleSidebar={() => setSidebarOpen((o) => !o)} />
 					<Container fluid className="flex-grow-1 p-3">
 						{children}
