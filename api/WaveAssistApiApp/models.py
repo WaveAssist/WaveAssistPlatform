@@ -208,7 +208,6 @@ class Project(models.Model):
     template_key = models.CharField(max_length=255, default="", null=True)  # Used for templates
     created_at = models.DateTimeField(auto_now_add=True)
 
-
     def __str__(self):
         ##Add all the fields
         return f"Project: {self.id} ({self.project_key})"

@@ -3,6 +3,7 @@ import uuid
 
 import boto3
 from ..models import *
+
 ##Custom
 from WaveAssistApiApp.Utils.constants import *
 from WaveAssistApiApp.Utils.Logger import Logger
@@ -21,10 +22,12 @@ import json
 import threading
 import requests
 from knockapi import Knock
+
 knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.db.models.functions import Lower
 import posthog
 from django.conf import settings
+
 posthog.api_key = settings.POSTHOG_API_KEY
 posthog.host = settings.POSTHOG_HOST
 import json
@@ -47,20 +50,19 @@ def get_param(request, key: str, default=None):
 
     # Fallback: try JSON body
     try:
-        body_data = json.loads(request.body.decode('utf-8'))
+        body_data = json.loads(request.body.decode("utf-8"))
         return body_data.get(key, default)
     except Exception as e:
-        print(f"Error parsing JSON body: {str(e)}, when fetching key: {key} from request {str(request)}")
+        print(
+            f"Error parsing JSON body: {str(e)}, when fetching key: {key} from request {str(request)}"
+        )
         return default
 
 
-def run_knock_workflow(uid:str, workflow_key, data=None):
+def run_knock_workflow(uid: str, workflow_key, data=None):
     try:
         knock_client.workflows.trigger(
-            key=workflow_key,
-            recipients=[uid],
-            actor=uid,
-            data=data
+            key=workflow_key, recipients=[uid], actor=uid, data=data
         )
     except Exception as e:
         print("Error in run_knock_start_workflow:", str(e))
@@ -74,11 +76,9 @@ def send_alert_email():
                 "uid": "2fec42dd-492b-4294-8154-d33c3ccf",
                 "project_key": "notifier",
                 "start_node_key": "node_notifier_notify_me",
-                "data_run_key": "notifier_default"
+                "data_run_key": "notifier_default",
             }
-            headers = {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
             requests.post(url, data=payload, headers=headers)
         except Exception as e:
             print("Error in background send_alert_email:", str(e))
@@ -87,11 +87,17 @@ def send_alert_email():
 
 
 def does_user_have_access_to_project(client_object, project_object, access_gte=1):
-    access_count = AccessProvided.objects.filter(user_object=client_object, project_object=project_object, type=0, project_access_type__gte=access_gte).count()
+    access_count = AccessProvided.objects.filter(
+        user_object=client_object,
+        project_object=project_object,
+        type=0,
+        project_access_type__gte=access_gte,
+    ).count()
     if access_count > 0:
         return True
     else:
         return False
+
 
 def get_collection_key(flow_object, project_object):
     return project_object.project_key + "-" + str(flow_object.id)
@@ -104,12 +110,15 @@ def does_user_have_access_to_flow(client_object, flow_object):
     else:
         return False
 
-def does_user_have_access_to_data_run(user_object, data_run_object, access_type = READ_GTE):
+
+def does_user_have_access_to_data_run(
+    user_object, data_run_object, access_type=READ_GTE
+):
     # Directly querying DataRuns model with conditions that relate to AccessProvided
     data_run_array = DataRuns.objects.filter(
         accessprovided__type=1,
         accessprovided__data_run_access_type__gte=access_type,
-        accessprovided__user_object=user_object
+        accessprovided__user_object=user_object,
     ).distinct()
 
     if data_run_object in data_run_array:
@@ -123,8 +132,12 @@ def resize_image(file, max_dimension=800):
 
 def upload_file_to_s3(file, s3_file_name=None, is_public=0):
     try:
-        s3 = boto3.client('s3', aws_access_key_id=AWSS3_ACCESS_KEY_VALUE, aws_secret_access_key=AWSS3_SECRET_KEY_VALUE)
-        bucket = 'waveassist-bundles' if is_public == 0 else 'waveassistapps'
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=AWSS3_ACCESS_KEY_VALUE,
+            aws_secret_access_key=AWSS3_SECRET_KEY_VALUE,
+        )
+        bucket = "waveassist-bundles" if is_public == 0 else "waveassistapps"
         if is_public:
             s3_file_name = f"public/{s3_file_name}"
 
@@ -180,8 +193,11 @@ def get_connected_subgraph_set(start_node, all_nodes):
     explore(start_node)
     return visited_nodes
 
+
 def detect_cycle_in_node_set(start_node, all_nodes_set):
-    node_dependencies = {node: set(node.run_after_nodes_array.all()) for node in all_nodes_set}
+    node_dependencies = {
+        node: set(node.run_after_nodes_array.all()) for node in all_nodes_set
+    }
     visited = set()
     recursion_stack = set()
 
@@ -203,9 +219,9 @@ def detect_cycle_in_node_set(start_node, all_nodes_set):
         recursion_stack.remove(node)
         return False
 
-
     # Start the DFS from the start node
     return dfs(start_node)
+
 
 def fetch_start_node_in_node_set(all_nodes_set):
     ##Check if there is only one is_starting_node assuming the input is of type set()
@@ -216,24 +232,30 @@ def fetch_start_node_in_node_set(all_nodes_set):
         return False, None
     return True, starting_nodes.pop()
 
+
 def check_dag(start_node, all_nodes):
-    all_nodes = all_nodes.prefetch_related('run_after_nodes_array')
+    all_nodes = all_nodes.prefetch_related("run_after_nodes_array")
     sub_nodes_set = get_connected_subgraph_set(start_node, all_nodes)
     success, start_node = fetch_start_node_in_node_set(sub_nodes_set)
     if not success:
-        return False, [], "Issue with starting node. There needs to be exactly one enabled starting node in each DAG"
-    is_cycle =  detect_cycle_in_node_set(start_node, sub_nodes_set)
+        return (
+            False,
+            [],
+            "Issue with starting node. There needs to be exactly one enabled starting node in each DAG",
+        )
+    is_cycle = detect_cycle_in_node_set(start_node, sub_nodes_set)
     if is_cycle:
-        return False, [] , "Invalid DAG: Cycle detected in the graph"
+        return False, [], "Invalid DAG: Cycle detected in the graph"
     else:
         return True, list(sub_nodes_set), "DAG is valid"
 
 
-def get_code_for_node(node_object,project_key):
+def get_code_for_node(node_object, project_key):
     node_python_code = node_object.python_code
     python_code = "def run_task():\n"
     python_code += "    " + node_python_code.replace("\n", "\n    ") + "\n\n"
     return python_code
+
 
 def get_task_dict_for_node(node_object, uid):
     task_dict = {
@@ -243,6 +265,7 @@ def get_task_dict_for_node(node_object, uid):
     }
     return task_dict
 
+
 def get_data_and_dependencies_for_dag(project_object, node_array, uid):
     dependency_dict = {}
     data_dict = {}
@@ -251,10 +274,11 @@ def get_data_and_dependencies_for_dag(project_object, node_array, uid):
         node_code = get_code_for_node(node_object, project_object.project_key)
         node_task_dict = get_task_dict_for_node(node_object, uid)
         node_task_dict["code_to_run"] = node_code
-        data_dict[node_object.node_key] =  node_task_dict
-        dependency_dict[node_object.node_key] = [node.node_key for node in node_object.run_after_nodes_array.all()]
+        data_dict[node_object.node_key] = node_task_dict
+        dependency_dict[node_object.node_key] = [
+            node.node_key for node in node_object.run_after_nodes_array.all()
+        ]
     return data_dict, dependency_dict
-
 
 
 def fetch_account_object_for_user(user_object):
@@ -264,20 +288,22 @@ def fetch_account_object_for_user(user_object):
         return None
     return account_object
 
+
 from graphviz import Digraph
 from io import BytesIO
 
+
 def generate_dag_visualization(dag_dict):
-    dot = Digraph(comment='DAGs Visualization')
+    dot = Digraph(comment="DAGs Visualization")
 
     # Global attributes
     dot.attr(
         bgcolor="#1F2732",
         rankdir="LR",
         fontname="Open Sans Semibold",  # semibold/bold style
-        nodesep="0.8",     # reduced spacing between nodes
-        ranksep="1.0",     # reduced spacing between ranks
-        margin="0.4"
+        nodesep="0.8",  # reduced spacing between nodes
+        ranksep="1.0",  # reduced spacing between ranks
+        margin="0.4",
     )
 
     # Node appearance
@@ -291,45 +317,36 @@ def generate_dag_visualization(dag_dict):
         "fontsize": "14",
         "width": "1.5",
         "height": "0.6",
-        "penwidth": "1.5"
+        "penwidth": "1.5",
     }
 
     # Edge style (thicker arrows)
     edge_style = {
         "color": "#408558",
         "fontname": "Open Sans Semibold",
-        "penwidth": "2.0"  # increased arrow thickness
+        "penwidth": "2.0",  # increased arrow thickness
     }
 
     for i, (start_node, node_list) in enumerate(dag_dict.items()):
-        with dot.subgraph(name=f'cluster_{start_node.node_key}') as subgraph:
+        with dot.subgraph(name=f"cluster_{start_node.node_key}") as subgraph:
             subgraph.attr(
                 style="rounded",
                 color="#408558",
                 fontname="Open Sans Semibold",
-                margin="20"
+                margin="20",
             )
 
-            subgraph.node(
-                start_node.node_key,
-                label=start_node.name,
-                **node_style
-            )
+            subgraph.node(start_node.node_key, label=start_node.name, **node_style)
 
             for node in node_list:
-                subgraph.node(
-                    node.node_key,
-                    label=node.name,
-                    **node_style
-                )
+                subgraph.node(node.node_key, label=node.name, **node_style)
                 for dep in node.run_after_nodes_array.all():
                     subgraph.edge(dep.node_key, node.node_key, **edge_style)
 
     image_stream = BytesIO()
-    image_stream.write(dot.pipe(format='png'))
+    image_stream.write(dot.pipe(format="png"))
     image_stream.seek(0)
     return image_stream
-
 
 
 def stop_deployment(deployment_object):
@@ -346,13 +363,12 @@ def stop_deployment(deployment_object):
         print(f"An error occurred: {e}")
         raise Exception("Could not stop the Deployment: " + str(e))
 
+
 def get_all_loki_jobs():
     try:
-        response = requests.get(
-            LOKI_URL + '/loki/api/v1/label/job/values'
-        )
+        response = requests.get(LOKI_URL + "/loki/api/v1/label/job/values")
         response_dict = response.json()
-        options_array = response_dict['data']
+        options_array = response_dict["data"]
         return options_array
     except:
         return []
@@ -362,30 +378,31 @@ def fetch_loki_logs(query, start_ts, end_ts):
     logs = []
     try:
         response = requests.get(
-            LOKI_URL + '/loki/api/v1/query_range',
+            LOKI_URL + "/loki/api/v1/query_range",
             params={
-                'query': query,
-                'start': start_ts,
-                'end': end_ts,
-                'limit': LOGS_LIMIT,
-                'direction': 'backward'  # Fetch logs in reverse order (latest logs first)
-            }
+                "query": query,
+                "start": start_ts,
+                "end": end_ts,
+                "limit": LOGS_LIMIT,
+                "direction": "backward",  # Fetch logs in reverse order (latest logs first)
+            },
         )
 
         response_dict = response.json()
-        result_array = response_dict['data']['result']
+        result_array = response_dict["data"]["result"]
         for result_dict in result_array:
             try:
-                all_values = result_dict['values']
+                all_values = result_dict["values"]
                 for values_array in all_values:
                     try:
                         log_message = values_array[1]
                         if log_message != "":
                             log_message = re.sub(r"\[.*?]", "", log_message).strip()
                             log_dict = {
-                                'log': log_message,
-                                'timestamp': datetime.fromtimestamp(int(values_array[0]) / 1000000000).strftime(
-                                    '%Y-%m-%d %H:%M:%S')
+                                "log": log_message,
+                                "timestamp": datetime.fromtimestamp(
+                                    int(values_array[0]) / 1000000000
+                                ).strftime("%Y-%m-%d %H:%M:%S"),
                             }
                             logs.append(log_dict)
                     except:
@@ -398,30 +415,28 @@ def fetch_loki_logs(query, start_ts, end_ts):
     return logs
 
 
-
 def build_loki_query(selected_jobs, node_key_array):
     # Create a regex pattern for the jobs
-    jobs_regex = "|".join([f'{job}' for job in selected_jobs])
+    jobs_regex = "|".join([f"{job}" for job in selected_jobs])
     query = f'{{job=~"{jobs_regex}"'
 
-    if len(node_key_array)>0:
+    if len(node_key_array) > 0:
         # Create a regex pattern for the node keys
-        nodes_regex = "|".join([f'{node}' for node in node_key_array])
+        nodes_regex = "|".join([f"{node}" for node in node_key_array])
         query += f', node=~"{nodes_regex}"'
 
-    query += '}'
+    query += "}"
     return query
-
-
-
 
 
 import pymongo
 import requests
 from requests.auth import HTTPDigestAuth
+
 mongo_url = "REMOVED_CREDENTIAL"
-public_key = 'nzaopldm'
-private_key = 'REMOVED_CREDENTIAL'
+public_key = "nzaopldm"
+private_key = "REMOVED_CREDENTIAL"
+
 
 def create_mongo_url(user_object):
 
@@ -437,28 +452,29 @@ def create_mongo_url(user_object):
     new_db = mongo_client[db_name]
 
     try:
-    # Create a collection to initialize the database
+        # Create a collection to initialize the database
         new_db.create_collection("initial_collection")
     except:
         pass
 
-    group_id = '67a20af1d579ac023d1d022d'
+    group_id = "67a20af1d579ac023d1d022d"
     # Use MongoDB Atlas API to create the user
     url = f"https://cloud.mongodb.com/api/atlas/v1.0/groups/{group_id}/databaseUsers"
-    headers = {
-        "Content-Type": "application/json"
-    }
+    headers = {"Content-Type": "application/json"}
     user_data = {
-        "databaseName": 'admin',
+        "databaseName": "admin",
         "username": username,
         "password": password,
-        "roles": [
-            {"databaseName": db_name, "roleName": "dbAdmin"}
-        ]
+        "roles": [{"databaseName": db_name, "roleName": "dbAdmin"}],
     }
 
     # Make the POST request with HTTP Digest Authentication
-    response = requests.post(url, json=user_data, headers=headers, auth=HTTPDigestAuth(public_key, private_key))
+    response = requests.post(
+        url,
+        json=user_data,
+        headers=headers,
+        auth=HTTPDigestAuth(public_key, private_key),
+    )
 
     if response.status_code == 201:
         print("User created successfully.")
@@ -467,15 +483,15 @@ def create_mongo_url(user_object):
         print("Failed to create user:", response.json())
         return None, None
 
-
     # Generate and return the connection URL for the new user
-    url = (
-        f"mongodb+srv://{username}:{password}@waveassistcluster.9ju27.mongodb.net/{db_name}"
-    )
+    url = f"mongodb+srv://{username}:{password}@waveassistcluster.9ju27.mongodb.net/{db_name}"
 
     return url, db_name
+
+
 def get_database_name(user_object):
-    return 'wa_' + str(user_object.uid)[:20]
+    return "wa_" + str(user_object.uid)[:20]
+
 
 def create_openrouter_token(uid, grant_usd=2):
     """Create an OpenRouter API token for the given user."""
@@ -485,11 +501,7 @@ def create_openrouter_token(uid, grant_usd=2):
             "Authorization": f"Bearer {OPENROUTER_PROVISIONING_KEY}",
             "Content-Type": "application/json",
         }
-        payload = {
-            "name": f"{uid}",
-            "label": str(uid),
-            "limit": grant_usd
-        }
+        payload = {"name": f"{uid}", "label": str(uid), "limit": grant_usd}
         response = requests.post(url, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -499,16 +511,17 @@ def create_openrouter_token(uid, grant_usd=2):
         return None
 
 
-
 def generate_filter_pattern(node_key_csv, project_object):
     # Construct filter_pattern
     if node_key_csv:
         # Split CSV into a list of node keys
-        node_key_array = node_key_csv.split(',')
+        node_key_array = node_key_csv.split(",")
         node_key_array = [node_key.strip() for node_key in node_key_array if node_key]
 
         # Construct OR conditions for node_key
-        node_key_conditions = " || ".join([f'$.extra.node_key = "{node_key}"' for node_key in node_key_array])
+        node_key_conditions = " || ".join(
+            [f'$.extra.node_key = "{node_key}"' for node_key in node_key_array]
+        )
 
         # Combine project_key with OR conditions
         filter_pattern = f'{{ $.extra.project_key = "{project_object.project_key}" && ({node_key_conditions}) }}'
@@ -516,7 +529,6 @@ def generate_filter_pattern(node_key_csv, project_object):
         filter_pattern = f'{{ $.extra.project_key = "{project_object.project_key}" }}'
 
     return filter_pattern
-
 
 
 def get_task_definition(uid):
@@ -528,12 +540,7 @@ def get_task_definition(uid):
                 "cpu": 0,
                 "portMappings": [],
                 "essential": True,
-                "environment": [
-                    {
-                        "name": "ACCOUNT_ID",
-                        "value": f"{uid}"
-                    }
-                ],
+                "environment": [{"name": "ACCOUNT_ID", "value": f"{uid}"}],
                 "mountPoints": [],
                 "volumesFrom": [],
                 "logConfiguration": {
@@ -544,11 +551,11 @@ def get_task_definition(uid):
                         "awslogs-create-group": "true",
                         "max-buffer-size": "25m",
                         "awslogs-region": "us-east-1",
-                        "awslogs-stream-prefix": "ecs"
+                        "awslogs-stream-prefix": "ecs",
                     },
-                    "secretOptions": []
+                    "secretOptions": [],
                 },
-                "systemControls": []
+                "systemControls": [],
             }
         ],
         "family": f"WaveAssistWorkerTasks__{uid}",
@@ -557,17 +564,13 @@ def get_task_definition(uid):
         "networkMode": "awsvpc",
         "volumes": [],
         "placementConstraints": [],
-
-        "requiresCompatibilities": [
-            "FARGATE"
-        ],
+        "requiresCompatibilities": ["FARGATE"],
         "cpu": "256",
         "memory": "1024",
         "runtimePlatform": {
             "cpuArchitecture": "X86_64",
-            "operatingSystemFamily": "LINUX"
+            "operatingSystemFamily": "LINUX",
         },
-
     }
 
 
@@ -587,8 +590,9 @@ import uuid
 
 
 def b64url_decode(s: str) -> str:
-    pad = '=' * (4 - len(s) % 4)
+    pad = "=" * (4 - len(s) % 4)
     return base64.urlsafe_b64decode(s + pad).decode()
+
 
 def decode_email_webhook_token(token: str) -> dict:
     """
@@ -613,11 +617,10 @@ def decode_email_webhook_token(token: str) -> dict:
         "node_id": node_id,
         "env_id": env_id,
     }
-    
-    
+
 
 def get_repo_parts_from_url(repo_url):
-    repo_parts = repo_url.replace('.git', '').rstrip('/').split('/')
+    repo_parts = repo_url.replace(".git", "").rstrip("/").split("/")
     if len(repo_parts) >= 2:
         owner = repo_parts[-2]
         repo_name = repo_parts[-1]
@@ -630,10 +633,243 @@ def get_repo_parts_from_url(repo_url):
 
 def track_posthog(uid, event, props):
     try:
-        posthog.capture(
-            distinct_id=str(uid),
-            event=event,
-            properties=props or {}
-        )
+        posthog.capture(distinct_id=str(uid), event=event, properties=props or {})
     except:
         pass
+
+
+def cron_to_human_readable(minute, hour, day_of_week, day_of_month, month_of_year):
+    """Convert basic crontab-style fields to a human-readable string.
+
+    Handles common patterns like "*/N" for every N units, explicit times, and named days/months.
+    This is deliberately simple and aims to be friendlier than raw cron syntax, not exhaustive.
+    """
+
+    def every_n(expression, unit):
+        if isinstance(expression, str) and expression.startswith("*/"):
+            try:
+                n = int(expression[2:])
+                return f"every {n} {unit}{'' if n == 1 else 's'}"
+            except Exception:
+                return None
+        return None
+
+    def format_time(h, m):
+        if h == "*" and m == "*":
+            return "every minute"
+
+        # Zero-pad numbers when numeric
+        def to_int_safe(x):
+            try:
+                return int(x)
+            except Exception:
+                return None
+
+        hi = to_int_safe(h)
+        mi = to_int_safe(m)
+        if hi is not None and mi is not None:
+            return f"at {hi:02d}:{mi:02d}"
+        if hi is not None and m == "*":
+            return f"every minute past {hi:02d}:00"
+        if h == "*" and mi is not None:
+            return f"at minute {mi:02d} of every hour"
+        return None
+
+    def try_format_multiple_hours(h, m):
+        # Handle comma-separated or range hours with a fixed minute
+        def to_int_list(expr):
+            if not isinstance(expr, str):
+                expr = str(expr)
+            parts = [p.strip() for p in expr.split(",")]
+            out = []
+            for p in parts:
+                if "-" in p:
+                    try:
+                        start, end = p.split("-")
+                        start_i = int(start)
+                        end_i = int(end)
+                        if start_i <= end_i:
+                            out.extend(list(range(start_i, end_i + 1)))
+                        else:
+                            out.extend(list(range(end_i, start_i + 1)))
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        out.append(int(p))
+                    except Exception:
+                        pass
+            # Deduplicate while preserving order
+            seen = set()
+            ordered = []
+            for v in out:
+                if v not in seen:
+                    ordered.append(v)
+                    seen.add(v)
+            return ordered
+
+        try:
+            mi = int(m)
+        except Exception:
+            return None
+        hour_list = to_int_list(h)
+        if not hour_list:
+            return None
+        times = [f"{hh:02d}:{mi:02d}" for hh in hour_list]
+        if len(times) == 1:
+            return f"at {times[0]}"
+        if len(times) == 2:
+            return f"at {times[0]} and {times[1]}"
+        return "at " + ", ".join(times[:-1]) + f" and {times[-1]}"
+
+    def format_list_or_value(expr, name_map=None):
+        # Accept comma-separated lists or ranges and keep them as-is, with simple mapping if provided
+        if not isinstance(expr, str):
+            expr = str(expr)
+        parts = [p.strip() for p in expr.split(",")]
+        if name_map:
+            mapped = [name_map.get(p.lower(), p) for p in parts]
+        else:
+            mapped = parts
+        if len(mapped) == 1:
+            return mapped[0]
+        if len(mapped) == 2:
+            return f"{mapped[0]} and {mapped[1]}"
+        return ", ".join(mapped[:-1]) + f" and {mapped[-1]}"
+
+    day_name_map = {
+        "0": "sun",
+        "1": "mon",
+        "2": "tue",
+        "3": "wed",
+        "4": "thu",
+        "5": "fri",
+        "6": "sat",
+        "sun": "sun",
+        "mon": "mon",
+        "tue": "tue",
+        "wed": "wed",
+        "thu": "thu",
+        "fri": "fri",
+        "sat": "sat",
+    }
+    day_order = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
+    month_name_map = {
+        "1": "jan",
+        "2": "feb",
+        "3": "mar",
+        "4": "apr",
+        "5": "may",
+        "6": "jun",
+        "7": "jul",
+        "8": "aug",
+        "9": "sep",
+        "10": "oct",
+        "11": "nov",
+        "12": "dec",
+        "jan": "jan",
+        "feb": "feb",
+        "mar": "mar",
+        "apr": "apr",
+        "may": "may",
+        "jun": "jun",
+        "jul": "jul",
+        "aug": "aug",
+        "sep": "sep",
+        "oct": "oct",
+        "nov": "nov",
+        "dec": "dec",
+    }
+
+    # Start building pieces
+    pieces = []
+
+    # Month
+    if month_of_year != "*":
+        month_text = format_list_or_value(month_of_year, month_name_map)
+        pieces.append(f"in {month_text}")
+
+    # Day of month vs day of week
+    if day_of_month != "*":
+        # Support every N days
+        en = every_n(day_of_month, "day")
+        if en:
+            pieces.append(en)
+        else:
+            pieces.append(f"on day {day_of_month}")
+    elif day_of_week != "*":
+        en = every_n(day_of_week, "day")
+        if en:
+            pieces.append(en)
+        else:
+            dow_expr = str(day_of_week).lower()
+            if "-" in dow_expr:
+                # Range like 1-5 -> mon through fri
+                try:
+                    start, end = dow_expr.split("-")
+                    start_name = day_name_map.get(start, start)
+                    end_name = day_name_map.get(end, end)
+                    # Special-case weekdays
+                    if {start_name, end_name} == {"mon", "fri"} and dow_expr in (
+                        "1-5",
+                        "mon-fri",
+                    ):
+                        pieces.append("on weekdays")
+                    else:
+                        pieces.append(f"on {start_name} through {end_name}")
+                except Exception:
+                    dow_text = format_list_or_value(dow_expr, day_name_map)
+                    pieces.append(f"on {dow_text}")
+            else:
+                dow_text = format_list_or_value(dow_expr, day_name_map)
+                pieces.append(f"on {dow_text}")
+    else:
+        # Neither specified: every day
+        pieces.append("every day")
+
+    # Hour/Minute
+    time_phrase = None
+    # Handle every N hours/minutes
+    hourly = every_n(hour, "hour")
+    minutely = every_n(minute, "minute")
+    if hourly and minutely:
+        # Prefer the more specific minute interval when both present
+        time_phrase = minutely
+    elif hourly:
+        time_phrase = hourly
+    elif minutely:
+        time_phrase = minutely
+    else:
+        # Try multiple hours with fixed minute first
+        time_phrase = try_format_multiple_hours(hour, minute) or format_time(
+            hour, minute
+        )
+
+    if time_phrase:
+        pieces.append(time_phrase)
+
+    # Join and tidy spacing
+    sentence = " ".join(pieces)
+    # Capitalize first letter
+    if sentence:
+        sentence = sentence[0].upper() + sentence[1:]
+    return sentence or "on a schedule"
+
+
+def interval_to_human_readable(every, period):
+    try:
+        n = int(every)
+    except Exception:
+        n = every
+    period = (str(period) or "").lower()
+    # Normalize Django Celery Beat period names
+    period_map = {
+        "days": "day",
+        "hours": "hour",
+        "minutes": "minute",
+        "seconds": "second",
+        "microseconds": "microsecond",
+    }
+    unit = period_map.get(period, period or "interval")
+    plural = "" if (isinstance(n, int) and n == 1) else "s"
+    return f"Every {n} {unit}{plural}"

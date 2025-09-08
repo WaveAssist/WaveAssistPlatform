@@ -15,6 +15,7 @@ from WaveAssistApiApp.dashboard_views import get_firebase_uid
 import WaveAssistApiApp.Utils.AWSManager as aws_manager
 from WaveAssistApiApp.dashboard_views import handle_cli_session
 from knockapi import Knock
+
 knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.test import Client
 import json
@@ -24,15 +25,15 @@ from django_celery_beat.models import PeriodicTask
 client = Client()
 
 
-def get_started(request): #TCW
-    firebase_token = request.POST.get('firebase_token', '')
-    is_test = int(request.POST.get('is_test', 0)) == 1
-    is_operator_account = int(request.POST.get('is_operator_account', 1)) == 1
+def get_started(request):  # TCW
+    firebase_token = request.POST.get("firebase_token", "")
+    is_test = int(request.POST.get("is_test", 0)) == 1
+    is_operator_account = int(request.POST.get("is_operator_account", 1)) == 1
 
     try:
         firebase_uid, decoded_dict = get_firebase_uid(firebase_token)
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage(f'Failed to login: {str(e)}')
+        return ResponseParser.getParsedErrorMessage(f"Failed to login: {str(e)}")
 
     ##Create User
     try:
@@ -43,65 +44,77 @@ def get_started(request): #TCW
     if user_object is None:
         ##Create User
         uid = str(uuid.uuid4())
-        name = request.POST.get('name', decoded_dict.get('full_name',''))
-        username = request.POST.get('email', decoded_dict.get('email','email'))
-        password = request.POST.get('password', 'REMOVED_CREDENTIAL')
-        company_name = request.POST.get('company_name', 'Company')
+        name = request.POST.get("name", decoded_dict.get("full_name", ""))
+        username = request.POST.get("email", decoded_dict.get("email", "email"))
+        password = request.POST.get("password", "REMOVED_CREDENTIAL")
+        company_name = request.POST.get("company_name", "Company")
         can_create_projects = True
         ##Check for name, if name not present, create name from email.
         try:
-            if name == '':
-                name = username.split('@')[0]
+            if name == "":
+                name = username.split("@")[0]
         except:
             pass
         try:
-            user_object = User.objects.create(uid=uid, name=name, username=username, password=password,
-                                              company_name=company_name, can_create_projects=can_create_projects,
-                                              firebase_uid=firebase_uid
-                                            )
+            user_object = User.objects.create(
+                uid=uid,
+                name=name,
+                username=username,
+                password=password,
+                company_name=company_name,
+                can_create_projects=can_create_projects,
+                firebase_uid=firebase_uid,
+            )
             user_object.save()
         except Exception as e:
             print("User creation failed: " + str(e))
-            return ResponseParser.getParsedErrorMessage('User creation failed.')
+            return ResponseParser.getParsedErrorMessage("User creation failed.")
 
         ##Register user in Knock
-        knock_client.users.update(
-          user_id=str(uid),
-          name=name,
-          email=username
-        )
+        knock_client.users.update(user_id=str(uid), name=name, email=username)
 
     ##Check for existing Account
     try:
         account_object = Account.objects.filter(created_by_user=user_object)
         if account_object.count() == 0:
             ##Create Account
-            account_name = request.POST.get('account_name', user_object.name)
+            account_name = request.POST.get("account_name", user_object.name)
             account_uid = user_object.uid
-            if is_operator_account: 
+            if is_operator_account:
                 celery_queue = SHARED_OPERATOR_QUEUE
             else:
-                celery_queue = 'queue_' + str(account_uid)
-            account_object = Account.objects.create(account_name=account_name, account_uid=account_uid, created_by_user=user_object, celery_queue=celery_queue)
+                celery_queue = "queue_" + str(account_uid)
+            account_object = Account.objects.create(
+                account_name=account_name,
+                account_uid=account_uid,
+                created_by_user=user_object,
+                celery_queue=celery_queue,
+            )
             account_object.save()
         else:
             account_object = account_object.first()
     except Exception as e:
         print("Account creation failed: " + str(e))
-        return ResponseParser.getParsedErrorMessage('Account creation failed.')
+        return ResponseParser.getParsedErrorMessage("Account creation failed.")
 
-    if account_object.mongo_db_url == '' and not is_test:
+    if account_object.mongo_db_url == "" and not is_test:
         ##Create Mongo url
         try:
-            mongo_url,db_name = utils.create_mongo_url(user_object)
+            mongo_url, db_name = utils.create_mongo_url(user_object)
             account_object.mongo_db_url = mongo_url
             account_object.db_name = db_name
             account_object.save()
         except Exception as e:
             print("Mongo url creation failed: " + str(e))
-            return ResponseParser.getParsedErrorMessage('Mongo url creation failed.' + str(e))
+            return ResponseParser.getParsedErrorMessage(
+                "Mongo url creation failed." + str(e)
+            )
 
-    if account_object.worker_service_arn == '' and not is_test and not is_operator_account:
+    if (
+        account_object.worker_service_arn == ""
+        and not is_test
+        and not is_operator_account
+    ):
         ##Create Worker
         try:
             worker_service_arn = aws_manager.create_worker(user_object.uid)
@@ -109,158 +122,210 @@ def get_started(request): #TCW
             account_object.save()
         except Exception as e:
             print("Worker creation failed: " + str(e))
-            return ResponseParser.getParsedErrorMessage('Worker creation failed.' + str(e))
+            return ResponseParser.getParsedErrorMessage(
+                "Worker creation failed." + str(e)
+            )
 
-    if account_object.open_router_key == '':
+    if account_object.open_router_key == "":
         try:
-            open_router_key = utils.create_openrouter_token(user_object.uid, grant_usd=2)
+            open_router_key = utils.create_openrouter_token(
+                user_object.uid, grant_usd=2
+            )
             if open_router_key:
                 account_object.open_router_key = open_router_key
                 account_object.save()
         except Exception as e:
             print("OpenRouter key creation failed: " + str(e))
 
-
     user_dict = user_object.get_dict()
     account_dict = account_object.get_dict()
-    user_dict['mongo_db_url'] = account_object.mongo_db_url
-    output_dict = {'user_data': user_dict, 'account': account_dict,'project_array':[]}
-    utils.run_knock_workflow(str(user_object.uid), 'welcome')
+    user_dict["mongo_db_url"] = account_object.mongo_db_url
+    output_dict = {"user_data": user_dict, "account": account_dict, "project_array": []}
+    utils.run_knock_workflow(str(user_object.uid), "welcome")
     handle_cli_session(request, user_dict)
-    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'User and Account created successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        output_dict, "200", "User and Account created successfully."
+    )
 
 
-def create_user(request): #TCW
-    uid = request.POST.get('uid', '')
+## Note: moved helpers to utils (cron_to_human_readable, interval_to_human_readable)
+
+
+def create_user(request):  # TCW
+    uid = request.POST.get("uid", "")
     try:
         user_object = User.objects.get(uid=uid)
     except:
-        return ResponseParser.getParsedErrorMessage('User not authorized or found.')
+        return ResponseParser.getParsedErrorMessage("User not authorized or found.")
 
     ##Check if user is an admin
-    admin_access_count = user_object.accessprovided_set.filter(type=0, project_access_type=3).count()
+    admin_access_count = user_object.accessprovided_set.filter(
+        type=0, project_access_type=3
+    ).count()
 
     if admin_access_count == 0 and not user_object.can_create_projects:
-        return ResponseParser.getParsedErrorMessage('You do not have access to create user.')
+        return ResponseParser.getParsedErrorMessage(
+            "You do not have access to create user."
+        )
 
     ##Creating a new user with default values
     user_default_uuid = str(uuid.uuid4())
-    name = request.POST.get('name', user_default_uuid)
-    username = request.POST.get('username', user_default_uuid)
-    password = request.POST.get('password', user_default_uuid)
-    company_name = request.POST.get('company_name', user_default_uuid)
+    name = request.POST.get("name", user_default_uuid)
+    username = request.POST.get("username", user_default_uuid)
+    password = request.POST.get("password", user_default_uuid)
+    company_name = request.POST.get("company_name", user_default_uuid)
 
     try:
-        user_object = User.objects.create(name=name, username=username, password=password,
-                                          company_name=company_name)
+        user_object = User.objects.create(
+            name=name, username=username, password=password, company_name=company_name
+        )
         user_object.save()
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('User creation failed: ' + str(e))
+        return ResponseParser.getParsedErrorMessage("User creation failed: " + str(e))
 
-    data_dict = {
-        "user_object": user_object.get_dict()
-    }
-    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'User created successfully.')
+    data_dict = {"user_object": user_object.get_dict()}
+    return ResponseParser.getParsedSuccessMessage(
+        data_dict, "200", "User created successfully."
+    )
 
 
-
-def fetch_all_projects(request): #TCW
-    uid = request.POST.get('uid', '')
+def fetch_all_projects(request):  # TCW
+    uid = request.POST.get("uid", "")
     try:
         user_object = User.objects.get(uid=uid)
     except:
-        return ResponseParser.getParsedErrorMessage('User not authorized or found.')
+        return ResponseParser.getParsedErrorMessage("User not authorized or found.")
     project_array = Project.objects.filter(
         accessprovided__type=0,
         accessprovided__project_access_type__gte=READ_GTE,
-        accessprovided__user_object=user_object
+        accessprovided__user_object=user_object,
     ).distinct()
 
     project_dict_array = []
     for project_object in project_array:
         project_dict_array.append(project_object.get_dict())
-    output_dictionary = {'project_array': project_dict_array}
-    return ResponseParser.getParsedSuccessMessage(output_dictionary, '200', 'Fetch successful.')
+    output_dictionary = {"project_array": project_dict_array}
+    return ResponseParser.getParsedSuccessMessage(
+        output_dictionary, "200", "Fetch successful."
+    )
 
 
-
-def create_project(request): ##TCW
-    uid = request.POST.get('uid', '')
+def create_project(request):  ##TCW
+    uid = request.POST.get("uid", "")
     try:
         user_object = User.objects.get(uid=uid)
     except:
-        return ResponseParser.getParsedErrorMessage('User not found')
+        return ResponseParser.getParsedErrorMessage("User not found")
 
     try:
         account_object = Account.objects.get(account_uid=uid)
     except:
-        return ResponseParser.getParsedErrorMessage('Account not found')
+        return ResponseParser.getParsedErrorMessage("Account not found")
 
     if not user_object.can_create_projects:
-        return ResponseParser.getParsedErrorMessage('You do not have access to create projects.')
+        return ResponseParser.getParsedErrorMessage(
+            "You do not have access to create projects."
+        )
 
-    project_key = request.POST.get('project_key', '')
-    project_name = request.POST.get('project_name', '')
-    is_premium = bool(int(request.POST.get('is_premium', '0')))
-    should_create_nodes = request.POST.get('should_create_nodes', '0')
+    project_key = request.POST.get("project_key", "")
+    project_name = request.POST.get("project_name", "")
+    is_premium = bool(int(request.POST.get("is_premium", "0")))
+    should_create_nodes = request.POST.get("should_create_nodes", "0")
 
-    if project_key == '':
-        return ResponseParser.getParsedErrorMessage('Project key not found.')
+    if project_key == "":
+        return ResponseParser.getParsedErrorMessage("Project key not found.")
 
-    if project_name == '':
-        return ResponseParser.getParsedErrorMessage('Project name not found.')
+    if project_name == "":
+        return ResponseParser.getParsedErrorMessage("Project name not found.")
 
     ##Make lower case.
     project_key = project_key.lower()
 
     ##Check if project_key has any spaces
-    if ' ' in project_key:
-        return ResponseParser.getParsedErrorMessage('Project key should not contain any spaces.')
+    if " " in project_key:
+        return ResponseParser.getParsedErrorMessage(
+            "Project key should not contain any spaces."
+        )
 
     ##Check if project_key already exists
     try:
-        if AccessProvided.objects.filter(project_object__project_key=project_key, user_object=user_object).exists():
-            return ResponseParser.getParsedErrorMessage('Project key already exists.')
+        if AccessProvided.objects.filter(
+            project_object__project_key=project_key, user_object=user_object
+        ).exists():
+            return ResponseParser.getParsedErrorMessage("Project key already exists.")
     except:
         pass
 
-    template_key = request.POST.get('template_key', '')
+    template_key = request.POST.get("template_key", "")
     try:
-        project_object = Project.objects.create(project_key=project_key, name=project_name,
-                                                is_premium=is_premium, template_key=template_key)
+        project_object = Project.objects.create(
+            project_key=project_key,
+            name=project_name,
+            is_premium=is_premium,
+            template_key=template_key,
+        )
         project_object.save()
 
         ##Add a default datarun to project
-        data_run_name = 'Default'
-        data_run_key = project_key + '_' + data_run_name.lower()
-        data_run_object = DataRuns.objects.create(project_object=project_object, data_run_key = data_run_key, name=data_run_name, is_enabled=True)
+        data_run_name = "Default"
+        data_run_key = project_key + "_" + data_run_name.lower()
+        data_run_object = DataRuns.objects.create(
+            project_object=project_object,
+            data_run_key=data_run_key,
+            name=data_run_name,
+            is_enabled=True,
+        )
         data_run_object.save()
 
         ##Add a test datarun to project
-        data_run_name_test = 'Test'
-        data_run_key_test = project_key + '_' + data_run_name_test.lower()
-        data_run_test_object = DataRuns.objects.create(project_object=project_object, data_run_key = data_run_key_test, name=data_run_name_test, is_enabled=True)
+        data_run_name_test = "Test"
+        data_run_key_test = project_key + "_" + data_run_name_test.lower()
+        data_run_test_object = DataRuns.objects.create(
+            project_object=project_object,
+            data_run_key=data_run_key_test,
+            name=data_run_name_test,
+            is_enabled=True,
+        )
         data_run_test_object.save()
 
-
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Project creation failed: ' + str(e))
+        return ResponseParser.getParsedErrorMessage(
+            "Project creation failed: " + str(e)
+        )
 
     try:
-        project_access_object = AccessProvided.objects.create(type=0, project_object=project_object, user_object = user_object, project_access_type=ADMIN_GTE)
+        project_access_object = AccessProvided.objects.create(
+            type=0,
+            project_object=project_object,
+            user_object=user_object,
+            project_access_type=ADMIN_GTE,
+        )
         project_access_object.save()
 
-        data_run_access_object = AccessProvided.objects.create(type=1, data_run_object=data_run_object, user_object = user_object, data_run_access_type=ADMIN_GTE)
+        data_run_access_object = AccessProvided.objects.create(
+            type=1,
+            data_run_object=data_run_object,
+            user_object=user_object,
+            data_run_access_type=ADMIN_GTE,
+        )
         data_run_access_object.save()
 
         ##Same for test
-        data_run_access_object_test = AccessProvided.objects.create(type=1, data_run_object=data_run_test_object, user_object = user_object, data_run_access_type=ADMIN_GTE)
+        data_run_access_object_test = AccessProvided.objects.create(
+            type=1,
+            data_run_object=data_run_test_object,
+            user_object=user_object,
+            data_run_access_type=ADMIN_GTE,
+        )
         data_run_access_object_test.save()
 
         # add two key value pair in the variables
         variables = [
             {"name": "uid", "value": str(uid)},
-            {"name": "mongo_url", "value": str(account_object.mongo_db_url)},  # or actual URL if available
+            {
+                "name": "mongo_url",
+                "value": str(account_object.mongo_db_url),
+            },  # or actual URL if available
             {"name": "open_router_key", "value": str(account_object.open_router_key)},
         ]
         for env_key in [data_run_key, data_run_key_test]:
@@ -269,53 +334,64 @@ def create_project(request): ##TCW
                 var_value = variable["value"]
                 try:
                     payload = {
-                        'uid': uid,
-                        'project_key': project_key,
-                        'data_run_key': env_key,
-                        'data': var_value,
-                        'data_key': var_name,
-                        'data_type': 'string',
+                        "uid": uid,
+                        "project_key": project_key,
+                        "data_run_key": env_key,
+                        "data": var_value,
+                        "data_key": var_name,
+                        "data_type": "string",
                     }
-                    response = client.post('/data/set_data_for_key/', data=json.dumps(payload),
-                                           content_type='application/json')
+                    response = client.post(
+                        "/data/set_data_for_key/",
+                        data=json.dumps(payload),
+                        content_type="application/json",
+                    )
                 except Exception as e:
                     pass
 
-        #create a default node if should_create_node is true
-        if str(should_create_nodes) == '1':
+        # create a default node if should_create_node is true
+        if str(should_create_nodes) == "1":
             try:
                 for node in DEFAULT_NODES_ARRAY:
                     request.POST = request.POST.copy()
-                    request.POST['name'] = node['name']
-                    request.POST['is_starting_node'] = node['is_starting_node']
-                    request.POST['is_enabled'] = node['is_enabled']
-                    request.POST['run_after_nodes_csv'] = node.get('run_after_nodes_csv', '')
+                    request.POST["name"] = node["name"]
+                    request.POST["is_starting_node"] = node["is_starting_node"]
+                    request.POST["is_enabled"] = node["is_enabled"]
+                    request.POST["run_after_nodes_csv"] = node.get(
+                        "run_after_nodes_csv", ""
+                    )
                     create_node(request)
             except Exception as e:
                 print("Error creating default nodes: " + str(e))
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Project access creation failed: ' + str(e))
+        return ResponseParser.getParsedErrorMessage(
+            "Project access creation failed: " + str(e)
+        )
 
     ##Track PostHog event
     utils.track_posthog(
         uid=str(user_object.uid),
-        event='project_created',
+        event="project_created",
         props={
-            'project_key': project_key,
-        }
+            "project_key": project_key,
+        },
     )
 
-    return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        project_object.get_dict(), "200", "Project created successfully."
+    )
 
 
-def delete_data_key(request): ##TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+def delete_data_key(request):  ##TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=ADMIN_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
     ##Fetch Values
-    data_key = request.POST.get('data_key', '')
-    data_run_key = request.POST.get('data_run_key', '')
+    data_key = request.POST.get("data_key", "")
+    data_run_key = request.POST.get("data_run_key", "")
 
     ##Remove row from Mongo where IODataKey = key
     try:
@@ -325,27 +401,33 @@ def delete_data_key(request): ##TCW
         collection = mongo_manager.database[data_run_key]
         collection.delete_many({"IODataKey": data_key})
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Data key deletion failed: ' + str(e))
+        return ResponseParser.getParsedErrorMessage(
+            "Data key deletion failed: " + str(e)
+        )
 
-    return ResponseParser.getParsedSuccessMessage({}, '200', 'Data key deleted successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        {}, "200", "Data key deleted successfully."
+    )
 
 
-def create_data_key(request): ##TCW
+def create_data_key(request):  ##TCW
     request.POST = request.POST.copy()
-    data_type = request.POST.get('data_type', 'string')
-    if data_type == 'json' or data_type == 'dataframe':
-        data = '[]'
+    data_type = request.POST.get("data_type", "string")
+    if data_type == "json" or data_type == "dataframe":
+        data = "[]"
     else:
-        data = ''
-    request.POST['data_type'] = data_type
-    request.POST['data'] = data
+        data = ""
+    request.POST["data_type"] = data_type
+    request.POST["data"] = data
     return set_data_for_key(request)
 
 
-def fetch_project_variables(request): #TCW
+def fetch_project_variables(request):  # TCW
 
     ##Validate Request
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=READ_GTE)
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=READ_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
@@ -356,7 +438,6 @@ def fetch_project_variables(request): #TCW
     mongo_manager = MongoManager()
     mongo_manager.database = mongo_manager.client[mongo_db_name]
 
-
     ##Fetch all environment keys for project
     data_runs_array = DataRuns.objects.filter(project_object=project_object)
     for data_run_object in data_runs_array:
@@ -366,118 +447,222 @@ def fetch_project_variables(request): #TCW
         all_data_keys.update(unique_iodata_keys)
 
     ##Get data for project
-    output_dict = {'data_keys': list(all_data_keys)}
+    output_dict = {"data_keys": list(all_data_keys)}
 
-    return ResponseParser.getParsedSuccessMessage(output_dict, '200', 'Project Variables fetched successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        output_dict, "200", "Project Variables fetched successfully."
+    )
 
 
 def fetch_nodes(request):  # TCW
     ##Validate Request
-    success, message, user_object, project_object = validator.validate_user_and_project(request,
-                                                                                        access_level_gte=READ_GTE)
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=READ_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
     ##Nodes
-    node_array = project_object.nodes_set.all().order_by(Lower('node_key'))
+    node_array = project_object.nodes_set.all().order_by(Lower("node_key"))
     node_dict_array = []
     for node_object in node_array:
         node_dict_array.append(node_object.get_dict())
-    data_dict = {'node_array': node_dict_array,
-                 'is_premium': project_object.is_premium}
-    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Nodes fetched successfully.')
+    data_dict = {"node_array": node_dict_array, "is_premium": project_object.is_premium}
+    return ResponseParser.getParsedSuccessMessage(
+        data_dict, "200", "Nodes fetched successfully."
+    )
 
 
 def fetch_environments(request):  # TCW
     ##Validate Request
-    success, message, user_object, project_object = validator.validate_user_and_project(request,
-                                                                                        access_level_gte=READ_GTE)
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=READ_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
     ##Provide data runs which user has access to, and belong to this project.
-    data_run_array = DataRuns.objects.filter(accessprovided__type=1,
+    data_run_array = DataRuns.objects.filter(
+        accessprovided__type=1,
         accessprovided__data_run_access_type__gte=READ_GTE,
         accessprovided__user_object=user_object,
-        project_object=project_object
+        project_object=project_object,
     ).distinct()
     data_run_dict_array = []
     for data_run_object in data_run_array:
         data_run_dict_array.append(data_run_object.get_dict())
 
-    data_dict = {'environment_array': data_run_dict_array}
-    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Project Environment fetched successfully.')
+    data_dict = {"environment_array": data_run_dict_array}
+    return ResponseParser.getParsedSuccessMessage(
+        data_dict, "200", "Project Environment fetched successfully."
+    )
 
+
+def fetch_running_deployment(request):  # TCW
+    ##Validate Request
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=READ_GTE
+    )
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+        ##Validate Request
+    success, message, user_object, data_run_object = (
+        validator.validate_user_and_data_run(request, access_level_gte=READ_GTE)
+    )
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    try:
+        deployment_object = Deployments.objects.get(
+            project_object=project_object,
+            is_running=True,
+            data_run_object=data_run_object,
+        )
+        dag_array = DAG.objects.filter(parent_deployment=deployment_object)
+        first_dag = dag_array.first()
+        first_dag_dict = {}
+        if first_dag is not None:
+            schedule_dict = None
+            if first_dag.crontab_schedule:
+                cron = first_dag.crontab_schedule
+                schedule_dict = {
+                    "type": "crontab",
+                    "minute": getattr(cron, "minute", "*"),
+                    "hour": getattr(cron, "hour", "*"),
+                    "day_of_week": getattr(cron, "day_of_week", "*"),
+                    "day_of_month": getattr(cron, "day_of_month", "*"),
+                    "month_of_year": getattr(cron, "month_of_year", "*"),
+                }
+                display_text = utils.cron_to_human_readable(
+                    schedule_dict["minute"],
+                    schedule_dict["hour"],
+                    schedule_dict["day_of_week"],
+                    schedule_dict["day_of_month"],
+                    schedule_dict["month_of_year"],
+                )
+                display_text = f"Scheduled to run {display_text}"
+                schedule_dict["display_text"] = display_text
+
+            elif first_dag.interval_schedule:
+                interval = first_dag.interval_schedule
+                schedule_dict = {
+                    "type": "interval",
+                    "every": getattr(interval, "every", None),
+                    "period": getattr(interval, "period", None),
+                }
+                display_text = utils.interval_to_human_readable(
+                    schedule_dict["every"], schedule_dict["period"]
+                )
+                display_text = f"Scheduled to run {display_text.lower()}"
+                schedule_dict["display_text"] = display_text
+
+            first_dag_dict = first_dag.get_dict()
+            first_dag_dict["schedule"] = schedule_dict
+
+    except:
+        return ResponseParser.getParsedErrorMessage("No running deployment found.")
+
+    deployment_dict = deployment_object.get_dict()
+    data_dict = {"deployment_object": deployment_dict}
+    if first_dag_dict is not None:
+        data_dict["dag_object"] = first_dag_dict
+    return ResponseParser.getParsedSuccessMessage(
+        data_dict, "200", "Running deployment fetched successfully."
+    )
 
 
 def fetch_deployments(request):  # Test cases pending
     ##Validate Request
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=READ_GTE)
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=READ_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
     ##Validate Request
-    success, message, user_object, data_run_object = validator.validate_user_and_data_run(request,
-                                                                                        access_level_gte=READ_GTE)
+    success, message, user_object, data_run_object = (
+        validator.validate_user_and_data_run(request, access_level_gte=READ_GTE)
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    deployment_array = Deployments.objects.filter(project_object=project_object, data_run_object=data_run_object).order_by('-version')
+    deployment_array = Deployments.objects.filter(
+        project_object=project_object, data_run_object=data_run_object
+    ).order_by("-version")
 
     deployment_dict_array = []
     for deployment_object in deployment_array:
         deployment_dict_array.append(deployment_object.get_dict())
-    data_dict = {'deployment_array': deployment_dict_array}
-    return ResponseParser.getParsedSuccessMessage(data_dict, '200', 'Deployments fetched successfully.')
+    data_dict = {"deployment_array": deployment_dict_array}
+    return ResponseParser.getParsedSuccessMessage(
+        data_dict, "200", "Deployments fetched successfully."
+    )
 
 
-def delete_project(request): ##ToDo: Write test cases. Check related deleted. Check if DAG Runs are gone.
+def delete_project(
+    request,
+):  ##ToDo: Write test cases. Check related deleted. Check if DAG Runs are gone.
     ##Validate Request
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=ADMIN_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
-    
+
     try:
         with transaction.atomic():
             # Get all DAGs associated with this project through deployments
-            project_dags = DAG.objects.filter(parent_deployment__project_object=project_object)
-            
+            project_dags = DAG.objects.filter(
+                parent_deployment__project_object=project_object
+            )
+
             # Delete periodic tasks associated with the project's DAGs
             for dag in project_dags:
                 if dag.periodic_task:
                     dag.periodic_task.delete()
-            
+
             # Delete the project (this will cascade delete all related objects)
             project_object.delete()
-            
-    except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Project deletion failed: ' + str(e))
 
-    return ResponseParser.getParsedSuccessMessage({}, '200', 'Project deleted successfully.')
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(
+            "Project deletion failed: " + str(e)
+        )
+
+    return ResponseParser.getParsedSuccessMessage(
+        {}, "200", "Project deleted successfully."
+    )
 
 
 ######## --- CRUD for DataKeys
 
 
 ###Node CRUD
-def create_node(request): ##TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request,access_level_gte=ADMIN_GTE)
+def create_node(request):  ##TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=ADMIN_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    node_name = request.POST.get('name', '')
-    node_key = node_name.lower().replace(' ', '_')
-    is_enabled = bool(int(request.POST.get('is_enabled', '0')))
+    node_name = request.POST.get("name", "")
+    node_key = node_name.lower().replace(" ", "_")
+    is_enabled = bool(int(request.POST.get("is_enabled", "0")))
 
-    is_starting_node = bool(int(request.POST.get('is_starting_node', '0')))
-    schedule_type = request.POST.get('schedule_type', 'none').lower()
-    success, message, interval_object, crontab_object, run_after_nodes_array = validator.validate_and_get_intervals(request, project_object)
+    is_starting_node = bool(int(request.POST.get("is_starting_node", "0")))
+    schedule_type = request.POST.get("schedule_type", "none").lower()
+    success, message, interval_object, crontab_object, run_after_nodes_array = (
+        validator.validate_and_get_intervals(request, project_object)
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
     ##Check if node_key already exists
     if Nodes.objects.filter(node_key=node_key, project_object=project_object).exists():
-        return ResponseParser.getParsedErrorMessage('Node with this key/name already exists in this project.')
+        return ResponseParser.getParsedErrorMessage(
+            "Node with this key/name already exists in this project."
+        )
 
     default_code = """\
 # Sample node code — replace with your logic
@@ -496,12 +681,12 @@ waveassist.init()
                 project_object=project_object,
                 node_key=node_key,
                 is_enabled=is_enabled,
-                name = node_name,
+                name=node_name,
                 is_starting_node=is_starting_node,
                 schedule_type=schedule_type,
                 interval_schedule=interval_object,
                 crontab_schedule=crontab_object,
-                python_code=default_code
+                python_code=default_code,
             )
             node_object.save()
 
@@ -511,62 +696,94 @@ waveassist.init()
             ##Save Node
             node_object.save()
 
-            #Check DAG
+            # Check DAG
             # success, node_list, message = utils.check_dag(node_object, project_object.nodes_set.filter(is_enabled=True))
             # if not success:
             #     raise Exception("Invalid DAG: " + message)
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while creating Node: ' + str(e))
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while creating Node: " + str(e)
+        )
+
+    return ResponseParser.getParsedSuccessMessage(
+        node_object.get_dict(), "200", "Node updated successfully."
+    )
 
 
-
-    return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Node updated successfully.')
-
-
-
-def update_node(request): ## TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
+def update_node(request):  ## TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=WRITE_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    node_key = request.POST.get('node_key', '')
+    node_key = request.POST.get("node_key", "")
     try:
-        node_object = Nodes.objects.get(node_key=node_key, project_object=project_object)
+        node_object = Nodes.objects.get(
+            node_key=node_key, project_object=project_object
+        )
     except:
-        return ResponseParser.getParsedErrorMessage('Node not found.')
+        return ResponseParser.getParsedErrorMessage("Node not found.")
 
     try:
         with transaction.atomic():
             ##Input keys
-            if 'input_data_key_csv' in request.POST:
-                input_data_key_csv = request.POST.get('input_data_key_csv', '')
-                success, message, input_data_keys_array = validator.validate_keys_csv(input_data_key_csv, project_object)
+            if "input_data_key_csv" in request.POST:
+                input_data_key_csv = request.POST.get("input_data_key_csv", "")
+                success, message, input_data_keys_array = validator.validate_keys_csv(
+                    input_data_key_csv, project_object
+                )
                 if not success:
-                    raise Exception('Input data keys should belong to this project: ' + message)
+                    raise Exception(
+                        "Input data keys should belong to this project: " + message
+                    )
                 node_object.input_data_key_array.set(input_data_keys_array)
 
             ##Output keys
-            if 'output_data_key_csv' in request.POST:
-                output_data_key_csv = request.POST.get('output_data_key_csv', '')
-                success, message, output_data_keys_array = validator.validate_keys_csv(output_data_key_csv, project_object)
+            if "output_data_key_csv" in request.POST:
+                output_data_key_csv = request.POST.get("output_data_key_csv", "")
+                success, message, output_data_keys_array = validator.validate_keys_csv(
+                    output_data_key_csv, project_object
+                )
                 if not success:
-                    raise Exception('Output data keys should belong to this project: ' + message)
+                    raise Exception(
+                        "Output data keys should belong to this project: " + message
+                    )
                 node_object.output_data_key_array.set(output_data_keys_array)
 
-            is_enabled = bool(int(request.POST.get('is_enabled', node_object.is_enabled)))
+            is_enabled = bool(
+                int(request.POST.get("is_enabled", node_object.is_enabled))
+            )
             node_object.is_enabled = is_enabled
 
-            name = request.POST.get('name', node_object.name)
+            name = request.POST.get("name", node_object.name)
             node_object.name = name
 
-
             ##Interval & Schedules
-            if 'schedule_type' in request.POST or 'run_after_nodes_csv' in request.POST:
-                is_starting_node = bool(int(request.POST.get('is_starting_node', node_object.is_starting_node)))
-                schedule_type = request.POST.get('schedule_type', node_object.schedule_type).lower()
+            if "schedule_type" in request.POST or "run_after_nodes_csv" in request.POST:
+                is_starting_node = bool(
+                    int(
+                        request.POST.get(
+                            "is_starting_node", node_object.is_starting_node
+                        )
+                    )
+                )
+                schedule_type = request.POST.get(
+                    "schedule_type", node_object.schedule_type
+                ).lower()
 
-                success, message, interval_object, crontab_object, run_after_nodes_array = validator.validate_and_get_intervals(
-                    request, project_object, is_starting_node=is_starting_node, schedule_type=schedule_type)
+                (
+                    success,
+                    message,
+                    interval_object,
+                    crontab_object,
+                    run_after_nodes_array,
+                ) = validator.validate_and_get_intervals(
+                    request,
+                    project_object,
+                    is_starting_node=is_starting_node,
+                    schedule_type=schedule_type,
+                )
                 if not success:
                     raise Exception(message)
                 node_object.schedule_type = schedule_type
@@ -583,54 +800,71 @@ def update_node(request): ## TCW
             #     raise Exception("Invalid DAG: " + message)
 
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while updating Node: ' + str(e))
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while updating Node: " + str(e)
+        )
 
-    return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Node updated successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        node_object.get_dict(), "200", "Node updated successfully."
+    )
 
 
-
-
-def delete_node(request): #TWC
-    success, message, user_object, project_object = validator.validate_user_and_project(request,access_level_gte=WRITE_GTE)
+def delete_node(request):  # TWC
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=WRITE_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
-    node_key = request.POST.get('node_key', '')
+    node_key = request.POST.get("node_key", "")
     try:
-        node_object = Nodes.objects.get(node_key=node_key, project_object=project_object)
+        node_object = Nodes.objects.get(
+            node_key=node_key, project_object=project_object
+        )
     except:
-        return ResponseParser.getParsedErrorMessage('Node not found.')
+        return ResponseParser.getParsedErrorMessage("Node not found.")
     try:
         node_object.delete()
     except Exception as e:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while deleting Node, error: ' + str(e))
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while deleting Node, error: " + str(e)
+        )
 
-    return ResponseParser.getParsedSuccessMessage({}, '200', 'Node deleted successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        {}, "200", "Node deleted successfully."
+    )
 
 
 ##Node Details
-def update_code(request): #TWC
-    node_key = request.POST.get('node_key', '')
-    python_code = request.POST.get('python_code', '')
+def update_code(request):  # TWC
+    node_key = request.POST.get("node_key", "")
+    python_code = request.POST.get("python_code", "")
 
     ##Validate request
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=WRITE_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
     try:
-        node_object = Nodes.objects.get(node_key=node_key, project_object = project_object)
+        node_object = Nodes.objects.get(
+            node_key=node_key, project_object=project_object
+        )
     except:
-        return ResponseParser.getParsedErrorMessage('Node not found')
+        return ResponseParser.getParsedErrorMessage("Node not found")
 
     node_object.python_code = python_code
     node_object.save()
 
-    return ResponseParser.getParsedSuccessMessage(node_object.get_dict(), '200', 'Code updated successfully.')
-
+    return ResponseParser.getParsedSuccessMessage(
+        node_object.get_dict(), "200", "Code updated successfully."
+    )
 
 
 ##Integrations CRUD
-def activate_integration(request): #TWC without mongo checks(manage_integration_details)
+def activate_integration(
+    request,
+):  # TWC without mongo checks(manage_integration_details)
     # success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
     # if not success:
     #     return ResponseParser.getParsedErrorMessage(message)
@@ -656,12 +890,12 @@ def activate_integration(request): #TWC without mongo checks(manage_integration_
     # except:
     #     return ResponseParser.getParsedErrorMessage('Something went wrong while managing integration details')
 
-    return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration activated successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        {}, "200", "Integration activated successfully."
+    )
 
 
-
-
-def deactivate_integration(request): #TWC
+def deactivate_integration(request):  # TWC
     # success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
     # if not success:
     #     return ResponseParser.getParsedErrorMessage(message)
@@ -681,66 +915,96 @@ def deactivate_integration(request): #TWC
     # except:
     #     return ResponseParser.getParsedErrorMessage('Something went wrong while deactivating integration')
 
-    return ResponseParser.getParsedSuccessMessage({}, '200', 'Integration deactivated successfully.')
-
-
+    return ResponseParser.getParsedSuccessMessage(
+        {}, "200", "Integration deactivated successfully."
+    )
 
 
 ##Crud dashboard section
 
-def create_dashboard_section(request): #TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
+
+def create_dashboard_section(request):  # TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=WRITE_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    row = request.POST.get('row', 0)
-    column = request.POST.get('column', 0)
-    display_type = request.POST.get('display_type', 0)
-    data_key = request.POST.get('data_key', '')
-    title = request.POST.get('title', '')
-    should_display_title = bool(int(request.POST.get('should_display_title', 1)))
-    is_editable = bool(int(request.POST.get('is_editable', 0)))
+    row = request.POST.get("row", 0)
+    column = request.POST.get("column", 0)
+    display_type = request.POST.get("display_type", 0)
+    data_key = request.POST.get("data_key", "")
+    title = request.POST.get("title", "")
+    should_display_title = bool(int(request.POST.get("should_display_title", 1)))
+    is_editable = bool(int(request.POST.get("is_editable", 0)))
     try:
         data_key_object = DataKey.objects.get(key=data_key)
     except:
-        return ResponseParser.getParsedErrorMessage('Data Key not found')
+        return ResponseParser.getParsedErrorMessage("Data Key not found")
 
     try:
-        dashboard_section_object = DashboardSection.objects.create(row=row, column=column, display_type=display_type, data_key_object=data_key_object,
-                                                                   title=title, should_display_title=should_display_title, is_editable=is_editable, project_object=project_object)
+        dashboard_section_object = DashboardSection.objects.create(
+            row=row,
+            column=column,
+            display_type=display_type,
+            data_key_object=data_key_object,
+            title=title,
+            should_display_title=should_display_title,
+            is_editable=is_editable,
+            project_object=project_object,
+        )
         dashboard_section_object.save()
     except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while creating dashboard section')
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while creating dashboard section"
+        )
+
+    return ResponseParser.getParsedSuccessMessage(
+        dashboard_section_object.get_dict(),
+        "200",
+        "Dashboard section created successfully.",
+    )
 
 
-    return ResponseParser.getParsedSuccessMessage(dashboard_section_object.get_dict(), '200', 'Dashboard section created successfully.')
-
-
-
-def update_dashboard_section(request): #TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
+def update_dashboard_section(request):  # TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=WRITE_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    dashboard_section_key = request.POST.get('dashboard_section_key', '')
+    dashboard_section_key = request.POST.get("dashboard_section_key", "")
     try:
-        dashboard_section_object = DashboardSection.objects.get(dashboard_section_key=dashboard_section_key)
+        dashboard_section_object = DashboardSection.objects.get(
+            dashboard_section_key=dashboard_section_key
+        )
     except:
-        return ResponseParser.getParsedErrorMessage('Dashboard Section not found')
+        return ResponseParser.getParsedErrorMessage("Dashboard Section not found")
 
-
-    row = request.POST.get('row', dashboard_section_object.row)
-    column = request.POST.get('column', dashboard_section_object.column)
-    display_type = request.POST.get('display_type', dashboard_section_object.display_type)
-    data_key = request.POST.get('data_key', dashboard_section_object.data_key_object.key)
-    title = request.POST.get('title', dashboard_section_object.title)
-    should_display_title = bool(int(request.POST.get('should_display_title', dashboard_section_object.should_display_title)))
-    is_editable = bool(int(request.POST.get('is_editable', dashboard_section_object.is_editable)))
+    row = request.POST.get("row", dashboard_section_object.row)
+    column = request.POST.get("column", dashboard_section_object.column)
+    display_type = request.POST.get(
+        "display_type", dashboard_section_object.display_type
+    )
+    data_key = request.POST.get(
+        "data_key", dashboard_section_object.data_key_object.key
+    )
+    title = request.POST.get("title", dashboard_section_object.title)
+    should_display_title = bool(
+        int(
+            request.POST.get(
+                "should_display_title", dashboard_section_object.should_display_title
+            )
+        )
+    )
+    is_editable = bool(
+        int(request.POST.get("is_editable", dashboard_section_object.is_editable))
+    )
 
     try:
         data_key_object = DataKey.objects.get(key=data_key)
     except:
-        return ResponseParser.getParsedErrorMessage('Data Key not found')
+        return ResponseParser.getParsedErrorMessage("Data Key not found")
 
     try:
         dashboard_section_object.row = row
@@ -751,109 +1015,153 @@ def update_dashboard_section(request): #TCW
         dashboard_section_object.should_display_title = should_display_title
         dashboard_section_object.is_editable = is_editable
         dashboard_section_object.save()
-        return ResponseParser.getParsedSuccessMessage(dashboard_section_object.get_dict(), '200', 'Dashboard section updated successfully.')
+        return ResponseParser.getParsedSuccessMessage(
+            dashboard_section_object.get_dict(),
+            "200",
+            "Dashboard section updated successfully.",
+        )
     except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while updating dashboard section')
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while updating dashboard section"
+        )
 
 
-
-
-def delete_dashboard_section(request): #TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=WRITE_GTE)
+def delete_dashboard_section(request):  # TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=WRITE_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    dashboard_section_key = request.POST.get('dashboard_section_key', '')
+    dashboard_section_key = request.POST.get("dashboard_section_key", "")
     try:
-        dashboard_section_object = DashboardSection.objects.get(dashboard_section_key=dashboard_section_key)
+        dashboard_section_object = DashboardSection.objects.get(
+            dashboard_section_key=dashboard_section_key
+        )
     except:
-        return ResponseParser.getParsedErrorMessage('Dashboard Section not found')
+        return ResponseParser.getParsedErrorMessage("Dashboard Section not found")
 
     try:
         dashboard_section_object.delete()
-        return ResponseParser.getParsedSuccessMessage({}, '200', 'Dashboard section deleted successfully.')
+        return ResponseParser.getParsedSuccessMessage(
+            {}, "200", "Dashboard section deleted successfully."
+        )
     except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while deleting dashboard section')
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while deleting dashboard section"
+        )
 
 
 ##CRUD: Data Runs
-def create_data_run(request): #TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+def create_data_run(request):  # TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=ADMIN_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    name = request.POST.get('name', '')
-    is_enabled = bool(int(request.POST.get('is_enabled', '0')))
-    data_run_key = project_object.project_key + '_' + name.lower()
+    name = request.POST.get("name", "")
+    is_enabled = bool(int(request.POST.get("is_enabled", "0")))
+    data_run_key = project_object.project_key + "_" + name.lower()
 
     ##Check if data_run key already exist for project, return if it does.
     try:
-        data_run_object = DataRuns.objects.get(data_run_key=data_run_key, project_object=project_object)
-        return ResponseParser.getParsedSuccessMessage(data_run_object.get_dict(), '200',
-                                                      'Data Run fetched successfully.')
+        data_run_object = DataRuns.objects.get(
+            data_run_key=data_run_key, project_object=project_object
+        )
+        return ResponseParser.getParsedSuccessMessage(
+            data_run_object.get_dict(), "200", "Data Run fetched successfully."
+        )
     except:
         pass
 
     try:
-        data_run_object = DataRuns.objects.create(name=name, data_run_key=data_run_key, project_object=project_object, is_enabled=is_enabled)
+        data_run_object = DataRuns.objects.create(
+            name=name,
+            data_run_key=data_run_key,
+            project_object=project_object,
+            is_enabled=is_enabled,
+        )
         data_run_object.save()
     except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while creating Data Run, make sure your data_run name is unique')
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while creating Data Run, make sure your data_run name is unique"
+        )
 
     ##Provide access to user for this data run
     try:
-        data_run_access_object = AccessProvided.objects.create(type=1, data_run_object=data_run_object, user_object=user_object, data_run_access_type=ADMIN_GTE)
+        data_run_access_object = AccessProvided.objects.create(
+            type=1,
+            data_run_object=data_run_object,
+            user_object=user_object,
+            data_run_access_type=ADMIN_GTE,
+        )
         data_run_access_object.save()
     except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while providing access to Data Run')
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while providing access to Data Run"
+        )
 
-    return ResponseParser.getParsedSuccessMessage(data_run_object.get_dict(), '200', 'Data Run created successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        data_run_object.get_dict(), "200", "Data Run created successfully."
+    )
 
 
-def update_data_run(request): #TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+def update_data_run(request):  # TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=ADMIN_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
     ##ToDo: Even the admin to the data run should be able to update it
-    data_run_key = request.POST.get('data_run_key', '')
+    data_run_key = request.POST.get("data_run_key", "")
     try:
         data_run_object = DataRuns.objects.get(data_run_key=data_run_key)
     except:
-        return ResponseParser.getParsedErrorMessage('Data Run not found')
+        return ResponseParser.getParsedErrorMessage("Data Run not found")
 
-    name = request.POST.get('name', data_run_object.name)
-    is_enabled = bool(int(request.POST.get('is_enabled', data_run_object.is_enabled)))
+    name = request.POST.get("name", data_run_object.name)
+    is_enabled = bool(int(request.POST.get("is_enabled", data_run_object.is_enabled)))
 
     try:
         data_run_object.name = name
         data_run_object.is_enabled = is_enabled
         data_run_object.save()
     except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while updating Data Run')
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while updating Data Run"
+        )
 
-    return ResponseParser.getParsedSuccessMessage(data_run_object.get_dict(), '200', 'Data Run updated successfully.')
+    return ResponseParser.getParsedSuccessMessage(
+        data_run_object.get_dict(), "200", "Data Run updated successfully."
+    )
 
 
-def delete_data_run(request): #TCW
-    success, message, user_object, project_object = validator.validate_user_and_project(request, access_level_gte=ADMIN_GTE)
+def delete_data_run(request):  # TCW
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=ADMIN_GTE
+    )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    data_run_key = request.POST.get('data_run_key', '')
+    data_run_key = request.POST.get("data_run_key", "")
     try:
         data_run_object = DataRuns.objects.get(data_run_key=data_run_key)
     except:
-        return ResponseParser.getParsedErrorMessage('Data Run not found')
+        return ResponseParser.getParsedErrorMessage("Data Run not found")
 
     try:
         data_run_object.delete()
     except:
-        return ResponseParser.getParsedErrorMessage('Something went wrong while deleting Data Run')
+        return ResponseParser.getParsedErrorMessage(
+            "Something went wrong while deleting Data Run"
+        )
 
     ##ToDo: Delete the related periodic task.
     ##ToDo: Delete mongo data
     ##ToDo: Same in disable, disable periodic tasks.
 
-    return ResponseParser.getParsedSuccessMessage({}, '200', 'Data Run deleted successfully.')
-
+    return ResponseParser.getParsedSuccessMessage(
+        {}, "200", "Data Run deleted successfully."
+    )
