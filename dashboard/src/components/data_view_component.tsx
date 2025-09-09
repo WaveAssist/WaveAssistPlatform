@@ -117,7 +117,7 @@ const DataViewComponent: React.FC = () => {
 					</Spinner>
 				</div>
 			) : (
-				<div className="content-container">
+				<div>
 					{dataType === "dataframe" && (
 						<div className="ag-theme-balham-dark grid-container full-screen">
 							<AgGridReact

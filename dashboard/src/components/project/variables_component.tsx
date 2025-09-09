@@ -404,7 +404,7 @@ const VariablesComponent: React.FC = () => {
 				</Modal.Header>
 				<Modal.Body>
 					<Form>
-						<div className="content-container">
+						<div>
 							{dataType === "dataframe" && (
 								<div className="ag-theme-balham-dark">
 									<AgGridReact

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { usePostHog } from "posthog-js/react";
 import { useToast } from "../utils/toast_context";
+import { useRefresh } from "../utils/RefreshContext";
 import { Button, Form, Spinner } from "react-bootstrap";
 import { fetchTemplateApi, setDataForKeyApi, runDAGApi } from "../services/project_services";
 import { deployProjectApi } from "../services/navbar_services";
@@ -11,6 +12,7 @@ import "./assistant_component.css";
 
 const AssistantComponent: React.FC = () => {
 	const { showToast } = useToast();
+	const { shouldRefresh } = useRefresh();
 	const posthog = usePostHog();
 	const navigate = useNavigate();
 
@@ -66,6 +68,20 @@ const AssistantComponent: React.FC = () => {
 		} catch (_err) {}
 	}, []);
 
+	// Fetch running deployment info
+	const fetchRunning = async () => {
+		try {
+			const response = await fetchRunningDeploymentApi();
+			setRunningDeploymentInfo(response);
+			setIsRunning(true);
+			setDisplayText(response.dag_object.schedule.display_text);
+		} catch (err) {
+			setIsRunning(false);
+			setRunningDeploymentInfo(null);
+			setDisplayText("");
+		}
+	};
+
 	useEffect(() => {
 		// Get template key and fetch wizard inputs
 		const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
@@ -85,31 +101,8 @@ const AssistantComponent: React.FC = () => {
 		}
 		setTemplateKey(templateKeyValue);
 		fetch_wizard_inputs(templateKeyValue);
-	}, []);
-
-	// Fetch running deployment info and store full response in a dict
-	useEffect(() => {
-		const fetchRunning = async () => {
-			try {
-				const response = await fetchRunningDeploymentApi();
-				setRunningDeploymentInfo(response);
-				setIsRunning(true);
-				setDisplayText(response.dag_object.schedule.display_text);
-			} catch (err) {
-				setIsRunning(false);
-				setRunningDeploymentInfo(null);
-				setDisplayText("");
-			}
-		};
 		fetchRunning();
-	}, []);
-
-	// Reference the stored response to satisfy linter and enable quick debugging
-	useEffect(() => {
-		if (runningDeploymentInfo) {
-			console.debug("Running deployment info:", runningDeploymentInfo);
-		}
-	}, [runningDeploymentInfo]);
+	}, [shouldRefresh]);
 
 	const handleWizardInputChange = (key: string, value: string) => {
 		setWizardValues((prev) => ({ ...prev, [key]: value }));

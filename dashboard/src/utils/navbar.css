@@ -15,17 +15,12 @@
     z-index: 1030;
   }
 
-  .content-container {
-    overflow-y: auto;
-    height: calc(100vh - 60px);
-  }
+
 
   @media (max-width: 767.98px) {
     .navbar-main {
       height: 60px !important;
     }
     
-    .content-container {
-      height: calc(100vh - 60px);
-    }
+
   }
