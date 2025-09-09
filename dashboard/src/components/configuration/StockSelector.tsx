@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Form, Spinner } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import { useToast } from "../../utils/toast_context";
 import "./StockSelector.css";
 
@@ -19,13 +19,14 @@ interface StockSelectorProps {
 	maxSelected?: number;
 }
 
-const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placeholder = "Search for stocks...", maxSelected = 5 }) => {
+const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placeholder = "Search for your stocks...", maxSelected = 5 }) => {
 	const { showToast } = useToast();
 	const [stockSearchQuery, setStockSearchQuery] = useState("");
 	const [stockSearchResults, setStockSearchResults] = useState<Stock[]>([]);
 	const [stockSearchLoading, setStockSearchLoading] = useState(false);
 	const [selectedStocks, setSelectedStocks] = useState<Stock[]>([]);
 	const [stockSearchTimeout, setStockSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+	const [hasSearched, setHasSearched] = useState(false);
 	const stockSearchAbortController = useRef<AbortController | null>(null);
 
 	// Initialize selected stocks from value prop
@@ -51,6 +52,7 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 	const searchStocks = async (query: string) => {
 		if (!query.trim()) {
 			setStockSearchResults([]);
+			setHasSearched(false);
 			return;
 		}
 
@@ -74,11 +76,13 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 			} else {
 				setStockSearchResults([]);
 			}
+			setHasSearched(true);
 		} catch (error: any) {
 			// Don't log error if it was aborted
 			if (error.name !== "AbortError") {
 				console.error("Stock search failed:", error);
 				setStockSearchResults([]);
+				setHasSearched(true);
 			}
 		} finally {
 			setStockSearchLoading(false);
@@ -137,7 +141,13 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 			{/* Stock Search Results */}
 			{stockSearchLoading && (
 				<div className="mt-2">
-					<Spinner animation="border" size="sm" /> <span className="text-muted">Loading...</span>
+					<span className="text-muted">Loading...</span>
+				</div>
+			)}
+
+			{!stockSearchLoading && stockSearchQuery.trim() && stockSearchResults.length === 0 && hasSearched && (
+				<div className="mt-2">
+					<span className="text-muted">No results found for "{stockSearchQuery}"</span>
 				</div>
 			)}
 
