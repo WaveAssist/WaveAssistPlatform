@@ -275,11 +275,7 @@ const AssistantComponent: React.FC = () => {
 											variant="outline-danger"
 											onClick={async () => {
 												try {
-													const deploymentKey =
-														runningDeploymentInfo?.deployment_key ||
-														runningDeploymentInfo?.deployment?.deployment_key ||
-														runningDeploymentInfo?.key ||
-														"";
+													const deploymentKey = runningDeploymentInfo?.deployment_object.key || "";
 													if (!deploymentKey) {
 														showToast("Could not determine deployment to stop.", "warning");
 														return;
@@ -288,7 +284,7 @@ const AssistantComponent: React.FC = () => {
 													setIsRunning(false);
 													setRunningDeploymentInfo(null);
 													setDisplayText("");
-													showToast("Stopped successfully", "success");
+													showToast("Schedule stopped successfully", "success");
 												} catch (err) {
 													console.error("Failed to stop:", err);
 													showToast("Failed to stop. Please try again.", "danger");
