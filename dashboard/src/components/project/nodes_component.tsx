@@ -33,6 +33,7 @@ import NodeFlowView from "./node_flow_view";
 import dagre from "dagre";
 import { Position } from "reactflow";
 import { applyNodeChanges, NodeChange } from "reactflow";
+import PaywallBlock from "../PaywallBlock";
 
 // Constants for node size
 const NODE_WIDTH = 250;
@@ -114,6 +115,10 @@ const NodesComponent: React.FC = () => {
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 	const showAddNodeButton = !(isProjectPremium && !isUserPremium);
 	const showDownloadButton = !(isProjectPremium && !isUserPremium);
+
+	// Check if the entire nodes section should be blocked based on user type
+	const currentPlanName = localStorage.getItem("plan_name") || "operator";
+	const shouldBlockNodes = currentPlanName === "operator";
 
 	const navigate = useNavigate();
 	const steps: Step[] = [
@@ -923,7 +928,7 @@ ${config.nodes
 	const [showPaywall, setShowPaywall] = useState(false);
 
 	return (
-		<div className="main-container">
+		<div className="main-container" style={{ position: "relative", overflow: "hidden" }}>
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
 				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-start align-items-center mb-3">
@@ -1483,6 +1488,8 @@ ${config.nodes
 					setShowPaywall(false);
 				}}
 			/>
+
+			<PaywallBlock show={shouldBlockNodes} />
 		</div>
 	);
 };

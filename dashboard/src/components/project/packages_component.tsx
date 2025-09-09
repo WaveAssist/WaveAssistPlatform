@@ -8,6 +8,7 @@ import "../../utils/ag-theme-project.css";
 import Modal from "react-bootstrap/Modal";
 import { useRefresh } from "../../utils/RefreshContext";
 import "ag-grid-community/styles/ag-theme-balham.css";
+import PaywallBlock from "../PaywallBlock";
 
 const PackagesComponent: React.FC = () => {
 	const [packagesArray, setPackagesArray] = useState<any[]>([]);
@@ -17,6 +18,10 @@ const PackagesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
 	const [packageName, setPackageName] = useState("");
 	const [packageVersion, setPackageVersion] = useState("");
+
+	// Check if the entire packages section should be blocked based on user type
+	const currentPlanName = localStorage.getItem("plan_name") || "operator";
+	const shouldBlockPackages = currentPlanName === "operator";
 
 	const handleCloseVariableEditor = () => {
 		setShowPackageEditor(false);
@@ -223,6 +228,7 @@ const PackagesComponent: React.FC = () => {
 					</Modal.Footer>
 				</Modal.Body>
 			</Modal>
+			<PaywallBlock show={shouldBlockPackages} />
 		</div>
 	);
 };

@@ -11,6 +11,7 @@ import Modal from "react-bootstrap/Modal";
 import { useRefresh } from "../../utils/RefreshContext";
 import Editor from "@monaco-editor/react";
 import { ColDef } from "ag-grid-community";
+import PaywallBlock from "../PaywallBlock";
 
 /**
  * Clipboard button used inside the Variable‐table.
@@ -56,7 +57,8 @@ const VariablesComponent: React.FC = () => {
 	const [variableKey, setVariableKey] = useState("");
 	const { shouldRefresh } = useRefresh();
 	const gridRef = useRef<AgGridReactType | null>(null);
-
+	const currentPlanName = localStorage.getItem("plan_name") || "operator";
+	const shouldBlockNodes = currentPlanName === "operator";
 	const handleCloseVariableEditor = () => {
 		setShowVariableEditor(false);
 	};
@@ -466,6 +468,7 @@ const VariablesComponent: React.FC = () => {
 					</Form>
 				</Modal.Body>
 			</Modal>
+			<PaywallBlock show={shouldBlockNodes} />
 		</div>
 	);
 };

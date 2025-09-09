@@ -5,8 +5,6 @@ import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 import WavePredictLogo from "../assets/Logo/Wave_Predict_W_Logo.png";
 import { useEffect, useState } from "react";
 import Joyride, { Step } from "react-joyride";
-import { useToast } from "./toast_context";
-
 interface SidebarProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -18,21 +16,12 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapsed = false, onToggleCollapse }) => {
 	const location = useLocation();
 	const [runTour, setRunTour] = useState(false);
-	const { showToast } = useToast();
 
 	// Get plan name from localStorage if not provided as prop
 	const currentPlanName = planName || localStorage.getItem("plan_name") || "operator";
 
 	// Determine which sections should be visible based on plan
 	const isBuilderOrEditorPlan = currentPlanName === "builder" || currentPlanName === "editor";
-	const isOperatorPlan = currentPlanName === "operator";
-
-	// Handle locked section clicks for operators
-	const handleLockedSectionClick = (sectionName: string) => {
-		if (isOperatorPlan) {
-			showToast(`Upgrade to Builder or Editor plan to access ${sectionName}`, "warning");
-		}
-	};
 
 	useEffect(() => {
 		const isNewUser = localStorage.getItem("is_new_user");
@@ -281,9 +270,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 							)}
 						</Link>
 					) : (
-						<div
+						<Link
+							to="/manage/nodes"
 							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={() => handleLockedSectionClick("Nodes")}
+							onClick={handleNavClick}
 							title={isCollapsed ? "Nodes (Locked)" : ""}
 							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
 							{isCollapsed ? (
@@ -300,7 +290,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
 								</>
 							)}
-						</div>
+						</Link>
 					)}
 				</li>
 
@@ -328,9 +318,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 							)}
 						</Link>
 					) : (
-						<div
+						<Link
+							to="/manage/variables"
 							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={() => handleLockedSectionClick("Variables")}
+							onClick={handleNavClick}
 							title={isCollapsed ? "Variables (Locked)" : ""}
 							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
 							{isCollapsed ? (
@@ -347,7 +338,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
 								</>
 							)}
-						</div>
+						</Link>
 					)}
 				</li>
 
@@ -375,9 +366,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 							)}
 						</Link>
 					) : (
-						<div
+						<Link
+							to="/manage/packages"
 							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={() => handleLockedSectionClick("Packages")}
+							onClick={handleNavClick}
 							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
 							{isCollapsed ? (
 								<>
@@ -393,7 +385,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
 								</>
 							)}
-						</div>
+						</Link>
 					)}
 				</li>
 
@@ -420,9 +412,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 							)}
 						</Link>
 					) : (
-						<div
+						<Link
+							to="/manage/environments"
 							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={() => handleLockedSectionClick("Environments")}
+							onClick={handleNavClick}
 							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
 							{isCollapsed ? (
 								<>
@@ -438,7 +431,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
 								</>
 							)}
-						</div>
+						</Link>
 					)}
 				</li>
 
@@ -466,9 +459,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 							)}
 						</Link>
 					) : (
-						<div
+						<Link
+							to="/manage/logs"
 							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={() => handleLockedSectionClick("Logs")}
+							onClick={handleNavClick}
 							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
 							{isCollapsed ? (
 								<>
@@ -484,7 +478,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
 								</>
 							)}
-						</div>
+						</Link>
 					)}
 				</li>
 			</ul>

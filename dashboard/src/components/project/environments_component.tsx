@@ -7,6 +7,7 @@ import "./project_components.css";
 import "../../utils/ag-theme-project.css";
 import Modal from "react-bootstrap/Modal";
 import { useRefresh } from "../../utils/RefreshContext";
+import PaywallBlock from "../PaywallBlock";
 
 const EnvironmentsComponent: React.FC = () => {
 	const [environmentsArray, setEnvironmentsArray] = useState<any[]>([]);
@@ -16,6 +17,10 @@ const EnvironmentsComponent: React.FC = () => {
 	const [editingEnvironmentKey, setEditingEnvironmentKey] = useState("");
 	const { shouldRefresh } = useRefresh();
 	const [loading, setLoading] = useState(true);
+
+	// Check if the entire environments section should be blocked based on user type
+	const currentPlanName = localStorage.getItem("plan_name") || "operator";
+	const shouldBlockEnvironments = currentPlanName === "operator";
 
 	const handleCloseEnvironmentEditor = () => {
 		setShowEnvironmentEditor(false);
@@ -148,6 +153,7 @@ const EnvironmentsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
+			<PaywallBlock show={shouldBlockEnvironments} />
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
 				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-between align-items-center mb-3">
