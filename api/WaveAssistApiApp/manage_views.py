@@ -462,11 +462,19 @@ def fetch_nodes(request):  # TCW
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
+    ##Fetch account info
+    account_object = Account.objects.get(created_by_user=user_object)
+    is_operator = account_object.plan_name == "operator"
+
     ##Nodes
     node_array = project_object.nodes_set.all().order_by(Lower("node_key"))
     node_dict_array = []
     for node_object in node_array:
-        node_dict_array.append(node_object.get_dict())
+        if is_operator:
+            node_dict = node_object.get_dict_safe()
+        else:
+            node_dict = node_object.get_dict()
+        node_dict_array.append(node_dict)
     data_dict = {"node_array": node_dict_array, "is_premium": project_object.is_premium}
     return ResponseParser.getParsedSuccessMessage(
         data_dict, "200", "Nodes fetched successfully."
