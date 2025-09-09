@@ -4,6 +4,13 @@
     padding: 2rem;
 }
 
+/* Mobile responsive padding */
+@media (max-width: 767px) {
+    .assistant-container {
+        padding: 1rem 0.75rem;
+    }
+}
+
 .assistant-header {
     display: flex;
     justify-content: space-between;
@@ -331,6 +338,7 @@
     .assistant-config-card {
         height: auto;
         min-height: 200px;
+        padding: 1rem;
     }
     
     .assistant-status-card {
@@ -344,5 +352,13 @@
     
     .assistant-container .col-md-6 {
         padding: 0 0.5rem;
+    }
+    
+    .assistant-header {
+        margin-bottom: 1rem;
+    }
+    
+    .assistant-title {
+        font-size: 1.5rem;
     }
 }

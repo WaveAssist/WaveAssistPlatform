@@ -184,7 +184,7 @@ const RunsComponent: React.FC = () => {
 			field: "run_id",
 			flex: 1,
 			minWidth: 50,
-			maxWidth: 150,
+			maxWidth: 120,
 			resizable: true,
 			pinned: "left" as const,
 			cellRenderer: (params: any) => {
@@ -213,10 +213,10 @@ const RunsComponent: React.FC = () => {
 			headerName: "Status",
 			field: "status",
 			flex: 2,
-			minWidth: 100,
+			minWidth: 120,
 			resizable: true,
 			cellRenderer: (params: any) => {
-				const status = params.value === "STARTED" ? "RUNNING" : params.value;
+				const status = params.value === "STARTED" ? "PROCESSING" : params.value;
 				return (
 					<span className={`badge ${status === "SUCCESS" ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}>
 						{status}

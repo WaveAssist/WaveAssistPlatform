@@ -6,6 +6,7 @@ import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_servi
 import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext"; // Import the custom hook
 import { usePostHog } from "posthog-js/react";
+import WaveAssistLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 interface NavbarProps {
 	onToggleSidebar?: () => void;
 }
@@ -162,15 +163,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 					<Button variant="dark" className="me-2 text-white" onClick={onToggleSidebar}>
 						<i className="bi bi-list"></i>
 					</Button>
+					<img src={WaveAssistLogo} alt="WaveAssist" style={{ height: "24px", width: "auto" }} />
 					<div className="ms-auto d-flex align-items-center">
-						<DarkDropdown
-							items={projectNames}
-							keys={projectKeys}
-							defaultText={getDefaultProjectName()}
-							headerText="Select Assistant"
-							onItemSelect={handleProjectChange}
-							icon="bi-bullseye"
-						/>
 						{!isOperatorPlan && (
 							<DarkDropdown
 								items={envItems}

@@ -165,8 +165,8 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 						{selectedStocks.map((stock) => (
 							<span key={stock._id} className="badge stock-selected-badge">
 								{stock.symbol} - {stock.name}
-								<button type="button" className="btn-close btn-close-white" onClick={() => handleStockRemove(stock._id)}>
-									X
+								<button type="button" className="btn-close" onClick={() => handleStockRemove(stock._id)}>
+									×
 								</button>
 							</span>
 						))}

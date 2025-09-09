@@ -65,7 +65,7 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId, onLoadingComplete }) => 
 			minWidth: 100,
 			resizable: true,
 			cellRenderer: (params: any) => {
-				const status = params.value === "STARTED" ? "RUNNING" : params.value;
+				const status = params.value === "STARTED" ? "PROCESSING" : params.value;
 				return (
 					<span className={`badge ${status === "SUCCESS" ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}>
 						{status}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { usePostHog } from "posthog-js/react";
 import { useToast } from "../utils/toast_context";
 import { useRefresh } from "../utils/RefreshContext";
-import { Button, Form, Spinner } from "react-bootstrap";
+import { Button, Form, Spinner, Modal } from "react-bootstrap";
 import { fetchTemplateApi, setDataForKeyApi, runDAGApi } from "../services/project_services";
 import { deployProjectApi } from "../services/navbar_services";
 import { fetchRunningDeploymentApi, stopDeploymentApi } from "../services/deployment_services";
@@ -26,11 +26,12 @@ const AssistantComponent: React.FC = () => {
 	const [processingWizard, setProcessingWizard] = useState(false);
 	const [wizardLoading, setWizardLoading] = useState(false);
 	const [startingNodeKey] = useState<string | null>(null);
-	const [templateKey, setTemplateKey] = useState<string>("");
 	const [runningDeploymentInfo, setRunningDeploymentInfo] = useState<any | null>(null);
 	const [isRunning, setIsRunning] = useState(false);
 	const [displayText, setDisplayText] = useState("");
 	const [showConfigOverride, setShowConfigOverride] = useState(false);
+	const [showStopConfirmation, setShowStopConfirmation] = useState(false);
+	const [showReconfigureConfirmation, setShowReconfigureConfirmation] = useState(false);
 
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
@@ -99,19 +100,12 @@ const AssistantComponent: React.FC = () => {
 				templateKeyValue = "default_template";
 			}
 		}
-		setTemplateKey(templateKeyValue);
 		fetch_wizard_inputs(templateKeyValue);
 		fetchRunning();
 	}, [shouldRefresh]);
 
 	const handleWizardInputChange = (key: string, value: string) => {
 		setWizardValues((prev) => ({ ...prev, [key]: value }));
-	};
-
-	// Function to format template key for display
-	const getTemplateDisplayName = (key: string) => {
-		if (!key) return "Setup Assistant";
-		return `Setup Assistant`;
 	};
 
 	const handleRunAndDeploy = async () => {
@@ -159,6 +153,31 @@ const AssistantComponent: React.FC = () => {
 		}
 	};
 
+	const handleStopDeployment = async () => {
+		try {
+			const deploymentKey = runningDeploymentInfo?.deployment_object.key || "";
+			if (!deploymentKey) {
+				showToast("Could not determine deployment to stop.", "warning");
+				return;
+			}
+			await stopDeploymentApi(deploymentKey);
+			setIsRunning(false);
+			setRunningDeploymentInfo(null);
+			setDisplayText("");
+			showToast("Schedule stopped successfully", "success");
+		} catch (err) {
+			console.error("Failed to stop:", err);
+			showToast("Failed to stop. Please try again.", "danger");
+		} finally {
+			setShowStopConfirmation(false);
+		}
+	};
+
+	const handleReconfigure = () => {
+		setShowConfigOverride(true);
+		setShowReconfigureConfirmation(false);
+	};
+
 	return (
 		<div className="main-container assistant-container">
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
@@ -174,7 +193,7 @@ const AssistantComponent: React.FC = () => {
 						<div className="col-md-12">
 							<div className="assistant-config-card">
 								<div className="assistant-config-header">
-									<h5 className="assistant-config-title">{getTemplateDisplayName(templateKey)}</h5>
+									<h5 className="assistant-config-title">Setup Assistant</h5>
 								</div>
 
 								<div className="assistant-config-content">
@@ -228,27 +247,27 @@ const AssistantComponent: React.FC = () => {
 						<div className="col-md-12">
 							<div className="assistant-config-card">
 								<div className="assistant-config-header">
-									<h5 className="assistant-config-title">{getTemplateDisplayName(templateKey)}</h5>
+									<h5 className="assistant-config-title">You're all set up!</h5>
 								</div>
 								<div className="assistant-config-content">
 									<div className="text-center py-2">
 										<div className="mb-3">
 											<i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
 										</div>
-										<h5 className="mb-2 text-white">You're all set up!</h5>
-										<p className="text-muted mb-0">Your agent is running on schedule. You can reconfigure or view runs.</p>
+										<h5 className="mb-2 text-white">Your assistant is running 🎉 </h5>
+										<p className="text-muted mb-0">Your agent was triggered and will also run on a schedule. Check runs for output.</p>
 									</div>
 								</div>
 								<div className="assistant-config-footer pt-2">
 									<Button
 										variant="outline-secondary"
 										onClick={() => {
-											setShowConfigOverride(true);
+											setShowReconfigureConfirmation(true);
 										}}
 										className="me-2">
 										Reconfigure
 									</Button>
-									<Button variant="outline-success" onClick={() => navigate("/manage/runs")}>
+									<Button variant="primary" onClick={() => navigate("/manage/runs")}>
 										View Runs
 									</Button>
 								</div>
@@ -273,22 +292,8 @@ const AssistantComponent: React.FC = () => {
 									<div>
 										<Button
 											variant="outline-danger"
-											onClick={async () => {
-												try {
-													const deploymentKey = runningDeploymentInfo?.deployment_object.key || "";
-													if (!deploymentKey) {
-														showToast("Could not determine deployment to stop.", "warning");
-														return;
-													}
-													await stopDeploymentApi(deploymentKey);
-													setIsRunning(false);
-													setRunningDeploymentInfo(null);
-													setDisplayText("");
-													showToast("Schedule stopped successfully", "success");
-												} catch (err) {
-													console.error("Failed to stop:", err);
-													showToast("Failed to stop. Please try again.", "danger");
-												}
+											onClick={() => {
+												setShowStopConfirmation(true);
 											}}>
 											Stop
 										</Button>
@@ -299,6 +304,42 @@ const AssistantComponent: React.FC = () => {
 					</div>
 				)}
 				{/* Running Section */}
+
+				{/* Stop Confirmation Modal */}
+				<Modal show={showStopConfirmation} onHide={() => setShowStopConfirmation(false)} centered>
+					<Modal.Header closeButton>
+						<Modal.Title>Confirm Stop</Modal.Title>
+					</Modal.Header>
+					<Modal.Body>
+						<p>Are you sure you want to stop your deployment? You will not receive updates from the assistant.</p>
+					</Modal.Body>
+					<Modal.Footer>
+						<Button variant="secondary" onClick={() => setShowStopConfirmation(false)}>
+							Cancel
+						</Button>
+						<Button variant="danger" onClick={handleStopDeployment}>
+							Stop Deployment
+						</Button>
+					</Modal.Footer>
+				</Modal>
+
+				{/* Reconfigure Confirmation Modal */}
+				<Modal show={showReconfigureConfirmation} onHide={() => setShowReconfigureConfirmation(false)} centered>
+					<Modal.Header closeButton>
+						<Modal.Title>Confirm Reconfigure</Modal.Title>
+					</Modal.Header>
+					<Modal.Body>
+						<p>Are you sure you want to reconfigure your assistant? Your current assistant is already running.</p>
+					</Modal.Body>
+					<Modal.Footer>
+						<Button variant="secondary" onClick={() => setShowReconfigureConfirmation(false)}>
+							Cancel
+						</Button>
+						<Button variant="primary" onClick={handleReconfigure}>
+							Reconfigure
+						</Button>
+					</Modal.Footer>
+				</Modal>
 			</div>
 		</div>
 	);
