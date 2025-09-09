@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 						</a>
 						<div className="d-flex gap-2">
 							{window.innerWidth >= 768 && onToggleCollapse && (
-								<button className="btn btn-outline-secondary btn-sm" onClick={onToggleCollapse} title="Collapse sidebar">
+								<button className="btn btn-outline-secondary btn-sm collapse-btn" onClick={onToggleCollapse} title="Collapse sidebar">
 									<i className="bi bi-chevron-left"></i>
 								</button>
 							)}
@@ -130,17 +130,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 						</div>
 					</div>
 				) : (
-					<div className="d-flex flex-column align-items-center">
-						<div className="mb-2">
+					<div className="d-flex flex-column align-items-center collapsed-header">
+						<div className="mb-2 logo-container">
 							<a href="/">
 								<img src={WavePredictLogo} className="wp_logo_collapsed" alt="WavePredict Logo" />
 							</a>
-						</div>
-						{window.innerWidth >= 768 && onToggleCollapse && (
-							<button className="btn btn-outline-secondary btn-sm " onClick={onToggleCollapse} title="Expand sidebar">
+							<button className="btn btn-outline-secondary btn-sm expand-btn" onClick={onToggleCollapse} title="Expand sidebar">
 								<i className="bi bi-chevron-right"></i>
 							</button>
-						)}
+						</div>
 					</div>
 				)}
 			</div>

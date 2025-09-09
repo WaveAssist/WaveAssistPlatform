@@ -12,6 +12,16 @@ export const fetchDeploymentsApi = async (): Promise<any> => {
 	return callApi(path, body);
 };
 
+export const fetchRunningDeploymentApi = async (): Promise<any> => {
+	const body = new URLSearchParams({
+		uid: localStorage.getItem("uid") || "",
+		project_key: localStorage.getItem("selected_project_key") || "",
+		data_run_key: localStorage.getItem("selected_env_key") || "",
+	});
+	var path = "manage/fetch_running_deployment/";
+	return callApi(path, body);
+};
+
 // stopDeploymentApi
 export const stopDeploymentApi = async (deploymentKey: string): Promise<any> => {
 	const body = new URLSearchParams({

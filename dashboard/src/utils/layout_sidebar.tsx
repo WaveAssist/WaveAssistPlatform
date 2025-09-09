@@ -46,8 +46,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 					onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
 				/>
 				<div className={`d-flex flex-column flex-grow-1 main-content ${sidebarCollapsed && window.innerWidth >= 768 ? "sidebar-collapsed" : ""}`}>
-					<NavbarComponent onToggleSidebar={() => setSidebarOpen((o) => !o)} />
-					<Container fluid className="flex-grow-1 p-3">
+					<div className="navbar-container">
+						<NavbarComponent onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+					</div>
+					<Container fluid className="flex-grow-1 p-3 content-container">
 						{children}
 					</Container>
 				</div>

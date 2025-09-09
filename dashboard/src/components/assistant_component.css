@@ -1,7 +1,6 @@
 /* Assistant Container - Match Credits Design */
 .assistant-container {
     background-color: #151720;
-    min-height: 100vh;
     padding: 2rem;
 }
 
@@ -141,6 +140,19 @@
 .assistant-deploy-button:hover {
     background-color: #408558;
     color: #ffffff;
+}
+
+/* Running section */
+.assistant-running-card {
+    background-color: #1f2633;
+    border: 1px solid #2b3548;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+.assistant-stop-button {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
 }
 
 /* Stock Search Styles */

@@ -152,6 +152,7 @@ const AllProjectsComponent: React.FC = () => {
 
 			// Set selected project and premium status, then navigate
 			localStorage.setItem("selected_project_key", newProjectKey);
+			localStorage.setItem("selected_env_key", newProjectKey + "_default");
 			localStorage.setItem("is_project_premium", "false");
 
 			// Check user's plan to determine navigation destination
@@ -171,6 +172,7 @@ const AllProjectsComponent: React.FC = () => {
 
 		// Store the project key and premium status in localStorage
 		localStorage.setItem("selected_project_key", projectKey);
+		localStorage.setItem("selected_env_key", projectKey + "_default");
 		if (selectedProject) {
 			localStorage.setItem("is_project_premium", selectedProject.is_premium ? "true" : "false");
 			localStorage.setItem("selected_project", JSON.stringify(selectedProject)); // <-- Ensure this is set

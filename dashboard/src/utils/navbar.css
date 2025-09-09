@@ -2,12 +2,30 @@
 
 .navbar-main{
     background-color: #141721 !important;
-    height:80px !important;
+    height:60px !important;
     border-bottom: 0.25px solid #2e3947;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1030 !important;
+  }
+
+  .navbar-container {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+  }
+
+  .content-container {
+    overflow-y: auto;
+    height: calc(100vh - 60px);
   }
 
   @media (max-width: 767.98px) {
     .navbar-main {
       height: 60px !important;
+    }
+    
+    .content-container {
+      height: calc(100vh - 60px);
     }
   }

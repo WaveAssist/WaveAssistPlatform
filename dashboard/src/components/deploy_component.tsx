@@ -106,6 +106,7 @@ const DeployComponent: React.FC = () => {
 				const projectKey = response.data.data?.project_key || response.data.project_key;
 				if (projectKey) {
 					localStorage.setItem("selected_project_key", projectKey);
+					localStorage.setItem("selected_env_key", projectKey + "_default");
 					try {
 						const projectData = await fetchAllProjectsAPI();
 						localStorage.setItem("projects_array", JSON.stringify(projectData.project_array));

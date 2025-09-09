@@ -77,6 +77,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 
 	const handleProjectChange = async (_project_name: string, project_key: string) => {
 		localStorage.setItem("selected_project_key", project_key);
+		localStorage.setItem("selected_env_key", project_key + "_default");
 
 		// Retrieve the selected project's details so we can update
 		// the premium status flag used throughout the app
@@ -186,7 +187,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 								<i className="bi bi-cloud-arrow-up-fill"></i>
 							</Button>
 						)}
-						{isOperatorPlan && (
+						{isOperatorPlan && !isMobile && (
 							<Button variant="outline-secondary" onClick={() => window.open("https://waveassist.io/pricing", "_blank")}>
 								<i className="bi bi-star"></i>
 							</Button>
