@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'WaveAssistApi.wsgi.application'
 DB_NAME = os.getenv('DB_NAME', 'waveassistdb')
 DB_USER = os.getenv('DB_USER', 'waveassist')
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'REMOVED_CREDENTIAL')
-DB_HOST = os.getenv('DB_HOST', 'waveassistdb.chjtszq6llmw.us-east-1.rds.amazonaws.com')
+DB_HOST = os.getenv('DB_HOST', 'waveassistdb.cc7ssiig4bl4.us-east-1.rds.amazonaws.com')
 DB_PORT = os.getenv('DB_PORT', '3306')
 
 DATABASES = {
