@@ -6,3 +6,4 @@ app = Celery('waveassist',
              broker=REDIS_URL,
              backend=REDIS_URL)
 app.conf.task_default_queue = QUEUE_NAME
+app.conf.broker_transport_options = {'visibility_timeout': 30*60}  # 30 mins

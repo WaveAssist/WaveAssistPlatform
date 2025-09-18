@@ -37,4 +37,4 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # Start the Worker
-CMD ["celery", "-A", "celery_worker", "worker", "--loglevel=info", "--autoscale=16,1"]
+CMD ["celery", "-A", "celery_worker", "worker", "--loglevel=info", "--autoscale=8,1", "--prefetch-multiplier=1"]
