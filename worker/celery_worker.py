@@ -16,7 +16,7 @@ from celery_app import app
 def unlock_all(**kwargs):
     clear_locks(app)
 
-@app.task(base=Singleton,unique_on=['collection_key','task_key'], bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
+@app.task(base=Singleton,unique_on=['collection_key','task_key'], bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10}, acks_late=True)
 def run_task(*args, task_dict=None, collection_key=None, task_key=None, run_id=None, **kwargs):
     # Task dict needs node_key, project_key and code_to_run
     try:
@@ -28,7 +28,7 @@ def run_task(*args, task_dict=None, collection_key=None, task_key=None, run_id=N
         utils.logger.error(f"Error in processing task: {e}", extra={'task_key': task_key, 'environment_key': collection_key, project_key:project_key, IS_SYSTEM_TASK: True})
         raise e
 
-@app.task(base=Singleton,unique_on=['collection_key','dag_key'], lock_expiry=600, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10})
+@app.task(base=Singleton,unique_on=['collection_key','dag_key'], lock_expiry=600, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10}, acks_late=True)
 def run_dag(*args, dependencies_dict=None, data_dict=None, collection_key=None, dag_key=None, **kwargs):
         try:
             ##ToDo: This function can be optimised by using a DFS or similar approach to generate the workflow for the DAG
