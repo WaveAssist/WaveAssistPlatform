@@ -586,3 +586,44 @@ class Payment(models.Model):
         db_table = "WaveAssist_Payment"
         verbose_name = "Payment"
         verbose_name_plural = "Payments"
+
+
+class Provider(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50, unique=True)
+    client_id = models.CharField(max_length=255)
+    client_secret = models.CharField(max_length=255)
+    auth_url = models.CharField(max_length=500)
+    token_url = models.CharField(max_length=500)
+    refresh_url = models.CharField(max_length=500, null=True, blank=True)
+    default_scopes = models.JSONField(default=list)
+    default_grant_type = models.CharField(max_length=20, default="authorization_code")
+    redirect_uri = models.CharField(max_length=500)
+    resource_configs = models.JSONField(default=dict)
+    base_url = models.CharField(max_length=500, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Provider: {self.name}"
+
+    def get_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "client_id": self.client_id,
+            "auth_url": self.auth_url,
+            "token_url": self.token_url,
+            "refresh_url": self.refresh_url,
+            "default_scopes": self.default_scopes,
+            "default_grant_type": self.default_grant_type,
+            "redirect_uri": self.redirect_uri,
+            "resource_configs": self.resource_configs,
+            "base_url": self.base_url,
+            "is_active": self.is_active,
+        }
+
+    class Meta:
+        db_table = "WaveAssist_Provider"
+        verbose_name = "Provider"
+        verbose_name_plural = "Providers"

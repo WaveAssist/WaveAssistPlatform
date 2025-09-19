@@ -33,6 +33,7 @@ posthog.host = settings.POSTHOG_HOST
 import json
 from .constants import GITHUB_USERNAME
 from django.db import transaction
+from django.test import Client
 
 
 def get_param(request, key: str, default=None):
@@ -873,3 +874,123 @@ def interval_to_human_readable(every, period):
     unit = period_map.get(period, period or "interval")
     plural = "" if (isinstance(n, int) and n == 1) else "s"
     return f"Every {n} {unit}{plural}"
+
+
+def fetch_data_for_key_internal(
+    uid, project_key, data_key, data_run_key=None, run_based=0, run_id=None
+):
+
+    try:
+        client = Client()
+        if data_run_key is None:
+            data_run_key = project_key + "_default"
+
+        # Prepare query parameters
+        params = {
+            "uid": uid,
+            "project_key": project_key,
+            "data_run_key": data_run_key,
+            "data_key": data_key,
+            "run_based": str(run_based),
+        }
+
+        # Add run_id if provided and run_based is enabled
+        if run_based == 1 and run_id:
+            params["run_id"] = run_id
+
+        # Make the API call
+        response = client.get("/data/fetch_data_for_key/", params)
+
+        # Check response status
+        if response.status_code != 200:
+            return (
+                False,
+                None,
+                f"API call failed with status {response.status_code}: {response.content.decode('utf-8')}",
+            )
+
+        # Parse response
+        try:
+            response_data = json.loads(response.content.decode("utf-8"))
+        except json.JSONDecodeError as e:
+            return False, None, f"Failed to parse JSON response: {str(e)}"
+
+        # Check if the API call was successful
+        if response_data.get("success") != "1":
+            return False, None, response_data.get("message", "Unknown error occurred")
+
+        # Extract data from response
+        response_data_content = response_data.get("data", {})
+        # The API returns {'data': actual_data, 'data_type': 'json'}, so extract the actual data
+        if isinstance(response_data_content, dict) and "data" in response_data_content:
+            data = response_data_content["data"]
+        else:
+            data = response_data_content
+        return True, data, "Data fetched successfully"
+
+    except Exception as e:
+        logger.error(f"❌ Error in fetch_data_for_key_internal: {str(e)}")
+        return False, None, f"Internal error: {str(e)}"
+
+
+def set_data_for_key_internal(
+    uid,
+    project_key,
+    data_key,
+    data,
+    data_type,
+    data_run_key=None,
+    run_based=0,
+    run_id=None,
+):
+    try:
+        client = Client()
+
+        if data_run_key is None:
+            data_run_key = project_key + "_default"
+
+        # Prepare payload
+        payload = {
+            "uid": uid,
+            "project_key": project_key,
+            "data_run_key": data_run_key,
+            "data_key": data_key,
+            "data": data,
+            "data_type": data_type,
+            "run_based": str(run_based),
+        }
+
+        # Add run_id if provided and run_based is enabled
+        if run_based == 1 and run_id:
+            payload["run_id"] = run_id
+
+        # Make the API call
+        response = client.post(
+            "/data/set_data_for_key/",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        # Check response status
+        if response.status_code != 200:
+            return (
+                False,
+                f"API call failed with status {response.status_code}: {response.content.decode('utf-8')}",
+            )
+
+        # Parse response
+        try:
+            response_data = json.loads(response.content.decode("utf-8"))
+        except json.JSONDecodeError as e:
+            return False, f"Failed to parse JSON response: {str(e)}"
+
+        # Check if the API call was successful
+        if response_data.get("success") != "1":
+            return False, response_data.get("message", "Unknown error occurred")
+
+        # Extract data_key from response
+        return True, "Data saved successfully"
+
+    except Exception as e:
+        logger.error(f"❌ Error in set_data_for_key_internal: {str(e)}")
+        return False, f"Internal error: {str(e)}"

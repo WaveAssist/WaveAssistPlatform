@@ -28,6 +28,7 @@ from WaveAssistApiApp import (
     sdk_views,
     run_views,
     payment_views,
+    providers,
 )
 
 from django.views.decorators.csrf import csrf_exempt
@@ -295,5 +296,20 @@ urlpatterns = [
         "payment/get_payment_history/",
         csrf_exempt(payment_views.get_payment_history),
         name="get_payment_history",
+    ),
+    path(
+        "providers/initiate/",
+        csrf_exempt(providers.initiate_oauth),
+        name="initiate_oauth",
+    ),
+    path(
+        "provider/callback/",
+        csrf_exempt(providers.oauth_callback),
+        name="oauth_callback",
+    ),
+    path(
+        "providers/fetch_resources/",
+        csrf_exempt(providers.fetch_resources),
+        name="fetch_resources",
     ),
 ]
