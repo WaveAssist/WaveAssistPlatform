@@ -27,7 +27,26 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 	const [selectedStocks, setSelectedStocks] = useState<Stock[]>([]);
 	const [stockSearchTimeout, setStockSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 	const [hasSearched, setHasSearched] = useState(false);
+	const [detectedCountry, setDetectedCountry] = useState<string>("");
 	const stockSearchAbortController = useRef<AbortController | null>(null);
+
+	// Detect country from IP address on component mount
+	useEffect(() => {
+		const detectCountry = async () => {
+			try {
+				const response = await fetch('https://ipapi.co/json/');
+				const data = await response.json();
+				if (data.country_name) {
+					setDetectedCountry(data.country_name);
+				}
+			} catch (error) {
+				console.error('Failed to detect country from IP:', error);
+				// Fallback to a default country or leave empty
+			}
+		};
+
+		detectCountry();
+	}, []);
 
 	// Initialize selected stocks from value prop
 	useEffect(() => {
@@ -66,7 +85,13 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 
 		setStockSearchLoading(true);
 		try {
-			const response = await fetch(`https://appsapi.waveassist.io/generic/search_stocks/${encodeURIComponent(query)}`, {
+			// Build URL with detected country parameter
+			let url = `https://api.waveassist.io/generic/search_stocks/${encodeURIComponent(query)}`;
+			if (detectedCountry) {
+				url += `?country=${encodeURIComponent(detectedCountry)}`;
+			}
+			
+			const response = await fetch(url, {
 				signal: stockSearchAbortController.current.signal,
 			});
 			const data = await response.json();
