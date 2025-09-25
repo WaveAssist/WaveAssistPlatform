@@ -86,7 +86,7 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 		setStockSearchLoading(true);
 		try {
 			// Build URL with detected country parameter
-			let url = `https://api.waveassist.io/generic/search_stocks/${encodeURIComponent(query)}`;
+			let url = `https://appsapi.waveassist.io/generic/search_stocks/${encodeURIComponent(query)}`;
 			if (detectedCountry) {
 				url += `?country=${encodeURIComponent(detectedCountry)}`;
 			}
