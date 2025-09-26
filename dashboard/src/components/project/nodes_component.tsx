@@ -533,18 +533,6 @@ ${config.nodes
 		try {
 			const data = await fetchNodesApi();
 
-			// Ensure project premium status is set in localStorage
-			// Prefer API response is_premium; fallback to selected_project or legacy field
-			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
-			if (typeof data.is_premium !== "undefined") {
-				localStorage.setItem("is_project_premium", data.is_premium ? "true" : "false");
-			} else if (projectData && typeof projectData.is_premium !== "undefined") {
-				localStorage.setItem("is_project_premium", projectData.is_premium ? "true" : "false");
-			} else if (typeof data.is_project_premium !== "undefined") {
-				// legacy support
-				localStorage.setItem("is_project_premium", data.is_project_premium ? "true" : "false");
-			}
-
 			var nodes_array = data.node_array;
 			//Sort to keep the starting node at the top
 			nodes_array.sort((a: any, b: any) => {

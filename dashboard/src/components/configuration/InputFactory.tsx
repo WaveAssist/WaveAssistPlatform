@@ -3,6 +3,7 @@ import { Form } from "react-bootstrap";
 import StockSelector from "./StockSelector";
 import DropdownInput from "./DropdownInput";
 import TextInput from "./TextInput";
+import GitHubInput from "./GitHubInput";
 
 interface InputConfig {
 	key: string;
@@ -49,6 +50,9 @@ const InputFactory: React.FC<InputFactoryProps> = ({ inputConfig, value, onChang
 
 			case "url":
 				return <TextInput type="url" value={value} onChange={onChange} />;
+
+			case "github":
+				return <GitHubInput value={value} onChange={onChange} />;
 
 			case "text":
 			default:

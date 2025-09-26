@@ -6,7 +6,8 @@ import { Button, Form, Spinner, Modal } from "react-bootstrap";
 import { fetchTemplateApi, setDataForKeyApi, runDAGApi } from "../services/project_services";
 import { deployProjectApi } from "../services/navbar_services";
 import { fetchRunningDeploymentApi, stopDeploymentApi } from "../services/deployment_services";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { fetchAllProjectsAPI } from "../services/all_projects_services";
 import InputFactory from "./configuration/InputFactory";
 import "./assistant_component.css";
 
@@ -15,6 +16,7 @@ const AssistantComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
 	const posthog = usePostHog();
 	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
 
 	// Get user name from localStorage
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
@@ -32,6 +34,8 @@ const AssistantComponent: React.FC = () => {
 	const [showConfigOverride, setShowConfigOverride] = useState(false);
 	const [showStopConfirmation, setShowStopConfirmation] = useState(false);
 	const [showReconfigureConfirmation, setShowReconfigureConfirmation] = useState(false);
+	const [showIntegrationModal, setShowIntegrationModal] = useState(false);
+	const [integrationSuccess, setIntegrationSuccess] = useState(false);
 
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
@@ -58,32 +62,62 @@ const AssistantComponent: React.FC = () => {
 		}
 	};
 
-	useEffect(() => {
-		// Pageview context for assistant page
-		try {
-			posthog?.capture("$pageview", {
-				page_category: "assistant",
-				project_id: localStorage.getItem("selected_project_key") || undefined,
-				environment: localStorage.getItem("selected_env_key") || undefined,
-			});
-		} catch (_err) {}
-	}, []);
+	const handleUrlParameters = async () => {
+		const projectKey = searchParams.get("project_key");
+		const integrationComplete = searchParams.get("is_integration_complete");
 
-	// Fetch running deployment info
-	const fetchRunning = async () => {
-		try {
-			const response = await fetchRunningDeploymentApi();
-			setRunningDeploymentInfo(response);
-			setIsRunning(true);
-			setDisplayText(response.dag_object.schedule.display_text);
-		} catch (err) {
-			setIsRunning(false);
-			setRunningDeploymentInfo(null);
-			setDisplayText("");
+		if (projectKey) {
+			// Store project key and env to localStorage
+			localStorage.setItem("selected_project_key", projectKey);
+			localStorage.setItem("selected_env_key", projectKey + "_default");
+
+			// Check if we already have the project data in localStorage
+			const existingProjectsArray = localStorage.getItem("projects_array");
+			const existingSelectedProject = localStorage.getItem("selected_project");
+
+			let needsProjectFetch = false;
+			let selectedProject = null;
+
+			if (existingProjectsArray && existingSelectedProject) {
+				try {
+					selectedProject = JSON.parse(existingSelectedProject);
+					if (selectedProject.project_key !== projectKey) {
+						needsProjectFetch = true;
+					}
+				} catch (error) {
+					needsProjectFetch = true;
+				}
+			} else {
+				needsProjectFetch = true;
+			}
+
+			// Only fetch projects API if we don't have the data or it doesn't match
+			if (needsProjectFetch) {
+				try {
+					const projectsData = await fetchAllProjectsAPI();
+					const projectArray = projectsData.project_array;
+					selectedProject = projectArray.find((project: any) => project.project_key === projectKey);
+
+					if (selectedProject) {
+						// Store project data in localStorage
+						localStorage.setItem("selected_project", JSON.stringify(selectedProject));
+						localStorage.setItem("projects_array", JSON.stringify(projectArray));
+					}
+				} catch (error) {
+					console.error("Error fetching projects:", error);
+					showToast("Error loading project data", "warning");
+				}
+			}
+		}
+
+		if (integrationComplete !== null) {
+			const isSuccess = integrationComplete === "1";
+			setIntegrationSuccess(isSuccess);
+			setShowIntegrationModal(true);
 		}
 	};
 
-	useEffect(() => {
+	const refreshData = async () => {
 		// Get template key and fetch wizard inputs
 		const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
 		let templateKeyValue = projectData.template_key || localStorage.getItem("template_key") || "";
@@ -100,8 +134,50 @@ const AssistantComponent: React.FC = () => {
 				templateKeyValue = "default_template";
 			}
 		}
-		fetch_wizard_inputs(templateKeyValue);
-		fetchRunning();
+		await fetch_wizard_inputs(templateKeyValue);
+		await fetchRunning();
+	};
+
+	useEffect(() => {
+		const initializeComponent = async () => {
+			// Handle URL parameters first
+			await handleUrlParameters();
+
+			// Refresh data after handling URL parameters
+			await refreshData();
+
+			// Pageview context for assistant page
+			try {
+				posthog?.capture("$pageview", {
+					page_category: "assistant",
+					project_id: localStorage.getItem("selected_project_key") || undefined,
+					environment: localStorage.getItem("selected_env_key") || undefined,
+				});
+			} catch (_err) {}
+		};
+
+		initializeComponent();
+	}, [searchParams]);
+
+	// Fetch running deployment info
+	const fetchRunning = async () => {
+		try {
+			const response = await fetchRunningDeploymentApi();
+			setRunningDeploymentInfo(response);
+			setIsRunning(true);
+			setDisplayText(response.dag_object.schedule.display_text);
+		} catch (err) {
+			setIsRunning(false);
+			setRunningDeploymentInfo(null);
+			setDisplayText("");
+		}
+	};
+
+	useEffect(() => {
+		// Refresh data when shouldRefresh changes (but not on initial load)
+		if (shouldRefresh) {
+			refreshData();
+		}
 	}, [shouldRefresh]);
 
 	const handleWizardInputChange = (key: string, value: string) => {
@@ -337,6 +413,50 @@ const AssistantComponent: React.FC = () => {
 						</Button>
 						<Button variant="primary" onClick={handleReconfigure}>
 							Reconfigure
+						</Button>
+					</Modal.Footer>
+				</Modal>
+
+				{/* Integration Status Modal */}
+				<Modal
+					show={showIntegrationModal}
+					onHide={async () => {
+						setShowIntegrationModal(false);
+						// Refresh data after dismissing the modal
+						await refreshData();
+					}}
+					centered>
+					<Modal.Header closeButton>
+						<Modal.Title>
+							{integrationSuccess ? (
+								<>
+									<i className="bi bi-check-circle-fill text-success me-2"></i>
+									Successfully Connected
+								</>
+							) : (
+								<>
+									<i className="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+									Connection Failed
+								</>
+							)}
+						</Modal.Title>
+					</Modal.Header>
+					<Modal.Body>
+						{integrationSuccess ? (
+							<p>Your integration has been successfully connected! You can now configure and use your assistant.</p>
+						) : (
+							<p>There was an error connecting your integration. Please try again or contact support if the issue persists.</p>
+						)}
+					</Modal.Body>
+					<Modal.Footer>
+						<Button
+							variant="primary"
+							onClick={async () => {
+								setShowIntegrationModal(false);
+								// Refresh data after dismissing the modal
+								await refreshData();
+							}}>
+							{integrationSuccess ? "Continue" : "OK"}
 						</Button>
 					</Modal.Footer>
 				</Modal>
