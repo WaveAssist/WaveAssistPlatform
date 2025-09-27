@@ -200,7 +200,10 @@ const AssistantComponent: React.FC = () => {
 		setProcessingWizard(true);
 		try {
 			for (const input of wizardInputs) {
-				await setDataForKeyApi(wizardValues[input.key], input.key, "string");
+				const value = wizardValues[input.key];
+				// Determine data type based on value format. ToDo: Temporary hack. May just work.
+				const dataType = value && (value.startsWith("[") || value.startsWith("{")) ? "json" : "string";
+				await setDataForKeyApi(value, input.key, dataType);
 			}
 			const env = localStorage.getItem("selected_env_key") || "";
 			console.log("Running DAB with starting node key: ", startingNodeKey, "and env: ", env);
