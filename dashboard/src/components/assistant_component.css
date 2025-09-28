@@ -333,6 +333,20 @@
     color: rgba(255, 255, 255, 0.6) !important;
 }
 
+/* GitHub Input Dark Theme */
+.main-container .github-input-container .border {
+    background-color: #2b3548 !important;
+    border-color: #2b3548 !important;
+}
+
+.main-container .github-input-container .fw-medium {
+    color: #ffffff !important;
+}
+
+.main-container .github-input-container .small {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
 /* Responsive Design */
 @media (max-width: 767px) {
     .assistant-config-card {

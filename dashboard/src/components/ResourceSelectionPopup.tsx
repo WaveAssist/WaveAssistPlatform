@@ -1,7 +1,10 @@
 import React, { useState, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, GridReadyEvent, SelectionChangedEvent, RowClickedEvent } from "ag-grid-community";
+import { ColDef, SelectionChangedEvent } from "ag-grid-community";
+import Modal from "react-bootstrap/Modal";
+import { Button } from "react-bootstrap";
 import "./ResourceSelectionPopup.css";
+import "../utils/ag-theme-project.css";
 
 interface Resource {
 	id: string;
@@ -22,39 +25,51 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen,
 
 	const columnDefs: ColDef[] = [
 		{
-			headerName: "Select",
+			headerName: "All",
 			field: "select",
 			checkboxSelection: true,
 			headerCheckboxSelection: true,
 			width: 80,
 			pinned: "left",
+			sortable: false,
+			filter: false,
+			resizable: false,
+			suppressSizeToFit: true,
 		},
 		{
 			headerName: "ID",
 			field: "id",
-			width: 200,
+			width: 350,
 			sortable: true,
 			filter: true,
+			resizable: false,
+			suppressSizeToFit: true,
 		},
 		{
 			headerName: "Name",
 			field: "name",
-			width: 300,
+			width: 400,
 			sortable: true,
-			filter: true,
+			filter: false,
+			resizable: false,
+			suppressSizeToFit: true,
 		},
 	];
 
-	const defaultColDef: ColDef = {
-		resizable: true,
-		sortable: true,
-		filter: true,
-		minWidth: 150,
-		cellStyle: { display: "flex", alignItems: "center" },
+	const gridOptions = {
+		suppressCellFocus: true,
 	};
 
-	const onGridReady = useCallback((params: GridReadyEvent) => {
-		params.api.sizeColumnsToFit();
+	const defaultColDef = {
+		autoHeight: true,
+		wrapText: true,
+		enableCellChangeFlash: true,
+		editable: false,
+		cellClass: "ag-cell",
+	};
+
+	const onGridReady = useCallback(() => {
+		// Grid is ready with fixed column widths
 	}, []);
 
 	const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
@@ -63,13 +78,6 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen,
 		setSelectedResources(selectedData);
 	}, []);
 
-	const onRowClicked = useCallback((event: RowClickedEvent) => {
-		const node = event.node;
-		const isSelected = node.isSelected();
-
-		// Toggle selection for this row
-		node.setSelected(!isSelected);
-	}, []);
 
 	const handleSave = () => {
 		console.log("Selected resources:", selectedResources);
@@ -82,52 +90,41 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen,
 		onClose();
 	};
 
-	if (!isOpen) return null;
-
 	return (
-		<div className="resource-popup-overlay">
-			<div className="resource-popup-container">
-				<div className="resource-popup-header">
-					<h4>Select {providerName} Resources</h4>
-					<button type="button" className="btn-close" onClick={handleClose} aria-label="Close">
-						×
-					</button>
+		<Modal show={isOpen} onHide={handleClose} size="lg" centered>
+			<Modal.Header closeButton>
+				<Modal.Title>Select {providerName} Resources</Modal.Title>
+			</Modal.Header>
+			<Modal.Body style={{ height: "400px", padding: "0" }}>
+				<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
+					<AgGridReact
+						rowData={resources}
+						columnDefs={columnDefs}
+						gridOptions={gridOptions}
+						defaultColDef={defaultColDef}
+						rowSelection="multiple"
+						onGridReady={onGridReady}
+						onSelectionChanged={onSelectionChanged}
+						suppressRowClickSelection={true}
+						pagination={true}
+						paginationPageSize={10}
+					/>
 				</div>
-
-				<div className="resource-popup-body">
-					<div className="ag-theme-balham-dark resource-grid">
-						<AgGridReact
-							rowData={resources}
-							columnDefs={columnDefs}
-							defaultColDef={defaultColDef}
-							rowSelection="multiple"
-							onGridReady={onGridReady}
-							onSelectionChanged={onSelectionChanged}
-							onRowClicked={onRowClicked}
-							suppressRowClickSelection={true}
-							animateRows={true}
-							pagination={true}
-							paginationPageSize={20}
-							domLayout="autoHeight"
-							headerHeight={50}
-							rowHeight={40}
-						/>
-					</div>
-				</div>
-
-				<div className="resource-popup-footer">
-					<div className="selected-count">{selectedResources.length} resource(s) selected</div>
-					<div className="popup-actions">
-						<button type="button" className="btn btn-secondary" onClick={handleClose}>
+			</Modal.Body>
+			<Modal.Footer>
+				<div className="d-flex justify-content-between align-items-center w-100">
+					<div className="selected-count text-muted">{selectedResources.length} resource(s) selected</div>
+					<div className="d-flex gap-2">
+						<Button variant="secondary" onClick={handleClose}>
 							Cancel
-						</button>
-						<button type="button" className="btn btn-primary" onClick={handleSave} disabled={selectedResources.length === 0}>
+						</Button>
+						<Button variant="primary" onClick={handleSave} disabled={selectedResources.length === 0}>
 							Save Selection
-						</button>
+						</Button>
 					</div>
 				</div>
-			</div>
-		</div>
+			</Modal.Footer>
+		</Modal>
 	);
 };
 

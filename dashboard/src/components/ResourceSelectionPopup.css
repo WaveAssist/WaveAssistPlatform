@@ -1,89 +1,50 @@
-.resource-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1050;
+/* Bootstrap Modal Dark Theme Overrides */
+.modal-content {
+  background-color: #141720 !important;
+  border: 1px solid #2a3a2f !important;
+  border-radius: 8px !important;
 }
 
-.resource-popup-container {
-  background: #141720;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  width: 90%;
-  max-width: 1000px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid #2a3a2f;
+.modal-header {
+  background-color: #1c242f !important;
+  border-bottom: 1px solid #2a3a2f !important;
+  border-radius: 8px 8px 0 0 !important;
 }
 
-.resource-popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #2a3a2f;
-  background-color: #1c242f;
+.modal-title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
 }
 
-.resource-popup-header h4 {
-  margin: 0;
-  color: #ffffff;
-  font-weight: 600;
+.modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
 }
 
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #ffffff;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+.modal-body {
+  background-color: #141720 !important;
+  padding: 0 !important;
 }
 
-.btn-close:hover {
-  background-color: #2a3a2f;
-  color: #ffffff;
+.modal-footer {
+  background-color: #1c242f !important;
+  border-top: 1px solid #2a3a2f !important;
+  border-radius: 0 0 8px 8px !important;
 }
 
-.resource-popup-body {
-  flex: 1;
-  padding: 1rem;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background-color: #141720;
-}
-
-.resource-grid {
-  flex: 1;
-  min-height: 400px;
+.grid-container {
+  height: 100%;
   width: 100%;
   background-color: #141720;
+  overflow: hidden;
 }
 
-.resource-popup-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #2a3a2f;
-  background-color: #1c242f;
+/* Ensure no horizontal scroll */
+.ag-theme-custom .ag-body-viewport {
+  overflow-x: hidden !important;
+}
+
+.ag-theme-custom .ag-center-cols-viewport {
+  overflow-x: hidden !important;
 }
 
 .selected-count {
@@ -92,104 +53,53 @@
   font-weight: 500;
 }
 
-.popup-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.popup-actions .btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.popup-actions .btn-secondary {
-  background-color: #2a3a2f;
-  border-color: #2a3a2f;
-  color: #ffffff;
-}
-
-.popup-actions .btn-secondary:hover {
-  background-color: #1a2a1f;
-  border-color: #1a2a1f;
-}
-
-.popup-actions .btn-primary {
-  background-color: #428d4f;
-  border-color: #428d4f;
-  color: white;
-}
-
-.popup-actions .btn-primary:hover:not(:disabled) {
-  background-color: #3a7d47;
-  border-color: #3a7d47;
-}
-
-.popup-actions .btn-primary:disabled {
-  background-color: #2a3a2f;
-  border-color: #2a3a2f;
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* AG Grid dark theme customizations - matching data_view_component */
-.ag-theme-balham-dark .ag-root-wrapper {
+/* AG Grid custom theme - matching Run Details modal */
+.ag-theme-custom .ag-root-wrapper {
   background-color: #141720; /* Main grid background */
 }
 
-.ag-theme-balham-dark .ag-header, 
-.ag-theme-balham-dark .ag-header-cell {
+.ag-theme-custom .ag-header, 
+.ag-theme-custom .ag-header-cell {
   background-color: #1c242f; /* Header background color */
   color: #ffffff; /* Header text color */
 }
 
-.ag-theme-balham-dark .ag-row {
+.ag-theme-custom .ag-row {
   background-color: #141720; /* Row background color */
 }
 
-.ag-theme-balham-dark .ag-row-odd {
+.ag-theme-custom .ag-row-odd {
   background-color: #1a1d26; /* Odd row background color, slightly different */
 }
 
-.ag-theme-balham-dark .ag-row-hover {
-  background-color: #2a3a2fd8; /* Hover color with a mild tint of #428d4f */
-}
 
-.ag-theme-balham-dark .ag-cell {
+.ag-theme-custom .ag-cell {
   background-color: inherit; /* Cells inherit row background */
   color: #ffffff; /* Text color */
 }
 
-.ag-theme-balham-dark .ag-cell-focus {
+.ag-theme-custom .ag-cell-focus {
   border: 1px solid #428d4f !important; /* Border color on cell click/focus */
   outline: none; /* Remove any default outline */
 }
 
-.ag-theme-balham-dark .ag-row-selected {
-  background-color: #2a3a2fd8 !important; /* Selected row background */
+.ag-theme-custom .ag-row-selected {
+  background-color: #2d3b52 !important; /* Selected row background */
 }
 
-/* Row height and spacing fixes */
-.ag-theme-balham-dark .ag-row {
-  min-height: 40px !important;
-  height: 40px !important;
+
+
+.ag-theme-custom .ag-checkbox-input:checked {
+  background-color: #4ade80 !important;
+  border-color: #4ade80 !important;
+  color: #ffffff !important;
 }
 
-.ag-theme-balham-dark .ag-cell {
-  line-height: 40px !important;
-  padding: 8px 12px !important;
-  display: flex !important;
-  align-items: center !important;
+.ag-theme-custom .ag-checkbox-input:focus {
+  outline: 2px solid #4ade80 !important;
+  outline-offset: 1px !important;
 }
 
-.ag-theme-balham-dark .ag-checkbox-input-wrapper {
-  margin: 0 !important;
-}
-
-.ag-theme-balham-dark .ag-checkbox-input {
-  margin: 0 !important;
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
