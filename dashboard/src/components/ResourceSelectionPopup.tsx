@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, SelectionChangedEvent } from "ag-grid-community";
+import { ColDef, SelectionChangedEvent, ICellRendererParams } from "ag-grid-community";
 import Modal from "react-bootstrap/Modal";
 import { Button } from "react-bootstrap";
 import "./ResourceSelectionPopup.css";
@@ -18,26 +18,46 @@ interface ResourceSelectionPopupProps {
 	resources: Resource[];
 	onSave: (selectedResources: Resource[]) => void;
 	providerName: string;
+	isDismissable?: boolean;
 }
 
-const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen, onClose, resources, onSave, providerName }) => {
+// Custom cell renderer for the select button
+const SelectButtonRenderer: React.FC<ICellRendererParams> = (params) => {
+	const isSelected = params.node.isSelected();
+
+	const handleClick = () => {
+		params.node.setSelected(!isSelected);
+		params.api.refreshCells({ rowNodes: [params.node], force: true });
+	};
+
+	return (
+		<Button
+			variant={isSelected ? "primary" : "outline-secondary"}
+			size="sm"
+			onClick={handleClick}
+			style={{
+				width: "100%",
+				fontSize: "12px",
+				padding: "4px 8px",
+			}}>
+			{isSelected ? "Selected" : "Select"}
+		</Button>
+	);
+};
+
+const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
+	isOpen,
+	onClose,
+	resources,
+	onSave,
+	providerName,
+	isDismissable = true,
+}) => {
 	const [selectedResources, setSelectedResources] = useState<Resource[]>([]);
 
 	const columnDefs: ColDef[] = [
 		{
-			headerName: "All",
-			field: "select",
-			checkboxSelection: true,
-			headerCheckboxSelection: true,
-			width: 80,
-			pinned: "left",
-			sortable: false,
-			filter: false,
-			resizable: false,
-			suppressSizeToFit: true,
-		},
-		{
-			headerName: "ID",
+			headerName: "Resource",
 			field: "id",
 			width: 350,
 			sortable: true,
@@ -48,8 +68,19 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen,
 		{
 			headerName: "Name",
 			field: "name",
-			width: 400,
+			width: 300,
 			sortable: true,
+			filter: false,
+			resizable: false,
+			suppressSizeToFit: true,
+		},
+		{
+			headerName: "Select",
+			field: "select",
+			cellRenderer: SelectButtonRenderer,
+			width: 160,
+			sortable: false,
+			pinned: "right",
 			filter: false,
 			resizable: false,
 			suppressSizeToFit: true,
@@ -58,10 +89,11 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen,
 
 	const gridOptions = {
 		suppressCellFocus: true,
+		rowHeight: 50,
 	};
 
 	const defaultColDef = {
-		autoHeight: true,
+		autoHeight: false,
 		wrapText: true,
 		enableCellChangeFlash: true,
 		editable: false,
@@ -78,7 +110,6 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen,
 		setSelectedResources(selectedData);
 	}, []);
 
-
 	const handleSave = () => {
 		console.log("Selected resources:", selectedResources);
 		onSave(selectedResources);
@@ -91,11 +122,11 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen,
 	};
 
 	return (
-		<Modal show={isOpen} onHide={handleClose} size="lg" centered>
-			<Modal.Header closeButton>
+		<Modal show={isOpen} onHide={handleClose} size="lg" centered backdrop="static">
+			<Modal.Header closeButton={isDismissable}>
 				<Modal.Title>Select {providerName} Resources</Modal.Title>
 			</Modal.Header>
-			<Modal.Body style={{ height: "400px", padding: "0" }}>
+			<Modal.Body style={{ height: "60vh", padding: "0" }}>
 				<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
 					<AgGridReact
 						rowData={resources}
@@ -115,9 +146,11 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({ isOpen,
 				<div className="d-flex justify-content-between align-items-center w-100">
 					<div className="selected-count text-muted">{selectedResources.length} resource(s) selected</div>
 					<div className="d-flex gap-2">
-						<Button variant="secondary" onClick={handleClose}>
-							Cancel
-						</Button>
+						{isDismissable && (
+							<Button variant="secondary" onClick={handleClose}>
+								Cancel
+							</Button>
+						)}
 						<Button variant="primary" onClick={handleSave} disabled={selectedResources.length === 0}>
 							Save Selection
 						</Button>
