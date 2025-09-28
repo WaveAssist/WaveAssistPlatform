@@ -3,13 +3,17 @@ import { usePostHog } from "posthog-js/react";
 import { useToast } from "../utils/toast_context";
 import { useRefresh } from "../utils/RefreshContext";
 import { Button, Form, Spinner, Modal } from "react-bootstrap";
-import { fetchTemplateApi, setDataForKeyApi, runDAGApi } from "../services/project_services";
+import { fetchTemplateApi, setDataForKeyApi, runDAGApi, fetchDataForKeyAPI } from "../services/project_services";
 import { deployProjectApi } from "../services/navbar_services";
 import { fetchRunningDeploymentApi, stopDeploymentApi } from "../services/deployment_services";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchAllProjectsAPI } from "../services/all_projects_services";
+import { fetchResourcesApi } from "../services/assistant_services";
 import InputFactory from "./configuration/InputFactory";
+import ResourceSelectionPopup from "./ResourceSelectionPopup";
 import "./assistant_component.css";
+
+const OAUTH_INPUTS = ["github"];
 
 const AssistantComponent: React.FC = () => {
 	const { showToast } = useToast();
@@ -36,6 +40,9 @@ const AssistantComponent: React.FC = () => {
 	const [showReconfigureConfirmation, setShowReconfigureConfirmation] = useState(false);
 	const [showIntegrationModal, setShowIntegrationModal] = useState(false);
 	const [integrationSuccess, setIntegrationSuccess] = useState(false);
+	const [resources, setResources] = useState<any[]>([]);
+	const [showResourcePopup, setShowResourcePopup] = useState(false);
+	const [currentProviderName, setCurrentProviderName] = useState<string>("");
 
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
@@ -43,6 +50,8 @@ const AssistantComponent: React.FC = () => {
 			const template_data = await fetchTemplateApi(template_key);
 			const input_array = template_data.input_array;
 			setWizardInputs(input_array);
+
+			// Initialize with defaults first
 			const defaults: Record<string, string> = {};
 			input_array.forEach((i: any) => {
 				if (i.default_value !== undefined) {
@@ -54,12 +63,41 @@ const AssistantComponent: React.FC = () => {
 				}
 			});
 			setWizardValues(defaults);
+
+			// Fetch existing data for each input key
+			await fetchExistingDataForInputs(input_array, defaults);
 		} catch (err) {
 			console.error("Error fetching assistant:", err);
 			showToast("Could not find anything to configure.", "warning");
 		} finally {
 			setWizardLoading(false);
 		}
+	};
+
+	const fetchExistingDataForInputs = async (input_array: any[], defaults: Record<string, string>) => {
+		const updatedValues = { ...defaults };
+
+		// Fetch data for each input key
+		for (const input of input_array) {
+			try {
+				var fetch_key = input.key;
+				if (OAUTH_INPUTS.includes(input.type)) {
+					fetch_key = input.key + "_access_token";
+				}
+				const response = await fetchDataForKeyAPI(fetch_key);
+				if (response && response.data !== undefined && response.data !== null) {
+					// Convert the data to string if it's not already
+					const dataValue = typeof response.data === "string" ? response.data : JSON.stringify(response.data);
+					updatedValues[input.key] = dataValue;
+				}
+			} catch (error) {
+				// If there's an error fetching data for this key, keep the default value
+				console.log(`No existing data found for key: ${input.key}`);
+			}
+		}
+
+		// Update the wizard values with fetched data
+		setWizardValues(updatedValues);
 	};
 
 	const handleUrlParameters = async () => {
@@ -184,6 +222,55 @@ const AssistantComponent: React.FC = () => {
 		setWizardValues((prev) => ({ ...prev, [key]: value }));
 	};
 
+	const handleSelectResources = async (inputData: any) => {
+		try {
+			console.log("Select Resources clicked with input data:", inputData);
+
+			// Use the type of the input data as provider_name
+			const providerName = inputData.type;
+
+			if (!providerName) {
+				showToast("No provider type found in input data", "warning");
+				return;
+			}
+
+			// Call the fetch resources API
+			const response = await fetchResourcesApi(providerName);
+			const resources = response.resources;
+			setResources(resources);
+			setCurrentProviderName(providerName);
+			setShowResourcePopup(true);
+			console.log("Resources fetched successfully for ", providerName, " : ", resources);
+		} catch (error) {
+			console.error("Error fetching resources:", error);
+			showToast(`Failed to fetch resources: ${error}`, "danger");
+		}
+	};
+
+	const handleResourceSave = async (selectedResources: any[]) => {
+		try {
+			console.log("Selected resources:", selectedResources);
+
+			// Create the key based on provider name
+			const resourceKey = `${currentProviderName}_selected_resources`;
+
+			// Convert selected resources to JSON string
+			const resourcesJson = JSON.stringify(selectedResources);
+
+			// Store using setDataForKeyApi
+			await setDataForKeyApi(resourcesJson, resourceKey, "json");
+
+			showToast(`Selected ${selectedResources.length} resource(s) saved successfully`, "success");
+		} catch (error) {
+			console.error("Error saving selected resources:", error);
+			showToast(`Failed to save selected resources: ${error}`, "danger");
+		}
+	};
+
+	const handleResourcePopupClose = () => {
+		setShowResourcePopup(false);
+	};
+
 	const handleRunAndDeploy = async () => {
 		// Validate that all required inputs have values
 		const emptyInputs = wizardInputs.filter((input) => {
@@ -301,6 +388,7 @@ const AssistantComponent: React.FC = () => {
 															inputConfig={input_dict}
 															value={wizardValues[input_dict.key] || ""}
 															onChange={(value) => handleWizardInputChange(input_dict.key, value)}
+															selectResources={handleSelectResources}
 														/>
 													))}
 												</Form>
@@ -463,6 +551,15 @@ const AssistantComponent: React.FC = () => {
 						</Button>
 					</Modal.Footer>
 				</Modal>
+
+				{/* Resource Selection Popup */}
+				<ResourceSelectionPopup
+					isOpen={showResourcePopup}
+					onClose={handleResourcePopupClose}
+					resources={resources}
+					onSave={handleResourceSave}
+					providerName={currentProviderName}
+				/>
 			</div>
 		</div>
 	);

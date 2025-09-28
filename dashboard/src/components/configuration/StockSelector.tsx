@@ -34,13 +34,13 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 	useEffect(() => {
 		const detectCountry = async () => {
 			try {
-				const response = await fetch('https://ipapi.co/json/');
+				const response = await fetch("https://ipapi.co/json/");
 				const data = await response.json();
 				if (data.country_name) {
 					setDetectedCountry(data.country_name);
 				}
 			} catch (error) {
-				console.error('Failed to detect country from IP:', error);
+				console.error("Failed to detect country from IP:", error);
 				// Fallback to a default country or leave empty
 			}
 		};
@@ -51,11 +51,41 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 	// Initialize selected stocks from value prop
 	useEffect(() => {
 		if (value && value.trim()) {
-			// Parse CSV value to get stock symbols
-			// Note: We can't reconstruct full stock objects from just symbols
-			// This is a limitation - we'd need to store more data or refetch
-			// For now, we'll work with the symbols as strings
-			// TODO: Implement proper stock reconstruction from stored data
+			try {
+				// Check if value is JSON (new format) or CSV (old format)
+				if (value.startsWith("[") && value.endsWith("]")) {
+					// JSON format - parse as array of stock objects
+					const parsedStocks = JSON.parse(value);
+					if (Array.isArray(parsedStocks)) {
+						setSelectedStocks(parsedStocks);
+					}
+				} else {
+					// CSV format - parse as comma-separated symbols
+					const symbols = value
+						.split(",")
+						.map((s) => s.trim())
+						.filter((s) => s);
+					if (symbols.length > 0) {
+						// Convert symbols to basic stock objects
+						// We'll create minimal stock objects with just the symbol
+						const stockObjects = symbols.map((symbol) => ({
+							_id: symbol, // Use symbol as ID for now
+							symbol: symbol,
+							name: symbol, // Fallback to symbol as name
+							exchange: "Unknown",
+							country: "Unknown",
+							currency: "Unknown",
+						}));
+						setSelectedStocks(stockObjects);
+					}
+				}
+			} catch (error) {
+				console.error("Failed to parse stock value:", error);
+				// If parsing fails, treat as empty selection
+				setSelectedStocks([]);
+			}
+		} else {
+			setSelectedStocks([]);
 		}
 	}, [value]);
 
@@ -90,7 +120,7 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 			if (detectedCountry) {
 				url += `?country=${encodeURIComponent(detectedCountry)}`;
 			}
-			
+
 			const response = await fetch(url, {
 				signal: stockSearchAbortController.current.signal,
 			});
@@ -142,9 +172,8 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 
 			const newSelectedStocks = [...selectedStocks, stock];
 			setSelectedStocks(newSelectedStocks);
-			// Update value with selected stocks as CSV
-			const stockSymbols = newSelectedStocks.map((s) => s.symbol).join(",");
-			onChange(stockSymbols);
+			// Update value with selected stocks as JSON (for better data preservation)
+			onChange(JSON.stringify(newSelectedStocks));
 		}
 		setStockSearchQuery("");
 		setStockSearchResults([]);
@@ -153,9 +182,8 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 	const handleStockRemove = (stockId: string) => {
 		const remainingStocks = selectedStocks.filter((s) => s._id !== stockId);
 		setSelectedStocks(remainingStocks);
-		// Update value with remaining stocks as CSV
-		const stockSymbols = remainingStocks.map((s) => s.symbol).join(",");
-		onChange(stockSymbols);
+		// Update value with remaining stocks as JSON (for better data preservation)
+		onChange(JSON.stringify(remainingStocks));
 	};
 
 	return (
