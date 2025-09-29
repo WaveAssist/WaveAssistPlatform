@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "react-bootstrap";
 import { callApi } from "../../services/base_service";
 
@@ -11,6 +11,27 @@ interface GitHubInputProps {
 const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, inputData }) => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSelectingResources, setIsSelectingResources] = useState(false);
+
+	const handleSelectResources = async () => {
+		if (selectResources && inputData) {
+			try {
+				setIsSelectingResources(true);
+				await selectResources(inputData);
+			} catch (error) {
+				console.error("Error selecting resources:", error);
+			} finally {
+				setIsSelectingResources(false);
+			}
+		}
+	};
+
+	// Monitor value prop changes and automatically trigger resource selection when connected
+	useEffect(() => {
+		if (value === "connected" && selectResources && inputData) {
+			// Automatically trigger resource selection when GitHub connection is successful
+			handleSelectResources();
+		}
+	}, [value, selectResources, inputData]);
 
 	const handleConnectGitHub = async () => {
 		try {
@@ -57,19 +78,6 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 
 	// Check if GitHub is already configured (value is not empty, null, or undefined)
 	const isConfigured = value && value !== "" && value !== "null" && value !== "undefined";
-
-	const handleSelectResources = async () => {
-		if (selectResources && inputData) {
-			try {
-				setIsSelectingResources(true);
-				await selectResources(inputData);
-			} catch (error) {
-				console.error("Error selecting resources:", error);
-			} finally {
-				setIsSelectingResources(false);
-			}
-		}
-	};
 
 	// If GitHub is already configured, show the configured state
 	if (isConfigured && value !== "connecting") {
