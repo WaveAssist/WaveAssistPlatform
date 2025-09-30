@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, Modal, Form } from "react-bootstrap";
+import { Button, Modal, Form, Spinner } from "react-bootstrap";
 import { callApi } from "../../services/base_service";
 import { setDataForKeyApi } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
@@ -111,7 +111,17 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 
 			// Trigger refresh to reload wizard inputs and show connected state
 			if (onRefresh) {
-				onRefresh();
+				await onRefresh();
+			}
+
+			// Automatically trigger resource selection after token is saved
+			if (selectResources && inputData) {
+				try {
+					await selectResources(inputData);
+				} catch (error) {
+					console.error("Error auto-selecting resources after token save:", error);
+					// Error is already handled by the parent component with a toast
+				}
 			}
 		} catch (error) {
 			console.error("Error saving GitHub token:", error);
@@ -377,6 +387,31 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 				</div>
 			</div>
 				{manualTokenModal}
+
+			{/* Loading Overlay */}
+			{isSelectingResources && (
+				<div
+					style={{
+						position: "fixed",
+						top: 0,
+						left: 0,
+						right: 0,
+						bottom: 0,
+						backgroundColor: "rgba(0, 0, 0, 0.5)",
+						display: "flex",
+						flexDirection: "column",
+						justifyContent: "center",
+						alignItems: "center",
+						zIndex: 9999,
+					}}>
+					<Spinner animation="border" role="status" variant="light" style={{ width: "3rem", height: "3rem" }}>
+						<span className="visually-hidden">Loading...</span>
+					</Spinner>
+					<p className="text-white mt-3" style={{ fontSize: "1.1rem", fontWeight: "500" }}>
+						Fetching resources...
+					</p>
+				</div>
+			)}
 			</>
 		);
 	}
@@ -515,6 +550,31 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 			)}
 
 			{manualTokenModal}
+
+			{/* Loading Overlay */}
+			{isSelectingResources && (
+				<div
+					style={{
+						position: "fixed",
+						top: 0,
+						left: 0,
+						right: 0,
+						bottom: 0,
+						backgroundColor: "rgba(0, 0, 0, 0.5)",
+						display: "flex",
+						flexDirection: "column",
+						justifyContent: "center",
+						alignItems: "center",
+						zIndex: 9999,
+					}}>
+					<Spinner animation="border" role="status" variant="light" style={{ width: "3rem", height: "3rem" }}>
+						<span className="visually-hidden">Loading...</span>
+					</Spinner>
+					<p className="text-white mt-3" style={{ fontSize: "1.1rem", fontWeight: "500" }}>
+						Fetching resources...
+					</p>
+				</div>
+			)}
 		</>
 	);
 };
