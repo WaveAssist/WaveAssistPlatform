@@ -243,7 +243,27 @@ const AssistantComponent: React.FC = () => {
 			console.log("Resources fetched successfully for ", providerName, " : ", resources);
 		} catch (error) {
 			console.error("Error fetching resources:", error);
-			showToast(`Failed to fetch resources: ${error}`, "danger");
+			
+			// Parse error message and provide user-friendly feedback
+			let errorMessage = "Failed to fetch resources. Please try again.";
+			const errorStr = error instanceof Error ? error.message : String(error);
+			
+			if (errorStr.includes("401") || errorStr.toLowerCase().includes("unauthorized")) {
+				errorMessage = "Authentication failed. Your token has expired or is invalid. Please reconnect or update your access token.";
+			} else if (errorStr.includes("403") || errorStr.toLowerCase().includes("forbidden")) {
+				errorMessage = "Access denied. Please ensure your token has the required permissions to access repositories.";
+			} else if (errorStr.includes("404") || errorStr.toLowerCase().includes("not found")) {
+				errorMessage = "Resources not found. Please verify your connection and try again.";
+			} else if (errorStr.toLowerCase().includes("network") || errorStr.toLowerCase().includes("timeout")) {
+				errorMessage = "Network error. Please check your internet connection and try again.";
+			} else if (errorStr.includes("Missing user ID") || errorStr.includes("project key")) {
+				errorMessage = "Session error. Please refresh the page and try again.";
+			} else if (errorStr && errorStr.length < 100) {
+				// If it's a short, specific error message from backend, show it
+				errorMessage = errorStr;
+			}
+			
+			showToast(errorMessage, "danger");
 		}
 	};
 

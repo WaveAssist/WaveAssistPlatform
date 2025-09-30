@@ -142,21 +142,27 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 					/>
 				</div>
 			</Modal.Body>
-			<Modal.Footer>
-				<div className="d-flex justify-content-between align-items-center w-100">
-					<div className="selected-count text-muted">{selectedResources.length} resource(s) selected</div>
-					<div className="d-flex gap-2">
-						{isDismissable && (
-							<Button variant="secondary" onClick={handleClose}>
-								Cancel
-							</Button>
-						)}
-						<Button variant="primary" onClick={handleSave} disabled={selectedResources.length === 0}>
-							Save Selection
-						</Button>
-					</div>
+		<Modal.Footer>
+			<div className="d-flex justify-content-between align-items-center w-100">
+				<div className="selected-count" style={{ 
+					fontSize: "1rem", 
+					fontWeight: "600",
+					color: selectedResources.length > 0 ? "#198754" : "#6c757d"
+				}}>
+					{selectedResources.length} resource{selectedResources.length !== 1 ? 's' : ''} selected
 				</div>
-			</Modal.Footer>
+				<div className="d-flex gap-2">
+					{isDismissable && (
+						<Button variant="secondary" onClick={handleClose}>
+							Cancel
+						</Button>
+					)}
+					<Button variant="primary" onClick={handleSave} disabled={selectedResources.length === 0}>
+						Save Selection
+					</Button>
+				</div>
+			</div>
+		</Modal.Footer>
 		</Modal>
 	);
 };

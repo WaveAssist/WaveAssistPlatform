@@ -17,7 +17,32 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 	const [showManualModal, setShowManualModal] = useState(false);
 	const [manualToken, setManualToken] = useState("");
 	const [isSubmittingToken, setIsSubmittingToken] = useState(false);
+	const [tokenValidationError, setTokenValidationError] = useState("");
 	const { showToast } = useToast();
+
+	const validateGitHubToken = (token: string): string => {
+		if (!token) {
+			return "";
+		}
+
+		// Check if token starts with ghp_ or gho_
+		if (!token.startsWith("ghp_") && !token.startsWith("gho_")) {
+			return "Token must start with 'ghp_' or 'gho_'";
+		}
+
+		// GitHub tokens are 40 characters total
+		if (token.length !== 40) {
+			return "Token must be exactly 40 characters long";
+		}
+
+		return "";
+	};
+
+	const handleTokenChange = (value: string) => {
+		setManualToken(value);
+		const error = validateGitHubToken(value);
+		setTokenValidationError(error);
+	};
 
 	const handleSelectResources = async () => {
 		if (selectResources && inputData) {
@@ -108,13 +133,77 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 	// Check if GitHub is already configured (value is not empty, null, or undefined)
 	const isConfigured = value && value !== "" && value !== "null" && value !== "undefined";
 
+	// Manual Token Entry Modal - shared between both states
+	const manualTokenModal = (
+		<Modal
+			show={showManualModal}
+			onHide={() => {
+				setShowManualModal(false);
+				setManualToken("");
+				setTokenValidationError("");
+			}}
+			centered>
+			<Modal.Header closeButton>
+				<Modal.Title>Enter GitHub Personal Access Token</Modal.Title>
+			</Modal.Header>
+			<Modal.Body>
+				<Form.Group className="mx-3">
+					<Form.Label className="text-white mt-4 mb-2">GitHub Personal Access Token (GHP)</Form.Label>
+					<Form.Control
+						type="text"
+						placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+						value={manualToken}
+						autoComplete="off"
+						onChange={(e) => handleTokenChange(e.target.value)}
+						autoFocus
+						isInvalid={!!tokenValidationError}
+					/>
+					{tokenValidationError && (
+						<Form.Control.Feedback type="invalid" style={{ display: "block" }}>
+							{tokenValidationError}
+						</Form.Control.Feedback>
+					)}
+					<p className="text-white mt-2 small">
+						Enter your GitHub Personal Access Token.{" "}
+						<a className="text-white" href="https://gitzoid.com/blog/how-to-get-your-github-token-for-gitzoid-fine-grained-classic" target="_blank">
+							How to find?
+						</a>
+					</p>
+				</Form.Group>
+			</Modal.Body>
+			<Modal.Footer>
+				<Button
+					variant="secondary"
+					onClick={() => {
+						setShowManualModal(false);
+						setManualToken("");
+						setTokenValidationError("");
+					}}
+					disabled={isSubmittingToken}>
+					Cancel
+				</Button>
+				<Button variant="primary" onClick={handleManualTokenSubmit} disabled={!manualToken.trim() || !!tokenValidationError || isSubmittingToken}>
+					{isSubmittingToken ? (
+						<>
+							<span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+							Saving...
+						</>
+					) : (
+						"Submit"
+					)}
+				</Button>
+			</Modal.Footer>
+		</Modal>
+	);
+
 	// If GitHub is already configured, show the configured state
 	if (isConfigured && value !== "connecting") {
 		return (
-			<div className="github-input-container">
-				<div className="p-3 border rounded" style={{ backgroundColor: "#f8f9fa", borderColor: "#e9ecef" }}>
-					{/* Desktop layout: horizontal with buttons on the right */}
-					<div className="d-flex align-items-center justify-content-between d-none d-sm-flex">
+			<>
+				<div className="github-input-container">
+					<div className="p-3 border rounded" style={{ backgroundColor: "#f8f9fa", borderColor: "#e9ecef" }}>
+						{/* Desktop layout: horizontal with buttons on the right */}
+						<div className="d-flex align-items-center justify-content-between d-none d-sm-flex">
 						<div className="d-flex align-items-center gap-3">
 							{/* GitHub icon */}
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
@@ -287,12 +376,15 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 					</div>
 				</div>
 			</div>
+				{manualTokenModal}
+			</>
 		);
 	}
 
 	// Default state - show connect button
 	return (
-		<div className="github-input-container">
+		<>
+			<div className="github-input-container">
 			<div className="p-3 border rounded" style={{ backgroundColor: "#f8f9fa", borderColor: "#e9ecef" }}>
 				{/* Desktop layout: horizontal with button on the right */}
 				<div className="d-flex align-items-center justify-content-between d-none d-sm-flex">
@@ -402,6 +494,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 					</div>
 				</div>
 			</div>
+		</div>
 
 			{value === "connected" && (
 				<div className="text-success mt-2 d-flex align-items-center gap-2" style={{ fontSize: "0.875rem" }}>
@@ -421,47 +514,8 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, selectResources, input
 				</div>
 			)}
 
-			{/* Manual Token Entry Modal */}
-			<Modal show={showManualModal} onHide={() => setShowManualModal(false)} centered>
-				<Modal.Header closeButton>
-					<Modal.Title>Enter GitHub Personal Access Token</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-					<Form.Group className="mx-3">
-						<Form.Label className="text-white mt-4 mb-2">GitHub Personal Access Token (GHP)</Form.Label>
-						<Form.Control
-							type="text"
-							placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-							value={manualToken}
-							autoComplete="off"
-							onChange={(e) => setManualToken(e.target.value)}
-							autoFocus
-						/>
-						<p className="text-white mt-2 small">
-							Enter your GitHub Personal Access Token.{" "}
-							<a className="text-white" href="https://gitzoid.com/blog/how-to-get-your-github-token-for-gitzoid-fine-grained-classic" target="_blank">
-								How to find?
-							</a>
-						</p>
-					</Form.Group>
-				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={() => setShowManualModal(false)} disabled={isSubmittingToken}>
-						Cancel
-					</Button>
-					<Button variant="primary" onClick={handleManualTokenSubmit} disabled={!manualToken.trim() || isSubmittingToken}>
-						{isSubmittingToken ? (
-							<>
-								<span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-								Saving...
-							</>
-						) : (
-							"Submit"
-						)}
-					</Button>
-				</Modal.Footer>
-			</Modal>
-		</div>
+			{manualTokenModal}
+		</>
 	);
 };
 
