@@ -389,6 +389,7 @@ const AssistantComponent: React.FC = () => {
 															value={wizardValues[input_dict.key] || ""}
 															onChange={(value) => handleWizardInputChange(input_dict.key, value)}
 															selectResources={handleSelectResources}
+															onRefresh={refreshData}
 														/>
 													))}
 												</Form>
