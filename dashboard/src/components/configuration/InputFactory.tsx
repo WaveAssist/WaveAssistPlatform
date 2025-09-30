@@ -19,10 +19,11 @@ interface InputFactoryProps {
 	value: string;
 	onChange: (value: string) => void;
 	selectResources?: (inputData: any) => void;
+	selectedResources?: any;
 	onRefresh?: () => void;
 }
 
-const InputFactory: React.FC<InputFactoryProps> = ({ inputConfig, value, onChange, selectResources, onRefresh }) => {
+const InputFactory: React.FC<InputFactoryProps> = ({ inputConfig, value, onChange, selectResources, selectedResources, onRefresh }) => {
 	const { key, type, options, helper_message } = inputConfig;
 
 	// Render appropriate input component based on type
@@ -58,7 +59,15 @@ const InputFactory: React.FC<InputFactoryProps> = ({ inputConfig, value, onChang
 				return <TextInput type="url" value={value} onChange={onChange} />;
 
 			case "github":
-				return <GitHubInput value={value} selectResources={selectResources} inputData={inputConfig} onRefresh={onRefresh} />;
+				return (
+					<GitHubInput
+						value={value}
+						selectResources={selectResources}
+						selectedResources={selectedResources}
+						inputData={inputConfig}
+						onRefresh={onRefresh}
+					/>
+				);
 
 			case "text":
 			default:

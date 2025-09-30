@@ -29,6 +29,7 @@ const AssistantComponent: React.FC = () => {
 	// Wizard state
 	const [wizardInputs, setWizardInputs] = useState<any[]>([]);
 	const [wizardValues, setWizardValues] = useState<Record<string, string>>({});
+	const [wizardSelectedResources, setWizardSelectedResources] = useState<Record<string, any>>({});
 	const [processingWizard, setProcessingWizard] = useState(false);
 	const [wizardLoading, setWizardLoading] = useState(false);
 	const [startingNodeKey] = useState<string | null>(null);
@@ -43,6 +44,7 @@ const AssistantComponent: React.FC = () => {
 	const [resources, setResources] = useState<any[]>([]);
 	const [showResourcePopup, setShowResourcePopup] = useState(false);
 	const [currentProviderName, setCurrentProviderName] = useState<string>("");
+	const [currentInputKey, setCurrentInputKey] = useState<string>("");
 
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
@@ -76,6 +78,7 @@ const AssistantComponent: React.FC = () => {
 
 	const fetchExistingDataForInputs = async (input_array: any[], defaults: Record<string, string>) => {
 		const updatedValues = { ...defaults };
+		const updatedSelectedResources: Record<string, any> = {};
 
 		// Fetch data for each input key
 		for (const input of input_array) {
@@ -94,10 +97,27 @@ const AssistantComponent: React.FC = () => {
 				// If there's an error fetching data for this key, keep the default value
 				console.log(`No existing data found for key: ${input.key}`);
 			}
+
+			// For OAuth inputs, also fetch selected resources
+			if (OAUTH_INPUTS.includes(input.type)) {
+				try {
+					const resources_key = input.key + "_selected_resources";
+					const resourcesResponse = await fetchDataForKeyAPI(resources_key);
+					if (resourcesResponse && resourcesResponse.data !== undefined && resourcesResponse.data !== null) {
+						// Parse the JSON string to get the actual resources array
+						const resourcesData = typeof resourcesResponse.data === "string" ? JSON.parse(resourcesResponse.data) : resourcesResponse.data;
+						updatedSelectedResources[input.key] = resourcesData;
+					}
+				} catch (error) {
+					// If there's an error fetching selected resources, just log it
+					console.log(`No existing selected resources found for key: ${input.key}`);
+				}
+			}
 		}
 
-		// Update the wizard values with fetched data
+		// Update the wizard values and selected resources with fetched data
 		setWizardValues(updatedValues);
+		setWizardSelectedResources(updatedSelectedResources);
 	};
 
 	const handleUrlParameters = async () => {
@@ -239,15 +259,16 @@ const AssistantComponent: React.FC = () => {
 			const resources = response.resources;
 			setResources(resources);
 			setCurrentProviderName(providerName);
+			setCurrentInputKey(inputData.key);
 			setShowResourcePopup(true);
 			console.log("Resources fetched successfully for ", providerName, " : ", resources);
 		} catch (error) {
 			console.error("Error fetching resources:", error);
-			
+
 			// Parse error message and provide user-friendly feedback
 			let errorMessage = "Failed to fetch resources. Please try again.";
 			const errorStr = error instanceof Error ? error.message : String(error);
-			
+
 			if (errorStr.includes("401") || errorStr.toLowerCase().includes("unauthorized")) {
 				errorMessage = "Authentication failed. Your token has expired or is invalid. Please reconnect or update your access token.";
 			} else if (errorStr.includes("403") || errorStr.toLowerCase().includes("forbidden")) {
@@ -262,7 +283,7 @@ const AssistantComponent: React.FC = () => {
 				// If it's a short, specific error message from backend, show it
 				errorMessage = errorStr;
 			}
-			
+
 			showToast(errorMessage, "danger");
 		}
 	};
@@ -280,6 +301,12 @@ const AssistantComponent: React.FC = () => {
 			// Store using setDataForKeyApi
 			await setDataForKeyApi(resourcesJson, resourceKey, "json");
 
+			// Update the local state immediately
+			setWizardSelectedResources((prev) => ({
+				...prev,
+				[currentInputKey]: selectedResources,
+			}));
+
 			showToast(`Selected ${selectedResources.length} resource(s) saved successfully`, "success");
 		} catch (error) {
 			console.error("Error saving selected resources:", error);
@@ -289,6 +316,24 @@ const AssistantComponent: React.FC = () => {
 
 	const handleResourcePopupClose = () => {
 		setShowResourcePopup(false);
+	};
+
+	const hasEmptyInputs = () => {
+		return wizardInputs.some((input) => {
+			const value = wizardValues[input.key];
+			// Check if value is empty
+			if (!value || value.trim() === "") {
+				return true;
+			}
+			// For OAuth inputs, also check if at least 1 resource is selected
+			if (OAUTH_INPUTS.includes(input.type)) {
+				const selectedResources = wizardSelectedResources[input.key];
+				if (!selectedResources || !Array.isArray(selectedResources) || selectedResources.length === 0) {
+					return true;
+				}
+			}
+			return false;
+		});
 	};
 
 	const handleRunAndDeploy = async () => {
@@ -301,6 +346,20 @@ const AssistantComponent: React.FC = () => {
 
 		if (emptyInputs.length > 0) {
 			showToast("Please provide input values for all required fields", "warning");
+			return;
+		}
+
+		// Validate that OAuth inputs have at least 1 resource selected
+		const oauthInputsWithoutResources = wizardInputs.filter((input) => {
+			if (OAUTH_INPUTS.includes(input.type)) {
+				const selectedResources = wizardSelectedResources[input.key];
+				return !selectedResources || !Array.isArray(selectedResources) || selectedResources.length === 0;
+			}
+			return false;
+		});
+
+		if (oauthInputsWithoutResources.length > 0) {
+			showToast("Please select at least 1 resource for all integrations", "warning");
 			return;
 		}
 
@@ -409,6 +468,7 @@ const AssistantComponent: React.FC = () => {
 															value={wizardValues[input_dict.key] || ""}
 															onChange={(value) => handleWizardInputChange(input_dict.key, value)}
 															selectResources={handleSelectResources}
+															selectedResources={wizardSelectedResources[input_dict.key]}
 															onRefresh={refreshData}
 														/>
 													))}
@@ -419,7 +479,11 @@ const AssistantComponent: React.FC = () => {
 								</div>
 
 								<div className="assistant-config-footer">
-									<Button className="assistant-deploy-button" onClick={handleRunAndDeploy} disabled={processingWizard || wizardLoading}>
+									<Button
+										className={`assistant-deploy-button ${hasEmptyInputs() ? "opacity-50" : ""}`}
+										onClick={handleRunAndDeploy}
+										disabled={processingWizard || wizardLoading}
+										style={hasEmptyInputs() ? { cursor: "not-allowed" } : {}}>
 										{processingWizard ? "Processing..." : wizardLoading ? "Loading..." : "Run and Deploy"}
 									</Button>
 								</div>
@@ -555,9 +619,11 @@ const AssistantComponent: React.FC = () => {
 					</Modal.Header>
 					<Modal.Body>
 						{integrationSuccess ? (
-							<p>Your integration has been successfully connected! You can now configure and use your assistant.</p>
+							<p className="text-white my-4 mx-4">Your integration has been successfully connected! You can now configure and use your assistant.</p>
 						) : (
-							<p>There was an error connecting your integration. Please try again or contact support if the issue persists.</p>
+							<p className="text-white my-4 mx-4">
+								There was an error connecting your integration. Please try again or contact support if the issue persists.
+							</p>
 						)}
 					</Modal.Body>
 					<Modal.Footer>
@@ -580,6 +646,7 @@ const AssistantComponent: React.FC = () => {
 					resources={resources}
 					onSave={handleResourceSave}
 					providerName={currentProviderName}
+					initiallySelectedResources={wizardSelectedResources[currentInputKey] || []}
 				/>
 			</div>
 		</div>

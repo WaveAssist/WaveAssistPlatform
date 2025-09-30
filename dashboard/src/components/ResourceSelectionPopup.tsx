@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, SelectionChangedEvent, ICellRendererParams } from "ag-grid-community";
 import Modal from "react-bootstrap/Modal";
@@ -19,6 +19,7 @@ interface ResourceSelectionPopupProps {
 	onSave: (selectedResources: Resource[]) => void;
 	providerName: string;
 	isDismissable?: boolean;
+	initiallySelectedResources?: Resource[];
 }
 
 // Custom cell renderer for the select button
@@ -52,8 +53,16 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 	onSave,
 	providerName,
 	isDismissable = true,
+	initiallySelectedResources = [],
 }) => {
-	const [selectedResources, setSelectedResources] = useState<Resource[]>([]);
+	const [selectedResources, setSelectedResources] = useState<Resource[]>(initiallySelectedResources);
+
+	// Update selected resources when popup opens with different initial selections
+	useEffect(() => {
+		if (isOpen) {
+			setSelectedResources(initiallySelectedResources);
+		}
+	}, [isOpen, initiallySelectedResources]);
 
 	const columnDefs: ColDef[] = [
 		{
@@ -100,9 +109,20 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 		cellClass: "ag-cell",
 	};
 
-	const onGridReady = useCallback(() => {
-		// Grid is ready with fixed column widths
-	}, []);
+	const onGridReady = useCallback(
+		(params: any) => {
+			// Preselect initially selected resources
+			if (initiallySelectedResources && initiallySelectedResources.length > 0) {
+				const selectedIds = initiallySelectedResources.map((resource) => resource.id);
+				params.api.forEachNode((node: any) => {
+					if (selectedIds.includes(node.data.id)) {
+						node.setSelected(true);
+					}
+				});
+			}
+		},
+		[initiallySelectedResources]
+	);
 
 	const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
 		const selectedNodes = event.api.getSelectedNodes();
@@ -126,7 +146,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 			<Modal.Header closeButton={isDismissable}>
 				<Modal.Title>Select {providerName} Resources</Modal.Title>
 			</Modal.Header>
-			<Modal.Body style={{ height: "60vh", padding: "0" }}>
+			<Modal.Body style={{ height: "65vh", padding: "0" }}>
 				<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
 					<AgGridReact
 						rowData={resources}
@@ -138,31 +158,33 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 						onSelectionChanged={onSelectionChanged}
 						suppressRowClickSelection={true}
 						pagination={true}
-						paginationPageSize={10}
+						paginationPageSize={15}
 					/>
 				</div>
 			</Modal.Body>
-		<Modal.Footer>
-			<div className="d-flex justify-content-between align-items-center w-100">
-				<div className="selected-count" style={{ 
-					fontSize: "1rem", 
-					fontWeight: "600",
-					color: selectedResources.length > 0 ? "#198754" : "#6c757d"
-				}}>
-					{selectedResources.length} resource{selectedResources.length !== 1 ? 's' : ''} selected
-				</div>
-				<div className="d-flex gap-2">
-					{isDismissable && (
-						<Button variant="secondary" onClick={handleClose}>
-							Cancel
+			<Modal.Footer>
+				<div className="d-flex justify-content-between align-items-center w-100">
+					<div
+						className="selected-count"
+						style={{
+							fontSize: "1rem",
+							fontWeight: "600",
+							color: selectedResources.length > 0 ? "#198754" : "#6c757d",
+						}}>
+						{selectedResources.length} resource{selectedResources.length !== 1 ? "s" : ""} selected
+					</div>
+					<div className="d-flex gap-2">
+						{isDismissable && (
+							<Button variant="secondary" onClick={handleClose}>
+								Cancel
+							</Button>
+						)}
+						<Button variant="primary" onClick={handleSave} disabled={selectedResources.length === 0}>
+							Save Selection
 						</Button>
-					)}
-					<Button variant="primary" onClick={handleSave} disabled={selectedResources.length === 0}>
-						Save Selection
-					</Button>
+					</div>
 				</div>
-			</div>
-		</Modal.Footer>
+			</Modal.Footer>
 		</Modal>
 	);
 };
