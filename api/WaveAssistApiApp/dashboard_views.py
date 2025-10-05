@@ -190,14 +190,14 @@ def fetch_assistant(request, assistant_key):
         if not is_valid:
             return ResponseParser.getParsedErrorMessage("Error with yaml: " + str(message))
         variables = yaml_config.get("variables", [])
-
-
+        success_message = yaml_config.get("success_message", "Your agent was triggered and will also run on a schedule.")
         ##Show optional variables
         optional_variables = [v for v in variables if v.get('is_optional', True) == True]
         variables = [v for v in variables if v.get('is_optional', True) == False]
         assistant_dict = assistant.get_dict()
         assistant_dict['input_array'] = variables
         assistant_dict['optional_input_array'] = optional_variables
+        assistant_dict['success_message'] = success_message
         return ResponseParser.getParsedSuccessMessage(assistant_dict, '200', 'Assistant found successfully.')
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f'Error fetching assistant: {str(e)}', 500)
