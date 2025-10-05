@@ -51,10 +51,69 @@ const RunsComponent: React.FC = () => {
 		fetchRuns();
 		const intervalId = setInterval(() => {
 			fetchRuns();
-		}, 10000); // 10000ms = 10 seconds
+		}, 5000); // 10000ms = 10 seconds
 		// Clean up the interval when the component unmounts
 		return () => clearInterval(intervalId);
 	}, [shouldRefresh]);
+
+	// Function to fetch tentative processing time from API
+	const fetchTentativeTime = async (runId: string): Promise<number | null> => {
+		try {
+			const response = await fetchDataForKeyAPI("tentative_time_to_process", runId);
+			if (response && response.data) {
+				const parsedTime = parseInt(response.data, 10);
+				// Only return if it's a valid number
+				if (!isNaN(parsedTime) && parsedTime > 0) {
+					return parsedTime;
+				}
+			}
+		} catch (error) {
+			console.error("Error fetching tentative time:", error);
+		}
+		// Return null if no valid value
+		return null;
+	};
+
+	// Effect to update progress for loading runs every 5 seconds
+	useEffect(() => {
+		const updateProgress = async () => {
+			// Get all processing runs
+			const processingRuns = runsArray.filter((run) => (run.status === "STARTED" || run.status === "RUNNING") && run.started_at);
+
+			if (processingRuns.length === 0) return;
+
+			// Get current progress state
+			setRunProgress((prevProgress) => {
+				// Process each run asynchronously
+				processingRuns.forEach(async (run) => {
+					let totalTime: number | null = prevProgress[run.run_id]?.totalTime || null;
+					if (!totalTime) {
+						totalTime = await fetchTentativeTime(run.run_id);
+					}
+
+					// Only update progress if we have a valid totalTime
+					if (totalTime !== null && totalTime > 0) {
+						const { progress, remaining } = calculateProgress(run.started_at, totalTime);
+
+						// Update state for this specific run
+						setRunProgress((prev) => ({
+							...prev,
+							[run.run_id]: {
+								totalTime,
+								progress,
+								remaining,
+							},
+						}));
+					}
+				});
+
+				return prevProgress;
+			});
+		};
+
+		// Initial update
+		updateProgress();
+	}, [runsArray]);
 
 	useEffect(() => {
 		// Pageview context for runs list
@@ -74,11 +133,26 @@ const RunsComponent: React.FC = () => {
 	const [outputDisplayMode, setOutputDisplayMode] = useState<"html" | "iframe">("iframe");
 	const [loadingOutputRunId, setLoadingOutputRunId] = useState<string | null>(null);
 	const [isLoadingRunDetails, setIsLoadingRunDetails] = useState(false);
+	const [runProgress, setRunProgress] = useState<Record<string, { totalTime: number; progress: number; remaining: number }>>({});
 
 	const handleLoadingComplete = useCallback(() => {
 		console.log("onLoadingComplete called, setting isLoadingRunDetails to false");
 		setIsLoadingRunDetails(false);
 	}, []);
+
+	// Function to calculate progress based on started_at time
+	const calculateProgress = (startedAt: string, totalTime: number) => {
+		const startTime = new Date(startedAt).getTime();
+		const currentTime = Date.now();
+		const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+
+		// Cap progress at 80% - never show 90% or 100%
+		const progress = Math.min((elapsedSeconds / totalTime) * 100, 80);
+		const twenty_percent_time = totalTime * 0.2;
+		const remaining = Math.max(totalTime - elapsedSeconds, twenty_percent_time);
+
+		return { progress, remaining };
+	};
 
 	const handleViewDetails = (run: any) => {
 		if (run && run.run_id) {
@@ -233,24 +307,62 @@ const RunsComponent: React.FC = () => {
 			cellRenderer: (params: any) => {
 				const isSuccess = params.data.status === "SUCCESS";
 				const isThisRunLoading = loadingOutputRunId === params.data.run_id;
-				const isDisabled =
-					params.data.status === "STARTED" || params.data.status === "RUNNING" || params.data.status === "FAILED" || isThisRunLoading;
+				const isProcessing = params.data.status === "STARTED" || params.data.status === "RUNNING";
+				const isDisabled = isProcessing || params.data.status === "FAILED" || isThisRunLoading;
+				const runId = params.data.run_id;
+				const progressData = runProgress[runId];
 
 				return (
-					<button
-						className={`btn btn-sm ${isSuccess ? "btn-outline-success" : "btn-outline-secondary"}`}
-						onClick={() => isSuccess && !isThisRunLoading && handleViewOutput(params.data.run_id)}
-						disabled={isDisabled}
-						title={isSuccess ? (isThisRunLoading ? "Loading..." : "View Output") : "Output not available"}>
-						{isThisRunLoading ? (
-							<>
-								<span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-								Loading...
-							</>
-						) : (
-							"View Output"
+					<div className="d-flex align-items-center gap-2">
+						<button
+							className={`btn btn-sm ${isSuccess ? "btn-outline-success" : "btn-outline-secondary"}`}
+							onClick={() => isSuccess && !isThisRunLoading && handleViewOutput(runId)}
+							disabled={isDisabled}
+							title={isSuccess ? (isThisRunLoading ? "Loading..." : "View Output") : "Output not available"}>
+							{isThisRunLoading ? (
+								<>
+									<span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+									Loading...
+								</>
+							) : (
+								"View Output"
+							)}
+						</button>
+						{isProcessing && progressData && (
+							<div className="d-flex align-items-center gap-2" style={{ fontSize: "11px", color: "#adb5bd" }}>
+								<div style={{ position: "relative", width: "40px", height: "40px" }}>
+									<svg width="40" height="40" style={{ transform: "rotate(-90deg)" }}>
+										{/* Background circle - dark theme */}
+										<circle cx="20" cy="20" r="16" fill="none" stroke="#2d3748" strokeWidth="3" />
+										{/* Progress circle */}
+										<circle
+											cx="20"
+											cy="20"
+											r="16"
+											fill="none"
+											stroke="#28a745"
+											strokeWidth="3"
+											strokeDasharray={`${(progressData.progress / 100) * 100.53} 100.53`}
+											strokeLinecap="round"
+										/>
+									</svg>
+									<div
+										style={{
+											position: "absolute",
+											top: "50%",
+											left: "50%",
+											transform: "translate(-50%, -50%)",
+											fontSize: "9px",
+											fontWeight: "bold",
+											color: "#28a745",
+										}}>
+										{progressData.progress.toFixed(0)}%
+									</div>
+								</div>
+								<span style={{ whiteSpace: "nowrap" }}>{progressData.remaining.toFixed(0)}s left</span>
+							</div>
 						)}
-					</button>
+					</div>
 				);
 			},
 			cellStyle: { display: "flex", alignItems: "center" },
