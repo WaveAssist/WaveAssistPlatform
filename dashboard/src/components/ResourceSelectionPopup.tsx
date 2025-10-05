@@ -142,7 +142,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 	};
 
 	return (
-		<Modal show={isOpen} onHide={handleClose} size="lg" centered backdrop="static">
+		<Modal show={isOpen} onHide={handleClose} size="lg" centered backdrop="static" className="resource-selection-popup">
 			<Modal.Header closeButton={isDismissable}>
 				<Modal.Title>Select {providerName} Resources</Modal.Title>
 			</Modal.Header>

@@ -7,12 +7,12 @@
   overflow: hidden;
 }
 
-/* Ensure no horizontal scroll */
-.ag-theme-custom .ag-body-viewport {
+/* Ensure no horizontal scroll - scoped to resource selection popup only */
+.resource-selection-popup .ag-theme-custom .ag-body-viewport {
   overflow-x: hidden !important;
 }
 
-.ag-theme-custom .ag-center-cols-viewport {
+.resource-selection-popup .ag-theme-custom .ag-center-cols-viewport {
   overflow-x: hidden !important;
 }
 
