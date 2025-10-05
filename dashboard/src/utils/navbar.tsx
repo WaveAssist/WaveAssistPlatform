@@ -160,11 +160,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 		<Navbar variant="dark" expand="lg" className="px-3 navbar-main">
 			{isMobile ? (
 				<>
-					<Button variant="dark" className="me-2 text-white" onClick={onToggleSidebar}>
+					<Button variant="dark" className="me-2 text-white navbar-hamburger" onClick={onToggleSidebar}>
 						<i className="bi bi-list"></i>
 					</Button>
-					<img src={WaveAssistLogo} alt="WaveAssist" style={{ height: "24px", width: "auto" }} />
-					<div className="ms-auto d-flex align-items-center">
+					<div className="navbar-logo-container flex-shrink-1">
+						<img src={WaveAssistLogo} alt="WaveAssist" className="navbar-logo" style={{ height: "24px", maxWidth: "150px", width: "auto" }} />
+					</div>
+					<div className="ms-auto d-flex align-items-center flex-shrink-0 navbar-actions">
 						{!isOperatorPlan && (
 							<DarkDropdown
 								items={envItems}

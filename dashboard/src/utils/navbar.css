@@ -15,12 +15,113 @@
     z-index: 1030;
   }
 
+  /* Logo container - allow it to shrink if needed */
+  .navbar-logo-container {
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
 
+  .navbar-logo {
+    display: block;
+    object-fit: contain;
+  }
 
+  /* Navbar actions - prevent shrinking */
+  .navbar-actions {
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+
+  /* Mobile responsiveness */
   @media (max-width: 767.98px) {
     .navbar-main {
       height: 60px !important;
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
     }
     
+    /* Reduce margins between navbar items on mobile */
+    .navbar-main .me-2 {
+      margin-right: 0.5rem !important;
+    }
+    
+    .navbar-main .ms-2 {
+      margin-left: 0.5rem !important;
+    }
+    
+    /* Compact all buttons on mobile */
+    .navbar-main .btn {
+      padding: 0.375rem 0.75rem !important;
+    }
+    
+    .navbar-main .icon-dropdown-btn,
+    .navbar-main .dropdown-toggle {
+      padding: 0.375rem 0.5rem !important;
+    }
+  }
 
+  /* Extra small mobile devices (320px - 375px) */
+  @media (max-width: 375px) {
+    .navbar-main {
+      padding-left: 0.25rem !important;
+      padding-right: 0.25rem !important;
+    }
+    
+    /* Reduce spacing even more on very small screens */
+    .navbar-main .me-2 {
+      margin-right: 0.25rem !important;
+    }
+    
+    .navbar-main .ms-2 {
+      margin-left: 0.25rem !important;
+    }
+    
+    /* Make hamburger button more compact */
+    .navbar-main .navbar-hamburger,
+    .navbar-main .btn.me-2 {
+      padding: 0.25rem 0.5rem !important;
+      font-size: 1.2rem;
+      min-width: auto;
+    }
+    
+    /* Limit logo width on very small screens */
+    .navbar-logo-container {
+      max-width: 100px;
+    }
+    
+    .navbar-main .navbar-logo {
+      max-width: 100px !important;
+      height: 20px !important;
+    }
+    
+    /* Make action buttons more compact */
+    .navbar-main .icon-dropdown-btn {
+      padding: 0.25rem 0.5rem !important;
+      font-size: 1rem;
+      min-width: auto;
+    }
+    
+    /* Reduce gap in navbar actions */
+    .navbar-actions {
+      gap: 0.25rem;
+    }
+  }
+  
+  /* Ultra small screens (< 360px) */
+  @media (max-width: 360px) {
+    .navbar-logo-container {
+      max-width: 80px;
+    }
+    
+    .navbar-main .navbar-logo {
+      max-width: 80px !important;
+      height: 18px !important;
+    }
+    
+    .navbar-main .navbar-hamburger {
+      padding: 0.2rem 0.4rem !important;
+      font-size: 1.1rem;
+    }
   }
