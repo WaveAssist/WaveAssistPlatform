@@ -48,12 +48,15 @@ const AssistantComponent: React.FC = () => {
 	const [showWebhookModal, setShowWebhookModal] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [webhookCopied, setWebhookCopied] = useState(false);
+	const [successMessage, setSuccessMessage] = useState("Your agent was triggered and will also run on a schedule.");
 
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
 		try {
 			const template_data = await fetchTemplateApi(template_key);
 			const input_array = template_data.input_array;
+			const success_message = template_data.success_message;
+			setSuccessMessage(success_message);
 			setWizardInputs(input_array);
 
 			// Initialize with defaults first
@@ -544,7 +547,8 @@ const AssistantComponent: React.FC = () => {
 											<i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
 										</div>
 										<h5 className="mb-2 text-white">Your assistant is running 🎉 </h5>
-										<p className="text-muted mb-0">Your agent was triggered and will also run on a schedule. Check runs for output.</p>
+										<p className="text-muted mb-0">{successMessage}</p>
+										<p className="text-muted mb-0">Check runs for output.</p>
 									</div>
 								</div>
 								<div className="assistant-config-footer pt-2">
