@@ -45,6 +45,9 @@ const AssistantComponent: React.FC = () => {
 	const [showResourcePopup, setShowResourcePopup] = useState(false);
 	const [currentProviderName, setCurrentProviderName] = useState<string>("");
 	const [currentInputKey, setCurrentInputKey] = useState<string>("");
+	const [showWebhookModal, setShowWebhookModal] = useState(false);
+	const [webhookUrl, setWebhookUrl] = useState("");
+	const [webhookCopied, setWebhookCopied] = useState(false);
 
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
@@ -423,6 +426,40 @@ const AssistantComponent: React.FC = () => {
 		setShowReconfigureConfirmation(false);
 	};
 
+	// Check if GitHub is configured
+	const hasGitHubConfigured = () => {
+		return wizardInputs.some((input) => input.type === "github");
+	};
+
+	// Generate webhook URL
+	const generateWebhookUrl = (): string => {
+		const baseUrl = "https://api.waveassist.io/webhook/run";
+		const uid = localStorage.getItem("uid");
+		const projectKey = localStorage.getItem("selected_project_key");
+		const envKey = projectKey + "_default";
+
+		// Get the first node key from running deployment if available
+		const nodeKey = "fetch_pull_requests";
+
+		if (!uid || !projectKey || !envKey || !nodeKey) {
+			return ""; // Cannot generate webhook if any piece is missing
+		}
+		return `${baseUrl}/${uid}/${projectKey}/${nodeKey}/${envKey}/`;
+	};
+
+	const handleViewWebhook = () => {
+		const url = generateWebhookUrl();
+		setWebhookUrl(url);
+		setShowWebhookModal(true);
+		setWebhookCopied(false);
+	};
+
+	const handleCopyWebhook = () => {
+		navigator.clipboard.writeText(webhookUrl);
+		setWebhookCopied(true);
+		setTimeout(() => setWebhookCopied(false), 2000);
+	};
+
 	return (
 		<div className="main-container assistant-container">
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
@@ -557,6 +594,34 @@ const AssistantComponent: React.FC = () => {
 				)}
 				{/* Running Section */}
 
+				{/* GitHub Webhook Helper Section */}
+				{isRunning && hasGitHubConfigured() && (
+					<div className="row mt-3">
+						<div className="col-md-12">
+							<div className="assistant-config-card" style={{ borderLeft: "3px solid #2ea043" }}>
+								<div className="assistant-config-content">
+									<div className="d-flex align-items-start">
+										<div className="me-3">
+											<i className="bi bi-github" style={{ fontSize: "2rem", color: "#2ea043" }}></i>
+										</div>
+										<div className="flex-grow-1">
+											<h6 className="text-white mb-2">Enable Real-time GitHub Connect (Optional)</h6>
+											<p className="text-muted mb-2" style={{ fontSize: "0.9rem" }}>
+												Configure a webhook in your github repository to have the agent run in realtime.
+											</p>
+											<Button variant="outline-success" size="sm" onClick={handleViewWebhook}>
+												<i className="bi bi-link-45deg me-1"></i>
+												View Webhook
+											</Button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
+				{/* GitHub Webhook Helper Section */}
+
 				{/* Stop Confirmation Modal */}
 				<Modal show={showStopConfirmation} onHide={() => setShowStopConfirmation(false)} centered>
 					<Modal.Header closeButton>
@@ -648,6 +713,62 @@ const AssistantComponent: React.FC = () => {
 					providerName={currentProviderName}
 					initiallySelectedResources={wizardSelectedResources[currentInputKey] || []}
 				/>
+
+				{/* Webhook Modal */}
+				<Modal show={showWebhookModal} onHide={() => setShowWebhookModal(false)} centered size="lg">
+					<Modal.Header closeButton>
+						<Modal.Title>GitHub Webhook Configuration</Modal.Title>
+					</Modal.Header>
+					<Modal.Body>
+						<div>
+							<div>
+								<label className="form-label text-white" style={{ fontSize: "0.9rem" }}>
+									Webhook URL
+								</label>
+								<div className="input-group">
+									<input
+										type="text"
+										className="form-control bg-dark text-white border-secondary"
+										value={webhookUrl}
+										readOnly
+										disabled
+										style={{ fontFamily: "monospace", fontSize: "0.9rem" }}
+									/>
+									<Button variant="outline-success" onClick={handleCopyWebhook}>
+										{webhookCopied ? (
+											<>
+												<i className="bi bi-check-lg me-1"></i>
+												Copied!
+											</>
+										) : (
+											<>
+												<i className="bi bi-clipboard me-1"></i>
+												Copy
+											</>
+										)}
+									</Button>
+								</div>
+							</div>
+							<p className="text-secondary my-3">Use this webhook URL to run the agent in realtime.</p>
+
+							<div className="mt-3">
+								<a
+									href="https://waveassist.io/blog/how-to-set-up-github-webhook-for-waveassist"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-success text-decoration-none">
+									<i className="bi bi-question-circle me-1"></i>
+									How to configure webhook?
+								</a>
+							</div>
+						</div>
+					</Modal.Body>
+					<Modal.Footer>
+						<Button variant="secondary" onClick={() => setShowWebhookModal(false)}>
+							Close
+						</Button>
+					</Modal.Footer>
+				</Modal>
 			</div>
 		</div>
 	);

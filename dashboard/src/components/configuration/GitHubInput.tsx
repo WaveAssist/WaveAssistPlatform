@@ -20,6 +20,9 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 	const [manualToken, setManualToken] = useState("");
 	const [isSubmittingToken, setIsSubmittingToken] = useState(false);
 	const [tokenValidationError, setTokenValidationError] = useState("");
+	const [showPopupMessage, setShowPopupMessage] = useState(false);
+	const [authUrl, setAuthUrl] = useState("");
+	const [popupBlocked, setPopupBlocked] = useState(false);
 	const { showToast } = useToast();
 
 	const validateGitHubToken = (token: string): string => {
@@ -69,6 +72,8 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 	const handleConnectGitHub = async () => {
 		try {
 			setIsLoading(true);
+			setPopupBlocked(false);
+			setShowPopupMessage(false);
 
 			const uid = localStorage.getItem("uid");
 			const projectKey = localStorage.getItem("selected_project_key");
@@ -87,8 +92,29 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 			const response = await callApi("providers/initiate/", body);
 
 			if (response && response.auth_url) {
+				// Store the auth URL for potential retry
+				setAuthUrl(response.auth_url);
+
 				// Open the auth URL in a new window/tab
-				window.open(response.auth_url, "_blank");
+				const popup = window.open(response.auth_url, "_blank");
+
+				// Check if popup was blocked
+				if (!popup || popup.closed || typeof popup.closed == "undefined") {
+					// Popup was blocked
+					setPopupBlocked(true);
+					setShowPopupMessage(true);
+				} else {
+					// Popup opened successfully
+					setShowPopupMessage(true);
+
+					// Check if popup is still open after a short delay
+					setTimeout(() => {
+						if (popup.closed) {
+							// Popup was closed quickly, might have been blocked
+							setPopupBlocked(true);
+						}
+					}, 1000);
+				}
 			} else {
 				throw new Error("No auth URL received from server");
 			}
@@ -97,6 +123,18 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 			alert("Failed to initiate GitHub connection. Please try again.");
 		} finally {
 			setIsLoading(false);
+		}
+	};
+
+	const handleRetryPopup = () => {
+		if (authUrl) {
+			const popup = window.open(authUrl, "_blank");
+			if (!popup || popup.closed || typeof popup.closed == "undefined") {
+				setPopupBlocked(true);
+			} else {
+				setPopupBlocked(false);
+				setShowPopupMessage(true);
+			}
 		}
 	};
 
@@ -160,8 +198,8 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 				<Modal.Title>Enter GitHub Personal Access Token</Modal.Title>
 			</Modal.Header>
 			<Modal.Body>
-				<Form.Group className="mx-3">
-					<Form.Label className="text-white mt-4 mb-2">GitHub Personal Access Token (GHP)</Form.Label>
+				<Form.Group>
+					<Form.Label className="text-white mb-2">GitHub Personal Access Token (GHP)</Form.Label>
 					<Form.Control
 						type="text"
 						placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -207,6 +245,33 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 				</Button>
 			</Modal.Footer>
 		</Modal>
+	);
+
+	// Popup Message Component
+	const popupMessage = showPopupMessage && (
+		<div className="mt-3 p-3 border rounded" style={{ backgroundColor: "#1a2332", borderColor: "#0d6efd" }}>
+			<div className="d-flex align-items-center gap-2">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="#0d6efd">
+					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+				</svg>
+				<div className="flex-grow-1">
+					<div className="fw-medium text-white mb-1">GitHub Authorization</div>
+					{popupBlocked ? (
+						<div className="small" style={{ color: "#adb5bd" }}>
+							Popup was blocked by your browser.
+							<button className="btn btn-link p-0 text-white text-decoration-none ms-1" onClick={handleRetryPopup} style={{ fontSize: "inherit" }}>
+								Click here to open again
+							</button>
+						</div>
+					) : (
+						<div className="small" style={{ color: "#adb5bd" }}>
+							Please continue the GitHub authorization flow in the new window that opened.
+						</div>
+					)}
+				</div>
+				<button className="btn-close btn-close-sm btn-close-white" onClick={() => setShowPopupMessage(false)} aria-label="Close"></button>
+			</div>
+		</div>
 	);
 
 	// If GitHub is already configured, show the configured state
@@ -403,6 +468,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 						</div>
 					</div>
 				</div>
+				{popupMessage}
 				{manualTokenModal}
 			</>
 		);
@@ -523,6 +589,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 				</div>
 			</div>
 
+			{popupMessage}
 			{manualTokenModal}
 
 			{/* Loading Overlay */}

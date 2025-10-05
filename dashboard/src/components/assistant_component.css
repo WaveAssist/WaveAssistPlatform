@@ -229,12 +229,7 @@
     justify-content: center;
 }
 
-/* Form Styles */
-.form-label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 8px;
-}
+
 
 .form-control, .form-select {
     border-radius: 8px;
