@@ -19,7 +19,7 @@ interface StockSelectorProps {
 	maxSelected?: number;
 }
 
-const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placeholder = "Search for your stocks...", maxSelected = 5 }) => {
+const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placeholder = "Search for your stocks...", maxSelected = 10 }) => {
 	const { showToast } = useToast();
 	const [stockSearchQuery, setStockSearchQuery] = useState("");
 	const [stockSearchResults, setStockSearchResults] = useState<Stock[]>([]);
