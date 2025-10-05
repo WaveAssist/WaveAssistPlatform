@@ -6,10 +6,15 @@ import DropdownInput from "./DropdownInput";
 import TextInput from "./TextInput";
 import GitHubInput from "./GitHubInput";
 
+interface Option {
+	name: string;
+	key: string;
+}
+
 interface InputConfig {
 	key: string;
 	type: string;
-	options?: string[];
+	options?: Option[];
 	helper_message?: string;
 	default_value?: string;
 }
@@ -21,9 +26,18 @@ interface InputFactoryProps {
 	selectResources?: (inputData: any) => void;
 	selectedResources?: any;
 	onRefresh?: () => void;
+	isOptional?: boolean;
 }
 
-const InputFactory: React.FC<InputFactoryProps> = ({ inputConfig, value, onChange, selectResources, selectedResources, onRefresh }) => {
+const InputFactory: React.FC<InputFactoryProps> = ({
+	inputConfig,
+	value,
+	onChange,
+	selectResources,
+	selectedResources,
+	onRefresh,
+	isOptional = false,
+}) => {
 	const { key, type, options, helper_message } = inputConfig;
 
 	// Render appropriate input component based on type
@@ -81,7 +95,10 @@ const InputFactory: React.FC<InputFactoryProps> = ({ inputConfig, value, onChang
 
 	return (
 		<Form.Group className="mb-3">
-			<Form.Label>{key}</Form.Label>
+			<Form.Label>
+				{key}
+				{isOptional && <span className="text-muted ms-1">(Optional)</span>}
+			</Form.Label>
 			{renderInput()}
 			{helper_message && <Form.Text className="text-secondary">{helper_message}</Form.Text>}
 		</Form.Group>

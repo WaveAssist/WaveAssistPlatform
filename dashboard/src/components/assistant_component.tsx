@@ -28,10 +28,12 @@ const AssistantComponent: React.FC = () => {
 
 	// Wizard state
 	const [wizardInputs, setWizardInputs] = useState<any[]>([]);
+	const [optionalInputs, setOptionalInputs] = useState<any[]>([]);
 	const [wizardValues, setWizardValues] = useState<Record<string, string>>({});
 	const [wizardSelectedResources, setWizardSelectedResources] = useState<Record<string, any>>({});
 	const [processingWizard, setProcessingWizard] = useState(false);
 	const [wizardLoading, setWizardLoading] = useState(false);
+	const [showOptionalInputs, setShowOptionalInputs] = useState(false);
 	const [startingNodeKey] = useState<string | null>(null);
 	const [runningDeploymentInfo, setRunningDeploymentInfo] = useState<any | null>(null);
 	const [isRunning, setIsRunning] = useState(false);
@@ -55,13 +57,19 @@ const AssistantComponent: React.FC = () => {
 		try {
 			const template_data = await fetchTemplateApi(template_key);
 			const input_array = template_data.input_array;
+			const optional_input_array = template_data.optional_input_array || [];
+
 			const success_message = template_data.success_message;
 			setSuccessMessage(success_message);
 			setWizardInputs(input_array);
+			setOptionalInputs(optional_input_array);
+
+			// Combine both arrays for initialization
+			const allInputs = [...input_array, ...optional_input_array];
 
 			// Initialize with defaults first
 			const defaults: Record<string, string> = {};
-			input_array.forEach((i: any) => {
+			allInputs.forEach((i: any) => {
 				if (i.default_value !== undefined) {
 					defaults[i.key] = i.default_value;
 				} else if (Array.isArray(i.options) && i.options.length > 0) {
@@ -73,7 +81,7 @@ const AssistantComponent: React.FC = () => {
 			setWizardValues(defaults);
 
 			// Fetch existing data for each input key
-			await fetchExistingDataForInputs(input_array, defaults);
+			await fetchExistingDataForInputs(allInputs, defaults);
 		} catch (err) {
 			console.error("Error fetching assistant:", err);
 			showToast("Could not find anything to configure.", "warning");
@@ -327,10 +335,22 @@ const AssistantComponent: React.FC = () => {
 	const hasEmptyInputs = () => {
 		return wizardInputs.some((input) => {
 			const value = wizardValues[input.key];
-			// Check if value is empty
+			
+			// Check if value is empty, null, undefined, or just whitespace
 			if (!value || value.trim() === "") {
 				return true;
 			}
+			
+			// Try to parse as JSON - if it's a JSON array, check if it's empty
+			try {
+				const parsed = JSON.parse(value);
+				if (Array.isArray(parsed) && parsed.length === 0) {
+					return true;
+				}
+			} catch {
+				// Not valid JSON, treat as regular string - already handled above
+			}
+			
 			// For OAuth inputs, also check if at least 1 resource is selected
 			if (OAUTH_INPUTS.includes(input.type)) {
 				const selectedResources = wizardSelectedResources[input.key];
@@ -338,6 +358,7 @@ const AssistantComponent: React.FC = () => {
 					return true;
 				}
 			}
+			
 			return false;
 		});
 	};
@@ -346,8 +367,23 @@ const AssistantComponent: React.FC = () => {
 		// Validate that all required inputs have values
 		const emptyInputs = wizardInputs.filter((input) => {
 			const value = wizardValues[input.key];
+
 			// Check if value is empty, null, undefined, or just whitespace
-			return !value || value.trim() === "";
+			if (!value || value.trim() === "") {
+				return true;
+			}
+
+			// Try to parse as JSON - if it's a JSON array, check if it's empty
+			try {
+				const parsed = JSON.parse(value);
+				if (Array.isArray(parsed) && parsed.length === 0) {
+					return true;
+				}
+			} catch {
+				// Not valid JSON, treat as regular string - already handled above
+			}
+
+			return false;
 		});
 
 		if (emptyInputs.length > 0) {
@@ -371,11 +407,22 @@ const AssistantComponent: React.FC = () => {
 
 		setProcessingWizard(true);
 		try {
+			// Save required inputs
 			for (const input of wizardInputs) {
 				const value = wizardValues[input.key];
 				// Determine data type based on value format. ToDo: Temporary hack. May just work.
 				const dataType = value && (value.startsWith("[") || value.startsWith("{")) ? "json" : "string";
 				await setDataForKeyApi(value, input.key, dataType);
+			}
+
+			// Save optional inputs (only if they have values)
+			for (const input of optionalInputs) {
+				const value = wizardValues[input.key];
+				if (value && value.trim() !== "") {
+					// Determine data type based on value format. ToDo: Temporary hack. May just work.
+					const dataType = value && (value.startsWith("[") || value.startsWith("{")) ? "json" : "string";
+					await setDataForKeyApi(value, input.key, dataType);
+				}
 			}
 			const env = localStorage.getItem("selected_env_key") || "";
 			console.log("Running DAB with starting node key: ", startingNodeKey, "and env: ", env);
@@ -512,6 +559,38 @@ const AssistantComponent: React.FC = () => {
 															onRefresh={refreshData}
 														/>
 													))}
+
+													{/* Optional Inputs Section */}
+													{optionalInputs.length > 0 && (
+														<div className="mt-4">
+															<Button
+																variant="outline-secondary"
+																size="sm"
+																className="mb-3"
+																onClick={() => setShowOptionalInputs(!showOptionalInputs)}
+																aria-expanded={showOptionalInputs}>
+																<i className={`bi bi-chevron-${showOptionalInputs ? "up" : "down"} me-2`}></i>
+																Other Options ({optionalInputs.length})
+															</Button>
+
+															{showOptionalInputs && (
+																<div className="optional-inputs-section">
+																	{optionalInputs.map((input_dict) => (
+																		<InputFactory
+																			key={input_dict.key}
+																			inputConfig={input_dict}
+																			value={wizardValues[input_dict.key] || ""}
+																			onChange={(value) => handleWizardInputChange(input_dict.key, value)}
+																			selectResources={handleSelectResources}
+																			selectedResources={wizardSelectedResources[input_dict.key]}
+																			onRefresh={refreshData}
+																			isOptional={true}
+																		/>
+																	))}
+																</div>
+															)}
+														</div>
+													)}
 												</Form>
 											)}
 										</>

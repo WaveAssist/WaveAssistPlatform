@@ -342,6 +342,58 @@
     color: rgba(255, 255, 255, 0.6) !important;
 }
 
+/* Optional Inputs Section */
+.optional-inputs-section {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.main-container .optional-inputs-section {
+    background-color: #2b3548;
+    border-color: #2b3548;
+}
+
+/* Dark theme for optional inputs section */
+.main-container .optional-inputs-section .form-label {
+    color: #ffffff;
+}
+
+.main-container .optional-inputs-section .form-control {
+    background-color: #1f2633;
+    border-color: #2b3548;
+    color: #ffffff;
+}
+
+.main-container .optional-inputs-section .form-control:focus {
+    background-color: #1f2633;
+    border-color: #408558;
+    color: #ffffff;
+}
+
+.main-container .optional-inputs-section .form-select {
+    background-color: #1f2633;
+    border-color: #2b3548;
+    color: #ffffff;
+}
+
+.main-container .optional-inputs-section .form-select:focus {
+    background-color: #1f2633;
+    border-color: #408558;
+    color: #ffffff;
+}
+
+.main-container .optional-inputs-section .form-text {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.main-container .optional-inputs-section .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
 /* Responsive Design */
 @media (max-width: 767px) {
     .assistant-config-card {
