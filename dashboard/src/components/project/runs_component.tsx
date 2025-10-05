@@ -254,40 +254,12 @@ const RunsComponent: React.FC = () => {
 
 	const columnDefs = [
 		{
-			headerName: "Run ID",
-			field: "run_id",
-			flex: 1,
-			minWidth: 50,
-			maxWidth: 120,
-			resizable: true,
-			pinned: "left" as const,
-			cellRenderer: (params: any) => {
-				const runId = params.value;
-				if (!runId) return "";
-
-				// Truncate to first 3 and last 3 characters
-				const truncated = runId.length > 8 ? `${runId.substring(0, 4)}...${runId.substring(runId.length - 4)}` : runId;
-
-				const handleCopy = () => {
-					navigator.clipboard.writeText(runId);
-					// Optional: Show a toast notification
-					showToast("Run ID copied to clipboard", "success");
-				};
-
-				return (
-					<div className="d-flex align-items-center gap-1" style={{ cursor: "pointer" }} onClick={handleCopy} title={`Click to copy: ${runId}`}>
-						<span className="text-truncate">{truncated}</span>
-						<span className="bi bi-clipboard" style={{ fontSize: "12px", opacity: 0.7 }}></span>
-					</div>
-				);
-			},
-			cellStyle: { display: "flex", alignItems: "center" },
-		},
-		{
 			headerName: "Status",
 			field: "status",
 			flex: 2,
 			minWidth: 120,
+			maxWidth: 120,
+
 			resizable: true,
 			cellRenderer: (params: any) => {
 				const status = params.value === "STARTED" ? "PROCESSING" : params.value;
@@ -302,7 +274,7 @@ const RunsComponent: React.FC = () => {
 		{
 			headerName: "View Output",
 			flex: 2,
-			minWidth: 130,
+			minWidth: 220,
 			resizable: true,
 			cellRenderer: (params: any) => {
 				const isSuccess = params.data.status === "SUCCESS";
@@ -401,9 +373,38 @@ const RunsComponent: React.FC = () => {
 			headerName: "Started At",
 			field: "started_at",
 			flex: 3,
-			minWidth: 150,
+			minWidth: 120,
 			resizable: true,
 			cellRenderer: (params: any) => formatTimestamp(params.value),
+			cellStyle: { display: "flex", alignItems: "center" },
+		},
+		{
+			headerName: "Run ID",
+			field: "run_id",
+			flex: 1,
+			minWidth: 150,
+			maxWidth: 150,
+			resizable: true,
+			cellRenderer: (params: any) => {
+				const runId = params.value;
+				if (!runId) return "";
+
+				// Truncate to first 3 and last 3 characters
+				const truncated = runId.length > 8 ? `${runId.substring(0, 4)}...${runId.substring(runId.length - 4)}` : runId;
+
+				const handleCopy = () => {
+					navigator.clipboard.writeText(runId);
+					// Optional: Show a toast notification
+					showToast("Run ID copied to clipboard", "success");
+				};
+
+				return (
+					<div className="d-flex align-items-center gap-1" style={{ cursor: "pointer" }} onClick={handleCopy} title={`Click to copy: ${runId}`}>
+						<span className="text-truncate">{truncated}</span>
+						<span className="bi bi-clipboard" style={{ fontSize: "12px", opacity: 0.7 }}></span>
+					</div>
+				);
+			},
 			cellStyle: { display: "flex", alignItems: "center" },
 		},
 	];
