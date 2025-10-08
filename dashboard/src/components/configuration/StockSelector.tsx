@@ -50,18 +50,29 @@ const StockSelector: React.FC<StockSelectorProps> = ({ value, onChange, placehol
 
 	// Initialize selected stocks from value prop
 	useEffect(() => {
-		if (value && value.trim()) {
+		console.log("value", value);
+		if (value) {
 			try {
+				// Convert value to string first if it's not already
+				const stringValue = typeof value === "string" ? value : JSON.stringify(value);
+
+				if (!stringValue || !stringValue.trim()) {
+					setSelectedStocks([]);
+					return;
+				}
+
+				const trimmedValue = stringValue.trim();
+
 				// Check if value is JSON (new format) or CSV (old format)
-				if (value.startsWith("[") && value.endsWith("]")) {
+				if (trimmedValue.startsWith("[") && trimmedValue.endsWith("]")) {
 					// JSON format - parse as array of stock objects
-					const parsedStocks = JSON.parse(value);
+					const parsedStocks = JSON.parse(trimmedValue);
 					if (Array.isArray(parsedStocks)) {
 						setSelectedStocks(parsedStocks);
 					}
 				} else {
 					// CSV format - parse as comma-separated symbols
-					const symbols = value
+					const symbols = trimmedValue
 						.split(",")
 						.map((s) => s.trim())
 						.filter((s) => s);

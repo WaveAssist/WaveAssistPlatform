@@ -30,10 +30,18 @@ const CommoditySelector: React.FC<CommoditySelectorProps> = ({ value, onChange, 
 
 	// Initialize selected commodities from value prop
 	useEffect(() => {
-		if (value && value.trim()) {
+		if (value) {
 			try {
+				// Convert value to string first if it's not already
+				const stringValue = typeof value === "string" ? value : JSON.stringify(value);
+
+				if (!stringValue || !stringValue.trim()) {
+					setSelectedCommodities([]);
+					return;
+				}
+
 				// Parse JSON value to get commodity objects
-				const parsedCommodities = JSON.parse(value);
+				const parsedCommodities = JSON.parse(stringValue.trim());
 				if (Array.isArray(parsedCommodities)) {
 					setSelectedCommodities(parsedCommodities);
 				}
@@ -42,6 +50,8 @@ const CommoditySelector: React.FC<CommoditySelectorProps> = ({ value, onChange, 
 				// If parsing fails, treat as empty selection
 				setSelectedCommodities([]);
 			}
+		} else {
+			setSelectedCommodities([]);
 		}
 	}, [value]);
 

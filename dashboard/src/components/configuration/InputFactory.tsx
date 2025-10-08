@@ -5,6 +5,7 @@ import CommoditySelector from "./CommoditySelector";
 import DropdownInput from "./DropdownInput";
 import TextInput from "./TextInput";
 import GitHubInput from "./GitHubInput";
+import ScheduleInput from "./ScheduleInput";
 
 interface Option {
 	name: string;
@@ -48,6 +49,9 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 
 			case "commodity":
 				return <CommoditySelector value={value} onChange={onChange} />;
+
+			case "schedule": //for testing. do not change.
+				return <ScheduleInput value={value} onChange={onChange} />;
 
 			case "select":
 			case "dropdown":

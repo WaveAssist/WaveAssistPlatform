@@ -9,6 +9,7 @@ import { fetchRunningDeploymentApi, stopDeploymentApi } from "../services/deploy
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchAllProjectsAPI } from "../services/all_projects_services";
 import { fetchResourcesApi } from "../services/assistant_services";
+import { convertToString, determineDataType } from "../utils/shared_functions";
 import InputFactory from "./configuration/InputFactory";
 import ResourceSelectionPopup from "./ResourceSelectionPopup";
 import "./assistant_component.css";
@@ -73,7 +74,9 @@ const AssistantComponent: React.FC = () => {
 				if (i.default_value !== undefined) {
 					defaults[i.key] = i.default_value;
 				} else if (Array.isArray(i.options) && i.options.length > 0) {
-					defaults[i.key] = i.options[0];
+					// Extract the key/value from the first option object
+					const firstOption = i.options[0];
+					defaults[i.key] = typeof firstOption === "string" ? firstOption : firstOption.key;
 				} else {
 					defaults[i.key] = "";
 				}
@@ -335,22 +338,30 @@ const AssistantComponent: React.FC = () => {
 	const hasEmptyInputs = () => {
 		return wizardInputs.some((input) => {
 			const value = wizardValues[input.key];
-			
-			// Check if value is empty, null, undefined, or just whitespace
-			if (!value || value.trim() === "") {
+
+			// Check if value is empty, null, undefined
+			if (!value) {
 				return true;
 			}
-			
+
+			// Convert to string first to ensure consistent handling
+			const stringValue = convertToString(value);
+
+			// Check if string value is empty or just whitespace
+			if (!stringValue || stringValue.trim() === "") {
+				return true;
+			}
+
 			// Try to parse as JSON - if it's a JSON array, check if it's empty
 			try {
-				const parsed = JSON.parse(value);
+				const parsed = JSON.parse(stringValue);
 				if (Array.isArray(parsed) && parsed.length === 0) {
 					return true;
 				}
 			} catch {
 				// Not valid JSON, treat as regular string - already handled above
 			}
-			
+
 			// For OAuth inputs, also check if at least 1 resource is selected
 			if (OAUTH_INPUTS.includes(input.type)) {
 				const selectedResources = wizardSelectedResources[input.key];
@@ -358,7 +369,7 @@ const AssistantComponent: React.FC = () => {
 					return true;
 				}
 			}
-			
+
 			return false;
 		});
 	};
@@ -367,15 +378,26 @@ const AssistantComponent: React.FC = () => {
 		// Validate that all required inputs have values
 		const emptyInputs = wizardInputs.filter((input) => {
 			const value = wizardValues[input.key];
+			console.log("value", value);
+			console.log("input", input);
+			console.log("wizardValues", wizardValues);
 
-			// Check if value is empty, null, undefined, or just whitespace
-			if (!value || value.trim() === "") {
+			// Check if value is empty, null, undefined
+			if (!value) {
+				return true;
+			}
+
+			// Convert to string first to ensure consistent handling
+			const stringValue = convertToString(value);
+
+			// Check if string value is empty or just whitespace
+			if (!stringValue || stringValue.trim() === "") {
 				return true;
 			}
 
 			// Try to parse as JSON - if it's a JSON array, check if it's empty
 			try {
-				const parsed = JSON.parse(value);
+				const parsed = JSON.parse(stringValue);
 				if (Array.isArray(parsed) && parsed.length === 0) {
 					return true;
 				}
@@ -410,18 +432,20 @@ const AssistantComponent: React.FC = () => {
 			// Save required inputs
 			for (const input of wizardInputs) {
 				const value = wizardValues[input.key];
-				// Determine data type based on value format. ToDo: Temporary hack. May just work.
-				const dataType = value && (value.startsWith("[") || value.startsWith("{")) ? "json" : "string";
-				await setDataForKeyApi(value, input.key, dataType);
+				// Convert value to string and determine data type
+				const stringValue = convertToString(value);
+				const dataType = determineDataType(value);
+				await setDataForKeyApi(stringValue, input.key, dataType);
 			}
 
 			// Save optional inputs (only if they have values)
 			for (const input of optionalInputs) {
 				const value = wizardValues[input.key];
-				if (value && value.trim() !== "") {
-					// Determine data type based on value format. ToDo: Temporary hack. May just work.
-					const dataType = value && (value.startsWith("[") || value.startsWith("{")) ? "json" : "string";
-					await setDataForKeyApi(value, input.key, dataType);
+				if (value) {
+					// Convert value to string and determine data type
+					const stringValue = convertToString(value);
+					const dataType = determineDataType(value);
+					await setDataForKeyApi(stringValue, input.key, dataType);
 				}
 			}
 			const env = localStorage.getItem("selected_env_key") || "";
