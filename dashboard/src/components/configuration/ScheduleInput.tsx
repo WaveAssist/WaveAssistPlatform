@@ -7,18 +7,6 @@ interface ScheduleInputProps {
 	onChange: (value: string) => void;
 }
 
-interface ScheduleData {
-	schedule_type: "interval" | "crontab" | "none";
-	interval_every?: string;
-	interval_type?: string;
-	crontab_minutes?: string;
-	crontab_hours?: string;
-	crontab_days_of_month?: string;
-	crontab_months_of_year?: string;
-	crontab_days_of_week?: string;
-	crontab_timezone?: string;
-}
-
 const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 	const [showModal, setShowModal] = useState(false);
 	const [scheduleType, setScheduleType] = useState<"interval" | "crontab" | "none">("interval");
@@ -35,6 +23,7 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 	useEffect(() => {
 		if (value) {
 			try {
+				console.log("value", value);
 				// Convert value to string first if it's not already
 				const stringValue = typeof value === "string" ? value : JSON.stringify(value);
 
@@ -42,18 +31,43 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 					return;
 				}
 
-				const parsed: ScheduleData = JSON.parse(stringValue);
-				setScheduleType(parsed.schedule_type || "interval");
-				if (parsed.schedule_type === "interval") {
-					setIntervalEvery(parsed.interval_every || "30");
-					setIntervalType(parsed.interval_type || "minutes");
-				} else if (parsed.schedule_type === "crontab") {
-					setCrontabMinutes(parsed.crontab_minutes || "*");
-					setCrontabHours(parsed.crontab_hours || "*");
-					setCrontabDaysOfMonth(parsed.crontab_days_of_month || "*");
-					setCrontabMonthsOfYear(parsed.crontab_months_of_year || "*");
-					setCrontabDaysOfWeek(parsed.crontab_days_of_week || "*");
-					setCrontabTimezone(parsed.crontab_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+				const parsed: any = JSON.parse(stringValue);
+
+				// Check if it's the new YAML-style format
+				if (parsed.interval) {
+					// New format: { interval: { every: 2, period: "minutes" } }
+					setScheduleType("interval");
+					setIntervalEvery(String(parsed.interval.every));
+					setIntervalType(parsed.interval.period);
+				} else if (parsed.cron) {
+					// New format: { cron: "30 15 * * *", timezone: "UTC" }
+					setScheduleType("crontab");
+					const cronParts = parsed.cron.split(" ");
+					if (cronParts.length === 5) {
+						setCrontabMinutes(cronParts[0]);
+						setCrontabHours(cronParts[1]);
+						setCrontabDaysOfMonth(cronParts[2]);
+						setCrontabMonthsOfYear(cronParts[3]);
+						setCrontabDaysOfWeek(cronParts[4]);
+					}
+					setCrontabTimezone(parsed.timezone || "UTC");
+				} else if (parsed.manual) {
+					// New format: { manual: true }
+					setScheduleType("none");
+				} else if (parsed.schedule_type) {
+					// Old format for backward compatibility
+					setScheduleType(parsed.schedule_type || "interval");
+					if (parsed.schedule_type === "interval") {
+						setIntervalEvery(parsed.interval_every || "30");
+						setIntervalType(parsed.interval_type || "minutes");
+					} else if (parsed.schedule_type === "crontab") {
+						setCrontabMinutes(parsed.crontab_minutes || "*");
+						setCrontabHours(parsed.crontab_hours || "*");
+						setCrontabDaysOfMonth(parsed.crontab_days_of_month || "*");
+						setCrontabMonthsOfYear(parsed.crontab_months_of_year || "*");
+						setCrontabDaysOfWeek(parsed.crontab_days_of_week || "*");
+						setCrontabTimezone(parsed.crontab_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+					}
 				}
 			} catch (error) {
 				console.error("Failed to parse schedule value:", error);
@@ -79,7 +93,7 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 			case "interval":
 				return `Every ${intervalEvery} ${intervalType}`;
 			case "crontab":
-				return `Cron: ${crontabMinutes} ${crontabHours} ${crontabDaysOfMonth} ${crontabMonthsOfYear} ${crontabDaysOfWeek}`;
+				return `Cron: ${crontabMinutes} ${crontabHours} ${crontabDaysOfMonth} ${crontabMonthsOfYear} ${crontabDaysOfWeek} (${crontabTimezone})`;
 			case "none":
 				return "Manual / Webhook Only";
 			default:
@@ -88,20 +102,28 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 	};
 
 	const handleSaveSchedule = () => {
-		const scheduleData: ScheduleData = {
-			schedule_type: scheduleType,
-		};
+		let scheduleData: any = {};
 
 		if (scheduleType === "interval") {
-			scheduleData.interval_every = intervalEvery;
-			scheduleData.interval_type = intervalType;
+			// New YAML format: { interval: { every: 2, period: "minutes" } }
+			scheduleData = {
+				interval: {
+					every: parseInt(intervalEvery) || 30,
+					period: intervalType,
+				},
+			};
 		} else if (scheduleType === "crontab") {
-			scheduleData.crontab_minutes = crontabMinutes;
-			scheduleData.crontab_hours = crontabHours;
-			scheduleData.crontab_days_of_month = crontabDaysOfMonth;
-			scheduleData.crontab_months_of_year = crontabMonthsOfYear;
-			scheduleData.crontab_days_of_week = crontabDaysOfWeek;
-			scheduleData.crontab_timezone = crontabTimezone;
+			// New YAML format: { cron: "30 15 * * *", timezone: "UTC" }
+			const cronString = `${crontabMinutes} ${crontabHours} ${crontabDaysOfMonth} ${crontabMonthsOfYear} ${crontabDaysOfWeek}`;
+			scheduleData = {
+				cron: cronString,
+				timezone: crontabTimezone,
+			};
+		} else if (scheduleType === "none") {
+			// For manual/webhook only, we can send an empty object or a specific flag
+			scheduleData = {
+				manual: true,
+			};
 		}
 
 		onChange(JSON.stringify(scheduleData));
@@ -181,13 +203,16 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 
 			{/* Schedule Configuration Modal */}
 			<Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
-				<Modal.Header closeButton>
-					<Modal.Title>Configure Schedule</Modal.Title>
+				<Modal.Header closeButton style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+					<Modal.Title>
+						<i className="bi bi-clock-history me-2"></i>
+						Configure Schedule
+					</Modal.Title>
 				</Modal.Header>
-				<Modal.Body>
+				<Modal.Body style={{ padding: "1.5rem" }}>
 					{/* Schedule Type Selector */}
 					<Form.Group className="mb-3">
-						<Form.Label>Schedule Type</Form.Label>
+						<Form.Label style={{ fontWeight: "500", fontSize: "0.95rem" }}>Schedule Type</Form.Label>
 						<DropdownButton
 							variant="secondary"
 							title={getScheduleTypeLabel()}
@@ -201,82 +226,117 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 
 					{/* Interval Schedule */}
 					{scheduleType === "interval" && (
-						<Form.Group className="mb-3">
-							<Form.Label>Interval</Form.Label>
-							<div className="d-flex align-items-center gap-2">
-								<span>Every</span>
-								<Form.Control type="text" value={intervalEvery} onChange={(e) => setIntervalEvery(e.target.value)} style={{ width: "80px" }} />
-								<DropdownButton
-									variant="secondary"
-									title={intervalType || "Select Type"}
-									id="intervalTypeDropdown"
-									onSelect={(selected) => setIntervalType(selected!)}>
-									<Dropdown.Item eventKey="days">days</Dropdown.Item>
-									<Dropdown.Item eventKey="hours">hours</Dropdown.Item>
-									<Dropdown.Item eventKey="minutes">minutes</Dropdown.Item>
-									<Dropdown.Item eventKey="seconds">seconds</Dropdown.Item>
-									<Dropdown.Item eventKey="microseconds">microseconds</Dropdown.Item>
-								</DropdownButton>
-							</div>
-							<Form.Text className="text-secondary">
-								Schedule will run every {intervalEvery} {intervalType}
-							</Form.Text>
-						</Form.Group>
+						<div
+							style={{
+								backgroundColor: "rgba(255, 255, 255, 0.02)",
+								padding: "1.25rem",
+								borderRadius: "8px",
+								border: "1px solid rgba(255, 255, 255, 0.08)",
+							}}>
+							<Form.Group>
+								<Form.Label style={{ fontWeight: "500", fontSize: "0.95rem" }}>
+									<i className="bi bi-arrow-repeat me-2"></i>
+									Interval Configuration
+								</Form.Label>
+								<div className="d-flex align-items-center gap-2">
+									<span style={{ fontSize: "0.9rem" }}>Every</span>
+									<Form.Control type="text" value={intervalEvery} onChange={(e) => setIntervalEvery(e.target.value)} style={{ width: "80px" }} />
+									<DropdownButton
+										variant="secondary"
+										title={intervalType || "Select Type"}
+										id="intervalTypeDropdown"
+										onSelect={(selected) => setIntervalType(selected!)}>
+										<Dropdown.Item eventKey="days">days</Dropdown.Item>
+										<Dropdown.Item eventKey="hours">hours</Dropdown.Item>
+										<Dropdown.Item eventKey="minutes">minutes</Dropdown.Item>
+										<Dropdown.Item eventKey="seconds">seconds</Dropdown.Item>
+										<Dropdown.Item eventKey="microseconds">microseconds</Dropdown.Item>
+									</DropdownButton>
+								</div>
+								<Form.Text className="text-secondary d-block mt-2" style={{ fontSize: "0.85rem" }}>
+									<i className="bi bi-info-circle me-1"></i>
+									Schedule will run every{" "}
+									<strong>
+										{intervalEvery} {intervalType}
+									</strong>
+								</Form.Text>
+							</Form.Group>
+						</div>
 					)}
 
 					{/* Cron Schedule */}
 					{scheduleType === "crontab" && (
-						<div>
+						<div
+							style={{
+								backgroundColor: "rgba(255, 255, 255, 0.02)",
+								padding: "0.85rem",
+								borderRadius: "8px",
+								border: "1px solid rgba(255, 255, 255, 0.08)",
+							}}>
+							<h6 style={{ fontWeight: "500", fontSize: "0.95rem", marginBottom: "0.6rem" }}>
+								<i className="bi bi-calendar3 me-2"></i>
+								Cron Expression
+							</h6>
 							<div className="row">
 								{/* Minute */}
-								<div className="col-md-6 mb-3">
+								<div className="col-md-6 mb-1">
 									<Form.Group>
-										<Form.Label>Minute (m)</Form.Label>
+										<Form.Label style={{ fontSize: "0.9rem", fontWeight: "500" }}>Minute (m)</Form.Label>
 										<Form.Control type="text" value={crontabMinutes} onChange={(e) => setCrontabMinutes(e.target.value)} placeholder="*" />
-										<Form.Text className="text-secondary">0-59 or *</Form.Text>
+										<Form.Text className="text-secondary" style={{ fontSize: "0.8rem" }}>
+											0-59 or *
+										</Form.Text>
 									</Form.Group>
 								</div>
 
 								{/* Hour */}
-								<div className="col-md-6 mb-3">
+								<div className="col-md-6 mb-1">
 									<Form.Group>
-										<Form.Label>Hour (h)</Form.Label>
+										<Form.Label style={{ fontSize: "0.9rem", fontWeight: "500" }}>Hour (h)</Form.Label>
 										<Form.Control type="text" value={crontabHours} onChange={(e) => setCrontabHours(e.target.value)} placeholder="*" />
-										<Form.Text className="text-secondary">0-23 or *</Form.Text>
+										<Form.Text className="text-secondary" style={{ fontSize: "0.8rem" }}>
+											0-23 or *
+										</Form.Text>
 									</Form.Group>
 								</div>
 
 								{/* Day of Month */}
-								<div className="col-md-6 mb-3">
+								<div className="col-md-6 mb-1">
 									<Form.Group>
-										<Form.Label>Day of Month (dM)</Form.Label>
+										<Form.Label style={{ fontSize: "0.9rem", fontWeight: "500" }}>Day of Month (dM)</Form.Label>
 										<Form.Control type="text" value={crontabDaysOfMonth} onChange={(e) => setCrontabDaysOfMonth(e.target.value)} placeholder="*" />
-										<Form.Text className="text-secondary">1-31 or *</Form.Text>
+										<Form.Text className="text-secondary" style={{ fontSize: "0.8rem" }}>
+											1-31 or *
+										</Form.Text>
 									</Form.Group>
 								</div>
 
 								{/* Month of Year */}
-								<div className="col-md-6 mb-3">
+								<div className="col-md-6 mb-1">
 									<Form.Group>
-										<Form.Label>Month of Year (MY)</Form.Label>
+										<Form.Label style={{ fontSize: "0.9rem", fontWeight: "500" }}>Month of Year (MY)</Form.Label>
 										<Form.Control type="text" value={crontabMonthsOfYear} onChange={(e) => setCrontabMonthsOfYear(e.target.value)} placeholder="*" />
-										<Form.Text className="text-secondary">1-12 or *</Form.Text>
+										<Form.Text className="text-secondary" style={{ fontSize: "0.8rem" }}>
+											1-12 or *
+										</Form.Text>
 									</Form.Group>
 								</div>
 
 								{/* Day of Week */}
-								<div className="col-md-6 mb-3">
+								<div className="col-md-6 mb-1">
 									<Form.Group>
-										<Form.Label>Day of Week (d)</Form.Label>
+										<Form.Label style={{ fontSize: "0.9rem", fontWeight: "500" }}>Day of Week (d)</Form.Label>
 										<Form.Control type="text" value={crontabDaysOfWeek} onChange={(e) => setCrontabDaysOfWeek(e.target.value)} placeholder="*" />
-										<Form.Text className="text-secondary">0-6 (Sun-Sat) or *</Form.Text>
+										<Form.Text className="text-secondary" style={{ fontSize: "0.8rem" }}>
+											0-6 (Sun-Sat) or *
+										</Form.Text>
 									</Form.Group>
 								</div>
 
 								{/* Timezone */}
-								<div className="col-md-6 mb-3">
+								<div className="col-md-6 mb-1">
 									<Form.Group>
-										<Form.Label>Timezone</Form.Label>
+										<Form.Label style={{ fontSize: "0.9rem", fontWeight: "500" }}>Timezone</Form.Label>
 										<DropdownButton
 											variant="secondary"
 											title={crontabTimezone || "Select Timezone"}
@@ -289,24 +349,44 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 												</Dropdown.Item>
 											))}
 										</DropdownButton>
+										<Form.Text className="text-secondary" style={{ fontSize: "0.8rem" }}>
+											Select timezone for cron execution
+										</Form.Text>
 									</Form.Group>
 								</div>
 							</div>
-							<Form.Text className="text-secondary">
-								Cron expression: {crontabMinutes} {crontabHours} {crontabDaysOfMonth} {crontabMonthsOfYear} {crontabDaysOfWeek} ({crontabTimezone})
-							</Form.Text>
+							<div
+								style={{
+									marginTop: "0.5rem",
+									padding: "0.5rem 0.65rem",
+									backgroundColor: "rgba(13, 110, 253, 0.1)",
+									borderRadius: "6px",
+									border: "1px solid rgba(13, 110, 253, 0.2)",
+								}}>
+								<Form.Text className="text-secondary d-block" style={{ fontSize: "0.82rem" }}>
+									<i className="bi bi-info-circle me-1"></i>
+									<strong>Cron expression:</strong> {crontabMinutes} {crontabHours} {crontabDaysOfMonth} {crontabMonthsOfYear} {crontabDaysOfWeek} (
+									{crontabTimezone})
+								</Form.Text>
+							</div>
 						</div>
 					)}
 
 					{/* Manual/Webhook Only */}
 					{scheduleType === "none" && (
-						<div className="alert alert-info">
+						<div
+							style={{
+								backgroundColor: "rgba(13, 202, 240, 0.1)",
+								padding: "1rem",
+								borderRadius: "8px",
+								border: "1px solid rgba(13, 202, 240, 0.2)",
+							}}>
 							<i className="bi bi-info-circle me-2"></i>
 							This schedule will only run manually or via webhook trigger.
 						</div>
 					)}
 				</Modal.Body>
-				<Modal.Footer>
+				<Modal.Footer style={{ borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
 					<Button variant="secondary" onClick={() => setShowModal(false)}>
 						Cancel
 					</Button>

@@ -3,7 +3,7 @@ import { usePostHog } from "posthog-js/react";
 import { useToast } from "../utils/toast_context";
 import { useRefresh } from "../utils/RefreshContext";
 import { Button, Form, Spinner, Modal } from "react-bootstrap";
-import { fetchTemplateApi, setDataForKeyApi, runDAGApi, fetchDataForKeyAPI } from "../services/project_services";
+import { fetchTemplateApi, setDataForKeyApi, runDAGApi, fetchDataForKeyAPI, updateNodeApi, fetchNodesApi } from "../services/project_services";
 import { deployProjectApi } from "../services/navbar_services";
 import { fetchRunningDeploymentApi, stopDeploymentApi } from "../services/deployment_services";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -71,8 +71,8 @@ const AssistantComponent: React.FC = () => {
 			// Initialize with defaults first
 			const defaults: Record<string, string> = {};
 			allInputs.forEach((i: any) => {
-				if (i.default_value !== undefined) {
-					defaults[i.key] = i.default_value;
+				if (i.value !== undefined) {
+					defaults[i.key] = i.value;
 				} else if (Array.isArray(i.options) && i.options.length > 0) {
 					// Extract the key/value from the first option object
 					const firstOption = i.options[0];
@@ -374,6 +374,88 @@ const AssistantComponent: React.FC = () => {
 		});
 	};
 
+	const handleScheduleInput = async (value: string, key: string) => {
+		console.log("=== Schedule Input Handler ===");
+		console.log("Schedule Key:", key);
+		console.log("Schedule Value:", value);
+
+		try {
+			const parsed = JSON.parse(value);
+			console.log("Parsed Schedule Data:", parsed);
+
+			// Convert new format to old format that backend expects
+			let scheduleData: any = {};
+
+			if (parsed.interval) {
+				console.log(`Interval Schedule: Every ${parsed.interval.every} ${parsed.interval.period}`);
+				scheduleData = {
+					schedule_type: "interval",
+					interval_every: String(parsed.interval.every),
+					interval_type: parsed.interval.period,
+				};
+			} else if (parsed.cron) {
+				console.log(`Cron Schedule: ${parsed.cron} (${parsed.timezone})`);
+				const cronParts = parsed.cron.split(" ");
+				if (cronParts.length === 5) {
+					scheduleData = {
+						schedule_type: "crontab",
+						crontab_minutes: cronParts[0],
+						crontab_hours: cronParts[1],
+						crontab_days_of_month: cronParts[2],
+						crontab_months_of_year: cronParts[3],
+						crontab_days_of_week: cronParts[4],
+						crontab_timezone: parsed.timezone || "UTC",
+					};
+				} else {
+					console.error("Invalid cron expression format");
+					throw new Error("Invalid cron expression format");
+				}
+			} else if (parsed.manual) {
+				console.log("Manual/Webhook Only Schedule");
+				scheduleData = {
+					schedule_type: "none",
+				};
+			} else {
+				// Already in old format, use as-is
+				scheduleData = parsed;
+			}
+
+			console.log("Converted Schedule Data:", scheduleData);
+
+			// Fetch the starting node to get its current data
+			const nodesData = await fetchNodesApi();
+			const startingNode = nodesData.node_array.find((n: any) => n.is_starting_node);
+
+			if (!startingNode) {
+				throw new Error("No starting node found");
+			}
+
+			console.log("Starting Node:", startingNode.node_key);
+
+			// Build the update data by merging current node data with schedule changes
+			const updateData = {
+				name: startingNode.name,
+				is_enabled: true,
+				is_starting_node: true,
+				...scheduleData,
+				input_data_key_array: startingNode.input_data_key_array || [],
+				output_data_key_array: startingNode.output_data_key_array || [],
+				run_after_nodes_array: startingNode.run_after_nodes_array || [],
+			};
+
+			console.log("Update Data:", updateData);
+
+			// Call updateNodeApi like nodes component does
+			await updateNodeApi(startingNode.node_key, updateData);
+			console.log("Node schedule updated successfully");
+		} catch (error) {
+			console.error("Error handling schedule data:", error);
+			throw error;
+		}
+
+		console.log("=============================");
+	};
+
 	const handleRunAndDeploy = async () => {
 		// Validate that all required inputs have values
 		const emptyInputs = wizardInputs.filter((input) => {
@@ -429,25 +511,25 @@ const AssistantComponent: React.FC = () => {
 
 		setProcessingWizard(true);
 		try {
-			// Save required inputs
-			for (const input of wizardInputs) {
-				const value = wizardValues[input.key];
-				// Convert value to string and determine data type
-				const stringValue = convertToString(value);
-				const dataType = determineDataType(value);
-				await setDataForKeyApi(stringValue, input.key, dataType);
-			}
+			// Merge both required and optional inputs
+			const allInputs = [...wizardInputs, ...optionalInputs];
 
-			// Save optional inputs (only if they have values)
-			for (const input of optionalInputs) {
+			// Save all inputs
+			for (const input of allInputs) {
 				const value = wizardValues[input.key];
 				if (value) {
-					// Convert value to string and determine data type
-					const stringValue = convertToString(value);
-					const dataType = determineDataType(value);
-					await setDataForKeyApi(stringValue, input.key, dataType);
+					// Check if this is a schedule type input
+					if (input.type === "schedule") {
+						await handleScheduleInput(value, input.key);
+					} else {
+						// Convert value to string and determine data type
+						const stringValue = convertToString(value);
+						const dataType = determineDataType(value);
+						await setDataForKeyApi(stringValue, input.key, dataType);
+					}
 				}
 			}
+
 			const env = localStorage.getItem("selected_env_key") || "";
 			console.log("Running DAB with starting node key: ", startingNodeKey, "and env: ", env);
 			await runDAGApi(null, env);

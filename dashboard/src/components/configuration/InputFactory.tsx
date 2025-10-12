@@ -50,7 +50,7 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 			case "commodity":
 				return <CommoditySelector value={value} onChange={onChange} />;
 
-			case "schedule": //for testing. do not change.
+			case "schedule":
 				return <ScheduleInput value={value} onChange={onChange} />;
 
 			case "select":
