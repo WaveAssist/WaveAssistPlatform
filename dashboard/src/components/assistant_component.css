@@ -334,6 +334,24 @@
     border-color: #2b3548 !important;
 }
 
+/* GitHub Input Dark Theme - Optional */
+.main-container .optional-inputs-section .github-input-container .border {
+    background-color: #1f2633 !important;
+    border-color: #1f2633 !important;
+}
+
+/* ClickUp Input Dark Theme */
+.main-container .clickup-input-container .border {
+    background-color: #2b3548 !important;
+    border-color: #2b3548 !important;
+}
+
+/* ClickUp Input Dark Theme - Optional */
+.main-container .optional-inputs-section .clickup-input-container .border {
+    background-color: #1f2633 !important;
+    border-color: #1f2633 !important;
+}
+
 .main-container .github-input-container .fw-medium {
     color: #ffffff !important;
 }
