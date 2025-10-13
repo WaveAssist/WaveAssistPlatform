@@ -380,6 +380,8 @@ const AssistantComponent: React.FC = () => {
 		console.log("Schedule Value:", value);
 
 		try {
+			//convert to string if not
+			value  = convertToString(value)
 			const parsed = JSON.parse(value);
 			console.log("Parsed Schedule Data:", parsed);
 
