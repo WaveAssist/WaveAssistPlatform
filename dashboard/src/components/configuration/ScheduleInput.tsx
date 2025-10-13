@@ -50,7 +50,7 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 						setCrontabMonthsOfYear(cronParts[3]);
 						setCrontabDaysOfWeek(cronParts[4]);
 					}
-					setCrontabTimezone(parsed.timezone || "UTC");
+					setCrontabTimezone(parsed.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
 				} else if (parsed.manual) {
 					// New format: { manual: true }
 					setScheduleType("none");
