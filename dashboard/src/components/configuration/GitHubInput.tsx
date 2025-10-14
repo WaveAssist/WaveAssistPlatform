@@ -30,14 +30,26 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 			return "";
 		}
 
-		// Check if token starts with ghp_ or gho_
-		if (!token.startsWith("ghp_") && !token.startsWith("gho_")) {
-			return "Token must start with 'ghp_' or 'gho_'";
+		// Define token types with their prefixes and expected lengths
+		const tokenTypes = [
+			{ prefix: "ghp_", length: 40, name: "Personal Access Token (Classic)" },
+			{ prefix: "gho_", length: 40, name: "OAuth Access Token" },
+			{ prefix: "github_pat_", length: 93, name: "Fine-Grained Personal Access Token" },
+			{ prefix: "ghu_", length: 40, name: "GitHub App User-to-Server Token" },
+			{ prefix: "ghs_", length: 40, name: "GitHub App Server-to-Server Token" },
+			{ prefix: "ghr_", length: 40, name: "GitHub App Refresh Token" }
+		];
+
+		// Check if token matches any known type
+		const matchingType = tokenTypes.find(type => token.startsWith(type.prefix));
+		
+		if (!matchingType) {
+			return `Please enter a valid GitHub Access Token`;
 		}
 
-		// GitHub tokens are 40 characters total
-		if (token.length !== 40) {
-			return "Token must be exactly 40 characters long";
+		// Check length for the specific token type
+		if (token.length !== matchingType.length) {
+			return `Please enter a valid GitHub Access Token`;
 		}
 
 		return "";
@@ -195,11 +207,11 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 			}}
 			centered>
 			<Modal.Header closeButton>
-				<Modal.Title>Enter GitHub Personal Access Token</Modal.Title>
+				<Modal.Title>Enter GitHub Access Token</Modal.Title>
 			</Modal.Header>
 			<Modal.Body>
 				<Form.Group>
-					<Form.Label className="text-white mb-2">GitHub Personal Access Token (GHP)</Form.Label>
+					<Form.Label className="text-white mb-2">GitHub Access Token</Form.Label>
 					<Form.Control
 						type="text"
 						placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -215,7 +227,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 						</Form.Control.Feedback>
 					)}
 					<p className="text-white mt-2 small">
-						Enter your GitHub Personal Access Token.{" "}
+						Enter your GitHub Access Token.{" "}
 						<a className="text-white" href="https://waveassist.io/blog/how-to-get-your-github-token-for-gitzoid" target="_blank">
 							How to find?
 						</a>
@@ -461,7 +473,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 										}}
 										onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
 										onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}>
-										or update manual token
+										or update token manually
 									</a>
 								</div>
 							</div>
@@ -525,7 +537,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 								}}
 								onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
 								onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}>
-								or manually enter your GHP
+								or manually enter your token
 							</a>
 						</div>
 					</div>
@@ -582,7 +594,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 								}}
 								onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
 								onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}>
-								or manually enter your GHP
+								or manually enter your token
 							</a>
 						</div>
 					</div>
