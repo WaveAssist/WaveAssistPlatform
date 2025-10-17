@@ -3,6 +3,7 @@ import Joyride, { Step } from "react-joyride";
 
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
+import Spinner from "react-bootstrap/Spinner";
 import Alert from "react-bootstrap/Alert";
 import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 
@@ -28,6 +29,7 @@ const AllProjectsComponent: React.FC = () => {
 	const [isUserPremium, setIsUserPremium] = useState(false);
 	const [showModal, setShowModal] = useState(false);
 	const [isProjectKeyEdited, setIsProjectKeyEdited] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const posthog = usePostHog();
@@ -63,6 +65,7 @@ const AllProjectsComponent: React.FC = () => {
 	}, [newProjectName]);
 
 	const fetchData = async () => {
+		setLoading(true);
 		try {
 			const data = await fetchAllProjectsAPI();
 			setProjectArray(data.project_array);
@@ -93,6 +96,8 @@ const AllProjectsComponent: React.FC = () => {
 		} catch (error) {
 			console.error("FetchAllProjects failed:", error);
 			showToast("Something went wrong with loading projects, please try again.", "danger");
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -221,7 +226,14 @@ const AllProjectsComponent: React.FC = () => {
 					</button>
 				</div>
 			</div>
-
+			{loading && (
+				<div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+					<Spinner animation="border" role="status" variant="success">
+						<span className="visually-hidden">Loading...</span>
+					</Spinner>
+				</div>
+			)}
+			{!loading && (
 			<div className="admin-panel">
 				<div className="content projects-row">
 					<div className="header">
@@ -266,8 +278,9 @@ const AllProjectsComponent: React.FC = () => {
 							</div>
 						))}
 					</div>
+					</div>
 				</div>
-			</div>
+			)}
 
 			<Modal show={showModal} onHide={handleCloseModal}>
 				<Modal.Header closeButton>
