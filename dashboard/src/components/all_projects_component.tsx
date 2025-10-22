@@ -210,7 +210,7 @@ const AllProjectsComponent: React.FC = () => {
 				<div className="col-6 d-flex flex-row flex-nowrap justify-content-end align-items-center button-row">
 					<a
 						href="https://waveassist.io/assistants"
-						target="_blank"
+						target="_self"
 						rel="noopener noreferrer"
 						className="btn btn-outline-secondary btn-sm ms-2 use-template-button">
 						<i className="bi bi-copy"></i>
@@ -241,7 +241,7 @@ const AllProjectsComponent: React.FC = () => {
 					</div>
 
 					<div className="row ">
-						<div className="col-sm-4 project-card  " onClick={() => window.open("https://waveassist.io/assistants", "_blank")}>
+						<div className="col-sm-4 project-card  " onClick={() => window.open("https://waveassist.io/assistants", "_self")}>
 							<div className="card text-white bg-dark mb-3 ml-5 mr-5 add-project-card">
 								<div className="card-body d-flex align-items-center justify-content-center">
 									<div className="text-center">
@@ -327,7 +327,7 @@ const AllProjectsComponent: React.FC = () => {
 						<Button
 							size="sm"
 							className="p-0 translucent_blue bg-transparent border-0 text-decoration-none"
-							onClick={() => window.open("https://waveassist.io/assistants", "_blank")}
+							onClick={() => window.open("https://waveassist.io/assistants", "_self")}
 							onMouseOver={(e) => e.currentTarget.classList.add("text-decoration-underline")}
 							onMouseOut={(e) => e.currentTarget.classList.remove("text-decoration-underline")}>
 							{/* <i className="bi bi-lightning-fill me-1" style={{ fontSize: "0.8rem" }}></i> */}
