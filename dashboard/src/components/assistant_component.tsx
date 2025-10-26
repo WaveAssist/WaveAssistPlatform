@@ -559,6 +559,7 @@ const AssistantComponent: React.FC = () => {
 					user_id: uid,
 					project_id: projectKey,
 					assistant_key: assistantKey,
+					value: 10,
 					deployment_status: "success",
 				};
 
