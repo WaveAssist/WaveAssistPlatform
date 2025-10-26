@@ -64,13 +64,8 @@ const DeployComponent: React.FC = () => {
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
 		const templateKey = searchParams.get("template_key");
-		const client_id = searchParams.get("client_id");
-		console.log("searchParams", searchParams);
 
-		// Store client_id in localStorage if provided
-		if (client_id) {
-			localStorage.setItem("client_id", client_id);
-		}
+		console.log("searchParams", searchParams);
 
 		if (!templateKey) {
 			alert("Missing template_key in URL.");

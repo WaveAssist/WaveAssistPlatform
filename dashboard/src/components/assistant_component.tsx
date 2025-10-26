@@ -140,12 +140,6 @@ const AssistantComponent: React.FC = () => {
 	const handleUrlParameters = async () => {
 		const projectKey = searchParams.get("project_key");
 		const integrationComplete = searchParams.get("is_integration_complete");
-		const client_id = searchParams.get("client_id");
-
-		// Store client_id in localStorage if provided
-		if (client_id) {
-			localStorage.setItem("client_id", client_id);
-		}
 
 		if (projectKey) {
 			// Store project key and env to localStorage
@@ -551,24 +545,17 @@ const AssistantComponent: React.FC = () => {
 			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
 			const assistantKey = projectData.template_key || "unknown_assistant";
 			const uid = localStorage.getItem("uid");
-			const client_id = localStorage.getItem("client_id");
 
-			if (typeof window !== "undefined" && (window as any).dataLayer) {
-				const gtmEvent: any = {
+			// Track deployment success
+			if (window?.dataLayer) {
+				window.dataLayer.push({
 					event: "assistant_deployed",
 					user_id: uid,
 					project_id: projectKey,
 					assistant_key: assistantKey,
 					value: 10,
 					deployment_status: "success",
-				};
-
-				// Add client_id if available
-				if (client_id) {
-					gtmEvent.client_id = client_id;
-				}
-
-				(window as any).dataLayer.push(gtmEvent);
+				});
 			}
 
 			// Switch UI to running state and fetch latest running info
