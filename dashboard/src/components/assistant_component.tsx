@@ -140,6 +140,12 @@ const AssistantComponent: React.FC = () => {
 	const handleUrlParameters = async () => {
 		const projectKey = searchParams.get("project_key");
 		const integrationComplete = searchParams.get("is_integration_complete");
+		const client_id = searchParams.get("client_id");
+
+		// Store client_id in localStorage if provided
+		if (client_id) {
+			localStorage.setItem("client_id", client_id);
+		}
 
 		if (projectKey) {
 			// Store project key and env to localStorage
@@ -381,7 +387,7 @@ const AssistantComponent: React.FC = () => {
 
 		try {
 			//convert to string if not
-			value  = convertToString(value)
+			value = convertToString(value);
 			const parsed = JSON.parse(value);
 			console.log("Parsed Schedule Data:", parsed);
 
@@ -539,6 +545,31 @@ const AssistantComponent: React.FC = () => {
 			var version_code_string = `0.${Math.floor(Math.random() * 101)}.${Math.floor(Math.random() * 101)}`;
 			console.log("Deploying project with version code: ", version_code_string);
 			await deployProjectApi(version_code_string);
+
+			// Push event to Google Tag Manager
+			const projectKey = localStorage.getItem("selected_project_key");
+			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
+			const assistantKey = projectData.template_key || "unknown_assistant";
+			const uid = localStorage.getItem("uid");
+			const client_id = localStorage.getItem("client_id");
+
+			if (typeof window !== "undefined" && (window as any).dataLayer) {
+				const gtmEvent: any = {
+					event: "assistant_deployed",
+					user_id: uid,
+					project_id: projectKey,
+					assistant_key: assistantKey,
+					deployment_status: "success",
+				};
+
+				// Add client_id if available
+				if (client_id) {
+					gtmEvent.client_id = client_id;
+				}
+
+				(window as any).dataLayer.push(gtmEvent);
+			}
+
 			// Switch UI to running state and fetch latest running info
 			try {
 				const response = await fetchRunningDeploymentApi();

@@ -43,7 +43,15 @@ const LoginComponent: React.FC = () => {
 
 	const session_id = searchParams.get("session_id");
 	const uid = searchParams.get("uid");
+	const client_id = searchParams.get("client_id");
 	const isCLILogin = !!session_id;
+
+	// Store client_id in localStorage if provided
+	useEffect(() => {
+		if (client_id) {
+			localStorage.setItem("client_id", client_id);
+		}
+	}, [client_id]);
 
 	const [cliLoginComplete, setCliLoginComplete] = useState(false);
 
