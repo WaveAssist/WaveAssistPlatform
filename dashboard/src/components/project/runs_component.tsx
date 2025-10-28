@@ -181,9 +181,7 @@ const RunsComponent: React.FC = () => {
 	const handleViewOutput = async (runId: string) => {
 		try {
 			setLoadingOutputRunId(runId);
-			console.log("View Output clicked for run ID:", runId);
 			const response = await fetchDataForKeyAPI("display_output", runId);
-			console.log("Output data:", response);
 
 			if (response && response.data && response.data.html_content) {
 				console.log("HTML Content:", response.data.html_content);
@@ -277,10 +275,13 @@ const RunsComponent: React.FC = () => {
 			minWidth: 220,
 			resizable: true,
 			cellRenderer: (params: any) => {
-				const isSuccess = params.data.status === "SUCCESS";
+				const status = params.data.status;
+				const isSuccess = status === "SUCCESS";
+				const isFailed = status === "FAILED";
+				const canViewOutput = isSuccess || isFailed;
 				const isThisRunLoading = loadingOutputRunId === params.data.run_id;
-				const isProcessing = params.data.status === "STARTED" || params.data.status === "RUNNING";
-				const isDisabled = isProcessing || params.data.status === "FAILED" || isThisRunLoading;
+				const isProcessing = status === "STARTED" || status === "RUNNING";
+				const isDisabled = isProcessing || isThisRunLoading;
 				const runId = params.data.run_id;
 				const progressData = runProgress[runId];
 
@@ -288,9 +289,9 @@ const RunsComponent: React.FC = () => {
 					<div className="d-flex align-items-center gap-2">
 						<button
 							className={`btn btn-sm ${isSuccess ? "btn-outline-success" : "btn-outline-secondary"}`}
-							onClick={() => isSuccess && !isThisRunLoading && handleViewOutput(runId)}
+							onClick={() => canViewOutput && !isThisRunLoading && handleViewOutput(runId)}
 							disabled={isDisabled}
-							title={isSuccess ? (isThisRunLoading ? "Loading..." : "View Output") : "Output not available"}>
+							title={canViewOutput ? (isThisRunLoading ? "Loading..." : "View Output") : "Output not available"}>
 							{isThisRunLoading ? (
 								<>
 									<span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
