@@ -2,6 +2,7 @@ import React from "react";
 import { Form } from "react-bootstrap";
 import StockSelector from "./StockSelector";
 import CommoditySelector from "./CommoditySelector";
+import CryptoSelector from "./CryptoSelector";
 import DropdownInput from "./DropdownInput";
 import TextInput from "./TextInput";
 import GitHubInput from "./GitHubInput";
@@ -46,6 +47,9 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 		switch (type) {
 			case "stock":
 				return <StockSelector value={value} onChange={onChange} />;
+
+			case "crypto":
+				return <CryptoSelector value={value} onChange={onChange} />;
 
 			case "commodity":
 				return <CommoditySelector value={value} onChange={onChange} />;
