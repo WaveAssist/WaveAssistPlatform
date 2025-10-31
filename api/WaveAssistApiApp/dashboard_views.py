@@ -221,8 +221,12 @@ def fetch_assistant(request, assistant_key):
         assistant_dict["input_array"] = variables
         assistant_dict["optional_input_array"] = optional_variables
         assistant_dict["success_message"] = success_message
-        assistant_dict["output_default_message"] = yaml_config.get('output_default_message', "No output to display.")
-        assistant_dict["configuration_helper_message"] = yaml_config.get('configuration_helper_message', "")
+        assistant_dict["output_default_message"] = yaml_config.get(
+            "output_default_message", ""
+        )
+        assistant_dict["configuration_helper_message"] = yaml_config.get(
+            "configuration_helper_message", ""
+        )
         return ResponseParser.getParsedSuccessMessage(
             assistant_dict, "200", "Assistant found successfully."
         )
