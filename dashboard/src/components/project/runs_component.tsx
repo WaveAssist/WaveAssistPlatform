@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { usePostHog } from "posthog-js/react";
 import { AgGridReact } from "ag-grid-react";
 import { fetchDagRunsApi } from "../../services/runs_services";
-import { fetchDataForKeyAPI } from "../../services/project_services";
+import { fetchDataForKeyAPI, fetchTemplateApi } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
 import { useRefresh } from "../../utils/RefreshContext";
 import Modal from "react-bootstrap/Modal";
@@ -154,6 +154,22 @@ const RunsComponent: React.FC = () => {
 		return { progress, remaining };
 	};
 
+	// Fetch assistant default message via API
+	const fetch_default_message_from_assistant = async (): Promise<string | null> => {
+		try {
+			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
+			const templateKey = projectData.template_key || localStorage.getItem("template_key") || "";
+			if (!templateKey) return null;
+			const response = await fetchTemplateApi(templateKey);
+			const msg = response?.output_default_message;
+			if (typeof msg === "string" && msg.trim().length > 0) return msg;
+			return null;
+		} catch (err) {
+			console.error("Failed to fetch assistant default message:", err);
+			return null;
+		}
+	};
+
 	const handleViewDetails = (run: any) => {
 		if (run && run.run_id) {
 			console.log("Opening View Status modal for run:", run.run_id);
@@ -188,11 +204,24 @@ const RunsComponent: React.FC = () => {
 				setOutputHtmlContent(response.data.html_content);
 				setShowOutputModal(true);
 			} else {
-				showToast("No output content available", "warning");
+				throw new Error("Output data not available.");
 			}
 		} catch (error) {
 			console.error("Error fetching output:", error);
-			showToast("Output data not available here. Check your email or output target for results.", "warning");
+			const run = runsArray.find((r) => r.run_id === runId);
+			const isSuccess = run && run.status === "SUCCESS";
+			if (isSuccess) {
+				const defaultMsg = await fetch_default_message_from_assistant();
+				if (defaultMsg && defaultMsg.trim().length > 0) {
+					const html = `<h1 style="font-size: 24px;  color: #222222;">${defaultMsg}</h1>`;
+					setOutputHtmlContent(html);
+					setShowOutputModal(true);
+				} else {
+					showToast("Output data not available here. Check your email or output target for results.", "warning");
+				}
+			} else {
+				showToast("Output data not available here. Check your email or output target for results.", "warning");
+			}
 		} finally {
 			setLoadingOutputRunId(null);
 		}
