@@ -29,6 +29,7 @@ interface InputFactoryProps {
 	selectedResources?: any;
 	onRefresh?: () => void;
 	isOptional?: boolean;
+	highlightSelectResources?: boolean;
 }
 
 const InputFactory: React.FC<InputFactoryProps> = ({
@@ -39,6 +40,7 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 	selectedResources,
 	onRefresh,
 	isOptional = false,
+	highlightSelectResources = false,
 }) => {
 	const { key, type, options, helper_message } = inputConfig;
 
@@ -88,6 +90,7 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 						selectedResources={selectedResources}
 						inputData={inputConfig}
 						onRefresh={onRefresh}
+						highlightSelectResources={highlightSelectResources}
 					/>
 				);
 

@@ -52,14 +52,15 @@ const AssistantComponent: React.FC = () => {
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [webhookCopied, setWebhookCopied] = useState(false);
 	const [successMessage, setSuccessMessage] = useState("Your agent was triggered and will also run on a schedule.");
-
+	const [templateData, setTemplateData] = useState<any | null>(null);
+	const [highlightResourceKeys, setHighlightResourceKeys] = useState<string[]>([]);
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
 		try {
 			const template_data = await fetchTemplateApi(template_key);
 			const input_array = template_data.input_array;
 			const optional_input_array = template_data.optional_input_array || [];
-
+			setTemplateData(template_data);
 			const success_message = template_data.success_message;
 			setSuccessMessage(success_message);
 			setWizardInputs(input_array);
@@ -508,6 +509,9 @@ const AssistantComponent: React.FC = () => {
 
 		if (oauthInputsWithoutResources.length > 0) {
 			showToast("Please select at least 1 resource for all integrations", "warning");
+			const keysToHighlight = oauthInputsWithoutResources.map((i) => i.key);
+			setHighlightResourceKeys(keysToHighlight);
+			setTimeout(() => setHighlightResourceKeys([]), 4000);
 			return;
 		}
 
@@ -684,6 +688,7 @@ const AssistantComponent: React.FC = () => {
 															selectResources={handleSelectResources}
 															selectedResources={wizardSelectedResources[input_dict.key]}
 															onRefresh={refreshData}
+															highlightSelectResources={highlightResourceKeys.includes(input_dict.key)}
 														/>
 													))}
 
@@ -712,6 +717,7 @@ const AssistantComponent: React.FC = () => {
 																			selectedResources={wizardSelectedResources[input_dict.key]}
 																			onRefresh={refreshData}
 																			isOptional={true}
+																			highlightSelectResources={highlightResourceKeys.includes(input_dict.key)}
 																		/>
 																	))}
 																</div>
@@ -719,6 +725,12 @@ const AssistantComponent: React.FC = () => {
 														</div>
 													)}
 												</Form>
+											)}
+											{templateData?.configuration_helper_message && (
+												<div className="alert bg-transparent border border-secondary text-secondary mb-4" style={{ fontSize: "0.875rem" }}>
+													<i className="bi bi-info-circle me-2 text-secondary"></i>
+													{templateData.configuration_helper_message}
+												</div>
 											)}
 										</>
 									)}

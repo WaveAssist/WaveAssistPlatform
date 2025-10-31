@@ -11,9 +11,18 @@ interface GitHubInputProps {
 	selectedResources?: any;
 	inputData?: any;
 	onRefresh?: () => void;
+	highlightSelectResources?: boolean;
 }
 
-const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResources, selectedResources, inputData, onRefresh }) => {
+const GitHubInput: React.FC<GitHubInputProps> = ({
+	value,
+	onChange,
+	selectResources,
+	selectedResources,
+	inputData,
+	onRefresh,
+	highlightSelectResources = false,
+}) => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSelectingResources, setIsSelectingResources] = useState(false);
 	const [showManualModal, setShowManualModal] = useState(false);
@@ -37,12 +46,12 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 			{ prefix: "github_pat_", length: 93, name: "Fine-Grained Personal Access Token" },
 			{ prefix: "ghu_", length: 40, name: "GitHub App User-to-Server Token" },
 			{ prefix: "ghs_", length: 40, name: "GitHub App Server-to-Server Token" },
-			{ prefix: "ghr_", length: 40, name: "GitHub App Refresh Token" }
+			{ prefix: "ghr_", length: 40, name: "GitHub App Refresh Token" },
 		];
 
 		// Check if token matches any known type
-		const matchingType = tokenTypes.find(type => token.startsWith(type.prefix));
-		
+		const matchingType = tokenTypes.find((type) => token.startsWith(type.prefix));
+
 		if (!matchingType) {
 			return `Please enter a valid GitHub Access Token`;
 		}
@@ -318,7 +327,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 										size="sm"
 										onClick={handleSelectResources}
 										disabled={isSelectingResources}
-										className="github-action-button"
+										className={`github-action-button ${highlightSelectResources ? "highlight-pulse" : ""}`}
 										style={{
 											display: "flex",
 											alignItems: "center",
@@ -410,7 +419,7 @@ const GitHubInput: React.FC<GitHubInputProps> = ({ value, onChange, selectResour
 									size="sm"
 									onClick={handleSelectResources}
 									disabled={isSelectingResources}
-									className="github-action-button"
+									className={`github-action-button ${highlightSelectResources ? "highlight-pulse" : ""}`}
 									style={{
 										display: "flex",
 										alignItems: "center",
