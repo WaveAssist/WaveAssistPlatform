@@ -494,7 +494,7 @@ const AssistantComponent: React.FC = () => {
 		});
 
 		if (emptyInputs.length > 0) {
-			showToast("Please provide input values for all required fields", "warning");
+			showToast("Please provide all required fields and connections", "warning");
 			return;
 		}
 
@@ -674,8 +674,8 @@ const AssistantComponent: React.FC = () => {
 													<div className="mb-3">
 														<i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
 													</div>
-													<h5 className="mb-3">Ready to run!</h5>
-													<p className="text-muted mb-0">Your agent is ready to go. No additional configuration is needed.</p>
+													<h5 className="mb-3 text-white">Ready to run!</h5>
+													<p className="text-white mb-0">Your agent is ready to go. No additional configuration is needed.</p>
 												</div>
 											) : (
 												<Form>

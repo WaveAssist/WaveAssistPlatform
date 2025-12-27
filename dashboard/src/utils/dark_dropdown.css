@@ -7,17 +7,17 @@
 
   /* Custom styles for dark theme dropdown */
 .custom-dropdown-menu {
-  background-color: #1A2430 !important; /* Card color */
-  border: none;
+  background-color: #1C1F28 !important; /* Card color */
+  border: 1px solid #2D313A !important;
 }
 
 .custom-dropdown-menu .dropdown-item {
-  color: #ffffff; /* Text color */
+  color: #FFFFFF; /* Text color */
 }
 
 .custom-dropdown-menu .dropdown-item:hover {
-  background-color: #232F42; /* Card hover color */
-  color: #ffffff; /* Text color on hover */
+  background-color: #16181F; /* Card hover color */
+  color: #FFFFFF; /* Text color on hover */
 }
 
 .text-header-dropdown{
@@ -28,7 +28,8 @@
 
 
 .dropdown-item.active {
-    background-color: #428d4f !important;
+    background-color: #1ED66C !important;
+    color: #000000 !important;
   }
 
 /* Styles for icon-only dropdown buttons */

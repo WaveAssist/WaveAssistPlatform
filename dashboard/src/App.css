@@ -2,40 +2,47 @@
 
 /* Modal CSS */
 .modal-body {
-    background-color: #1d2733;
-    color: white;
+    background-color: #1C1F28;
+    color: #FFFFFF;
+    border-bottom: 1px solid #2D313A;
   }
   
   .modal-header {
-    background-color: #1d2733;
-    border-bottom: 1px solid #454d55;
+    background-color: #1C1F28;
+    border-bottom: 1px solid #2D313A;
   }
   
   .modal-title {
-    color: white !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
   
   .modal-close-button button.btn-close {
-    color: white !important;
+    color: #FFFFFF !important;
+    filter: brightness(0) invert(1);
   }
   
   .model-text {
-    color: white !important;
-    
+    color: #A1A1AA !important;
   }
   
   .modal-footer {
-    background-color: #1d2733 !important;
-    border-top: 1px solid #454d55 !important;
+    background-color: #1C1F28 !important;
+    border-top: 1px solid #2D313A !important;
   }
   
   .markdown-body {
     background-color: transparent !important;
-    color: white !important;
+    color: #FFFFFF !important;
   }
   
   .markdown-body a {
-    color: inherit;
-    text-decoration: underline; /* optional: keeps the underline */
+    color: #1ED66C;
+    text-decoration: underline;
+  }
+  
+  .markdown-body a:hover {
+    color: #148F47;
   }
   

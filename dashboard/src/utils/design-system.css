@@ -1,0 +1,147 @@
+/* WaveAssist Design System - CSS Variables */
+
+:root {
+  /* Color Palette */
+  --color-primary: #1ED66C;
+  --color-primary-hover: #148F47;
+  --color-pro-accent: #FBB040;
+  --color-bg-main: #0F1116;
+  --color-bg-section: #16181F;
+  --color-bg-card: #1C1F28;
+  --color-border: #2D313A;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1AA;
+  --color-text-button: #000000;
+  
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-weight-heading: 600;
+  --font-weight-bold: 700;
+  --font-weight-regular: 400;
+  --letter-spacing-heading: -0.02em;
+  
+  /* Border Radius */
+  --radius-button: 6px;
+  --radius-card: 8px;
+  
+  /* Shadows */
+  --shadow-active: 0 0 20px rgba(30, 214, 108, 0.15);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  /* Background Pattern */
+  --pattern-opacity: 0.4;
+  --pattern-spacing: 24px;
+}
+
+/* Background Pattern Overlay */
+.bg-pattern {
+  position: relative;
+}
+
+.bg-pattern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: var(--pattern-spacing) var(--pattern-spacing);
+  opacity: var(--pattern-opacity);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Primary Button */
+.btn-primary-wa {
+  background-color: var(--color-primary);
+  color: var(--color-text-button);
+  border: none;
+  border-radius: var(--radius-button);
+  padding: 0.5rem 1rem;
+  font-weight: var(--font-weight-regular);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-wa:hover {
+  background-color: var(--color-primary-hover);
+  color: var(--color-text-button);
+  box-shadow: var(--shadow-active);
+}
+
+.btn-primary-wa:active {
+  background-color: var(--color-primary-hover);
+  transform: translateY(1px);
+}
+
+.btn-primary-wa:disabled {
+  background-color: var(--color-text-secondary);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Secondary Button */
+.btn-secondary-wa {
+  background-color: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 0.5rem 1rem;
+  font-weight: var(--font-weight-regular);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-wa:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+/* Active State with Glow */
+.active-glow {
+  box-shadow: var(--shadow-active);
+}
+
+/* Card Styling */
+.card-wa {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+}
+
+/* Text Gradient for H1 */
+h1.text-gradient {
+  background: linear-gradient(to bottom, var(--color-text-primary), var(--color-text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Section Backgrounds */
+.bg-main {
+  background-color: var(--color-bg-main);
+}
+
+.bg-section {
+  background-color: var(--color-bg-section);
+}
+
+.bg-card {
+  background-color: var(--color-bg-card);
+}
+
+/* Text Colors */
+.text-primary-wa {
+  color: var(--color-text-primary);
+}
+
+.text-secondary-wa {
+  color: var(--color-text-secondary);
+}
+
+/* Border */
+.border-wa {
+  border: 1px solid var(--color-border);
+}
+

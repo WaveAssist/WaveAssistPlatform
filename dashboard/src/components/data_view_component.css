@@ -17,7 +17,7 @@
 }
 
 .ag-theme-balham-dark .ag-row-hover {
-  background-color: #2a3a2fd8; /* Hover color with a mild tint of #428d4f */
+  background-color: rgba(30, 214, 108, 0.1); /* Hover color with brand green tint */
 }
 
 .ag-theme-balham-dark .ag-cell {
@@ -26,6 +26,6 @@
 }
 
 .ag-theme-balham-dark .ag-cell-focus {
-  border: 1px solid #428d4f !important; /* Border color on cell click/focus */
+  border: 1px solid #1ED66C !important; /* Border color on cell click/focus */
   outline: none; /* Remove any default outline */
 }

@@ -1,5 +1,5 @@
 body {
-	background-color: #141721 !important;
+	background-color: #0F1116 !important;
 	margin: 0;
 	padding: 0;
 }
@@ -44,8 +44,8 @@ wp_logo {
 }
 
 .email-input-container .form-control {
-	background: #1a1d2a;
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: #1C1F28;
+	border: 1px solid #2D313A;
 	border-radius: 8px;
 	color: #ffffff;
 	padding: 0.75rem 1rem;
@@ -55,8 +55,8 @@ wp_logo {
 
 .email-input-container .form-control:focus {
 	background: #1a1d2a;
-	border-color: #28a745;
-	box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+	border-color: #1ED66C;
+	box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
 	color: #ffffff;
 }
 
@@ -118,7 +118,7 @@ wp_logo {
 }
 
 .text-success {
-	color: #28a745 !important;
+	color: #1ED66C !important;
 }
 
 .btn-outline-light {
@@ -135,19 +135,23 @@ wp_logo {
 }
 
 .btn-primary {
-	background-color: #28a745;
-	border-color: #28a745;
-	color: #ffffff;
+	background-color: #1ED66C;
+	border-color: #1ED66C;
+	color: #000000;
+	border-radius: 6px;
 }
 
 .btn-primary:hover {
-	background-color: #218838;
-	border-color: #1e7e34;
+	background-color: #148F47;
+	border-color: #148F47;
+	color: #000000;
+	box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
 }
 
 .btn-primary:disabled {
-	background-color: #6c757d;
-	border-color: #6c757d;
+	background-color: #A1A1AA;
+	border-color: #A1A1AA;
+	opacity: 0.5;
 }
 
 .wp_logo_login {
@@ -163,11 +167,12 @@ wp_logo {
 .wa-card {
 	width: 100%;
 	max-width: 420px;
-	background: #131621;
+	background: #1C1F28;
+	border: 1px solid #2D313A;
 	border-radius: 1rem;
 	padding: 2.5rem;
 	text-align: center;
-	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 20px 60px rgba(0, 0, 0, 0.5);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
   .wa-title {
@@ -182,8 +187,9 @@ wp_logo {
 	align-items: center;
 	justify-content: center;
 	min-height: 100vh;
-	background: #0b0d14;
+	background: #0F1116;
 	padding: 2rem;
+	position: relative;
 }
 
   

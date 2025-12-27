@@ -275,8 +275,8 @@ const NodesComponent: React.FC = () => {
 			},
 			position: { x: 0, y: 0 }, // Placeholder — dagre sets actual values
 			style: {
-				background: "#232F42",
-				border: `2px solid ${n.is_enabled ? "#428d4f" : "#d9534f"}`,
+				background: "#1C1F28",
+				border: `2px solid ${n.is_enabled ? "#1ED66C" : "#d9534f"}`,
 				color: "#fff",
 				borderRadius: 8,
 				fontSize: 13,
@@ -817,7 +817,20 @@ ${config.nodes
 					<i className="bi bi-trash"></i>
 				</Button>{" "}
 				{params.data.is_starting_node && (
-					<Button variant="success" size="sm" onClick={() => handleRun(params.data)} title="Run node">
+					<Button
+						variant="primary"
+						size="sm"
+						onClick={() => handleRun(params.data)}
+						title="Run node"
+						style={{ backgroundColor: "#1ED66C", borderColor: "#1ED66C", color: "#000000" }}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.backgroundColor = "#148F47";
+							e.currentTarget.style.boxShadow = "0 0 20px rgba(30, 214, 108, 0.15)";
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.backgroundColor = "#1ED66C";
+							e.currentTarget.style.boxShadow = "none";
+						}}>
 						<i className="bi bi-play">Run</i>
 					</Button>
 				)}
@@ -836,21 +849,28 @@ ${config.nodes
 				const cleanedCrontabSchedule = data.crontab_schedule.replace(/\(.*?\)/g, "");
 				return (
 					<div>
-						<span className="badge badge-important">Starting Node</span> <span className="badge badge-primary">Cron</span>{" "}
-						<span className="badge badge-secondary">{cleanedCrontabSchedule}</span>
+						<span className="badge badge-important" style={{ backgroundColor: "#1ED66C", color: "#000000" }}>
+							Starting Node
+						</span>{" "}
+						<span className="badge badge-primary">Cron</span> <span className="badge badge-secondary">{cleanedCrontabSchedule}</span>
 					</div>
 				);
 			} else if (data.schedule_type === "interval") {
 				return (
 					<div>
-						<span className="badge badge-important">Starting Node</span>
+						<span className="badge badge-important" style={{ backgroundColor: "#1ED66C", color: "#000000" }}>
+							Starting Node
+						</span>
 						<span className="badge badge-primary">Interval</span> <span className="badge badge-secondary">{data.interval_schedule}</span>
 					</div>
 				);
 			} else if (data.schedule_type === "none") {
 				return (
 					<div>
-						<span className="badge badge-important">Starting Node</span> <span className="badge badge-primary">Manual/Webhook Only</span>
+						<span className="badge badge-important" style={{ backgroundColor: "#1ED66C", color: "#000000" }}>
+							Starting Node
+						</span>{" "}
+						<span className="badge badge-primary">Manual/Webhook Only</span>
 					</div>
 				);
 			}
@@ -1300,7 +1320,9 @@ ${config.nodes
 				<Modal.Body>
 					{wizardDone ? (
 						<div className="text-center">
-							<span className="badge bg-success mb-3 fs-6">Deployed</span>
+							<span className="badge badge-primary mb-3 fs-6" style={{ backgroundColor: "#1ED66C", color: "#000000" }}>
+								Deployed
+							</span>
 							<h5 className="mb-3">🎉 Your assistant has been successfully deployed! 🎉</h5>
 							<p className="translucent_white mb-2">You will receive an email notification in the next few minutes.</p>
 							<p className="translucent_white mb-0">
@@ -1322,7 +1344,7 @@ ${config.nodes
 										<i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
 									</div>
 									<h5 className="text-white mb-3">Ready to run!</h5>
-									<p className="translucent_white mb-0">Your agent is ready to go. No additional configuration is needed.</p>
+									<p className="text-white mb-0">Your agent is ready to go. No additional configuration is needed.</p>
 								</div>
 							) : (
 								<Form>
@@ -1375,9 +1397,12 @@ ${config.nodes
 																		{stock.symbol} - {stock.name}
 																		<button
 																			type="button"
-																			className="btn-close btn-close-white"
-																			onClick={() => handleStockRemove(stock._id, input_dict.key)}>
-																			X
+																			className="btn-close"
+																			onClick={() => handleStockRemove(stock._id, input_dict.key)}
+																			style={{ color: "#000000", opacity: 0.8 }}
+																			onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+																			onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.8")}>
+																			×
 																		</button>
 																	</span>
 																))}
@@ -1416,12 +1441,28 @@ ${config.nodes
 							<Button variant="outline-secondary" onClick={() => setShowWizard(false)}>
 								Close
 							</Button>
-							<Button variant="outline-success" onClick={() => navigate("/manage/runs")}>
+							<Button
+								variant="outline-success"
+								onClick={() => navigate("/manage/runs")}
+								style={{ color: "#1ED66C", borderColor: "#1ED66C" }}
+								onMouseEnter={(e) => {
+									e.currentTarget.style.backgroundColor = "#1ED66C";
+									e.currentTarget.style.color = "#000000";
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.style.backgroundColor = "transparent";
+									e.currentTarget.style.color = "#1ED66C";
+								}}>
 								View Runs
 							</Button>
 						</>
 					) : (
-						<Button variant="success" className="w-100" onClick={handleRunAndDeploy} disabled={processingWizard || wizardLoading}>
+						<Button
+							variant="primary"
+							className="w-100"
+							onClick={handleRunAndDeploy}
+							disabled={processingWizard || wizardLoading}
+							style={{ backgroundColor: "#1ED66C", borderColor: "#1ED66C", color: "#000000" }}>
 							{processingWizard ? "Processing..." : wizardLoading ? "Loading..." : "Run and Deploy"}
 						</Button>
 					)}
@@ -1438,7 +1479,7 @@ ${config.nodes
 					options: {
 						arrowColor: "#0D1B2A",
 						backgroundColor: "#0D1B2A",
-						primaryColor: "#2ECC71",
+						primaryColor: "#1ED66C",
 						textColor: "#FFFFFF",
 						width: 300,
 						zIndex: 10000,
@@ -1449,7 +1490,7 @@ ${config.nodes
 						borderRadius: "12px",
 					},
 					buttonNext: {
-						backgroundColor: "#2ECC71",
+						backgroundColor: "#1ED66C",
 						color: "#000",
 					},
 					buttonBack: {

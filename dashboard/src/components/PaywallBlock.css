@@ -19,14 +19,14 @@
 }
 
 .paywall-modal {
-  background: #1A2430;
-  border: 1px solid #ffd700;
+  background: #1C1F28;
+  border: 1px solid #FBB040;
   border-radius: 16px;
   padding: 30px;
   max-width: min(500px, 90vw);
   width: min(80%, 90vw);
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(251, 176, 64, 0.3);
   animation: paywallFadeIn 0.3s ease-out;
   box-sizing: border-box;
   overflow: hidden;

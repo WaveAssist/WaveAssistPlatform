@@ -234,50 +234,50 @@ const AllProjectsComponent: React.FC = () => {
 				</div>
 			)}
 			{!loading && (
-			<div className="admin-panel">
-				<div className="content projects-row">
-					<div className="header">
-						<h2 className="admin-title mb-3 translucent_white">All Assistants</h2>
-					</div>
-
-					<div className="row ">
-						<div className="col-sm-4 project-card  " onClick={() => window.open("https://waveassist.io/assistants", "_self")}>
-							<div className="card text-white bg-dark mb-3 ml-5 mr-5 add-project-card">
-								<div className="card-body d-flex align-items-center justify-content-center">
-									<div className="text-center">
-										<i className="bi bi-plus-lg add-icon translucent_blue fs-3"></i>
-										<p className="add-text translucent_blue">Add Assistant</p>
-									</div>
-								</div>
-							</div>
+				<div className="admin-panel">
+					<div className="content projects-row">
+						<div className="header">
+							<h2 className="admin-title mb-3 translucent_white">All Assistants</h2>
 						</div>
-						{projectArray.map((project: any) => (
-							<div className="col-sm-4 project-card ml-5" key={project.project_key} onClick={() => handleViewDetails(project.project_key)}>
-								<div className="card text-white bg-dark mb-3 ml-5 mr-5">
-									<div className="card-body position-relative p-3">
-										<div className="d-flex align-items-center">
-											<h5 className="card-title translucent_white fs-4 mb-0">{project.name}</h5>
-											{project.is_premium && (
-												<span className="badge bg-warning text-dark ms-2" style={{ fontSize: "0.6rem" }}>
-													PREMIUM
-												</span>
-											)}
+
+						<div className="row ">
+							<div className="col-sm-4 project-card  " onClick={() => window.open("https://waveassist.io/assistants", "_self")}>
+								<div className="card text-white bg-dark mb-3 ml-5 mr-5 add-project-card">
+									<div className="card-body d-flex align-items-center justify-content-center">
+										<div className="text-center">
+											<i className="bi bi-plus-lg add-icon translucent_blue fs-3"></i>
+											<p className="add-text translucent_blue">Add Assistant</p>
 										</div>
-										<h5 className="card-title translucent_white_more fs-6 mb-3">{project.project_key}</h5>
-										<button
-											className="btn btn-dark delete-icon translucent_white p-2"
-											onClick={(e) => {
-												e.stopPropagation();
-												handleDeleteProject(project.project_key);
-											}}
-											title={project.is_premium && !isUserPremium ? "Premium projects cannot be deleted" : ""}>
-											<i className="bi bi-trash-fill"></i>
-										</button>
 									</div>
 								</div>
 							</div>
-						))}
-					</div>
+							{projectArray.map((project: any) => (
+								<div className="col-sm-4 project-card ml-5" key={project.project_key} onClick={() => handleViewDetails(project.project_key)}>
+									<div className="card text-white bg-dark mb-3 ml-5 mr-5">
+										<div className="card-body position-relative p-3">
+											<div className="d-flex align-items-center">
+												<h5 className="card-title translucent_white fs-4 mb-0">{project.name}</h5>
+												{project.is_premium && (
+													<span className="badge bg-warning text-dark ms-2" style={{ fontSize: "0.6rem" }}>
+														PREMIUM
+													</span>
+												)}
+											</div>
+											<h5 className="card-title translucent_white_more fs-6 mb-3">{project.project_key}</h5>
+											<button
+												className="btn btn-dark delete-icon translucent_white p-2"
+												onClick={(e) => {
+													e.stopPropagation();
+													handleDeleteProject(project.project_key);
+												}}
+												title={project.is_premium && !isUserPremium ? "Premium projects cannot be deleted" : ""}>
+												<i className="bi bi-trash-fill"></i>
+											</button>
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
 					</div>
 				</div>
 			)}
@@ -363,7 +363,7 @@ const AllProjectsComponent: React.FC = () => {
 					options: {
 						arrowColor: "#0D1B2A", // blue-black background
 						backgroundColor: "#0D1B2A",
-						primaryColor: "#428d4f", // darker green button
+						primaryColor: "#1ED66C", // brand green button
 						textColor: "#FFFFFF",
 						width: 300,
 						zIndex: 10000,
@@ -374,7 +374,7 @@ const AllProjectsComponent: React.FC = () => {
 						borderRadius: "12px",
 					},
 					buttonNext: {
-						backgroundColor: "#428d4f", // dark green
+						backgroundColor: "#1ED66C", // brand green
 						color: "#000",
 					},
 					buttonBack: {

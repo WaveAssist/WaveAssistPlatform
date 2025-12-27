@@ -72,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 					options: {
 						arrowColor: "#0D1B2A",
 						backgroundColor: "#0D1B2A",
-						primaryColor: "#2ECC71",
+						primaryColor: "#1ED66C",
 						textColor: "#FFFFFF",
 						width: 300,
 						zIndex: 10000,
@@ -83,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 						borderRadius: "12px",
 					},
 					buttonNext: {
-						backgroundColor: "#2ECC71",
+						backgroundColor: "#1ED66C",
 						color: "#000",
 					},
 					buttonBack: {
@@ -138,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 					<li
 						className="nav-item mb-1 text-uppercase small ps-2"
 						style={{ color: "#ffffff80", fontSize: "11px", letterSpacing: "0.05em", paddingTop: "48px" }}>
-						Usage
+						Modules
 					</li>
 				)}
 				<li className="nav-item">
@@ -489,16 +489,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 					<div className="d-flex flex-column gap-2">
 						<Link to="/" className="btn btn-outline-light collapsed-btn" onClick={handleNavClick} title="Back">
 							<div className="nav-icon">
-								<i className="bi bi-chevron-left"></i>
-								<span style={{ fontSize: "0.8rem" }}>Back</span>
+								<i className="bi bi-chevron-left" style={{ fontSize: "1rem" }}></i>
+								<span style={{ fontSize: "0.75rem" }}>Back</span>
 							</div>
 						</Link>
 					</div>
 				) : (
 					<div className="row g-2">
 						<div className="col-12">
-							<Link to="/" className="btn btn-outline-light w-100" onClick={handleNavClick}>
-								<i className="bi bi-chevron-left me-1"></i>
+							<Link to="/" className="btn btn-outline-light w-100" onClick={handleNavClick} style={{ fontSize: "0.75rem", whiteSpace: "nowrap" }}>
+								<i className="bi bi-chevron-left me-1" style={{ fontSize: "1rem" }}></i>
 								Back
 							</Link>
 						</div>

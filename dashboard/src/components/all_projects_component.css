@@ -1,7 +1,8 @@
 .base_component {
-  background-color: #141721;
+  background-color: #0F1116;
   height: 100vh;
   overflow: auto;
+  position: relative;
 }
 
 .wp_logo {
@@ -87,19 +88,23 @@
   width: 100%;
   aspect-ratio: 2;
   position: relative;
-  transition: transform 0.2s;;
+  transition: transform 0.2s, box-shadow 0.2s;
   margin-top:10px;
-  background-color: #1A2430 !important;
+  background-color: #1C1F28 !important;
+  border: 1px solid #2D313A !important;
   min-width: 220px;
   min-height: 120px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  border-radius: 8px;
 }
 
 .project-card .card:hover {
   transform: scale(1.015);
-  background-color: #232F42 !important;
+  background-color: #1C1F28 !important;
+  box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+  border-color: #1ED66C !important;
 }
 
 .add-project-card {
@@ -131,8 +136,17 @@
 }
 
 .btn-primary {
-  background-color: #428d4f !important;
-  border-color: #428d4f !important;
+  background-color: #1ED66C !important;
+  border-color: #1ED66C !important;
+  color: #000000 !important;
+  border-radius: 6px;
+}
+
+.btn-primary:hover {
+  background-color: #148F47 !important;
+  border-color: #148F47 !important;
+  color: #000000 !important;
+  box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
 }
 
 .ag-cell {

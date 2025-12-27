@@ -1,6 +1,7 @@
 .credits-container {
-    background-color: #151720;
+    background-color: #0F1116;
     padding: 2rem;
+    position: relative;
 }
 
 .credits-header {
@@ -13,8 +14,9 @@
 .credits-title {
     font-size: 2rem;
     font-weight: 700;
-    color: #000000;
+    color: #FFFFFF;
     margin: 0;
+    letter-spacing: -0.02em;
 }
 
 .refresh-button {
@@ -31,7 +33,8 @@
 }
 
 .available-credits-card {
-    background-color: #f8f9fa;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
     border-radius: 12px;
     padding: 2rem;
     position: relative;
@@ -47,7 +50,7 @@
 }
 
 .credit-details {
-    border-top: 1px solid #e9ecef;
+    border-top: 1px solid #2D313A;
     padding-top: 1.5rem;
     margin-top: 1rem;
 }
@@ -65,17 +68,18 @@
 
 .credit-detail-label {
     font-size: 0.9rem;
-    color: #6c757d;
+    color: #A1A1AA;
     font-weight: 500;
 }
 
 .credit-detail-value {
     font-size: 1.1rem;
     font-weight: 600;
+    color: #FFFFFF;
 }
 
 .credit-detail-value.total {
-    color: #28a745;
+    color: #1ED66C;
 }
 
 .credit-detail-value.used {
@@ -85,7 +89,7 @@
 .credit-balance-amount {
     font-size: 3.5rem;
     font-weight: 700;
-    color: #000000;
+    color: #FFFFFF;
     text-align: center;
     margin: 0;
     line-height: 1;
@@ -93,7 +97,7 @@
 
 .credit-balance-label {
     text-align: center;
-    color: #6c757d;
+    color: #A1A1AA;
     margin: 0.5rem 0 0 0;
     font-size: 1rem;
 }
@@ -107,8 +111,8 @@
 }
 
 .buy-credits-card {
-    background-color: #ffffff;
-    border: 1px solid #e9ecef;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -165,7 +169,7 @@
 
 .credit-amount-btn.active {
     background-color: #f8f9fa;
-    border-color: #408558;
+    border-color: #1ED66C;
     color: #333;
 }
 
@@ -191,7 +195,7 @@
 
 .custom-amount-input.active {
     background-color: #f8f9fa;
-    border-color: #408558;
+    border-color: #1ED66C;
     color: #333;
 }
 
@@ -209,7 +213,7 @@
 }
 
 .custom-amount-input input:focus {
-    border-color: #408558;
+    border-color: #1ED66C;
     outline: none;
 }
 
@@ -255,8 +259,9 @@
 .buy-credits-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #000000;
+    color: #FFFFFF;
     margin: 0;
+    letter-spacing: -0.02em;
 }
 
 .crypto-toggle {
@@ -302,23 +307,24 @@
 
 .add-credits-button {
     width: 100%;
-    background-color: #408558;
+    background-color: #1ED66C;
     border: none;
-    color: #ffffff;
+    color: #000000;
     padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 500;
+    border-radius: 6px;
+    font-weight: 400;
     margin-bottom: 1rem;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .add-credits-button:hover {
-    background-color: #408558;
-    color: #ffffff;
+    background-color: #148F47;
+    color: #000000;
+    box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
 }
 
 .view-usage-link {
-    color: #408558;
+    color: #1ED66C;
     text-decoration: none;
     font-size: 0.875rem;
     display: flex;
@@ -328,7 +334,7 @@
 }
 
 .view-usage-link:hover {
-    color: #0056b3;
+    color: #148F47;
     text-decoration: underline;
 }
 
@@ -336,7 +342,7 @@
 
 /* Dark theme overrides for the project */
 .main-container .credits-container {
-    background-color: #101219;
+    background-color: #0F1116;
     color: #ffffff;
 }
 
@@ -345,8 +351,8 @@
 }
 
 .main-container .available-credits-card {
-    background-color: #1f2633;
-    border: 1px solid #2b3548;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
 }
 
 .main-container .credit-balance-amount {
@@ -358,7 +364,7 @@
 }
 
 .main-container .credit-details {
-    border-top-color: #2b3548;
+    border-top-color: #2D313A;
 }
 
 .main-container .credit-detail-label {
@@ -370,8 +376,8 @@
 }
 
 .main-container .buy-credits-card {
-    background-color: #1f2633;
-    border: 1px solid #2b3548;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
 }
 
 .main-container .buy-credits-title {
@@ -501,7 +507,7 @@
 .total-amount {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #28a745;
+    color: #1ED66C;
 }
 
 .indian-currency-amount {
@@ -622,16 +628,16 @@
 
 /* Dark theme overrides for modal */
 .main-container .modal-content {
-    background-color: #1f2633;
-    border: 1px solid #2b3548;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
 }
 
 .main-container .modal-header {
-    border-bottom-color: #2b3548;
+    border-bottom-color: #2D313A;
 }
 
 .main-container .modal-footer {
-    border-top-color: #2b3548;
+    border-top-color: #2D313A;
 }
 
 .main-container .modal-title {
@@ -639,8 +645,8 @@
 }
 
 .main-container .credit-package-card {
-    background-color: #2b3548;
-    border-color: #28a745;
+    background-color: #1C1F28;
+    border-color: #1ED66C;
 }
 
 .main-container .package-name {
@@ -652,20 +658,21 @@
 }
 
 .main-container .billing-option {
-    border-bottom-color: #2b3548;
+    border-bottom-color: #2D313A;
     color: #ffffff;
 }
 
 .main-container .billing-option:hover {
-    background-color: #2b3548;
+    background-color: #16181F;
 }
 
 .main-container .purchase-summary {
-    background-color: #2b3548;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
 }
 
 .main-container .total-row {
-    border-top-color: #2b3548;
+    border-top-color: #2D313A;
 }
 
 .main-container .indian-currency-amount {
@@ -677,48 +684,49 @@
 }
 
 .main-container .form-control {
-    background-color: #2b3548;
-    border-color: #2b3548;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
     color: #ffffff;
 }
 
 .main-container .form-control:focus {
-    background-color: #2b3548;
-    border-color: #007bff;
+    background-color: #1C1F28;
+    border-color: #1ED66C;
     color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
 }
 
 /* Dark theme for credit amount buttons */
 .main-container .credit-amount-btn {
-    background-color: #2b3548;
-    border-color: #2b3548;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
     color: #ffffff;
 }
 
 .main-container .credit-amount-btn:hover {
-    background-color: #1f2633;
+    background-color: #16181F;
 }
 
 .main-container .credit-amount-btn.active {
-    background-color: #1f2633;
-    border-color: #408558;
+    background-color: #16181F;
+    border-color: #1ED66C;
     color: #ffffff;
 }
 
 /* Dark theme for custom amount input */
 .main-container .custom-amount-input {
-    background-color: #2b3548;
-    border-color: #2b3548;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
     color: #ffffff;
 }
 
 .main-container .custom-amount-input:hover {
-    background-color: #1f2633;
+    background-color: #16181F;
 }
 
 .main-container .custom-amount-input.active {
-    background-color: #1f2633;
-    border-color: #408558;
+    background-color: #16181F;
+    border-color: #1ED66C;
     color: #ffffff;
 }
 

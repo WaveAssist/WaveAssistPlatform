@@ -1,9 +1,9 @@
 
 
 .navbar-main{
-    background-color: #141721 !important;
+    background-color: #16181F !important;
     height:60px !important;
-    border-bottom: 0.25px solid #2e3947;
+    border-bottom: 1px solid #2D313A;
     position: sticky !important;
     top: 0 !important;
     z-index: 1030 !important;

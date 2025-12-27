@@ -290,8 +290,11 @@ const RunsComponent: React.FC = () => {
 			resizable: true,
 			cellRenderer: (params: any) => {
 				const status = params.value === "STARTED" ? "PROCESSING" : params.value;
+				const isSuccess = status === "SUCCESS";
 				return (
-					<span className={`badge ${status === "SUCCESS" ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}>
+					<span
+						className={`badge ${isSuccess ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}
+						style={isSuccess ? { backgroundColor: "#1ED66C", color: "#000000" } : {}}>
 						{status}
 					</span>
 				);
@@ -320,6 +323,29 @@ const RunsComponent: React.FC = () => {
 							className={`btn btn-sm ${isSuccess ? "btn-outline-success" : "btn-outline-secondary"}`}
 							onClick={() => canViewOutput && !isThisRunLoading && handleViewOutput(runId)}
 							disabled={isDisabled}
+							style={
+								isSuccess
+									? {
+											color: "#1ED66C",
+											borderColor: "#1ED66C",
+											borderRadius: "6px",
+									  }
+									: { borderRadius: "6px" }
+							}
+							onMouseEnter={(e) => {
+								if (isSuccess && !isDisabled) {
+									e.currentTarget.style.backgroundColor = "#1ED66C";
+									e.currentTarget.style.color = "#000000";
+									e.currentTarget.style.boxShadow = "0 0 20px rgba(30, 214, 108, 0.15)";
+								}
+							}}
+							onMouseLeave={(e) => {
+								if (isSuccess && !isDisabled) {
+									e.currentTarget.style.backgroundColor = "transparent";
+									e.currentTarget.style.color = "#1ED66C";
+									e.currentTarget.style.boxShadow = "none";
+								}
+							}}
 							title={canViewOutput ? (isThisRunLoading ? "Loading..." : "View Output") : "Output not available"}>
 							{isThisRunLoading ? (
 								<>
@@ -342,7 +368,7 @@ const RunsComponent: React.FC = () => {
 											cy="20"
 											r="16"
 											fill="none"
-											stroke="#28a745"
+											stroke="#1ED66C"
 											strokeWidth="3"
 											strokeDasharray={`${(progressData.progress / 100) * 100.53} 100.53`}
 											strokeLinecap="round"
@@ -354,9 +380,10 @@ const RunsComponent: React.FC = () => {
 											top: "50%",
 											left: "50%",
 											transform: "translate(-50%, -50%)",
-											fontSize: "9px",
+											fontSize: "8px",
 											fontWeight: "bold",
-											color: "#28a745",
+											color: "#1ED66C",
+											whiteSpace: "nowrap",
 										}}>
 										{progressData.progress.toFixed(0)}%
 									</div>
@@ -375,7 +402,11 @@ const RunsComponent: React.FC = () => {
 			minWidth: 130,
 			resizable: true,
 			cellRenderer: (params: any) => (
-				<button className="btn btn-sm btn-outline-secondary" onClick={() => handleViewDetails(params.data)} title="View Status">
+				<button
+					className="btn btn-sm btn-outline-secondary"
+					onClick={() => handleViewDetails(params.data)}
+					title="View Status"
+					style={{ borderRadius: "6px" }}>
 					View Status
 				</button>
 			),
@@ -453,7 +484,10 @@ const RunsComponent: React.FC = () => {
 					{isLoading && runsArray.length === 0 ? (
 						<div className="d-flex justify-content-center align-items-center" style={{ flex: 1, minHeight: "400px" }}>
 							<div className="text-center">
-								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+								<div
+									className="spinner-border mb-3"
+									role="status"
+									style={{ width: "3rem", height: "3rem", borderColor: "#1ED66C", borderRightColor: "transparent" }}>
 									<span className="visually-hidden">Loading...</span>
 								</div>
 								<div className="text-white">Loading runs...</div>
@@ -493,7 +527,10 @@ const RunsComponent: React.FC = () => {
 								zIndex: 1000,
 							}}>
 							<div className="text-center">
-								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+								<div
+									className="spinner-border mb-3"
+									role="status"
+									style={{ width: "3rem", height: "3rem", borderColor: "#1ED66C", borderRightColor: "transparent" }}>
 									<span className="visually-hidden">Loading...</span>
 								</div>
 								<div className="text-white">Loading run details...</div>
@@ -517,7 +554,10 @@ const RunsComponent: React.FC = () => {
 					{loadingOutputRunId ? (
 						<div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
 							<div className="text-center">
-								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+								<div
+									className="spinner-border mb-3"
+									role="status"
+									style={{ width: "3rem", height: "3rem", borderColor: "#1ED66C", borderRightColor: "transparent" }}>
 									<span className="visually-hidden">Loading...</span>
 								</div>
 								<div className="text-white">Loading output content...</div>

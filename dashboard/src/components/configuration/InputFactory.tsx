@@ -19,6 +19,7 @@ interface InputConfig {
 	options?: Option[];
 	helper_message?: string;
 	default_value?: string;
+	display_name?: string;
 }
 
 interface InputFactoryProps {
@@ -42,7 +43,7 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 	isOptional = false,
 	highlightSelectResources = false,
 }) => {
-	const { key, type, options, helper_message } = inputConfig;
+	const { key, type, options, helper_message, display_name } = inputConfig;
 
 	// Render appropriate input component based on type
 	const renderInput = () => {
@@ -107,7 +108,8 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 	return (
 		<Form.Group className="mb-3">
 			<Form.Label>
-				{key}
+				{display_name || key}
+				{!isOptional && <span style={{ color: "#ff4444", marginLeft: "4px" }}>*</span>}
 				{isOptional && <span className="text-muted ms-1">(Optional)</span>}
 			</Form.Label>
 			{renderInput()}

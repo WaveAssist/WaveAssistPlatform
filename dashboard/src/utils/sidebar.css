@@ -18,7 +18,7 @@
   }
 
 .side-div{
-    background-color: #1A2430 !important;
+    background-color: #16181F !important;
     width: 280px;
     position: fixed;
     top: 0;
@@ -41,7 +41,14 @@
   }
   
   .nav-pills .nav-link.active {
-    --bs-nav-pills-link-active-bg: #2d3b52; 
+    --bs-nav-pills-link-active-bg: #1ED66C;
+    color: #000000 !important;
+    font-weight: 500;
+  }
+  
+  .nav-pills .nav-link.active:hover {
+    background-color: #148F47 !important;
+    color: #000000 !important;
   }
 
   

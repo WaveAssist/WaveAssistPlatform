@@ -4,16 +4,16 @@
  * See installation docs at https://ag-grid.com/javascript-data-grid/applying-theme-builder-styling-grid/
  */
 
-@import url('https://fonts.googleapis.com/css2?family=IBM%20Plex%20Sans:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
 
 .ag-root-wrapper, .ag-measurement-container, .ag-apply-theme-variables {
-	--ag-background-color: var(--ag-inherited-background-color, #141721);
-	--ag-foreground-color: var(--ag-inherited-foreground-color, #FFFFFFCC);
+	--ag-background-color: var(--ag-inherited-background-color, #0F1116);
+	--ag-foreground-color: var(--ag-inherited-foreground-color, #FFFFFF);
 	--ag-text-color: var(--ag-inherited-text-color, var(--ag-foreground-color));
-	--ag-accent-color: var(--ag-inherited-accent-color, #2D3B52);
+	--ag-accent-color: var(--ag-inherited-accent-color, #1ED66C);
 	--ag-invalid-color: var(--ag-inherited-invalid-color, #e02525);
-	--ag-border-color: var(--ag-inherited-border-color, color-mix(in srgb, transparent, var(--ag-foreground-color) 15%));
+	--ag-border-color: var(--ag-inherited-border-color, #2D313A);
 	--ag-wrapper-border: var(--ag-inherited-wrapper-border, none);
 	--ag-row-border: var(--ag-inherited-row-border, solid 1px var(--ag-border-color));
 	--ag-color-scheme: var(--ag-inherited-color-scheme, dark);
@@ -25,9 +25,9 @@
 	--ag-pinned-column-border: var(--ag-inherited-pinned-column-border, solid 1px var(--ag-border-color));
 	--ag-pinned-row-border: var(--ag-inherited-pinned-row-border, solid 1px var(--ag-border-color));
 	--ag-side-panel-border: var(--ag-inherited-side-panel-border, solid 1px var(--ag-border-color));
-	--ag-font-family: var(--ag-inherited-font-family, 'IBM Plex Sans');
-	--ag-chrome-background-color: var(--ag-inherited-chrome-background-color, color-mix(in srgb, var(--ag-background-color), var(--ag-foreground-color) 7%));
-	--ag-header-background-color: var(--ag-inherited-header-background-color, #1A2430);
+	--ag-font-family: var(--ag-inherited-font-family, 'Inter');
+	--ag-chrome-background-color: var(--ag-inherited-chrome-background-color, #1C1F28);
+	--ag-header-background-color: var(--ag-inherited-header-background-color, #16181F);
 	--ag-header-font-family: var(--ag-inherited-header-font-family, var(--ag-font-family));
 	--ag-header-font-weight: var(--ag-inherited-header-font-weight, 600);
 	--ag-header-font-size: var(--ag-inherited-header-font-size, 14px);

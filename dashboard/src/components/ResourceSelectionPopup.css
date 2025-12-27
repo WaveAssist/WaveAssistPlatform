@@ -48,7 +48,7 @@
 }
 
 .ag-theme-custom .ag-cell-focus {
-  border: 1px solid #428d4f !important; /* Border color on cell click/focus */
+  border: 1px solid #1ED66C !important; /* Border color on cell click/focus */
   outline: none; /* Remove any default outline */
 }
 
@@ -59,13 +59,13 @@
 
 
 .ag-theme-custom .ag-checkbox-input:checked {
-  background-color: #4ade80 !important;
-  border-color: #4ade80 !important;
-  color: #ffffff !important;
+  background-color: #1ED66C !important;
+  border-color: #1ED66C !important;
+  color: #000000 !important;
 }
 
 .ag-theme-custom .ag-checkbox-input:focus {
-  outline: 2px solid #4ade80 !important;
+  outline: 2px solid #1ED66C !important;
   outline-offset: 1px !important;
 }
 
