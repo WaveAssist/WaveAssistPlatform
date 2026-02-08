@@ -131,15 +131,21 @@ def fetch_openrouter_credits(request, uid):
             credits_response = requests.get(credits_url, headers=headers, timeout=10)
             if credits_response.status_code == 200:
                 credits_info = credits_response.json()
-                data = credits_info.get("data", {})
-                credit_data["limit"] = data.get("limit", 0)
-                credit_data["usage"] = data.get("usage", 0)
-                credit_data["limit_remaining"] = data.get("limit_remaining", 0)
+                if "data" not in credits_info:
+                    raise KeyError("OpenRouter credits response missing 'data' key")
+                data = credits_info["data"]
+                for key in ("limit", "usage", "limit_remaining"):
+                    if key not in data:
+                        raise KeyError(
+                            f"OpenRouter credits response missing '{key}' key"
+                        )
+                credit_data["limit"] = float(data["limit"])
+                credit_data["usage"] = float(data["usage"])
+                credit_data["limit_remaining"] = float(data["limit_remaining"])
             else:
                 print(
                     f"OpenRouter credits API returned status {credits_response.status_code}"
                 )
-
         except requests.exceptions.RequestException as e:
             print(f"Network error fetching OpenRouter credits: {str(e)}")
             return ResponseParser.getParsedErrorMessage(f"Network error: {str(e)}")
