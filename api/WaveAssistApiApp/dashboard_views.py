@@ -109,54 +109,65 @@ def fetch_openrouter_credits(request, uid):
     try:
         account_object = Account.objects.get(created_by_user=user_object)
         open_router_key = account_object.open_router_key
-    except:
+    except Exception:
         return ResponseParser.getParsedErrorMessage("Account not found.")
 
-    credit_data = {
-        "limit": 0,
-        "usage": 0,
-        "limit_remaining": 0,
-    }
-
-    if open_router_key:
-        try:
-            # Fetch credits from OpenRouter
-            headers = {
-                "Authorization": f"Bearer {open_router_key}",
-                "Content-Type": "application/json",
-            }
-
-            # Get credits information
-            credits_url = "https://openrouter.ai/api/v1/key"
-            credits_response = requests.get(credits_url, headers=headers, timeout=10)
-            if credits_response.status_code == 200:
-                credits_info = credits_response.json()
-                if "data" not in credits_info:
-                    raise KeyError("OpenRouter credits response missing 'data' key")
-                data = credits_info["data"]
-                for key in ("limit", "usage", "limit_remaining"):
-                    if key not in data:
-                        raise KeyError(
-                            f"OpenRouter credits response missing '{key}' key"
-                        )
-                credit_data["limit"] = float(data["limit"])
-                credit_data["usage"] = float(data["usage"])
-                credit_data["limit_remaining"] = float(data["limit_remaining"])
-            else:
-                print(
-                    f"OpenRouter credits API returned status {credits_response.status_code}"
-                )
-        except requests.exceptions.RequestException as e:
-            print(f"Network error fetching OpenRouter credits: {str(e)}")
-            return ResponseParser.getParsedErrorMessage(f"Network error: {str(e)}")
-        except Exception as e:
-            print(f"Error fetching OpenRouter credits: {str(e)}")
-            return ResponseParser.getParsedErrorMessage(
-                f"Error fetching credits: {str(e)}"
-            )
-    else:
+    if not open_router_key:
         return ResponseParser.getParsedErrorMessage("OpenRouter key not found.")
 
+    # Helper to call OpenRouter and return parsed credits, or raise on any issue.
+    def _fetch_credits(headers):
+        credits_url = "https://openrouter.ai/api/v1/key"
+        credits_response = requests.get(credits_url, headers=headers, timeout=10)
+        if credits_response.status_code != 200:
+            raise Exception(
+                f"OpenRouter credits API returned status {credits_response.status_code}"
+            )
+        credits_info = credits_response.json()
+        if "data" not in credits_info:
+            raise KeyError("OpenRouter credits response missing 'data' key")
+        data = credits_info["data"]
+        for key in ("limit", "usage", "limit_remaining"):
+            if key not in data:
+                raise KeyError(f"OpenRouter credits response missing '{key}' key")
+        return {
+            "limit": float(data["limit"]),
+            "usage": float(data["usage"]),
+            "limit_remaining": float(data["limit_remaining"]),
+        }
+    try:
+        # Base headers
+        headers = {
+            "Authorization": f"Bearer {open_router_key}",
+            "Content-Type": "application/json",
+        }
+        # First attempt
+        credit_data = _fetch_credits(headers)
+        # If limit_remaining is reported as 0, retry once
+        if credit_data.get("limit_remaining") == 0:
+            try:
+                retry_credit_data = _fetch_credits(headers)
+            except Exception as retry_error:
+                # Do NOT silently fall back to 0 – surface the error instead
+                print(f"Retry fetching OpenRouter credits failed: {str(retry_error)}")
+                return ResponseParser.getParsedErrorMessage(
+                    "Unable to reliably determine OpenRouter credits at this time."
+                )
+
+            # After a successful retry, always use the retried values.
+            # If the retry still returns 0, we now trust that as the real value.
+            credit_data = retry_credit_data
+
+    except requests.exceptions.RequestException as e:
+        print(f"Network error fetching OpenRouter credits: {str(e)}")
+        return ResponseParser.getParsedErrorMessage(f"Network error: {str(e)}")
+    except Exception as e:
+        print(f"Error fetching OpenRouter credits: {str(e)}")
+        return ResponseParser.getParsedErrorMessage(
+            f"Error fetching credits: {str(e)}"
+        )
+
+    # Only reach here when we have a confident reading from OpenRouter.
     return ResponseParser.getParsedSuccessMessage(
         credit_data, "200", "OpenRouter credits fetched successfully."
     )
