@@ -21,6 +21,15 @@ class Logger:
 
         # Add the console handler to the logger
         self.logger.addHandler(console_handler)
+        self.logger.propagate = False
+
+        # Configure root logger so library loggers (e.g. "waveassist") are captured as JSON
+        root_logger = logging.getLogger()
+        if not root_logger.handlers:
+            root_handler = logging.StreamHandler()
+            root_handler.setFormatter(formatter)
+            root_logger.setLevel(logging.INFO)
+            root_logger.addHandler(root_handler)
 
         # Suppress urllib3 logs if needed
         urllib3_logger = logging.getLogger('urllib3')
