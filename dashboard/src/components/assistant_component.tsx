@@ -54,6 +54,7 @@ const AssistantComponent: React.FC = () => {
 	const [successMessage, setSuccessMessage] = useState("Your agent was triggered and will also run on a schedule.");
 	const [templateData, setTemplateData] = useState<any | null>(null);
 	const [highlightResourceKeys, setHighlightResourceKeys] = useState<string[]>([]);
+	const [runOnceStarted, setRunOnceStarted] = useState(false);
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
 		try {
@@ -459,7 +460,7 @@ const AssistantComponent: React.FC = () => {
 		console.log("=============================");
 	};
 
-	const handleRunAndDeploy = async () => {
+	const handleRunAndDeploy = async (shouldDeploy: boolean = true) => {
 		// Validate that all required inputs have values
 		const emptyInputs = wizardInputs.filter((input) => {
 			const value = wizardValues[input.key];
@@ -537,42 +538,48 @@ const AssistantComponent: React.FC = () => {
 			}
 
 			const env = localStorage.getItem("selected_env_key") || "";
-			console.log("Running DAB with starting node key: ", startingNodeKey, "and env: ", env);
+			console.log("Running DAG with starting node key: ", startingNodeKey, "and env: ", env);
 			await runDAGApi(null, env);
 
-			var version_code_string = `0.${Math.floor(Math.random() * 101)}.${Math.floor(Math.random() * 101)}`;
-			console.log("Deploying project with version code: ", version_code_string);
-			await deployProjectApi(version_code_string);
+			if (shouldDeploy) {
+				var version_code_string = `0.${Math.floor(Math.random() * 101)}.${Math.floor(Math.random() * 101)}`;
+				console.log("Deploying project with version code: ", version_code_string);
+				await deployProjectApi(version_code_string);
 
-			// Push event to Google Tag Manager
-			const projectKey = localStorage.getItem("selected_project_key");
-			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
-			const assistantKey = projectData.template_key || "unknown_assistant";
-			const uid = localStorage.getItem("uid");
+				// Push event to Google Tag Manager
+				const projectKey = localStorage.getItem("selected_project_key");
+				const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
+				const assistantKey = projectData.template_key || "unknown_assistant";
+				const uid = localStorage.getItem("uid");
 
-			// Track deployment success
-			if (window?.dataLayer) {
-				window.dataLayer.push({
-					event: "assistant_deployed",
-					user_id: uid,
-					project_id: projectKey,
-					assistant_key: assistantKey,
-					value: 10,
-					deployment_status: "success",
-				});
-			}
+				// Track deployment success
+				if (window?.dataLayer) {
+					window.dataLayer.push({
+						event: "assistant_deployed",
+						user_id: uid,
+						project_id: projectKey,
+						assistant_key: assistantKey,
+						value: 10,
+						deployment_status: "success",
+					});
+				}
 
-			// Switch UI to running state and fetch latest running info
-			try {
-				const response = await fetchRunningDeploymentApi();
-				setRunningDeploymentInfo(response);
-				setIsRunning(true);
-				setDisplayText(response.dag_object.schedule.display_text);
-				setShowConfigOverride(false);
-			} catch (_fetchErr) {
-				// Even if fetch fails, assume running state after successful deploy
-				setIsRunning(true);
-				setShowConfigOverride(false);
+				// Switch UI to running state and fetch latest running info
+				try {
+					const response = await fetchRunningDeploymentApi();
+					setRunningDeploymentInfo(response);
+					setIsRunning(true);
+					setDisplayText(response.dag_object.schedule.display_text);
+					setShowConfigOverride(false);
+				} catch (_fetchErr) {
+					// Even if fetch fails, assume running state after successful deploy
+					setIsRunning(true);
+					setShowConfigOverride(false);
+				}
+			} else {
+				// For run once, show temporary success view
+				setRunOnceStarted(true);
+				showToast("Run started successfully", "success");
 			}
 		} catch (error) {
 			console.error("Wizard run failed:", error);
@@ -580,6 +587,10 @@ const AssistantComponent: React.FC = () => {
 		} finally {
 			setProcessingWizard(false);
 		}
+	};
+
+	const handleRunOnce = async () => {
+		await handleRunAndDeploy(false);
 	};
 
 	const handleStopDeployment = async () => {
@@ -650,7 +661,7 @@ const AssistantComponent: React.FC = () => {
 				</div>
 
 				{/* Configuration Section */}
-				{(!isRunning || showConfigOverride) && (
+				{(!isRunning || showConfigOverride) && !runOnceStarted && (
 					<div className="row">
 						{/* Configuration Card */}
 						<div className="col-md-12">
@@ -736,13 +747,39 @@ const AssistantComponent: React.FC = () => {
 									)}
 								</div>
 
-								<div className="assistant-config-footer">
+								<div className="assistant-config-footer d-flex gap-2">
 									<Button
-										className={`assistant-deploy-button ${hasEmptyInputs() ? "opacity-50" : ""}`}
-										onClick={handleRunAndDeploy}
+										variant="secondary"
+										className={`assistant-action-button assistant-run-once-button ${hasEmptyInputs() ? "opacity-50" : ""}`}
+										onClick={handleRunOnce}
 										disabled={processingWizard || wizardLoading}
 										style={hasEmptyInputs() ? { cursor: "not-allowed" } : {}}>
-										{processingWizard ? "Processing..." : wizardLoading ? "Loading..." : "Run and Deploy"}
+										{processingWizard ? (
+											"Processing..."
+										) : wizardLoading ? (
+											"Loading..."
+										) : (
+											<>
+												<i className="bi bi-play-fill" aria-hidden="true"></i>
+												<span>Run Once</span>
+											</>
+										)}
+									</Button>
+									<Button
+										className={`assistant-action-button assistant-deploy-button ${hasEmptyInputs() ? "opacity-50" : ""}`}
+										onClick={() => handleRunAndDeploy(true)}
+										disabled={processingWizard || wizardLoading}
+										style={hasEmptyInputs() ? { cursor: "not-allowed" } : {}}>
+										{processingWizard ? (
+											"Processing..."
+										) : wizardLoading ? (
+											"Loading..."
+										) : (
+											<>
+												<i className="bi bi-lightning-charge-fill" aria-hidden="true"></i>
+												<span>Enable Assistant</span>
+											</>
+										)}
 									</Button>
 								</div>
 							</div>
@@ -751,8 +788,44 @@ const AssistantComponent: React.FC = () => {
 				)}
 				{/* Configuration Section */}
 
+				{/* Run Once Success Section */}
+				{runOnceStarted && (
+					<div className="row">
+						<div className="col-md-12">
+							<div className="assistant-config-card">
+								<div className="assistant-config-header">
+									<h5 className="assistant-config-title">Run Started!</h5>
+								</div>
+								<div className="assistant-config-content">
+									<div className="text-center py-2">
+										<div className="mb-3">
+											<i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
+										</div>
+										<h5 className="mb-2 text-white">Run started successfully.</h5>
+										<p className="text-muted mb-0">Your one-time run is in progress. Open output to track results.</p>
+									</div>
+								</div>
+								<div className="assistant-config-footer pt-2">
+									<Button
+										variant="outline-secondary"
+										onClick={() => {
+											setRunOnceStarted(false);
+										}}
+										className="me-2">
+										Back to Config
+									</Button>
+									<Button variant="primary" onClick={() => navigate("/manage/runs")}>
+										View Output
+									</Button>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
+				{/* Run Once Success Section */}
+
 				{/* Ready section */}
-				{isRunning && !showConfigOverride && (
+				{isRunning && !showConfigOverride && !runOnceStarted && (
 					<div className="row">
 						<div className="col-md-12">
 							<div className="assistant-config-card">
@@ -764,9 +837,9 @@ const AssistantComponent: React.FC = () => {
 										<div className="mb-3">
 											<i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
 										</div>
-										<h5 className="mb-2 text-white">Your assistant is running 🎉 </h5>
+										<h5 className="mb-2 text-white">Assistant is running successfully.</h5>
 										<p className="text-muted mb-0">{successMessage}</p>
-										<p className="text-muted mb-0">Check runs for output.</p>
+										<p className="text-muted mb-0">Open output to view activity and results.</p>
 									</div>
 								</div>
 								<div className="assistant-config-footer pt-2">
@@ -779,7 +852,7 @@ const AssistantComponent: React.FC = () => {
 										Reconfigure
 									</Button>
 									<Button variant="primary" onClick={() => navigate("/manage/runs")}>
-										View Runs
+										View Output
 									</Button>
 								</div>
 							</div>
