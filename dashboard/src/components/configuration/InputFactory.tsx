@@ -6,6 +6,7 @@ import CryptoSelector from "./CryptoSelector";
 import DropdownInput from "./DropdownInput";
 import TextInput from "./TextInput";
 import GitHubInput from "./GitHubInput";
+import HubSpotInput from "./HubSpotInput";
 import ScheduleInput from "./ScheduleInput";
 
 interface Option {
@@ -86,6 +87,18 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 			case "github":
 				return (
 					<GitHubInput
+						value={value}
+						selectResources={selectResources}
+						selectedResources={selectedResources}
+						inputData={inputConfig}
+						onRefresh={onRefresh}
+						highlightSelectResources={highlightSelectResources}
+					/>
+				);
+
+			case "hubspot":
+				return (
+					<HubSpotInput
 						value={value}
 						selectResources={selectResources}
 						selectedResources={selectedResources}

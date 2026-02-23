@@ -14,7 +14,7 @@ import InputFactory from "./configuration/InputFactory";
 import ResourceSelectionPopup from "./ResourceSelectionPopup";
 import "./assistant_component.css";
 
-const OAUTH_INPUTS = ["github"];
+const OAUTH_INPUTS = ["github", "hubspot"];
 
 const AssistantComponent: React.FC = () => {
 	const { showToast } = useToast();
