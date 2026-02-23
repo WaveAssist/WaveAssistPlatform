@@ -73,11 +73,8 @@ const NodesComponent: React.FC = () => {
 	const [copied, setCopied] = useState(false);
 	const [runTour, setRunTour] = useState(false);
 	const [emailWebhook, setEmailWebhook] = useState("");
-	const [view, setView] = useState<"flow" | "table">(() => {
-		const saved = localStorage.getItem("nodesView");
-		if (saved === "flow" || saved === "table") return saved;
-		return "flow";
-	});
+	// Default to flow view always; do not restore table view from localStorage
+	const [view, setView] = useState<"flow" | "table">("flow");
 	const [rfNodes, setRfNodes] = useState<RFNode[]>([]);
 	const [rfEdges, setRfEdges] = useState<RFEdge[]>([]);
 
@@ -113,12 +110,15 @@ const NodesComponent: React.FC = () => {
 	const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-	const showAddNodeButton = !(isProjectPremium && !isUserPremium);
-	const showDownloadButton = !(isProjectPremium && !isUserPremium);
 
-	// Check if the entire nodes section should be blocked based on user type
+	// Plan: builder = full access; editor = view-only nodes (no add/edit/delete/run/deploy); operator = blocked
 	const currentPlanName = localStorage.getItem("plan_name") || "operator";
+	const isBuilderPlan = currentPlanName === "builder";
 	const shouldBlockNodes = currentPlanName === "operator";
+	const isEditorPlan = currentPlanName === "editor";
+
+	const showAddNodeButton = isBuilderPlan && !(isProjectPremium && !isUserPremium);
+	const showDownloadButton = !(isProjectPremium && !isUserPremium);
 
 	const navigate = useNavigate();
 	const steps: Step[] = [
@@ -155,10 +155,6 @@ const NodesComponent: React.FC = () => {
 			setWizardLoading(false);
 		}
 	};
-
-	useEffect(() => {
-		localStorage.setItem("nodesView", view);
-	}, [view]);
 
 	// Cleanup stock search timeout on unmount
 	useEffect(() => {
@@ -264,13 +260,14 @@ const NodesComponent: React.FC = () => {
 				name: n.name,
 				node_key: n.node_key,
 				is_enabled: n.is_enabled,
-				is_premium: n.is_premium, // Include the premium flag from the node data
+				is_premium: n.is_premium,
 				scheduleLabel: getScheduleLabel(n),
 				onView: () => handleViewCode(n),
-				onEdit: () => handleEdit(n),
-				onDelete: () => handleDelete(n),
-				onRun: () => handleRun(n),
+				onEdit: isBuilderPlan ? () => handleEdit(n) : undefined,
+				onDelete: isBuilderPlan ? () => handleDelete(n) : undefined,
+				onRun: isBuilderPlan ? () => handleRun(n) : undefined,
 				canRun: n.is_starting_node,
+				canEdit: isBuilderPlan,
 				label: n.name,
 			},
 			position: { x: 0, y: 0 }, // Placeholder — dagre sets actual values
@@ -294,7 +291,7 @@ const NodesComponent: React.FC = () => {
 					strokeWidth: 1.5,
 				},
 				markerEnd: { type: "arrowclosed", color: "#49d078" },
-			}))
+			})),
 		);
 
 		// Layout with dagre
@@ -426,7 +423,7 @@ ${config.nodes
 	.map(
 		(n: any) => `  - key: ${n.key}
     file_name: ${n.file_name}
-    name: ${n.name}`
+    name: ${n.name}`,
 	)
 	.join("\n")}`;
 
@@ -521,7 +518,7 @@ ${config.nodes
 	const editorOptions = {
 		selectOnLineNumbers: true,
 		roundedSelection: false,
-		readOnly: false,
+		readOnly: isEditorPlan,
 		automaticLayout: true,
 		language: "python", // Set the language to Python for syntax highlighting
 		theme: "vs-dark", // Use a dark theme
@@ -640,11 +637,11 @@ ${config.nodes
 	};
 
 	const ViewCodeButton = (params: any) => {
-		// Check if the project is premium and if the user has premium access
+		// Editor can always view code (no upgrade); builder/operator use premium check
 		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-		const isDisabled = isProjectPremium && !isUserPremium;
+		const isDisabled = !isEditorPlan && isProjectPremium && !isUserPremium;
 
 		return (
 			<button
@@ -794,7 +791,8 @@ ${config.nodes
 	};
 
 	const ActionButtons = (params: any) => {
-		// Check if the project is premium and if the user has premium access
+		// Actions (Edit, Delete, Run) only shown for builder
+		if (!isBuilderPlan) return null;
 		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
@@ -920,13 +918,17 @@ ${config.nodes
 		},
 		{
 			headerName: "Scheduled",
-			width: 200,
-			minWidth: 150,
+			...(isEditorPlan ? { flex: 2, minWidth: 220 } : { width: 200, minWidth: 150 }),
 			resizable: true,
 			cellRenderer: (params: any) => formatSchedule(params.data),
 		},
-		{ headerName: "Code", cellRenderer: ViewCodeButton, width: 140, minWidth: 120, resizable: true },
-		{ headerName: "Actions", cellRenderer: ActionButtons, width: 180, minWidth: 140, resizable: true },
+		{
+			headerName: "Code",
+			cellRenderer: ViewCodeButton,
+			...(isEditorPlan ? { flex: 1, minWidth: 160 } : { width: 140, minWidth: 120 }),
+			resizable: true,
+		},
+		...(isBuilderPlan ? [{ headerName: "Actions", cellRenderer: ActionButtons, width: 180, minWidth: 140, resizable: true }] : []),
 	];
 
 	const isStartingNode = watch("is_starting_node");
@@ -1000,7 +1002,7 @@ ${config.nodes
 
 			<Modal show={showCodeModal} onHide={handleClose} size="lg" centered>
 				<Modal.Header>
-					<Modal.Title>Edit Code</Modal.Title>
+					<Modal.Title>{isEditorPlan ? "View Code" : "Edit Code"}</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
 					<Editor
@@ -1010,16 +1012,18 @@ ${config.nodes
 						defaultLanguage="python"
 						value={modalCode}
 						options={editorOptions}
-						onChange={(newValue: any) => setModalCode(newValue)}
+						onChange={isEditorPlan ? undefined : (newValue: any) => setModalCode(newValue)}
 					/>
 				</Modal.Body>
 				<Modal.Footer>
 					<Button variant="secondary" onClick={handleClose}>
 						Close
 					</Button>
-					<Button variant="primary" onClick={handleSave}>
-						Save
-					</Button>
+					{isBuilderPlan && (
+						<Button variant="primary" onClick={handleSave}>
+							Save
+						</Button>
+					)}
 				</Modal.Footer>
 			</Modal>
 
@@ -1427,7 +1431,11 @@ ${config.nodes
 													onChange={(e) => handleWizardInputChange(input_dict.key, e.target.value)}
 												/>
 											)}
-											{input_dict.helper_message && <Form.Text className="text-secondary">{input_dict.helper_message}</Form.Text>}
+											{input_dict.helper_message && (
+												<Form.Text className="text-secondary" style={{ fontSize: "0.8rem" }}>
+													{input_dict.helper_message}
+												</Form.Text>
+											)}
 										</Form.Group>
 									))}
 								</Form>
@@ -1456,7 +1464,7 @@ ${config.nodes
 								View Runs
 							</Button>
 						</>
-					) : (
+					) : isBuilderPlan ? (
 						<Button
 							variant="primary"
 							className="w-100"
@@ -1464,6 +1472,10 @@ ${config.nodes
 							disabled={processingWizard || wizardLoading}
 							style={{ backgroundColor: "#1ED66C", borderColor: "#1ED66C", color: "#000000" }}>
 							{processingWizard ? "Processing..." : wizardLoading ? "Loading..." : "Run and Deploy"}
+						</Button>
+					) : (
+						<Button variant="secondary" onClick={() => setShowWizard(false)}>
+							Close
 						</Button>
 					)}
 				</Modal.Footer>

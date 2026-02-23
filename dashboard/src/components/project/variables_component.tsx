@@ -57,8 +57,9 @@ const VariablesComponent: React.FC = () => {
 	const [variableKey, setVariableKey] = useState("");
 	const { shouldRefresh } = useRefresh();
 	const gridRef = useRef<AgGridReactType | null>(null);
+	// Only builder can access Variables (editor and operator cannot)
 	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const shouldBlockNodes = currentPlanName === "operator";
+	const shouldBlockNodes = currentPlanName !== "builder";
 	const handleCloseVariableEditor = () => {
 		setShowVariableEditor(false);
 	};
@@ -468,7 +469,7 @@ const VariablesComponent: React.FC = () => {
 					</Form>
 				</Modal.Body>
 			</Modal>
-			<PaywallBlock show={shouldBlockNodes} />
+			<PaywallBlock show={shouldBlockNodes} showUpgradeButton={currentPlanName === "operator"} />
 		</div>
 	);
 };

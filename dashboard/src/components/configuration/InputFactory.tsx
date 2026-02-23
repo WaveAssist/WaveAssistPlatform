@@ -130,14 +130,18 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 	};
 
 	return (
-		<Form.Group className="mb-3">
-			<Form.Label>
+		<Form.Group className="mb-4">
+			<Form.Label className="mb-2 d-block">
 				{display_name || key}
 				{!isOptional && <span style={{ color: "#ff4444", marginLeft: "4px" }}>*</span>}
 				{isOptional && <span className="text-muted ms-1">(Optional)</span>}
 			</Form.Label>
-			{renderInput()}
-			{helper_message && <Form.Text className="text-secondary">{helper_message}</Form.Text>}
+			<div className="mb-1">{renderInput()}</div>
+			{helper_message && (
+				<Form.Text className="text-secondary d-block mt-1" style={{ fontSize: "0.8rem" }}>
+					{helper_message}
+				</Form.Text>
+			)}
 		</Form.Group>
 	);
 };

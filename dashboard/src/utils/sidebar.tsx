@@ -22,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 
 	// Determine which sections should be visible based on plan
 	const isBuilderOrEditorPlan = currentPlanName === "builder" || currentPlanName === "editor";
+	const isBuilderPlan = currentPlanName === "builder";
 
 	useEffect(() => {
 		const isNewUser = localStorage.getItem("is_new_user");
@@ -38,14 +39,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 		{
 			target: ".variables-link",
 			content: "View and manage your variables here.",
-		},
-		{
-			target: ".packages-link",
-			content: "Manage all your installed packages from here.",
-		},
-		{
-			target: ".logs-link",
-			content: "View detailed logs for all your executed workflows.",
 		},
 		{
 			target: ".keys-link",
@@ -240,6 +233,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 					</Link>
 				</li>
 
+				{/* Divider between Modules and Customizations - only in collapsed view */}
+				{isCollapsed && (
+					<li className="nav-item nav-divider-collapsed" aria-hidden="true">
+						<div className="sidebar-group-divider" />
+					</li>
+				)}
+
 				{!isCollapsed && (
 					<li className="nav-item mb-1 text-uppercase small ps-2 pt-3" style={{ color: "#ffffff80", fontSize: "11px", letterSpacing: "0.05em" }}>
 						Customizations
@@ -294,9 +294,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 					)}
 				</li>
 
-				{/* Variables - Locked for operators, visible for builder/editor plans */}
-				<li className="nav-item">
-					{isBuilderOrEditorPlan ? (
+				{/* Variables - Only visible to builder */}
+				{isBuilderPlan && (
+					<li className="nav-item">
 						<Link
 							to="/manage/variables"
 							className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1 variables-link ${
@@ -317,80 +317,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 								</>
 							)}
 						</Link>
-					) : (
-						<Link
-							to="/manage/variables"
-							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={handleNavClick}
-							title={isCollapsed ? "Variables (Locked)" : ""}
-							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-table"></i>
-									</div>
-									<span>Variables</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-table me-2"></i>
-									Variables
-									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
-								</>
-							)}
-						</Link>
-					)}
-				</li>
+					</li>
+				)}
 
-				{/* Packages - Locked for operators, visible for builder/editor plans */}
-				<li className="nav-item">
-					{isBuilderOrEditorPlan ? (
-						<Link
-							to="/manage/packages"
-							className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 packages-link ${
-								isCollapsed ? "collapsed-nav-link" : ""
-							}`}
-							onClick={handleNavClick}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-box-fill"></i>
-									</div>
-									<span>Packages</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-box-fill me-2"></i>
-									Packages
-								</>
-							)}
-						</Link>
-					) : (
-						<Link
-							to="/manage/packages"
-							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={handleNavClick}
-							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-box-fill"></i>
-									</div>
-									<span>Packages</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-box-fill me-2"></i>
-									Packages
-									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
-								</>
-							)}
-						</Link>
-					)}
-				</li>
-
-				<li className="nav-item">
-					{isBuilderOrEditorPlan ? (
+				{/* Environments - Only visible to builder */}
+				{isBuilderPlan && (
+					<li className="nav-item">
 						<Link
 							to="/manage/environments"
 							className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1 ${
@@ -411,76 +343,61 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 								</>
 							)}
 						</Link>
-					) : (
-						<Link
-							to="/manage/environments"
-							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={handleNavClick}
-							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-stack"></i>
-									</div>
-									<span>Environments</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-stack me-2"></i>
-									Environments
-									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
-								</>
-							)}
-						</Link>
-					)}
-				</li>
+					</li>
+				)}
 
-				{/* Logs - Locked for operators, visible for builder/editor plans */}
-				<li className="nav-item">
-					{isBuilderOrEditorPlan ? (
+				{/* Packages - Only visible to builder */}
+				{isBuilderPlan && (
+					<li className="nav-item">
 						<Link
-							to="/manage/logs"
-							className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 logs-link ${
+							to="/manage/packages"
+							className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 ${
 								isCollapsed ? "collapsed-nav-link" : ""
 							}`}
 							onClick={handleNavClick}>
 							{isCollapsed ? (
 								<>
 									<div className="nav-icon">
-										<i className="bi bi-file-text-fill"></i>
+										<i className="bi bi-box-seam"></i>
 									</div>
-									<span>Logs</span>
+									<span>Packages</span>
 								</>
 							) : (
 								<>
-									<i className="bi bi-file-text-fill me-2"></i>
-									Logs
+									<i className="bi bi-box-seam me-2"></i>
+									Packages
 								</>
 							)}
 						</Link>
-					) : (
+					</li>
+				)}
+
+				{/* Logs - Only visible to builder */}
+				{isBuilderPlan && (
+					<li className="nav-item">
 						<Link
 							to="/manage/logs"
-							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={handleNavClick}
-							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
+							className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 ${
+								isCollapsed ? "collapsed-nav-link" : ""
+							}`}
+							onClick={handleNavClick}>
 							{isCollapsed ? (
 								<>
 									<div className="nav-icon">
-										<i className="bi bi-file-text-fill"></i>
+										<i className="bi bi-journal-text"></i>
 									</div>
 									<span>Logs</span>
 								</>
 							) : (
 								<>
-									<i className="bi bi-file-text-fill me-2"></i>
+									<i className="bi bi-journal-text me-2"></i>
 									Logs
-									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
 								</>
 							)}
 						</Link>
-					)}
-				</li>
+					</li>
+				)}
+
 			</ul>
 
 			<div className="mt-auto">

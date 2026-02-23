@@ -44,6 +44,12 @@
 	gap: 8px;
 }
 
+/* Editor mode: single "View code" action centered for cleaner look */
+.node-actions-view-only {
+	justify-content: center;
+	min-width: 32px;
+}
+
 .node-actions i {
 	font-size: 14px;
 	color: #4dd38c; /* soft custom green */

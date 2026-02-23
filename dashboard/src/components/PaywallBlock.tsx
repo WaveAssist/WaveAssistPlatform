@@ -6,12 +6,15 @@ interface PaywallBlockProps {
 	show: boolean;
 	message?: string;
 	onUpgrade?: () => void;
+	/** When false, no Upgrade button is shown (e.g. for editor plan) */
+	showUpgradeButton?: boolean;
 }
 
 const PaywallBlock: React.FC<PaywallBlockProps> = ({
 	show,
-	message = "This feature is only available on Builder and Editor plans. Upgrade to unlock!",
+	message = "This feature is only available on Customized plans. Upgrade to unlock!",
 	onUpgrade,
+	showUpgradeButton = true,
 }) => {
 	if (!show) return null;
 
@@ -19,7 +22,6 @@ const PaywallBlock: React.FC<PaywallBlockProps> = ({
 		if (onUpgrade) {
 			onUpgrade();
 		} else {
-			// Default behavior - open pricing page
 			window.open("https://waveassist.io/pricing", "_blank");
 		}
 	};
@@ -30,10 +32,12 @@ const PaywallBlock: React.FC<PaywallBlockProps> = ({
 				<div className="paywall-content">
 					<h4 className="paywall-title">Want to customize your assistant?</h4>
 					<p className="paywall-message">{message}</p>
-					<Button variant="warning" onClick={handleUpgrade}>
-						<i className="bi bi-arrow-up-circle me-2"></i>
-						Upgrade Now
-					</Button>
+					{showUpgradeButton && (
+						<Button variant="warning" onClick={handleUpgrade}>
+							<i className="bi bi-arrow-up-circle me-2"></i>
+							Upgrade Now
+						</Button>
+					)}
 				</div>
 			</div>
 		</div>

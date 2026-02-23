@@ -18,9 +18,9 @@ const EnvironmentsComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
 	const [loading, setLoading] = useState(true);
 
-	// Check if the entire environments section should be blocked based on user type
+	// Only builder can access Environments (editor and operator cannot)
 	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const shouldBlockEnvironments = currentPlanName === "operator";
+	const shouldBlockEnvironments = currentPlanName !== "builder";
 
 	const handleCloseEnvironmentEditor = () => {
 		setShowEnvironmentEditor(false);
@@ -153,7 +153,7 @@ const EnvironmentsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<PaywallBlock show={shouldBlockEnvironments} />
+			<PaywallBlock show={shouldBlockEnvironments} showUpgradeButton={currentPlanName === "operator"} />
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
 				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-between align-items-center mb-3">

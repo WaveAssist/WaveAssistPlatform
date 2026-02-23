@@ -148,27 +148,22 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange, options 
 		setShowModal(false);
 	};
 
-	const handleSelectOption = (option: Option) => {
-		onChange(JSON.stringify(option.key));
-	};
-
-	// If options are provided, render a simpler dropdown instead of the complex UI
+	// If options are provided, render the same dropdown UI as DropdownInput (Form.Select)
 	if (options && options.length > 0) {
 		return (
-			<div className="github-input-container">
-				<DropdownButton
-					variant="outline-secondary"
-					title={getScheduleDisplayText()}
-					id={`schedule-dropdown`}
-					className="w-100"
-					style={{ textAlign: "left" }}>
-					{options.map((option, idx) => (
-						<Dropdown.Item key={idx} onClick={() => handleSelectOption(option)}>
-							{option.name}
-						</Dropdown.Item>
-					))}
-				</DropdownButton>
-			</div>
+			<Form.Select
+				value={value || ""}
+				onChange={(e) => onChange(e.target.value)}
+				className="w-100">
+				<option value="" disabled>
+					Select schedule...
+				</option>
+				{options.map((option, idx) => (
+					<option key={idx} value={JSON.stringify(option.key)}>
+						{option.name}
+					</option>
+				))}
+			</Form.Select>
 		);
 	}
 

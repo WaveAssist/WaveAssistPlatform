@@ -29,13 +29,14 @@ function PaywallModal({ show, onHide, onPay }: { show: boolean; onHide: () => vo
 }
 
 export default function NodeCard({ data }: NodeProps) {
-        const { name, is_enabled, onEdit, onView, onRun, canRun } = data;
+        const { name, is_enabled, onEdit, onView, onRun, canRun, canEdit } = data as any;
 
         const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
         const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
         const isUserPremium =
                 localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-        const isDisabled = isProjectPremium && !isUserPremium;
+        // Editor (canEdit false) can always view code; no upgrade CTA for editor
+        const isDisabled = canEdit === false ? false : isProjectPremium && !isUserPremium;
 
         const [showPaywall, setShowPaywall] = useState(false);
 
@@ -51,20 +52,22 @@ export default function NodeCard({ data }: NodeProps) {
                         <Handle type="target" position={Position.Top} />
                         <div className="node-content">
                                 <div className="node-name">{name}</div>
-                                <div className="node-actions">
-                                        <i
-                                                className="bi bi-gear-fill"
-                                                onClick={isDisabled ? handlePremiumBlocked : onEdit}
-                                                title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
-                                                style={disabledStyle}
-                                        />
+                                <div className={`node-actions ${canEdit === false ? "node-actions-view-only" : ""}`}>
+                                        {canEdit && (
+                                                <i
+                                                        className="bi bi-gear-fill"
+                                                        onClick={isDisabled ? handlePremiumBlocked : onEdit}
+                                                        title={isDisabled ? "Premium feature - upgrade to access" : "Edit node"}
+                                                        style={disabledStyle}
+                                                />
+                                        )}
                                         <i
                                                 className="bi bi-code-slash"
                                                 onClick={isDisabled ? handlePremiumBlocked : onView}
                                                 title={isDisabled ? "Premium feature - upgrade to access" : "View node code"}
                                                 style={disabledStyle}
                                         />
-                                        {canRun && (
+                                        {canEdit && canRun && (
                                                 <i
                                                         className="bi bi-play-fill play-button-step"
                                                         onClick={!isDisabled ? onRun : undefined}

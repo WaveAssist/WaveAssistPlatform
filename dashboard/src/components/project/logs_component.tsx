@@ -18,9 +18,9 @@ const LogsComponent: React.FC = () => {
 	const [selectedSystemKey, _] = useState("celery-worker");
 	const [selectedNodeKey, setSelectedNodeKey] = useState("All");
 
-	// Check if the entire logs section should be blocked based on user type
+	// Only builder can access Logs (editor and operator cannot)
 	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const shouldBlockLogs = currentPlanName === "operator";
+	const shouldBlockLogs = currentPlanName !== "builder";
 	// const systemName = ["Worker", "API", "Redis", "MongoDB", "Dashboard"];
 	// const systemKeys = ["celery-worker", "django", "redis", "mongodb", "dashboard"];
 
@@ -90,7 +90,7 @@ const LogsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<PaywallBlock show={shouldBlockLogs} />
+			<PaywallBlock show={shouldBlockLogs} showUpgradeButton={currentPlanName === "operator"} />
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
 				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-start align-items-center mb-3">

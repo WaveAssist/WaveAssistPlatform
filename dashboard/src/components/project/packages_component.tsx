@@ -19,9 +19,9 @@ const PackagesComponent: React.FC = () => {
 	const [packageName, setPackageName] = useState("");
 	const [packageVersion, setPackageVersion] = useState("");
 
-	// Check if the entire packages section should be blocked based on user type
+	// Only builder can access Packages (editor and operator cannot)
 	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const shouldBlockPackages = currentPlanName === "operator";
+	const shouldBlockPackages = currentPlanName !== "builder";
 
 	const handleCloseVariableEditor = () => {
 		setShowPackageEditor(false);
@@ -228,7 +228,7 @@ const PackagesComponent: React.FC = () => {
 					</Modal.Footer>
 				</Modal.Body>
 			</Modal>
-			<PaywallBlock show={shouldBlockPackages} />
+			<PaywallBlock show={shouldBlockPackages} showUpgradeButton={currentPlanName === "operator"} />
 		</div>
 	);
 };

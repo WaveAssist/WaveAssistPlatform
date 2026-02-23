@@ -40,11 +40,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 
-	// Get plan name to determine if user is on operator plan
+	// Get plan name: Deploy only visible to builder; Upgrade only for operator
 	const currentPlanName = localStorage.getItem("plan_name") || "operator";
+	const isBuilderPlan = currentPlanName === "builder";
 	const isOperatorPlan = currentPlanName === "operator";
 
-	const showDeployButton = !(isProjectPremium && !isUserPremium) && !isOperatorPlan;
+	const showDeployButton = !(isProjectPremium && !isUserPremium) && isBuilderPlan;
 
 	useEffect(() => {
 		fetchEnvironments();

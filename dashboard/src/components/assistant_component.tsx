@@ -738,7 +738,7 @@ const AssistantComponent: React.FC = () => {
 												</Form>
 											)}
 											{templateData?.configuration_helper_message && (
-												<div className="alert bg-transparent border border-secondary text-secondary mb-4" style={{ fontSize: "0.875rem" }}>
+												<div className="alert bg-transparent border border-secondary text-secondary mb-4" style={{ fontSize: "0.8rem" }}>
 													<i className="bi bi-info-circle me-2 text-secondary"></i>
 													{templateData.configuration_helper_message}
 												</div>
