@@ -25,8 +25,6 @@ import { useForm, Controller } from "react-hook-form";
 import timezones from "../../utils/timezones.json";
 import { NodeType } from "../../utils/types";
 import { useRefresh } from "../../utils/RefreshContext";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
 import { Badge, Collapse } from "react-bootstrap";
 import NodeTableView from "./node_table_view";
 import NodeFlowView from "./node_flow_view";
@@ -118,7 +116,6 @@ const NodesComponent: React.FC = () => {
 	const isEditorPlan = currentPlanName === "editor";
 
 	const showAddNodeButton = isBuilderPlan && !(isProjectPremium && !isUserPremium);
-	const showDownloadButton = !(isProjectPremium && !isUserPremium);
 
 	const navigate = useNavigate();
 	const steps: Step[] = [
@@ -396,47 +393,6 @@ const NodesComponent: React.FC = () => {
 	// 	setUrl(url);
 	// 	setIsOpen(true);
 	// };
-
-	const handleDownloadCode = () => {
-		if (premiumBlocked()) return;
-		const zip = new JSZip();
-		const config: any = {
-			project_key: localStorage.getItem("selected_project_key") || "unknown_project",
-			nodes: [],
-		};
-
-		nodesArray.forEach((node) => {
-			if (node.python_code) {
-				const safeFilename = `${node.node_key.replace(/\s+/g, "_")}.py`;
-				zip.file(safeFilename, node.python_code);
-				config.nodes.push({
-					key: node.node_key,
-					name: node.name,
-					file_name: safeFilename,
-				});
-			}
-		});
-
-		const yamlContent = `project_key: ${config.project_key}
-nodes:
-${config.nodes
-	.map(
-		(n: any) => `  - key: ${n.key}
-    file_name: ${n.file_name}
-    name: ${n.name}`,
-	)
-	.join("\n")}`;
-
-		zip.file("config.yaml", yamlContent);
-		zip
-			.generateAsync({ type: "blob" })
-			.then((content) => {
-				saveAs(content, `WaveAssistCode_${config.project_key}.zip`);
-			})
-			.catch((err) => {
-				console.error("Error generating zip file:", err);
-			});
-	};
 
 	const handleCloseNodeEditor = () => {
 		setSelectedNodeKey("");
@@ -955,12 +911,6 @@ ${config.nodes
 							{showAddNodeButton && (
 								<Button variant="dark" onClick={handleCreateNode} className="ms-2">
 									<span className="bi bi-plus-lg">{!isMobile && <> Add Node</>}</span>
-								</Button>
-							)}
-							{/* Check premium status for Download button */}
-							{showDownloadButton && (
-								<Button variant="dark" onClick={handleDownloadCode} className="ms-2">
-									<span className="bi bi-cloud-download">{/* No text for download, just icon */}</span>
 								</Button>
 							)}
 						</div>
