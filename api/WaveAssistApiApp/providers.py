@@ -22,6 +22,36 @@ oauth = OAuth()
 client = Client()
 
 
+def get_nested(data, path, default=None):
+    """
+    Safely get a nested value from a dict/list using dot notation.
+    Example: get_nested(obj, "properties.email")
+    """
+    if not path:
+        return data
+
+    keys = path.split(".")
+    current = data
+
+    for key in keys:
+        if isinstance(current, dict):
+            if key not in current:
+                return default
+            current = current.get(key)
+        elif isinstance(current, list):
+            try:
+                index = int(key)
+            except (TypeError, ValueError):
+                return default
+            if index < 0 or index >= len(current):
+                return default
+            current = current[index]
+        else:
+            return default
+
+    return current
+
+
 def store_in_mongo(uid, project_key, provider_name, access_token, refresh_token):
     try:
 
@@ -64,6 +94,11 @@ def initiate_oauth(request):
             client_secret=provider.client_secret,
             scope=scopes,
             redirect_uri=provider.redirect_uri,
+            token_endpoint_auth_method=getattr(
+                provider,
+                "token_endpoint_auth_method",
+                TokenAuthMethod.CLIENT_SECRET_BASIC,
+            ),
         )
 
         # Generate state with provider_name, uid, and project_key for security
@@ -76,9 +111,12 @@ def initiate_oauth(request):
         ##convert to JWT
         state = jwt.encode(state_data, JWT_SECRET, algorithm="HS256")
 
-        # Generate authorization URL with state
+        # Generate authorization URL with state and any extra provider-specific params
+        extra_auth_params = getattr(provider, "extra_auth_params", {}) or {}
         auth_url, state = session.create_authorization_url(
-            provider.auth_url, state=state
+            provider.auth_url,
+            state=state,
+            **extra_auth_params,
         )
 
         return ResponseParser.getParsedSuccessMessage(
@@ -145,14 +183,32 @@ def oauth_callback(request):
             client_secret=provider.client_secret,
             scope=scopes,
             redirect_uri=provider.redirect_uri,
+            token_endpoint_auth_method=getattr(
+                provider,
+                "token_endpoint_auth_method",
+                TokenAuthMethod.CLIENT_SECRET_BASIC,
+            ),
         )
 
-        # Fetch token using AuthLib
-        token = session.fetch_token(
-            provider.token_url,
-            authorization_response=request.build_absolute_uri(),
-            state=state,
+        # Prepare token fetch parameters based on provider configuration
+        token_fetch_method = getattr(
+            provider,
+            "token_fetch_method",
+            TokenFetchMethod.AUTHORIZATION_RESPONSE,
         )
+        extra_token_params = getattr(provider, "extra_token_params", {}) or {}
+
+        fetch_kwargs = {"state": state, **extra_token_params}
+
+        if token_fetch_method == TokenFetchMethod.CODE:
+            fetch_kwargs["code"] = code
+            fetch_kwargs.setdefault("redirect_uri", provider.redirect_uri)
+        else:
+            # Default to using the full authorization response URL
+            fetch_kwargs["authorization_response"] = request.build_absolute_uri()
+
+        # Fetch token using AuthLib
+        token = session.fetch_token(provider.token_url, **fetch_kwargs)
 
         access_token = token.get("access_token", "")
         refresh_token = token.get("refresh_token", "")
@@ -233,18 +289,28 @@ def fetch_resources(request):
             timeout=30,
         )
         response.raise_for_status()
-        items = response.json()
+        items_data = response.json()
 
-        ##Optionally extract data from items if not array already
+        # Optionally extract list of items using items_key or default to "data"
+        items_key = single_resource_config_dict.get("items_key")
+        if items_key:
+            items = get_nested(items_data, items_key, [])
+        else:
+            items = items_data
+            if not isinstance(items, list):
+                items = items.get("data", [])
+
         if not isinstance(items, list):
-            items = items.get("data", [])
+            items = []
 
         # Extract resource information
         resources = []
+        id_field = single_resource_config_dict.get("id_field")
+        name_field = single_resource_config_dict.get("name_field")
         for item in items:
             resource = {
-                "id": item.get(single_resource_config_dict["id_field"]),
-                "name": item.get(single_resource_config_dict["name_field"]),
+                "id": get_nested(item, id_field) if id_field else None,
+                "name": get_nested(item, name_field) if name_field else None,
                 "extra": {},
             }
             # Add other fields as extra data

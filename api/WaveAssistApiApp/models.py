@@ -588,6 +588,23 @@ class Payment(models.Model):
         verbose_name_plural = "Payments"
 
 
+class TokenAuthMethod(models.TextChoices):
+    CLIENT_SECRET_BASIC = "client_secret_basic", "Client Secret Basic"
+    CLIENT_SECRET_POST = "client_secret_post", "Client Secret Post"
+    NONE = "none", "None"
+
+
+class GrantType(models.TextChoices):
+    AUTHORIZATION_CODE = "authorization_code", "Authorization Code"
+    CLIENT_CREDENTIALS = "client_credentials", "Client Credentials"
+    REFRESH_TOKEN = "refresh_token", "Refresh Token"
+
+
+class TokenFetchMethod(models.TextChoices):
+    AUTHORIZATION_RESPONSE = "authorization_response", "Authorization Response"
+    CODE = "code", "Code"
+
+
 class Provider(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50, unique=True)
@@ -597,7 +614,23 @@ class Provider(models.Model):
     token_url = models.CharField(max_length=500)
     refresh_url = models.CharField(max_length=500, null=True, blank=True)
     default_scopes = models.JSONField(default=list)
-    default_grant_type = models.CharField(max_length=20, default="authorization_code")
+    default_grant_type = models.CharField(
+        max_length=20,
+        choices=GrantType.choices,
+        default=GrantType.AUTHORIZATION_CODE,
+    )
+    token_endpoint_auth_method = models.CharField(
+        max_length=50,
+        choices=TokenAuthMethod.choices,
+        default=TokenAuthMethod.CLIENT_SECRET_BASIC,
+    )
+    token_fetch_method = models.CharField(
+        max_length=50,
+        choices=TokenFetchMethod.choices,
+        default=TokenFetchMethod.AUTHORIZATION_RESPONSE,
+    )
+    extra_auth_params = models.JSONField(default=dict, blank=True)
+    extra_token_params = models.JSONField(default=dict, blank=True)
     redirect_uri = models.CharField(max_length=500)
     resource_configs = models.JSONField(default=dict)
     base_url = models.CharField(max_length=500, null=True, blank=True)
@@ -617,6 +650,10 @@ class Provider(models.Model):
             "refresh_url": self.refresh_url,
             "default_scopes": self.default_scopes,
             "default_grant_type": self.default_grant_type,
+            "token_endpoint_auth_method": self.token_endpoint_auth_method,
+            "token_fetch_method": self.token_fetch_method,
+            "extra_auth_params": self.extra_auth_params,
+            "extra_token_params": self.extra_token_params,
             "redirect_uri": self.redirect_uri,
             "resource_configs": self.resource_configs,
             "base_url": self.base_url,
