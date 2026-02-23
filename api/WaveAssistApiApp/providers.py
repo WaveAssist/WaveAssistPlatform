@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from authlib.integrations.requests_client import OAuth2Session
 from .models import *
+from .models import TokenAuthMethod, TokenFetchMethod
 from .Utils.responseParser import ResponseParser
 from .Utils.constants import *
 import WaveAssistApiApp.Utils.utils as utils
@@ -39,11 +40,11 @@ def get_nested(data, path, default=None):
                 return default
             current = current.get(key)
         elif isinstance(current, list):
-            try:
-                index = int(key)
-            except (TypeError, ValueError):
+            # Only allow non-negative integer indices (reject "-1", "1.5", etc.)
+            if not key.isdigit():
                 return default
-            if index < 0 or index >= len(current):
+            index = int(key)
+            if index >= len(current):
                 return default
             current = current[index]
         else:
@@ -94,10 +95,8 @@ def initiate_oauth(request):
             client_secret=provider.client_secret,
             scope=scopes,
             redirect_uri=provider.redirect_uri,
-            token_endpoint_auth_method=getattr(
-                provider,
-                "token_endpoint_auth_method",
-                TokenAuthMethod.CLIENT_SECRET_BASIC,
+            token_endpoint_auth_method=(
+                provider.token_endpoint_auth_method or TokenAuthMethod.CLIENT_SECRET_BASIC
             ),
         )
 
@@ -112,7 +111,7 @@ def initiate_oauth(request):
         state = jwt.encode(state_data, JWT_SECRET, algorithm="HS256")
 
         # Generate authorization URL with state and any extra provider-specific params
-        extra_auth_params = getattr(provider, "extra_auth_params", {}) or {}
+        extra_auth_params = provider.extra_auth_params or {}
         auth_url, state = session.create_authorization_url(
             provider.auth_url,
             state=state,
@@ -183,20 +182,16 @@ def oauth_callback(request):
             client_secret=provider.client_secret,
             scope=scopes,
             redirect_uri=provider.redirect_uri,
-            token_endpoint_auth_method=getattr(
-                provider,
-                "token_endpoint_auth_method",
-                TokenAuthMethod.CLIENT_SECRET_BASIC,
+            token_endpoint_auth_method=(
+                provider.token_endpoint_auth_method or TokenAuthMethod.CLIENT_SECRET_BASIC
             ),
         )
 
         # Prepare token fetch parameters based on provider configuration
-        token_fetch_method = getattr(
-            provider,
-            "token_fetch_method",
-            TokenFetchMethod.AUTHORIZATION_RESPONSE,
+        token_fetch_method = (
+            provider.token_fetch_method or TokenFetchMethod.AUTHORIZATION_RESPONSE
         )
-        extra_token_params = getattr(provider, "extra_token_params", {}) or {}
+        extra_token_params = provider.extra_token_params or {}
 
         fetch_kwargs = {"state": state, **extra_token_params}
 
@@ -291,15 +286,16 @@ def fetch_resources(request):
         response.raise_for_status()
         items_data = response.json()
 
-        # Optionally extract list of items using items_key or default to "data"
+        # Extract list of items via items_key or default "data"; always normalize to list
         items_key = single_resource_config_dict.get("items_key")
         if items_key:
             items = get_nested(items_data, items_key, [])
         else:
-            items = items_data
-            if not isinstance(items, list):
-                items = items.get("data", [])
-
+            items = (
+                items_data
+                if isinstance(items_data, list)
+                else get_nested(items_data, "data", [])
+            )
         if not isinstance(items, list):
             items = []
 
@@ -313,12 +309,10 @@ def fetch_resources(request):
                 "name": get_nested(item, name_field) if name_field else None,
                 "extra": {},
             }
-            # Add other fields as extra data
+            # Add other fields as extra data (exclude id/name fields when defined)
+            excluded_keys = [k for k in (id_field, name_field) if k is not None]
             for key, value in item.items():
-                if key not in [
-                    single_resource_config_dict["id_field"],
-                    single_resource_config_dict["name_field"],
-                ]:
+                if key not in excluded_keys:
                     resource["extra"][key] = value
             resources.append(resource)
         return ResponseParser.getParsedSuccessMessage(
