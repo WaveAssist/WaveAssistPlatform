@@ -2,12 +2,18 @@ import React, { useState, useEffect } from "react";
 import { Form, DropdownButton, Dropdown, Button, Modal } from "react-bootstrap";
 import timezones from "../../utils/timezones.json";
 
+interface Option {
+	name: string;
+	key: any;
+}
+
 interface ScheduleInputProps {
 	value: string;
 	onChange: (value: string) => void;
+	options?: Option[];
 }
 
-const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
+const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange, options }) => {
 	const [showModal, setShowModal] = useState(false);
 	const [scheduleType, setScheduleType] = useState<"interval" | "crontab" | "none">("interval");
 	const [intervalEvery, setIntervalEvery] = useState<string>("30");
@@ -89,6 +95,18 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 	};
 
 	const getScheduleDisplayText = () => {
+		if (options && options.length > 0) {
+			try {
+				const parsedValue = typeof value === "string" ? JSON.parse(value) : value;
+				const matchedOption = options.find((opt) => JSON.stringify(opt.key) === JSON.stringify(parsedValue));
+				if (matchedOption) {
+					return matchedOption.name;
+				}
+			} catch (e) {
+				// Ignore parsing errors and fallback
+			}
+		}
+
 		switch (scheduleType) {
 			case "interval":
 				return `Every ${intervalEvery} ${intervalType}`;
@@ -129,6 +147,30 @@ const ScheduleInput: React.FC<ScheduleInputProps> = ({ value, onChange }) => {
 		onChange(JSON.stringify(scheduleData));
 		setShowModal(false);
 	};
+
+	const handleSelectOption = (option: Option) => {
+		onChange(JSON.stringify(option.key));
+	};
+
+	// If options are provided, render a simpler dropdown instead of the complex UI
+	if (options && options.length > 0) {
+		return (
+			<div className="github-input-container">
+				<DropdownButton
+					variant="outline-secondary"
+					title={getScheduleDisplayText()}
+					id={`schedule-dropdown`}
+					className="w-100"
+					style={{ textAlign: "left" }}>
+					{options.map((option, idx) => (
+						<Dropdown.Item key={idx} onClick={() => handleSelectOption(option)}>
+							{option.name}
+						</Dropdown.Item>
+					))}
+				</DropdownButton>
+			</div>
+		);
+	}
 
 	return (
 		<>
