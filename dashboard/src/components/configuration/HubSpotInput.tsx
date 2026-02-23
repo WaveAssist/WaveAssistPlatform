@@ -3,6 +3,7 @@ import { Button, Modal, Form, Spinner } from "react-bootstrap";
 import { callApi } from "../../services/base_service";
 import { setDataForKeyApi } from "../../services/project_services";
 import { useToast } from "../../utils/toast_context";
+import hubspotLogo from "../../assets/uploads/hubspot-logo.png";
 
 interface HubSpotInputProps {
 	value: string;
@@ -11,7 +12,6 @@ interface HubSpotInputProps {
 	selectedResources?: any;
 	inputData?: any;
 	onRefresh?: () => void;
-	highlightSelectResources?: boolean;
 }
 
 const HubSpotInput: React.FC<HubSpotInputProps> = ({
@@ -21,7 +21,6 @@ const HubSpotInput: React.FC<HubSpotInputProps> = ({
 	selectedResources,
 	inputData,
 	onRefresh,
-	highlightSelectResources = false,
 }) => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSelectingResources, setIsSelectingResources] = useState(false);
@@ -243,15 +242,21 @@ const HubSpotInput: React.FC<HubSpotInputProps> = ({
 										width: 32,
 										height: 32,
 										borderRadius: "50%",
-										background: "#FBB040",
+										overflow: "hidden",
+										background: "#FF7A59",
 										display: "flex",
 										alignItems: "center",
 										justifyContent: "center",
-										color: "#000000",
-										fontWeight: 700,
-										fontSize: "1rem",
 									}}>
-									H
+									<img
+										src={hubspotLogo}
+										alt="HubSpot logo"
+										style={{
+											width: "95%",
+											height: "95%",
+											objectFit: "cover",
+										}}
+									/>
 								</div>
 								<div>
 									<div className="fw-medium text-white" style={{ fontSize: "0.95rem" }}>
@@ -271,64 +276,22 @@ const HubSpotInput: React.FC<HubSpotInputProps> = ({
 								</div>
 							</div>
 							<div className="d-flex flex-column align-items-end gap-1">
-								<div className="d-flex flex-wrap gap-2 justify-content-end">
-									<Button
-										variant="primary"
-										size="sm"
-										onClick={handleSelectResources}
-										disabled={isSelectingResources}
-										className={highlightSelectResources ? "highlight-pulse" : ""}
-										style={{
-											display: "flex",
-											alignItems: "center",
-											gap: "6px",
-											fontWeight: 500,
-											padding: "6px 12px",
-											borderRadius: "6px",
-											fontSize: "0.875rem",
-											transition: "all 0.2s ease",
-										}}>
-										{isSelectingResources ? (
-											<>
-												<span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-												Loading...
-											</>
-										) : (
-											"Select Lists"
-										)}
-									</Button>
-									<Button
-										variant="outline-success"
-										size="sm"
-										onClick={handleConnectHubSpot}
-										style={{
-											display: "flex",
-											alignItems: "center",
-											gap: "6px",
-											fontWeight: 500,
-											padding: "6px 12px",
-											borderRadius: "6px",
-											fontSize: "0.875rem",
-											transition: "all 0.2s ease",
-										}}>
-										Reconnect
-									</Button>
-								</div>
-								<a
-									href="#"
-									onClick={(e) => {
-										e.preventDefault();
-										setShowManualModal(true);
-									}}
+								<Button
+									variant="outline-success"
+									size="sm"
+									onClick={handleConnectHubSpot}
 									style={{
-										fontSize: "0.75rem",
-										color: "#A1A1AA",
-										textDecoration: "none",
-									}}
-									onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-									onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}>
-									or manually update token
-								</a>
+										display: "flex",
+										alignItems: "center",
+										gap: "6px",
+										fontWeight: 500,
+										padding: "6px 12px",
+										borderRadius: "6px",
+										fontSize: "0.875rem",
+										transition: "all 0.2s ease",
+									}}>
+									Reconnect
+								</Button>
 							</div>
 						</div>
 					</div>
@@ -378,15 +341,21 @@ const HubSpotInput: React.FC<HubSpotInputProps> = ({
 									width: 32,
 									height: 32,
 									borderRadius: "50%",
-									background: "#FBB040",
+									overflow: "hidden",
+									background: "#FF7A59",
 									display: "flex",
 									alignItems: "center",
 									justifyContent: "center",
-									color: "#000000",
-									fontWeight: 700,
-									fontSize: "1rem",
 								}}>
-								H
+								<img
+									src={hubspotLogo}
+									alt="HubSpot logo"
+									style={{
+										width: "95%",
+										height: "95%",
+										objectFit: "cover",
+									}}
+								/>
 							</div>
 							<div>
 								<div className="fw-medium text-white" style={{ fontSize: "0.95rem" }}>

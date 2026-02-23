@@ -7,6 +7,7 @@ import DropdownInput from "./DropdownInput";
 import TextInput from "./TextInput";
 import GitHubInput from "./GitHubInput";
 import HubSpotInput from "./HubSpotInput";
+import ClickUpInput from "./ClickUpInput";
 import ScheduleInput from "./ScheduleInput";
 
 interface Option {
@@ -96,15 +97,25 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 					/>
 				);
 
+			case "clickup":
+				return (
+					<ClickUpInput
+						value={value}
+						selectResources={selectResources}
+						inputData={inputConfig}
+						onRefresh={onRefresh}
+						highlightSelectResources={highlightSelectResources}
+					/>
+				);
+
 			case "hubspot":
 				return (
 					<HubSpotInput
 						value={value}
 						selectResources={selectResources}
 						selectedResources={selectedResources}
-						inputData={inputConfig}
 						onRefresh={onRefresh}
-						highlightSelectResources={highlightSelectResources}
+						inputData={inputConfig}
 					/>
 				);
 
