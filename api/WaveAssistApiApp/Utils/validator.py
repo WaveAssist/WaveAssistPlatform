@@ -25,7 +25,10 @@ def validate_user_and_project(request, access_level_gte=1):
 
 
 def validate_crontab_fields(minute, hour, day_of_month, month_of_year, day_of_week, timezone):
-    cron_regex = re.compile(r'^(\*|([0-5]?\d)(-[0-5]?\d)?(\/[0-5]?\d)?(,[0-5]?\d(-[0-5]?\d)?(\/[0-5]?\d)?)*)$')
+    # Allow * or */N (e.g. */2, */30) plus numeric ranges/steps/lists
+    cron_regex = re.compile(
+        r'^(\*(\/[0-5]?\d)?|([0-5]?\d)(-[0-5]?\d)?(\/[0-5]?\d)?(,[0-5]?\d(-[0-5]?\d)?(\/[0-5]?\d)?)*)$'
+    )
     fields = {
         'minute': minute,
         'hour': hour,
