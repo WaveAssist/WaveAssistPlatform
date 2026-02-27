@@ -22,11 +22,11 @@ const CreditsComponent: React.FC = () => {
 	// TEMPORARY: Disable Add Credits functionality - set to false to re-enable
 	const ADD_CREDITS_ENABLED = true;
 
-	// INR conversion rate (USD * 88)
-	const INR_CONVERSION_RATE = 88;
+	// INR conversion rate (USD * 95)
+	const INR_CONVERSION_RATE = 95;
 
 	// RazorPay configuration
-	const KEY_ID = "rzp_live_RBBftuzZGRsYIz";
+	const KEY_ID = "rzp_live_SL8z1feuqGaz59";
 
 	// PayPal configuration
 	const PAYPAL_CLIENT_ID = "AQPRi0ROg3TN4djeqcXqBVlu150SiOH1gipJOPf5JDSOoiuCPswPWtL-a7TTdX8fV3buN9NB_lK3A651";
@@ -119,7 +119,7 @@ const CreditsComponent: React.FC = () => {
 					data.orderID, // provider_payment_id (PayPal payment ID)
 					"", // signature (empty for PayPal)
 					"", // razorpay_payment_id (empty for PayPal)
-					data.payerID // paypal_payer_id
+					data.payerID, // paypal_payer_id
 				);
 
 				console.debug("Verification data received:", verificationData);
@@ -279,7 +279,7 @@ const CreditsComponent: React.FC = () => {
 							order_id, // provider_payment_id (RazorPay payment ID)
 							response.razorpay_signature || "", // signature
 							response.razorpay_payment_id, // razorpay_payment_id (RazorPay payment ID)
-							"" // paypal_payer_id (empty for RazorPay)
+							"", // paypal_payer_id (empty for RazorPay)
 						);
 						console.debug("verificationData", verificationData);
 						if (verificationData.success === "1") {
@@ -524,7 +524,7 @@ const CreditsComponent: React.FC = () => {
 							</div>
 						</div>
 					</div>
-					{isIndia ?? false ? (
+					{(isIndia ?? false) ? (
 						<>
 							<div className="payment-buttons-row">
 								<Button
@@ -586,8 +586,8 @@ const CreditsComponent: React.FC = () => {
 											? isRazorPayCreatingOrder
 												? "Creating Order..."
 												: isRazorPayVerifying
-												? "Verifying Payment..."
-												: "Creating Order..."
+													? "Verifying Payment..."
+													: "Creating Order..."
 											: "Pay with Razorpay"}
 									</a>
 									<br />
