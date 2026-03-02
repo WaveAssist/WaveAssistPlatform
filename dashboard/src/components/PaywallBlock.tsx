@@ -12,7 +12,7 @@ interface PaywallBlockProps {
 
 const PaywallBlock: React.FC<PaywallBlockProps> = ({
 	show,
-	message = "This feature is only available on Customized plans. Upgrade to unlock!",
+	message = "This feature is only available on specific plans. Upgrade to unlock!",
 	onUpgrade,
 	showUpgradeButton = true,
 }) => {
