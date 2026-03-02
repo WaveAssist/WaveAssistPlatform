@@ -4,6 +4,7 @@ import Sidebar from "./sidebar";
 import NavbarComponent from "./navbar";
 import { Container } from "react-bootstrap";
 import RefreshContext from "./RefreshContext";
+import { refreshUserProfile } from "../services/login_services";
 
 interface LayoutProps {
 	children: ReactNode;
@@ -13,9 +14,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 	const [shouldRefresh, setShouldRefresh] = useState(false);
 	const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth >= 768);
+	const [planName, setPlanName] = useState<string | undefined>(localStorage.getItem("plan_name") || undefined);
 
-	// Get plan name from localStorage
-	const planName = localStorage.getItem("plan_name") || undefined;
+	useEffect(() => {
+		refreshUserProfile().then(() => {
+			const updated = localStorage.getItem("plan_name");
+			if (updated) setPlanName(updated);
+		});
+	}, []);
 
 	useEffect(() => {
 		const handleResize = () => {
