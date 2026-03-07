@@ -618,9 +618,11 @@ const AssistantComponent: React.FC = () => {
 		setShowReconfigureConfirmation(false);
 	};
 
-	// Check if GitHub is configured
-	const hasGitHubConfigured = () => {
-		return wizardInputs.some((input) => input.type === "github");
+	// Show webhook section when GitHub is configured and display_type is not "no-webhook" (e.g. "base" or undefined)
+	const shouldShowGitHubWebhook = () => {
+		const githubInput = wizardInputs.find((input) => input.type === "github");
+		if (!githubInput) return false;
+		return githubInput.display_type !== "no-webhook";
 	};
 
 	// Generate webhook URL
@@ -889,8 +891,8 @@ const AssistantComponent: React.FC = () => {
 				)}
 				{/* Running Section */}
 
-				{/* GitHub Webhook Helper Section */}
-				{isRunning && hasGitHubConfigured() && (
+				{/* GitHub Webhook Helper Section - shown when GitHub is configured and display_type is not "no-webhook" */}
+				{isRunning && shouldShowGitHubWebhook() && (
 					<div className="row mt-3">
 						<div className="col-md-12">
 							<div className="assistant-config-card" style={{ borderLeft: "3px solid #2ea043" }}>
@@ -915,7 +917,6 @@ const AssistantComponent: React.FC = () => {
 						</div>
 					</div>
 				)}
-				{/* GitHub Webhook Helper Section */}
 
 				{/* Stop Confirmation Modal */}
 				<Modal show={showStopConfirmation} onHide={() => setShowStopConfirmation(false)} centered>
