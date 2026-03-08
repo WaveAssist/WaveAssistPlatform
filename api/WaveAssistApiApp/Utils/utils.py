@@ -994,3 +994,219 @@ def set_data_for_key_internal(
     except Exception as e:
         logger.error(f"❌ Error in set_data_for_key_internal: {str(e)}")
         return False, f"Internal error: {str(e)}"
+
+
+def get_email_template_credits_limit_reached(
+    assistant_name: str,
+    required_credits: float,
+    credits_remaining: float,
+    plan_name: str = "",
+) -> str:
+    is_paid_plan = str(plan_name).lower() in ("plus", "pro")
+
+    if is_paid_plan:
+        cta_label = "Add Credits"
+        cta_url = FRONTEND_URL
+        plan_message = (
+            f"Your <strong>{plan_name.capitalize()} plan</strong> credits have run out. "
+            f"Top up your credits from the dashboard to keep <strong>{assistant_name}</strong> running."
+        )
+    else:
+        cta_label = "Upgrade Plan"
+        cta_url = "https://waveassist.io/pricing"
+        plan_message = (
+            f"Your free credits have run out. Upgrade to <strong>Plus</strong> or <strong>Pro</strong> "
+            f"to get monthly credits and keep <strong>{assistant_name}</strong> running."
+        )
+
+    return f"""<!doctype html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>{assistant_name} - Credit Limit Reached</title>
+    <!--[if mso]>
+    <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+    <![endif]-->
+    <style>
+        :root {{ color-scheme: light; supported-color-schemes: light; }}
+        body, table, td, p, a {{ -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }}
+        table, td {{ mso-table-lspace: 0pt; mso-table-rspace: 0pt; }}
+        img {{ border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }}
+        body {{ margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f3f4f6 !important; }}
+        .outer-bg {{ background-color: #f3f4f6 !important; }}
+        .inner-card {{ background-color: #ffffff !important; }}
+        .card-border {{ border-color: #e5e7eb !important; }}
+        .heading-text {{ color: #0f172a !important; }}
+        .body-text {{ color: #a1a1aa !important; }}
+        .muted-text {{ color: #6b7280 !important; }}
+        .footer-text {{ color: #9ca3af !important; }}
+        .cta-btn {{ background-color: #1ed66c !important; color: #000000 !important; }}
+        .secondary-link {{ color: #4b5563 !important; }}
+        @media screen and (max-width: 600px) {{
+            .content-padding {{ padding-left: 24px !important; padding-right: 24px !important; }}
+            .outer-padding {{ padding: 16px !important; }}
+            .heading-text {{ font-size: 22px !important; }}
+            .cta-btn {{ padding: 16px 40px !important; }}
+        }}
+    </style>
+</head>
+<body bgcolor="#f3f4f6" style="margin:0;padding:0;background-color:#f3f4f6 !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="outer-bg" bgcolor="#f3f4f6" style="background-color:#f3f4f6 !important;">
+        <tr>
+            <td align="center" style="padding:48px 20px;" class="outer-padding">
+
+                <!-- Inner card -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                    style="max-width:520px;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:12px;"
+                    class="inner-card card-border">
+
+                    <!-- Logo -->
+                    <tr>
+                        <td align="center" style="padding:48px 40px 0 40px;" class="content-padding">
+                            <img src="https://waveassist.io/images/logo/WaveAssist-W.png" alt="WaveAssist" width="80"
+                                style="display:block;max-width:80px;height:auto;margin:0 auto;" />
+                        </td>
+                    </tr>
+
+                    <!-- Heading -->
+                    <tr>
+                        <td align="center" style="padding:32px 40px 0 40px;" class="content-padding">
+                            <h1 class="heading-text" style="margin:0;font-size:26px;font-weight:700;color:#0f172a;letter-spacing:-0.03em;line-height:1.2;">
+                                {assistant_name} needs more credits
+                            </h1>
+                        </td>
+                    </tr>
+
+                    <!-- Divider accent -->
+                    <tr>
+                        <td align="center" style="padding:24px 40px 0 40px;">
+                            <div style="width:40px;height:3px;background-color:#1ed66c;border-radius:2px;"></div>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding:24px 40px 0 40px;" class="content-padding">
+                            <p class="body-text" style="margin:0;font-size:15px;color:#a1a1aa;line-height:1.7;">
+                                {plan_message}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Credit details box -->
+                    <tr>
+                        <td style="padding:24px 40px 0 40px;" class="content-padding">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                                style="background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
+                                <tr>
+                                    <td style="padding:16px 20px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="font-size:13px;color:#6b7280;padding-bottom:10px;">Credits required</td>
+                                                <td align="right" style="font-size:13px;font-weight:600;color:#0f172a;padding-bottom:10px;">${required_credits:.2f}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-size:13px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:10px;">Credits remaining</td>
+                                                <td align="right" style="font-size:13px;font-weight:600;color:#ef4444;border-top:1px solid #e5e7eb;padding-top:10px;">${credits_remaining:.2f}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Primary CTA -->
+                    <tr>
+                        <td align="center" style="padding:36px 40px 0 40px;">
+                            <!--[if mso]>
+                            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                                href="{cta_url}" style="height:52px;v-text-anchor:middle;width:200px;"
+                                arcsize="15%" fillcolor="#1ED66C" stroke="f">
+                                <w:anchorlock/>
+                                <center style="color:#000000;font-family:sans-serif;font-size:15px;font-weight:bold;">{cta_label}</center>
+                            </v:roundrect>
+                            <![endif]-->
+                            <!--[if !mso]><!-->
+                            <a href="{cta_url}" target="_blank" class="cta-btn"
+                               style="display:inline-block;padding:16px 48px;background-color:#1ed66c;color:#000000;font-size:15px;font-weight:700;text-decoration:none;border-radius:8px;letter-spacing:-0.01em;">
+                                {cta_label}
+                            </a>
+                            <!--<![endif]-->
+                        </td>
+                    </tr>
+
+                    <!-- Secondary -->
+                    <tr>
+                        <td align="center" style="padding:20px 40px 48px 40px;">
+                            <p style="margin:0;font-size:13px;">
+                                <span class="muted-text" style="color:#71717a;">Questions? </span>
+                                <a href="mailto:support@waveassist.io" target="_blank" class="secondary-link"
+                                   style="color:#a1a1aa;text-decoration:underline;">Contact support</a>
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+                <!-- End inner card -->
+
+                <!-- Footer -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:520px;">
+                    <tr>
+                        <td align="center" style="padding:28px 20px 0 20px;">
+                            <p class="footer-text" style="margin:0 0 8px 0;font-size:11px;color:#52525b;line-height:1.5;letter-spacing:0.02em;">
+                                WaveAssist. Reliable AI Assistants as your Digital Workforce.
+                            </p>
+                            <p class="footer-text" style="margin:0;font-size:11px;color:#52525b;line-height:1.5;">
+                                &copy; {datetime.now().year} WaveAssist. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</body>
+</html>"""
+
+
+def fetch_credits_from_openrouter(open_router_key: str) -> dict:
+    """
+    Fetch credit balance from OpenRouter for a given API key.
+    Retries once when limit_remaining is 0 — OpenRouter sometimes returns stale 0
+    even when credits exist. Raises on any failure so callers can handle it.
+    Returns dict with keys: limit, usage, limit_remaining (all floats).
+    """
+    headers = {
+        "Authorization": f"Bearer {open_router_key}",
+        "Content-Type": "application/json",
+    }
+
+    def _call():
+        response = requests.get("https://openrouter.ai/api/v1/key", headers=headers, timeout=10)
+        if response.status_code != 200:
+            raise Exception(f"OpenRouter API returned status {response.status_code}")
+        info = response.json()
+        if "data" not in info:
+            raise KeyError("OpenRouter response missing 'data' key")
+        data = info["data"]
+        for key in ("limit", "usage", "limit_remaining"):
+            if key not in data:
+                raise KeyError(f"OpenRouter response missing '{key}' key")
+        return {
+            "limit": float(data["limit"]),
+            "usage": float(data["usage"]),
+            "limit_remaining": float(data["limit_remaining"]),
+        }
+
+    result = _call()
+    # If 0 is returned on first attempt, retry once — could be a stale/cached response
+    if result["limit_remaining"] == 0:
+        result = _call()
+    return result

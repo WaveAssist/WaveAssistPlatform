@@ -321,6 +321,10 @@ def verify_razorpay_payment(
                 if credits_added:
                     payment.credits_granted = True
                     payment.save()
+                    # Drop check interval to 30s so agents pick up restored credits quickly
+                    account = payment.account
+                    account.credits_check_interval = CREDITS_CHECK_INTERVAL_FAST
+                    account.save()
                 else:
                     logger.error(f"Failed to add credits to OpenRouter.")
             else:
@@ -375,6 +379,10 @@ def verify_paypal_payment(payment, provider_payment_id, payer_id):
                 if credits_added:
                     payment.credits_granted = True
                     payment.save()
+                    # Drop check interval to 30s so agents pick up restored credits quickly
+                    account = payment.account
+                    account.credits_check_interval = CREDITS_CHECK_INTERVAL_FAST
+                    account.save()
                 else:
                     logger.error("Failed to add credits to OpenRouter")
 

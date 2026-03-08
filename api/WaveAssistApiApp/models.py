@@ -28,6 +28,10 @@ class Account(models.Model):
     is_premium = models.BooleanField(
         default=False
     )  # True if the account is premium, False if free
+    credits_remaining = models.FloatField(null=True, blank=True, default=None)
+    credits_last_checked = models.DateTimeField(null=True, blank=True)
+    credits_check_interval = models.IntegerField(default=300)
+    credits_notification_sent = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Account: {self.account_name} ({self.plan_name})"
@@ -47,6 +51,10 @@ class Account(models.Model):
         account_dict["open_router_key"] = self.open_router_key
         account_dict["is_working_running"] = self.is_working_running
         account_dict["is_premium"] = self.is_premium
+        account_dict["credits_remaining"] = self.credits_remaining
+        account_dict["credits_last_checked"] = self.credits_last_checked
+        account_dict["credits_check_interval"] = self.credits_check_interval
+        account_dict["credits_notification_sent"] = self.credits_notification_sent
         return account_dict
 
     class Meta:

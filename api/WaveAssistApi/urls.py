@@ -270,6 +270,7 @@ urlpatterns = [
     path("fetch_config/", csrf_exempt(worker_views.fetch_config), name="fetch_config"),
     ##SDK URL's
     path("sdk/send_email/", csrf_exempt(sdk_views.send_email), name="send_email"),
+    path("sdk/check_account_credits/", csrf_exempt(sdk_views.check_account_credits), name="check_account_credits"),
     ##Runs URL's
     path(
         "runs/fetch_dag_runs/",
