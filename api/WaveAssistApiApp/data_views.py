@@ -96,6 +96,21 @@ def fetch_data_for_key(request):
     if not data_key:
         return ResponseParser.getParsedErrorMessage("Missing 'data_key' in request")
 
+    # OpenRouter key is sourced directly from the Account model (PostgreSQL) —
+    # single source of truth. Any MongoDB copy is ignored.
+    if data_key == 'open_router_key':
+        try:
+            account = Account.objects.get(created_by_user=user_object)
+            if not account.open_router_key:
+                return ResponseParser.getParsedErrorMessage('OpenRouter key not found.')
+            output_data = {'data': account.open_router_key, 'data_type': 'string'}
+            return ResponseParser.getParsedSuccessMessage(output_data, '200', 'Data fetched successfully.')
+        except Account.DoesNotExist:
+            return ResponseParser.getParsedErrorMessage('Account not found.')
+        except Exception as e:
+            utils.logger.error(f"❌ Error fetching OpenRouter key: {str(e)}")
+            return ResponseParser.getParsedErrorMessage('Server error fetching OpenRouter key.')
+
     try:
         db_name = utils.get_database_name(user_object)
         mongo_manager.database = mongo_manager.client[db_name]
