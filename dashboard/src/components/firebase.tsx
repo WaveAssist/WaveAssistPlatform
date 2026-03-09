@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider, TwitterAuthProvider } from "firebase/auth"
 
 const firebaseConfig = {
 	apiKey: "REMOVED_CREDENTIAL",
-	authDomain: "waveassistdashboard.firebaseapp.com",
+	authDomain: "app.waveassist.io",
 	projectId: "waveassistdashboard",
 	storageBucket: "waveassistdashboard.firebasestorage.app",
 	messagingSenderId: "754862556966",
