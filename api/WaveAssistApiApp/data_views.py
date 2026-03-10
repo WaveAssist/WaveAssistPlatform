@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from httplib2.auth import params
 import json
+import time
 
 from .models import *
 from .Utils.responseParser import ResponseParser
@@ -13,7 +14,9 @@ from WaveAssistApiApp.Utils.utils import get_param
 import WaveAssistApiApp.Utils.validator as validator
 from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
-mongo_manager= MongoManager()
+from WaveAssistApiApp.providers import refresh_access_token
+
+mongo_manager = MongoManager()
 
 
 @require_POST
@@ -115,6 +118,36 @@ def fetch_data_for_key(request):
         db_name = utils.get_database_name(user_object)
         mongo_manager.database = mongo_manager.client[db_name]
         mongo_manager.collection = mongo_manager.database[data_run_key]
+
+        # Transparent OAuth access token auto-refresh
+        if data_key.endswith("_access_token"):
+            provider_name = data_key[: -len("_access_token")]
+            expires_key = f"{provider_name}_token_expires_at"
+
+            expires_at_value, _ = mongo_manager.fetch_data_for_key(expires_key)
+            if expires_at_value is not None:
+                try:
+                    expires_at_ts = float(expires_at_value)
+                except (TypeError, ValueError):
+                    expires_at_ts = None
+
+                if expires_at_ts is not None and time.time() > (expires_at_ts - 60):
+                    project_key = data_run_object.project_object.project_key
+                    success_refresh, new_token, err = refresh_access_token(
+                        user_object.uid, project_key, provider_name
+                    )
+                    if success_refresh and new_token:
+                        output_data = {'data': new_token, 'data_type': 'string'}
+                        return ResponseParser.getParsedSuccessMessage(
+                            output_data,
+                            '200',
+                            'Data fetched successfully.'
+                        )
+                    else:
+                        # Log error but fall through to return whatever is stored
+                        utils.logger.error(
+                            f"❌ Error refreshing access token for provider '{provider_name}': {err}"
+                        )
 
         data, data_type = mongo_manager.fetch_data_for_key(data_key)
         if data is None:

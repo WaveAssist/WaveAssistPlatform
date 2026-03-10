@@ -53,16 +53,135 @@ def get_nested(data, path, default=None):
     return current
 
 
-def store_in_mongo(uid, project_key, provider_name, access_token, refresh_token):
+def refresh_access_token(uid, project_key, provider_name):
+    """
+    Refresh OAuth access token using the stored refresh token.
+
+    Returns (success: bool, access_token: Optional[str], error_message: Optional[str])
+    """
+    try:
+        # Fetch refresh token from Mongo
+        success, refresh_token, message = utils.fetch_data_for_key_internal(
+            uid, project_key, provider_name + "_refresh_token"
+        )
+        if not success or not refresh_token:
+            utils.logger.error(
+                f"Error fetching refresh token for provider '{provider_name}': {message}"
+            )
+            return False, None, "No refresh capability"
+
+        # Get provider configuration
+        try:
+            provider = Provider.objects.get(name=provider_name, is_active=True)
+        except Provider.DoesNotExist:
+            utils.logger.error(
+                f"Provider '{provider_name}' not found or inactive while refreshing token"
+            )
+            return False, None, "No refresh capability"
+
+        if not getattr(provider, "refresh_url", None):
+            return False, None, "No refresh capability"
+
+        scopes = provider.default_scopes
+
+        # Create OAuth session using AuthLib
+        session = OAuth2Session(
+            client_id=provider.client_id,
+            client_secret=provider.client_secret,
+            scope=scopes,
+            token_endpoint_auth_method=(
+                provider.token_endpoint_auth_method
+                or TokenAuthMethod.CLIENT_SECRET_BASIC
+            ),
+        )
+
+        try:
+            token = session.fetch_token(
+                provider.refresh_url,
+                grant_type="refresh_token",
+                refresh_token=refresh_token,
+            )
+        except Exception as e:
+            utils.logger.error(
+                f"Error refreshing access token for provider '{provider_name}': {str(e)}"
+            )
+            return False, None, str(e)
+
+        new_access_token = token.get("access_token")
+        if not new_access_token:
+            utils.logger.error(
+                f"Refresh response for provider '{provider_name}' did not contain an access_token"
+            )
+            return False, None, "Failed to refresh access token"
+
+        new_refresh_token = token.get("refresh_token") or refresh_token
+
+        # Determine new expiry
+        new_expires_at = token.get("expires_at")
+        if new_expires_at is None:
+            expires_in = token.get("expires_in")
+            if expires_in is not None:
+                try:
+                    new_expires_at = int(time.time()) + int(expires_in)
+                except Exception:
+                    new_expires_at = None
+
+        # Persist updated tokens
+        store_success = store_in_mongo(
+            uid,
+            project_key,
+            provider_name,
+            new_access_token,
+            new_refresh_token,
+            new_expires_at,
+        )
+        if not store_success:
+            utils.logger.error(
+                f"Failed to persist refreshed token for provider '{provider_name}'"
+            )
+            return False, None, "Failed to persist refreshed token"
+
+        return True, new_access_token, None
+
+    except Exception as e:
+        utils.logger.error(
+            f"Unexpected error in refresh_access_token for provider '{provider_name}': {str(e)}"
+        )
+        return False, None, "Internal error during token refresh"
+
+
+def store_in_mongo(
+    uid, project_key, provider_name, access_token, refresh_token, expires_at=None
+):
     try:
 
         status, _ = utils.set_data_for_key_internal(
-            uid, project_key, provider_name + "_access_token", access_token, "string"
+            uid,
+            project_key,
+            provider_name + "_access_token",
+            access_token,
+            "string",
         )
         status2, _ = utils.set_data_for_key_internal(
-            uid, project_key, provider_name + "_refresh_token", refresh_token, "string"
+            uid,
+            project_key,
+            provider_name + "_refresh_token",
+            refresh_token,
+            "string",
         )
-        if not status or not status2:
+
+        status3 = True
+        if expires_at is not None:
+            # Store token expiry as unix timestamp string
+            status3, _ = utils.set_data_for_key_internal(
+                uid,
+                project_key,
+                provider_name + "_token_expires_at",
+                str(int(expires_at)),
+                "string",
+            )
+
+        if not status or not status2 or not status3:
             return False
         return True
     except Exception as e:
@@ -208,12 +327,27 @@ def oauth_callback(request):
         access_token = token.get("access_token", "")
         refresh_token = token.get("refresh_token", "")
 
-        ##Store in Mongo:
+        # Determine token expiry (unix timestamp)
+        expires_at = token.get("expires_at")
+        if expires_at is None:
+            expires_in = token.get("expires_in")
+            if expires_in is not None:
+                try:
+                    expires_at = int(time.time()) + int(expires_in)
+                except Exception:
+                    expires_at = None
+
+        # Store in Mongo:
         if not access_token:
             return redirect(failure_redirect_uri)
 
         success = store_in_mongo(
-            uid, project_key, provider_name, access_token, refresh_token
+            uid,
+            project_key,
+            provider_name,
+            access_token,
+            refresh_token,
+            expires_at,
         )
         if not success:
             return redirect(failure_redirect_uri)
