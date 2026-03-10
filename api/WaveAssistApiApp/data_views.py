@@ -131,7 +131,7 @@ def fetch_data_for_key(request):
                 except (TypeError, ValueError):
                     expires_at_ts = None
 
-                if expires_at_ts is not None and time.time() > (expires_at_ts - 60):
+                if expires_at_ts is not None and time.time() > (expires_at_ts - 300):
                     project_key = data_run_object.project_object.project_key
                     success_refresh, new_token, err = refresh_access_token(
                         user_object.uid, project_key, provider_name
