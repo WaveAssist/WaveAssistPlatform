@@ -41,7 +41,7 @@ def _dodo_api_key():
 def _dodo_webhook_secret():
     return os.environ.get(
         "DODO_PAYMENTS_WEBHOOK_SECRET",
-        "whsec_VxeHj+evY4vX3+cNWapZlQ5lxa2JVQA6",
+        DODO_DEFAULT_WEBHOOK_SECRET,
     )
 
 
