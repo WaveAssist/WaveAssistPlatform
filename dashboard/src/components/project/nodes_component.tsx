@@ -13,6 +13,7 @@ import {
 	fetchTemplateApi,
 } from "../../services/project_services";
 import { deployProjectApi } from "../../services/navbar_services";
+import { BASE_URL } from "../../services/base_service";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../utils/toast_context";
 import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap";
@@ -32,6 +33,7 @@ import dagre from "dagre";
 import { Position } from "reactflow";
 import { applyNodeChanges, NodeChange } from "reactflow";
 import PaywallBlock from "../PaywallBlock";
+import { hasBuilderAccess } from "../../utils/plan";
 
 // Constants for node size
 const NODE_WIDTH = 250;
@@ -109,11 +111,9 @@ const NodesComponent: React.FC = () => {
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 
-	// Plan: builder = full access; editor = view-only nodes (no add/edit/delete/run/deploy); operator = blocked
-	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const isBuilderPlan = currentPlanName === "builder";
-	const shouldBlockNodes = currentPlanName === "operator";
-	const isEditorPlan = currentPlanName === "editor";
+	// Plan: builder = admin mode (full edit/delete/run); all plans can view Nodes (no paywall)
+	const isBuilderPlan = hasBuilderAccess();
+	const shouldBlockNodes = false;
 
 	const showAddNodeButton = isBuilderPlan && !(isProjectPremium && !isUserPremium);
 
@@ -400,7 +400,7 @@ const NodesComponent: React.FC = () => {
 	};
 
 	const generateWebhookUrl = (nodeKey: string): string => {
-		const baseUrl = "https://api.waveassist.io/webhook/run";
+		const baseUrl = `${BASE_URL}/webhook/run`;
 		const uid = localStorage.getItem("uid");
 		const projectKey = localStorage.getItem("selected_project_key");
 		const envKey = localStorage.getItem("selected_env_key");
@@ -474,7 +474,7 @@ const NodesComponent: React.FC = () => {
 	const editorOptions = {
 		selectOnLineNumbers: true,
 		roundedSelection: false,
-		readOnly: isEditorPlan,
+		readOnly: false,
 		automaticLayout: true,
 		language: "python", // Set the language to Python for syntax highlighting
 		theme: "vs-dark", // Use a dark theme
@@ -593,11 +593,11 @@ const NodesComponent: React.FC = () => {
 	};
 
 	const ViewCodeButton = (params: any) => {
-		// Editor can always view code (no upgrade); builder/operator use premium check
+		// Only builder sees this page; premium check for viewing code
 		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
-		const isDisabled = !isEditorPlan && isProjectPremium && !isUserPremium;
+		const isDisabled = isProjectPremium && !isUserPremium;
 
 		return (
 			<button
@@ -874,14 +874,16 @@ const NodesComponent: React.FC = () => {
 		},
 		{
 			headerName: "Scheduled",
-			...(isEditorPlan ? { flex: 2, minWidth: 220 } : { width: 200, minWidth: 150 }),
+			width: 200,
+			minWidth: 150,
 			resizable: true,
 			cellRenderer: (params: any) => formatSchedule(params.data),
 		},
 		{
 			headerName: "Code",
 			cellRenderer: ViewCodeButton,
-			...(isEditorPlan ? { flex: 1, minWidth: 160 } : { width: 140, minWidth: 120 }),
+			width: 140,
+			minWidth: 120,
 			resizable: true,
 		},
 		...(isBuilderPlan ? [{ headerName: "Actions", cellRenderer: ActionButtons, width: 180, minWidth: 140, resizable: true }] : []),
@@ -952,7 +954,7 @@ const NodesComponent: React.FC = () => {
 
 			<Modal show={showCodeModal} onHide={handleClose} size="lg" centered>
 				<Modal.Header>
-					<Modal.Title>{isEditorPlan ? "View Code" : "Edit Code"}</Modal.Title>
+					<Modal.Title>Edit Code</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
 					<Editor
@@ -962,7 +964,7 @@ const NodesComponent: React.FC = () => {
 						defaultLanguage="python"
 						value={modalCode}
 						options={editorOptions}
-						onChange={isEditorPlan ? undefined : (newValue: any) => setModalCode(newValue)}
+						onChange={(newValue: any) => setModalCode(newValue)}
 					/>
 				</Modal.Body>
 				<Modal.Footer>

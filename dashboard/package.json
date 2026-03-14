@@ -13,7 +13,6 @@
   "dependencies": {
     "@melloware/react-logviewer": "^5.2.2",
     "@monaco-editor/react": "^4.6.0",
-    "@paypal/react-paypal-js": "^8.9.1",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.43.6",
@@ -34,7 +33,6 @@
     "monaco-editor": "^0.50.0",
     "papaparse": "^5.4.1",
     "posthog-js": "^1.239.0",
-    "razorpay": "^2.9.6",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.2",
     "react-dom": "^18.2.0",
@@ -43,7 +41,6 @@
     "react-joyride": "^2.9.3",
     "react-lazylog": "^4.5.3",
     "react-markdown": "^10.1.0",
-    "react-razorpay": "^3.0.1",
     "react-router-dom": "^6.23.1",
     "react-virtualized": "^9.22.5",
     "reactflow": "^11.11.4",

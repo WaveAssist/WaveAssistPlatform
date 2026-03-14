@@ -9,6 +9,7 @@ import { loginAPI, getStartedAPI } from "../services/login_services";
 import { Spinner } from "react-bootstrap";
 import ReactGA from "react-ga4";
 import { usePostHog } from "posthog-js/react";
+import { persistUserPlan } from "../utils/plan";
 // import Button from "react-bootstrap/Button";
 // import Modal from "react-bootstrap/Modal";
 
@@ -127,10 +128,7 @@ const LoginComponent: React.FC = () => {
 				localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
 				localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
-				// Store plan_name for sidebar visibility control
-				if (data.user_data.plan_name) {
-					localStorage.setItem("plan_name", data.user_data.plan_name);
-				}
+				persistUserPlan(data.user_data.plan_name);
 
 				// PostHog identify with uid as distinct_id and properties
 
@@ -170,10 +168,7 @@ const LoginComponent: React.FC = () => {
 			localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 			localStorage.setItem("uid", data.user_data.uid);
 			localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
-			// Store plan_name for sidebar visibility control
-			if (data.user_data.plan_name) {
-				localStorage.setItem("plan_name", data.user_data.plan_name);
-			}
+			persistUserPlan(data.user_data.plan_name);
 
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {

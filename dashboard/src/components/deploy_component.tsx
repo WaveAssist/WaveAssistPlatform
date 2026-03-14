@@ -5,6 +5,7 @@ import Spinner from "react-bootstrap/Spinner";
 import "./deploy_component.css";
 import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 import { fetchAllProjectsAPI } from "../services/all_projects_services";
+import { BASE_URL } from "../services/base_service";
 
 const DeployComponent: React.FC = () => {
 	const [searchParams] = useSearchParams();
@@ -48,7 +49,7 @@ const DeployComponent: React.FC = () => {
 
 	const fetchTemplate = async (templateKey: string) => {
 		try {
-			const res = await axios.get(`https://api.waveassist.io/fetch_assistant/${templateKey}/`);
+			const res = await axios.get(`${BASE_URL}/fetch_assistant/${templateKey}/`);
 			if (res.data.success === "1") {
 				setGithubRepo(res.data.data.github_url);
 			} else {
@@ -98,7 +99,7 @@ const DeployComponent: React.FC = () => {
 			formData.append("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
 			const isPremium = searchParams.get("is_premium") === "true";
 			formData.append("is_premium", isPremium ? "1" : "0");
-			const response = await axios.post("https://api.waveassist.io/template/deploy_template/", formData, {
+			const response = await axios.post(`${BASE_URL}/template/deploy_template/`, formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
 			if (response.data.success === "1") {

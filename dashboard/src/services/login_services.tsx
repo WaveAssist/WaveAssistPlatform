@@ -1,5 +1,6 @@
 import { auth } from "../utils/firebase";
 import { callApi } from "./base_service";
+import { persistUserPlan } from "../utils/plan";
 
 export const refreshUserProfile = async (): Promise<void> => {
 	try {
@@ -15,9 +16,7 @@ export const refreshUserProfile = async (): Promise<void> => {
 		if (data.user_data) {
 			localStorage.setItem("user_data", JSON.stringify(data.user_data));
 			localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
-			if (data.user_data.plan_name) {
-				localStorage.setItem("plan_name", data.user_data.plan_name);
-			}
+			persistUserPlan(data.user_data.plan_name);
 		}
 		if (data.project_array) {
 			localStorage.setItem("projects_array", JSON.stringify(data.project_array));

@@ -5,10 +5,15 @@ import CommoditySelector from "./CommoditySelector";
 import CryptoSelector from "./CryptoSelector";
 import DropdownInput from "./DropdownInput";
 import TextInput from "./TextInput";
-import GitHubInput from "./GitHubInput";
-import HubSpotInput from "./HubSpotInput";
+import TextareaInput from "./TextareaInput";
+import BooleanInput from "./BooleanInput";
+import MultiSelectInput from "./MultiSelectInput";
+import ListInput from "./ListInput";
+import SecretInput from "./SecretInput";
 import ClickUpInput from "./ClickUpInput";
 import ScheduleInput from "./ScheduleInput";
+import ProviderInput from "./ProviderInput";
+import { PROVIDER_CONFIGS } from "./providerConfigs";
 
 interface Option {
 	name: string;
@@ -22,6 +27,9 @@ interface InputConfig {
 	helper_message?: string;
 	default_value?: string;
 	display_name?: string;
+	placeholder?: string;
+	max_items?: number;
+	label?: string;
 }
 
 interface InputFactoryProps {
@@ -45,7 +53,7 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 	isOptional = false,
 	highlightSelectResources = false,
 }) => {
-	const { key, type, options, helper_message, display_name } = inputConfig;
+	const { key, type, options, helper_message, display_name, placeholder, max_items, label } = inputConfig;
 
 	// Render appropriate input component based on type
 	const renderInput = () => {
@@ -76,6 +84,9 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 			case "password":
 				return <TextInput type="password" value={value} onChange={onChange} />;
 
+			case "secret":
+				return <SecretInput value={value} onChange={onChange} placeholder={placeholder} />;
+
 			case "number":
 				return <TextInput type="number" value={value} onChange={onChange} />;
 
@@ -85,17 +96,24 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 			case "url":
 				return <TextInput type="url" value={value} onChange={onChange} />;
 
-			case "github":
-				return (
-					<GitHubInput
-						value={value}
-						selectResources={selectResources}
-						selectedResources={selectedResources}
-						inputData={inputConfig}
-						onRefresh={onRefresh}
-						highlightSelectResources={highlightSelectResources}
-					/>
-				);
+			case "textarea":
+				return <TextareaInput value={value} onChange={onChange} placeholder={placeholder} />;
+
+			case "boolean":
+			case "checkbox":
+			case "toggle":
+				return <BooleanInput value={value} onChange={onChange} label={label || display_name || key} />;
+
+			case "multiselect":
+			case "multi_select":
+				if (Array.isArray(options) && options.length > 0) {
+					return <MultiSelectInput value={value} onChange={onChange} options={options} />;
+				}
+				return <TextInput value={value} onChange={onChange} placeholder={placeholder} />;
+
+			case "list":
+			case "chips":
+				return <ListInput value={value} onChange={onChange} placeholder={placeholder} maxItems={max_items} />;
 
 			case "clickup":
 				return (
@@ -108,24 +126,26 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 					/>
 				);
 
-			case "hubspot":
-				return (
-					<HubSpotInput
-						value={value}
-						selectResources={selectResources}
-						selectedResources={selectedResources}
-						onRefresh={onRefresh}
-						inputData={inputConfig}
-					/>
-				);
-
 			case "text":
 			default:
-				// Check if it has options (for backward compatibility with existing code)
+				if (PROVIDER_CONFIGS[type]) {
+					return (
+						<ProviderInput
+							config={PROVIDER_CONFIGS[type]}
+							value={value}
+							onChange={onChange}
+							selectResources={selectResources}
+							selectedResources={selectedResources}
+							inputData={inputConfig}
+							onRefresh={onRefresh}
+							highlightSelectResources={highlightSelectResources}
+						/>
+					);
+				}
 				if (Array.isArray(options) && options.length > 0) {
 					return <DropdownInput value={value} onChange={onChange} options={options} />;
 				}
-				return <TextInput value={value} onChange={onChange} />;
+				return <TextInput value={value} onChange={onChange} placeholder={placeholder} />;
 		}
 	};
 

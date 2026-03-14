@@ -34,7 +34,8 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, layou
 	}, [isAuthenticated, posthog]);
 
 	if (!isAuthenticated) {
-		return <Navigate to="/login" state={{ from: location }} />;
+		const redirectPath = location.pathname + location.search;
+		return <Navigate to={`/login?redirect=${encodeURIComponent(redirectPath)}`} state={{ from: location }} />;
 	}
 
 	const RenderComponent = Layout ? (

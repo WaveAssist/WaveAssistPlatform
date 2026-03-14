@@ -8,6 +8,7 @@ import "../../utils/ag-theme-project.css";
 import Modal from "react-bootstrap/Modal";
 import { useRefresh } from "../../utils/RefreshContext";
 import PaywallBlock from "../PaywallBlock";
+import { hasBuilderAccess } from "../../utils/plan";
 
 const EnvironmentsComponent: React.FC = () => {
 	const [environmentsArray, setEnvironmentsArray] = useState<any[]>([]);
@@ -19,8 +20,8 @@ const EnvironmentsComponent: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 
 	// Only builder can access Environments (editor and operator cannot)
-	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const shouldBlockEnvironments = currentPlanName !== "builder";
+	const isBuilderPlan = hasBuilderAccess();
+	const shouldBlockEnvironments = !isBuilderPlan;
 
 	const handleCloseEnvironmentEditor = () => {
 		setShowEnvironmentEditor(false);
@@ -153,7 +154,7 @@ const EnvironmentsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<PaywallBlock show={shouldBlockEnvironments} showUpgradeButton={currentPlanName === "operator"} />
+			<PaywallBlock show={shouldBlockEnvironments} showUpgradeButton={!isBuilderPlan} />
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
 				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-between align-items-center mb-3">

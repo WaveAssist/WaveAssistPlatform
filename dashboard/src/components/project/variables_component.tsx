@@ -12,6 +12,7 @@ import { useRefresh } from "../../utils/RefreshContext";
 import Editor from "@monaco-editor/react";
 import { ColDef } from "ag-grid-community";
 import PaywallBlock from "../PaywallBlock";
+import { hasBuilderAccess } from "../../utils/plan";
 
 /**
  * Clipboard button used inside the Variable‐table.
@@ -58,8 +59,8 @@ const VariablesComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
 	const gridRef = useRef<AgGridReactType | null>(null);
 	// Only builder can access Variables (editor and operator cannot)
-	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const shouldBlockNodes = currentPlanName !== "builder";
+	const isBuilderPlan = hasBuilderAccess();
+	const shouldBlockNodes = !isBuilderPlan;
 	const handleCloseVariableEditor = () => {
 		setShowVariableEditor(false);
 	};
@@ -469,7 +470,7 @@ const VariablesComponent: React.FC = () => {
 					</Form>
 				</Modal.Body>
 			</Modal>
-			<PaywallBlock show={shouldBlockNodes} showUpgradeButton={currentPlanName === "operator"} />
+			<PaywallBlock show={shouldBlockNodes} showUpgradeButton={!isBuilderPlan} />
 		</div>
 	);
 };

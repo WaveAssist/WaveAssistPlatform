@@ -1,14 +1,26 @@
+/* ═══════════════════════════════════════════════
+   Credits Page
+   ═══════════════════════════════════════════════ */
+
 .credits-container {
     background-color: #0F1116;
     padding: 2rem;
     position: relative;
 }
 
+/* ── Header ── */
+
 .credits-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+}
+
+.credits-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 .credits-title {
@@ -19,18 +31,51 @@
     letter-spacing: -0.02em;
 }
 
-.refresh-button {
-    background: none;
-    border: none;
-    color: #6c757d;
-    cursor: pointer;
-    border-radius: 10%;
-    transition: background-color 0.2s ease;
+.plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
-.refresh-button:hover {
-    background-color: #f8f9fa;
+.plan-badge-free {
+    background-color: rgba(161, 161, 170, 0.15);
+    color: #A1A1AA;
+    border: 1px solid rgba(161, 161, 170, 0.25);
 }
+
+.plan-badge-paid {
+    background-color: rgba(30, 214, 108, 0.12);
+    color: #1ED66C;
+    border: 1px solid rgba(30, 214, 108, 0.3);
+}
+
+.refresh-btn {
+    background: none;
+    border: 1px solid #2D313A;
+    color: #A1A1AA;
+    cursor: pointer;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+}
+
+.refresh-btn:hover {
+    background-color: #1C1F28;
+    color: #FFFFFF;
+    border-color: #3D414A;
+}
+
+/* ── Available Credits Card ── */
 
 .available-credits-card {
     background-color: #1C1F28;
@@ -47,6 +92,22 @@
     .available-credits-card {
         margin-bottom: 0;
     }
+}
+
+.credit-balance-amount {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    text-align: center;
+    margin: 0;
+    line-height: 1;
+}
+
+.credit-balance-label {
+    text-align: center;
+    color: #A1A1AA;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
 }
 
 .credit-details {
@@ -83,32 +144,86 @@
 }
 
 .credit-detail-value.used {
-    color: #ffc107;
-}
-
-.credit-balance-amount {
-    font-size: 3.5rem;
-    font-weight: 700;
     color: #FFFFFF;
-    text-align: center;
-    margin: 0;
-    line-height: 1;
 }
 
-.credit-balance-label {
-    text-align: center;
+/* ── Subscription & Billing row ── */
+
+/* Subscription & Billing: text left, button right */
+.buy-credits-card.subscription-billing-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: auto;
+    min-height: 0;
+    padding: 0.8rem 1rem;
+    gap: 0.75rem;
+}
+
+@media (min-width: 992px) {
+    .buy-credits-card.subscription-billing-row {
+        min-height: 82px;
+        max-height: 94px;
+        overflow: hidden;
+    }
+}
+
+.subscription-billing-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+}
+
+.subscription-billing-left {
+    min-width: 0;
+    flex: 1 1 auto;
+    text-align: left;
+}
+
+.subscription-billing-row .manage-billing-btn {
+    flex-shrink: 0;
+}
+
+.subscription-billing-title {
+    white-space: nowrap;
+    margin-bottom: 0.25rem !important;
+}
+
+.subscription-billing-status {
+    display: block;
     color: #A1A1AA;
-    margin: 0.5rem 0 0 0;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
-.info-icon {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    color: #6c757d;
+.manage-billing-btn {
+    flex: 0 0 auto;
+    background-color: #1ED66C;
+    border: none;
+    color: #000000;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
+
+.manage-billing-btn:hover:not(:disabled) {
+    background-color: #148F47;
+    color: #000000;
+    box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+}
+
+.manage-billing-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ── Buy Credits Card (paid users) ── */
 
 .buy-credits-card {
     background-color: #1C1F28;
@@ -119,134 +234,6 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-}
-
-.buy-credits-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.add-credits-section {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.view-usage-section {
-    margin-top: auto;
-    text-align: center;
-}
-
-.credit-amount-section {
-    margin-bottom: 1.5rem;
-}
-
-.credit-amount-buttons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.credit-amount-btn {
-    padding: 0.5rem;
-    border: 1px solid #dee2e6;
-    background-color: #ffffff;
-    color: #333;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 500;
-}
-
-.credit-amount-btn:hover {
-    background-color: #f8f9fa;
-}
-
-.credit-amount-btn.active {
-    background-color: #f8f9fa;
-    border-color: #1ED66C;
-    color: #333;
-}
-
-.custom-amount-input {
-    padding: 0.5rem;
-    border: 1px solid #dee2e6;
-    background-color: #ffffff;
-    color: #333;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 40px;
-}
-
-.custom-amount-input:hover {
-    background-color: #f8f9fa;
-    border-color: #333;
-}
-
-.custom-amount-input.active {
-    background-color: #f8f9fa;
-    border-color: #1ED66C;
-    color: #333;
-}
-
-.custom-amount-input input {
-    width: 100%;
-    padding: 0;
-    border-radius: 6px;
-    text-align: center;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: inherit;
-    font-weight: inherit;
-    font-size: inherit;
-}
-
-.custom-amount-input input:focus {
-    border-color: #1ED66C;
-    outline: none;
-}
-
-.dollar-sign {
-    color: #6c757d;
-    font-weight: 500;
-    font-size: 0.9rem;
-    margin-right: 0.25rem;
-    user-select: none;
-}
-
-.custom-amount-input.active .dollar-sign {
-    color: #6c757d;
-}
-
-@media (max-width: 767px) {
-    .buy-credits-card {
-        height: auto;
-        min-height: 200px;
-    }
-    
-    .available-credits-card {
-        height: auto;
-        min-height: 250px;
-    }
-    
-    .credits-container .row {
-        margin: 0 -0.5rem;
-    }
-    
-    .credits-container .col-md-6 {
-        padding: 0 0.5rem;
-    }
 }
 
 .buy-credits-header {
@@ -264,45 +251,108 @@
     letter-spacing: -0.02em;
 }
 
-.crypto-toggle {
+.buy-credits-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.credit-amount-section {
+    margin-bottom: 1.5rem;
+}
+
+.credit-amount-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.credit-amount-btn {
+    padding: 0.5rem;
+    border: 1px solid #2D313A;
+    background-color: #1C1F28;
+    color: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.credit-amount-btn:hover {
+    background-color: #16181F;
+}
+
+.credit-amount-btn.active {
+    background-color: #16181F;
+    border-color: #1ED66C;
+    color: #ffffff;
+}
+
+.custom-amount-input {
+    padding: 0.5rem;
+    border: 1px solid #2D313A;
+    background-color: #1C1F28;
+    color: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    min-height: 40px;
 }
 
-.crypto-label {
+.custom-amount-input:hover {
+    background-color: #16181F;
+}
+
+.custom-amount-input.active {
+    background-color: #16181F;
+    border-color: #1ED66C;
+    color: #ffffff;
+}
+
+.custom-amount-input input {
+    width: 100%;
+    padding: 0;
+    border-radius: 6px;
+    text-align: center;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+}
+
+.custom-amount-input input:focus {
+    border: none;
+    box-shadow: none;
+    outline: none;
+    color: inherit;
+}
+
+.custom-amount-input input::placeholder {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.dollar-sign {
     color: #6c757d;
-    font-size: 0.875rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-right: 0.25rem;
+    user-select: none;
 }
 
-.toggle-switch {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    background-color: #e9ecef;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.toggle-switch.active {
-    background-color: #007bff;
-}
-
-.toggle-switch::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    background-color: #ffffff;
-    border-radius: 50%;
-    transition: transform 0.2s ease;
-}
-
-.toggle-switch.active::after {
-    transform: translateX(20px);
+.add-credits-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .add-credits-button {
@@ -312,9 +362,10 @@
     color: #000000;
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
-    font-weight: 400;
-    margin-bottom: 1rem;
+    font-weight: 500;
+    margin-bottom: 0;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .add-credits-button:hover {
@@ -323,157 +374,275 @@
     box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
 }
 
-.view-usage-link {
+/* ── Upgrade Plan Card (free users) ── */
+
+.upgrade-plan-card {
+    background: linear-gradient(135deg, #1C1F28 0%, #16181F 100%);
+    border: 1px solid #2D313A;
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.upgrade-card-icon {
+    font-size: 2.5rem;
     color: #1ED66C;
-    text-decoration: none;
-    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+
+.upgrade-card-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0 0 0.75rem 0;
+    letter-spacing: -0.02em;
+}
+
+.upgrade-card-desc {
+    font-size: 0.9rem;
+    color: #A1A1AA;
+    margin: 0 0 1.75rem 0;
+    line-height: 1.5;
+    max-width: 280px;
+}
+
+.upgrade-card-btn {
+    background-color: #1ED66C;
+    border: none;
+    color: #000;
+    padding: 0.75rem 2.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.upgrade-card-btn:hover {
+    background-color: #17b85c;
+    box-shadow: 0 0 24px rgba(30, 214, 108, 0.2);
+    transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════
+   Upgrade Modal
+   ═══════════════════════════════════════════════ */
+
+.upgrade-modal .modal-content {
+    background-color: #0F1116;
+    border: 1px solid #2D313A;
+    border-radius: 16px;
+}
+
+.upgrade-modal .modal-header {
+    border-bottom: 1px solid #2D313A;
+    padding: 1.5rem 2rem 1rem 2rem;
+}
+
+.upgrade-modal-title {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.upgrade-modal-subtitle {
+    color: #A1A1AA;
+    font-size: 0.9rem;
+    margin: 0.25rem 0 0 0;
+}
+
+.upgrade-modal .modal-body {
+    padding: 2rem;
+}
+
+.upgrade-plans-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+    .upgrade-plans-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.upgrade-plan-option {
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
+    border-radius: 12px;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: border-color 0.2s ease;
+}
+
+.upgrade-plan-option:hover {
+    border-color: #3D414A;
+}
+
+.upgrade-plan-option.recommended {
+    border-color: #1ED66C;
+    background: linear-gradient(180deg, rgba(30, 214, 108, 0.04) 0%, #1C1F28 40%);
+}
+
+.recommended-badge {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1ED66C;
+    color: #000;
+    padding: 3px 16px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.plan-option-name {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 0 0 0.75rem 0;
+}
+
+.plan-option-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.plan-price-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #FFFFFF;
+    line-height: 1;
+}
+
+.plan-price-period {
+    font-size: 0.9rem;
+    color: #A1A1AA;
+    font-weight: 400;
+}
+
+.plan-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+    flex: 1;
+}
+
+.plan-features-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.4rem 0;
+    font-size: 0.88rem;
+    color: #d4d4d8;
+}
+
+.plan-features-list li i {
+    color: #1ED66C;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.plan-select-btn {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
+    min-height: 44px;
 }
 
-.view-usage-link:hover {
-    color: #148F47;
+.plan-select-btn.primary {
+    background-color: #1ED66C;
+    color: #000;
+}
+
+.plan-select-btn.primary:hover {
+    background-color: #17b85c;
+    box-shadow: 0 0 20px rgba(30, 214, 108, 0.2);
+}
+
+.plan-select-btn.secondary {
+    background-color: transparent;
+    color: #FFFFFF;
+    border: 1px solid #2D313A;
+}
+
+.plan-select-btn.secondary:hover {
+    background-color: #16181F;
+    border-color: #3D414A;
+}
+
+.plan-select-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.upgrade-footer {
+    text-align: center;
+    margin-top: 1.25rem;
+}
+
+.upgrade-footer-note {
+    color: #71717a;
+    font-size: 0.8rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.upgrade-pricing-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #1ED66C;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.upgrade-pricing-link:hover {
+    color: #17b85c;
     text-decoration: underline;
 }
 
-
-
-/* Dark theme overrides for the project */
-.main-container .credits-container {
-    background-color: #0F1116;
-    color: #ffffff;
+.upgrade-pricing-link i {
+    font-size: 0.75rem;
 }
 
-.main-container .credits-title {
-    color: rgba(255, 255, 255, 0.8);
-}
+/* ═══════════════════════════════════════════════
+   Purchase Credits Modal
+   ═══════════════════════════════════════════════ */
 
-.main-container .available-credits-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
-}
-
-.main-container .credit-balance-amount {
-    color: #ffffff;
-}
-
-.main-container .credit-balance-label {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.main-container .credit-details {
-    border-top-color: #2D313A;
-}
-
-.main-container .credit-detail-label {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.main-container .credit-detail-value {
-    color: #ffffff;
-}
-
-.main-container .buy-credits-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
-}
-
-.main-container .buy-credits-title {
-    color: #ffffff;
-}
-
-.main-container .crypto-label {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-/* Purchase Modal Styles */
 .purchase-modal-content {
     padding: 0.5rem 0;
 }
 
-
-
-.package-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
-
-.package-name {
-    font-weight: 600;
-    color: #333;
-}
-
-.remove-package-btn {
-    background: none;
-    border: none;
-    color: #dc3545;
-    cursor: pointer;
-    padding: 0.25rem;
-}
-
-.package-details {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.package-date {
-    color: #6c757d;
-    font-size: 0.9rem;
-}
-
-.add-package-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: #007bff;
-    border: none;
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.amount-section {
-    margin-bottom: 1.5rem;
-}
-
-.amount-input {
-    max-width: 200px;
-}
-
-.billing-options {
-    margin-bottom: 1.5rem;
-}
-
-.billing-option {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #e9ecef;
-    cursor: pointer;
-}
-
-.billing-option:last-child {
-    border-bottom: none;
-}
-
-.billing-option:hover {
-    background-color: #f8f9fa;
-}
-
 .purchase-summary {
-    background-color: #1f2633;
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 0.2rem;
@@ -484,6 +653,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
+    color: #d4d4d8;
 }
 
 .summary-row:last-child {
@@ -491,10 +661,11 @@
 }
 
 .total-row {
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid #2D313A;
     padding-top: 0.7rem;
     margin-top: 0.9rem;
     font-weight: 600;
+    color: #FFFFFF;
 }
 
 .total-amount-container {
@@ -512,29 +683,18 @@
 
 .indian-currency-amount {
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.6);
     font-weight: 500;
 }
 
-.purchase-btn {
-    background-color: #6f42c1;
-    border-color: #6f42c1;
-}
-
-.purchase-btn:hover {
-    background-color: #5a32a3;
-    border-color: #5a32a3;
-}
-
-.payment-buttons {
-    padding: 1rem 0 1.5rem 0;
-}
+/* ── Payment Buttons ── */
 
 .payment-buttons-row {
     display: flex;
     gap: 5rem;
     width: 100%;
     justify-content: center;
+    padding-top: 1rem;
 }
 
 .payment-btn {
@@ -549,12 +709,9 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     position: relative;
     overflow: hidden;
-}
-
-/* Common background color for both payment buttons */
-.payment-btn {
-    background-color: #152037;
-    color: #ffffff;
+    background-color: #1ED66C;
+    color: #000000;
+    cursor: pointer;
 }
 
 .payment-btn::before {
@@ -564,7 +721,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
     transition: left 0.5s;
 }
 
@@ -572,15 +729,19 @@
     left: 100%;
 }
 
-/* Keep hover consistent for both */
 .payment-btn:hover {
-    background-color: #1a2b4d;
-    color: #ffffff;
+    background-color: #148F47;
+    color: #000000;
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
 }
 
-/* Inline content and logo sizes */
+.payment-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .payment-btn-content {
     display: inline-flex;
     align-items: center;
@@ -593,42 +754,12 @@
     display: inline-block;
 }
 
-/* Primary vs Secondary buttons */
-.payment-btn.primary {
-    min-width: 220px;
-}
+/* ═══════════════════════════════════════════════
+   Dark Theme Modal Overrides
+   ═══════════════════════════════════════════════ */
 
-.payment-btn.secondary {
-    min-width: 150px;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-.secondary-option {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.secondary-note {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.8);
-    text-align: center;
-    max-width: 320px;
-}
-
-.payment-link {
-    color: #7fb8ff;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-/* Dark theme overrides for modal */
 .main-container .modal-content {
-    background-color: #1C1F28;
+    background-color: #0F1116;
     border: 1px solid #2D313A;
 }
 
@@ -642,41 +773,6 @@
 
 .main-container .modal-title {
     color: #ffffff;
-}
-
-.main-container .credit-package-card {
-    background-color: #1C1F28;
-    border-color: #1ED66C;
-}
-
-.main-container .package-name {
-    color: #ffffff;
-}
-
-.main-container .package-date {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.main-container .billing-option {
-    border-bottom-color: #2D313A;
-    color: #ffffff;
-}
-
-.main-container .billing-option:hover {
-    background-color: #16181F;
-}
-
-.main-container .purchase-summary {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
-}
-
-.main-container .total-row {
-    border-top-color: #2D313A;
-}
-
-.main-container .indian-currency-amount {
-    color: rgba(255, 255, 255, 0.6);
 }
 
 .main-container .form-label {
@@ -696,80 +792,49 @@
     box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
 }
 
-/* Dark theme for credit amount buttons */
-.main-container .credit-amount-btn {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
-    color: #ffffff;
+/* ═══════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+    .credits-container {
+        padding: 1rem;
+    }
+
+    .credits-header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .credits-title {
+        font-size: 1.5rem;
+    }
+
+    .buy-credits-card {
+        height: auto;
+        min-height: 200px;
+    }
+
+    .available-credits-card {
+        height: auto;
+        min-height: 250px;
+    }
+
+    .credits-container .row {
+        margin: 0 -0.5rem;
+    }
+
+    .credits-container .col-md-6 {
+        padding: 0 0.5rem;
+    }
+
+    .upgrade-plan-card {
+        margin-top: 1rem;
+        height: auto;
+    }
+
+    .credit-balance-amount {
+        font-size: 2.5rem;
+    }
 }
-
-.main-container .credit-amount-btn:hover {
-    background-color: #16181F;
-}
-
-.main-container .credit-amount-btn.active {
-    background-color: #16181F;
-    border-color: #1ED66C;
-    color: #ffffff;
-}
-
-/* Dark theme for custom amount input */
-.main-container .custom-amount-input {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
-    color: #ffffff;
-}
-
-.main-container .custom-amount-input:hover {
-    background-color: #16181F;
-}
-
-.main-container .custom-amount-input.active {
-    background-color: #16181F;
-    border-color: #1ED66C;
-    color: #ffffff;
-}
-
-.main-container .custom-amount-input input {
-    background: transparent;
-    border: none;
-    color: inherit;
-}
-
-.main-container .custom-amount-input input:focus {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    outline: none;
-    color: inherit;
-}
-
-/* Brighter placeholder for dark theme */
-.main-container .custom-amount-input input::placeholder {
-    color: rgba(255, 255, 255, 0.75);
-}
-
-
-
-.paypal-loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    z-index: 10;
-    backdrop-filter: blur(2px);
-}
-
-/* Dark theme for PayPal loading overlay */
-.main-container .paypal-loading-overlay {
-    background-color: rgba(31, 38, 51, 0.9);
-    color: #ffffff;
-}
-
-

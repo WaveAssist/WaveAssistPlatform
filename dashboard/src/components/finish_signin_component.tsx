@@ -8,6 +8,7 @@ import ReactGA from "react-ga4";
 import { usePostHog } from "posthog-js/react";
 import WALogo from "../assets/Logo/Wave_Predict_W_Logo.png";
 import "./finish_signin_component.css";
+import { persistUserPlan } from "../utils/plan";
 
 const FinishSignInComponent: React.FC = () => {
 	const navigate = useNavigate();
@@ -106,6 +107,7 @@ const FinishSignInComponent: React.FC = () => {
 				localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 				localStorage.setItem("uid", data.user_data.uid);
 				localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
+				persistUserPlan(data.user_data.plan_name);
 
 				// Clean up localStorage if we used the stored redirect
 				if (storedRedirect) {
@@ -146,6 +148,7 @@ const FinishSignInComponent: React.FC = () => {
 			localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 			localStorage.setItem("uid", data.user_data.uid);
 			localStorage.setItem("is_premium", data.user_data.is_premium ? "true" : "false");
+			persistUserPlan(data.user_data.plan_name);
 
 			setLoading(false);
 			// ✅ Fire GA4 sign_up event

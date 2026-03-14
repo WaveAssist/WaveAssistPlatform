@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import "./PaywallBlock.css";
 
 interface PaywallBlockProps {
@@ -16,13 +17,15 @@ const PaywallBlock: React.FC<PaywallBlockProps> = ({
 	onUpgrade,
 	showUpgradeButton = true,
 }) => {
+	const navigate = useNavigate();
+
 	if (!show) return null;
 
 	const handleUpgrade = () => {
 		if (onUpgrade) {
 			onUpgrade();
 		} else {
-			window.open("https://waveassist.io/pricing", "_blank");
+			navigate("/manage/credits?upgrade=true");
 		}
 	};
 

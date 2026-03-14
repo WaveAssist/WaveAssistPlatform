@@ -5,6 +5,7 @@ import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 import WavePredictLogo from "../assets/Logo/Wave_Predict_W_Logo.png";
 import { useEffect, useState } from "react";
 import Joyride, { Step } from "react-joyride";
+import { normalizeAccessPlan } from "./plan";
 interface SidebarProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -17,12 +18,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 	const location = useLocation();
 	const [runTour, setRunTour] = useState(false);
 
-	// Get plan name from localStorage if not provided as prop
-	const currentPlanName = planName || localStorage.getItem("plan_name") || "operator";
-
-	// Determine which sections should be visible based on plan
-	const isBuilderOrEditorPlan = currentPlanName === "builder" || currentPlanName === "editor";
-	const isBuilderPlan = currentPlanName === "builder";
+	const currentPlanSource = planName || localStorage.getItem("plan_access") || localStorage.getItem("plan_name");
+	// Builder = admin/test mode (extra customization modules unlocked).
+	const isBuilderPlan = normalizeAccessPlan(currentPlanSource) === "builder";
 
 	useEffect(() => {
 		const isNewUser = localStorage.getItem("is_new_user");
@@ -206,9 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 					</Link>
 				</li>
 
-				{/* Environments - Locked for operators, visible for builder/editor plans */}
-
-				{/* Credits - Visible for all plans */}
+				{/* Billing - Visible for all plans */}
 				<li className="nav-item">
 					<Link
 						to="/manage/credits"
@@ -216,18 +212,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 							isCollapsed ? "collapsed-nav-link" : ""
 						}`}
 						onClick={handleNavClick}
-						title={isCollapsed ? "Credits" : ""}>
+						title={isCollapsed ? "Billing" : ""}>
 						{isCollapsed ? (
 							<>
 								<div className="nav-icon">
 									<i className="bi bi-credit-card"></i>
 								</div>
-								<span>Credits</span>
+								<span>Billing</span>
 							</>
 						) : (
 							<>
 								<i className="bi bi-credit-card me-2"></i>
-								Credits
+								Billing
 							</>
 						)}
 					</Link>
@@ -246,52 +242,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 					</li>
 				)}
 
-				{/* Nodes - Locked for operators, visible for builder/editor plans */}
+				{/* Nodes - Visible and unlocked for all plans */}
 				<li className="nav-item">
-					{isBuilderOrEditorPlan ? (
-						<Link
-							to="/manage/nodes"
-							className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1 ${
-								isCollapsed ? "collapsed-nav-link" : ""
-							}`}
-							onClick={handleNavClick}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-bezier2"></i>
-									</div>
-									<span>Nodes</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-bezier2 me-2"></i>
-									Nodes
-								</>
-							)}
-						</Link>
-					) : (
-						<Link
-							to="/manage/nodes"
-							className={`nav-link text-white-50 mb-1 disabled-link ${isCollapsed ? "collapsed-nav-link" : ""}`}
-							onClick={handleNavClick}
-							title={isCollapsed ? "Nodes (Locked)" : ""}
-							style={{ cursor: "pointer", opacity: 0.7, backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "6px", padding: "8px 12px" }}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-bezier2"></i>
-									</div>
-									<span>Nodes</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-bezier2 me-2"></i>
-									Nodes
-									<i className="bi bi-lock-fill ms-2" style={{ fontSize: "0.8rem" }}></i>
-								</>
-							)}
-						</Link>
-					)}
+					<Link
+						to="/manage/nodes"
+						className={`nav-link ${location.pathname === "/manage/nodes" ? "active" : "text-white"} mb-1 ${
+							isCollapsed ? "collapsed-nav-link" : ""
+						}`}
+						onClick={handleNavClick}>
+						{isCollapsed ? (
+							<>
+								<div className="nav-icon">
+									<i className="bi bi-bezier2"></i>
+								</div>
+								<span>Nodes</span>
+							</>
+						) : (
+							<>
+								<i className="bi bi-bezier2 me-2"></i>
+								Nodes
+							</>
+						)}
+					</Link>
 				</li>
 
 				{/* Variables - Only visible to builder */}

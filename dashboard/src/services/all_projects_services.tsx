@@ -1,4 +1,4 @@
-import { callApi } from "./base_service";
+import { callApi, BASE_URL } from "./base_service";
 
 export const fetchAllProjectsAPI = async (): Promise<any> => {
 	const body = new URLSearchParams({
@@ -28,15 +28,21 @@ export const deleteProjectApi = async (projectKey: string): Promise<any> => {
 	return callApi(path, body);
 };
 
-export const createPaymentOrder = async (provider: string, amount: string, currency: string, uid: string, creditsInUsd: string): Promise<any> => {
+export const createCheckoutSession = async (
+	uid: string,
+	useCase: "credits" | "subscription",
+	amount: string,
+	creditsInUsd: string,
+	planName?: string
+): Promise<any> => {
 	const body = new FormData();
-	body.append("provider", provider);
-	body.append("amount", amount);
-	body.append("currency", currency);
 	body.append("uid", uid);
+	body.append("use_case", useCase);
+	body.append("amount", amount);
 	body.append("credits_in_usd", creditsInUsd);
+	if (planName) body.append("plan_name", planName);
 
-	const response = await fetch("https://api.waveassist.io/payment/create_payment_order/", {
+	const response = await fetch(`${BASE_URL}/payment/create_checkout/`, {
 		method: "POST",
 		body: body,
 	});
@@ -48,34 +54,12 @@ export const createPaymentOrder = async (provider: string, amount: string, curre
 	return response.json();
 };
 
-export const verifyPayment = async (
-	provider: string,
-	amount: string,
-	currency: string,
-	uid: string,
-	providerPaymentId: string,
-	signature: string,
-	razorpayPaymentId: string,
-	paypalPayerId: string
-): Promise<any> => {
-	const body = new FormData();
-	body.append("provider", provider);
-	body.append("amount", amount);
-	body.append("currency", currency);
-	body.append("uid", uid);
-	body.append("provider_payment_id", providerPaymentId);
-	body.append("signature", signature);
-	body.append("razorpay_payment_id", razorpayPaymentId);
-	body.append("paypal_payer_id", paypalPayerId);
+export const fetchBillingOverview = async (uid: string): Promise<any> => {
+	const body = new URLSearchParams({ uid });
+	return callApi("payment/billing_overview/", body);
+};
 
-	const response = await fetch("https://api.waveassist.io/payment/verify_payment/", {
-		method: "POST",
-		body: body,
-	});
-
-	if (!response.ok) {
-		throw new Error("Failed to verify payment");
-	}
-
-	return response.json();
+export const createBillingPortalSession = async (uid: string): Promise<any> => {
+	const body = new URLSearchParams({ uid });
+	return callApi("payment/create_portal_session/", body);
 };

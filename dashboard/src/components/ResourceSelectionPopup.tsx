@@ -1,15 +1,29 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { AgGridReact } from "ag-grid-react";
-import { ColDef, SelectionChangedEvent, ICellRendererParams } from "ag-grid-community";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import Modal from "react-bootstrap/Modal";
-import { Button } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
+import { useToast } from "../utils/toast_context";
 import "./ResourceSelectionPopup.css";
-import "../utils/ag-theme-project.css";
 
 interface Resource {
 	id: string;
 	name: string;
 	extra?: any;
+	properties?: Record<string, any>;
+}
+
+interface PropertyOption {
+	name: string;
+	key: string;
+}
+
+interface ResourcePropertyConfig {
+	key: string;
+	display_name: string;
+	type: "select" | "text";
+	is_optional?: boolean; // default true when omitted (optional)
+	default_value?: string;
+	helper_message?: string;
+	options?: PropertyOption[];
 }
 
 interface ResourceSelectionPopupProps {
@@ -20,31 +34,11 @@ interface ResourceSelectionPopupProps {
 	providerName: string;
 	isDismissable?: boolean;
 	initiallySelectedResources?: Resource[];
+	resourceProperties?: ResourcePropertyConfig[];
 }
 
-// Custom cell renderer for the select button
-const SelectButtonRenderer: React.FC<ICellRendererParams> = (params) => {
-	const isSelected = params.node.isSelected();
-
-	const handleClick = () => {
-		params.node.setSelected(!isSelected);
-		params.api.refreshCells({ rowNodes: [params.node], force: true });
-	};
-
-	return (
-		<Button
-			variant={isSelected ? "primary" : "outline-secondary"}
-			size="sm"
-			onClick={handleClick}
-			style={{
-				width: "100%",
-				fontSize: "12px",
-				padding: "4px 8px",
-			}}>
-			{isSelected ? "Selected" : "Select"}
-		</Button>
-	);
-};
+const PAGE_SIZE_OPTIONS = [10, 15, 25, 50];
+const DEFAULT_PAGE_SIZE = 15;
 
 const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 	isOpen,
@@ -54,122 +48,308 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 	providerName,
 	isDismissable = true,
 	initiallySelectedResources = [],
+	resourceProperties = [],
 }) => {
-	const [selectedResources, setSelectedResources] = useState<Resource[]>(initiallySelectedResources);
+	const { showToast } = useToast();
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+	const [expandedRowId, setExpandedRowId] = useState<string | null>(null); // only one open at a time
+	const [resourcePropertiesState, setResourcePropertiesState] = useState<Record<string, Record<string, any>>>({});
+	const [filterText, setFilterText] = useState("");
+	const [page, setPage] = useState(1);
+	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-	// Update selected resources when popup opens with different initial selections
+	const hasProperties = resourceProperties.length > 0;
+
+	const buildDefaultProperties = useCallback((): Record<string, any> => {
+		const defaults: Record<string, any> = {};
+		for (const prop of resourceProperties) {
+			defaults[prop.key] = prop.default_value ?? "";
+		}
+		return defaults;
+	}, [resourceProperties]);
+
+	// Initialize selection and props when modal opens (all rows collapsed; only Select opens them)
 	useEffect(() => {
 		if (isOpen) {
-			setSelectedResources(initiallySelectedResources);
-		}
-	}, [isOpen, initiallySelectedResources]);
-
-	const columnDefs: ColDef[] = [
-		{
-			headerName: "Resource",
-			field: "id",
-			width: 350,
-			sortable: true,
-			filter: true,
-			resizable: false,
-			suppressSizeToFit: true,
-		},
-		{
-			headerName: "Name",
-			field: "name",
-			width: 300,
-			sortable: true,
-			filter: false,
-			resizable: false,
-			suppressSizeToFit: true,
-		},
-		{
-			headerName: "Select",
-			field: "select",
-			cellRenderer: SelectButtonRenderer,
-			width: 160,
-			sortable: false,
-			pinned: "right",
-			filter: false,
-			resizable: false,
-			suppressSizeToFit: true,
-		},
-	];
-
-	const gridOptions = {
-		suppressCellFocus: true,
-		rowHeight: 50,
-	};
-
-	const defaultColDef = {
-		autoHeight: false,
-		wrapText: true,
-		enableCellChangeFlash: true,
-		editable: false,
-		cellClass: "ag-cell",
-	};
-
-	const onGridReady = useCallback(
-		(params: any) => {
-			// Preselect initially selected resources
-			if (initiallySelectedResources && initiallySelectedResources.length > 0) {
-				const selectedIds = initiallySelectedResources.map((resource) => resource.id);
-				params.api.forEachNode((node: any) => {
-					if (selectedIds.includes(node.data.id)) {
-						node.setSelected(true);
-					}
-				});
+			const ids = new Set(initiallySelectedResources.map((r) => r.id));
+			setSelectedIds(ids);
+			setExpandedRowId(null); // Default all collapsed; expand only when user clicks Select
+			const propsMap: Record<string, Record<string, any>> = {};
+			for (const res of initiallySelectedResources) {
+				propsMap[res.id] = res.properties ? { ...res.properties } : buildDefaultProperties();
 			}
-		},
-		[initiallySelectedResources]
+			setResourcePropertiesState(propsMap);
+			setFilterText("");
+			setPage(1);
+		}
+	}, [isOpen, initiallySelectedResources, buildDefaultProperties]);
+
+	const filteredResources = useMemo(() => {
+		if (!filterText.trim()) return resources;
+		const q = filterText.trim().toLowerCase();
+		return resources.filter((r) => r.id.toLowerCase().includes(q) || (r.name && r.name.toLowerCase().includes(q)));
+	}, [resources, filterText]);
+
+	const totalPages = Math.max(1, Math.ceil(filteredResources.length / pageSize));
+	const paginatedResources = useMemo(() => {
+		const start = (page - 1) * pageSize;
+		return filteredResources.slice(start, start + pageSize);
+	}, [filteredResources, page, pageSize]);
+
+	const selectedResources = useMemo(
+		() => resources.filter((r) => selectedIds.has(r.id)),
+		[resources, selectedIds]
 	);
 
-	const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
-		const selectedNodes = event.api.getSelectedNodes();
-		const selectedData = selectedNodes.map((node) => node.data);
-		setSelectedResources(selectedData);
+	const toggleSelect = useCallback(
+		(resourceId: string) => {
+			setSelectedIds((prev) => {
+				const next = new Set(prev);
+				if (next.has(resourceId)) {
+					next.delete(resourceId);
+					setExpandedRowId((current) => (current === resourceId ? null : current));
+				} else {
+					next.add(resourceId);
+					setExpandedRowId(resourceId); // open this one, close any other
+					setResourcePropertiesState((p) => ({
+						...p,
+						[resourceId]: p[resourceId] || buildDefaultProperties(),
+					}));
+				}
+				return next;
+			});
+		},
+		[buildDefaultProperties]
+	);
+
+	const toggleExpand = useCallback((resourceId: string) => {
+		setExpandedRowId((current) => (current === resourceId ? null : resourceId)); // open this one only, or close if already open
 	}, []);
 
+	const handlePropertyChange = (resourceId: string, propKey: string, value: string) => {
+		setResourcePropertiesState((prev) => ({
+			...prev,
+			[resourceId]: {
+				...(prev[resourceId] || buildDefaultProperties()),
+				[propKey]: value,
+			},
+		}));
+	};
+
 	const handleSave = () => {
-		console.log("Selected resources:", selectedResources);
-		onSave(selectedResources);
+		if (hasProperties) {
+			const requiredProps = resourceProperties.filter((p) => p.is_optional === false);
+			for (const res of selectedResources) {
+				const props = resourcePropertiesState[res.id] || buildDefaultProperties();
+				for (const prop of requiredProps) {
+					const val = props[prop.key];
+					if (val == null || String(val).trim() === "") {
+						showToast(`"${prop.display_name}" is required for ${res.id}.`, "warning");
+						return;
+					}
+				}
+			}
+		}
+		let enrichedResources = selectedResources;
+		if (hasProperties) {
+			enrichedResources = selectedResources.map((res) => ({
+				...res,
+				properties: resourcePropertiesState[res.id] || buildDefaultProperties(),
+			}));
+		}
+		onSave(enrichedResources);
 		onClose();
 	};
 
 	const handleClose = () => {
-		setSelectedResources([]);
+		setSelectedIds(new Set());
+		setExpandedRowId(null);
+		setResourcePropertiesState({});
 		onClose();
 	};
 
 	return (
-		<Modal show={isOpen} onHide={handleClose} size="lg" centered backdrop="static" className="resource-selection-popup">
+		<Modal show={isOpen} onHide={handleClose} size="xl" centered backdrop="static" className="resource-selection-popup">
 			<Modal.Header closeButton={isDismissable}>
 				<Modal.Title>Select {providerName} Resources</Modal.Title>
 			</Modal.Header>
-			<Modal.Body style={{ height: "65vh", padding: "0" }}>
-				<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
-					<AgGridReact
-						rowData={resources}
-						columnDefs={columnDefs}
-						gridOptions={gridOptions}
-						defaultColDef={defaultColDef}
-						rowSelection="multiple"
-						onGridReady={onGridReady}
-						onSelectionChanged={onSelectionChanged}
-						suppressRowClickSelection={true}
-						pagination={true}
-						paginationPageSize={15}
+			<Modal.Body className="resource-selection-popup-body">
+				{/* Search: full width above table */}
+				<div className="resource-search-wrapper">
+					<Form.Control
+						type="text"
+						placeholder="Search repositories..."
+						value={filterText}
+						onChange={(e) => {
+							setFilterText(e.target.value);
+							setPage(1);
+						}}
+						className="resource-search-input"
+						aria-label="Search resources"
 					/>
+				</div>
+
+				<div className="resource-table-wrapper">
+					<table className="resource-table">
+						<thead>
+							<tr>
+								<th className="resource-table-col-chevron" style={{ width: 30 }} aria-label="Expand" />
+								<th className="resource-table-col-resource">Resource</th>
+								<th className="resource-table-col-name">Name</th>
+								<th className="resource-table-col-select" style={{ width: 150 }}>
+									Select
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{paginatedResources.map((resource) => {
+								const isSelected = selectedIds.has(resource.id);
+								const isExpanded = expandedRowId === resource.id;
+								return (
+									<React.Fragment key={resource.id}>
+										<tr
+											className={`resource-table-row ${isSelected ? "resource-table-row-selected" : ""} ${isExpanded ? "resource-table-row-expanded" : ""}`}
+											onClick={() => toggleSelect(resource.id)}
+											role="button"
+											tabIndex={0}
+											onKeyDown={(e) => {
+												if (e.key === "Enter" || e.key === " ") {
+													e.preventDefault();
+													toggleSelect(resource.id);
+												}
+											}}
+											aria-expanded={isSelected ? isExpanded : undefined}>
+											<td className="resource-table-col-chevron align-middle">
+												{isSelected ? (
+													<span
+														className={`resource-table-chevron ${isExpanded ? "resource-table-chevron-expanded" : ""}`}
+														onClick={(e) => {
+															e.stopPropagation();
+															toggleExpand(resource.id);
+														}}
+														aria-hidden>
+														<i className="bi bi-chevron-right" />
+													</span>
+												) : (
+													<span className="resource-table-chevron-placeholder" aria-hidden />
+												)}
+											</td>
+											<td className="align-middle resource-table-cell-id">{resource.id}</td>
+											<td className="align-middle resource-table-cell-name">{resource.name}</td>
+											<td className="align-middle resource-table-cell-select">
+												<Button
+													variant={isSelected ? "primary" : "outline-secondary"}
+													size="sm"
+													onClick={(e) => {
+														e.stopPropagation();
+														toggleSelect(resource.id);
+													}}
+													className="resource-table-select-btn">
+													{isSelected ? "Selected" : "Select"}
+												</Button>
+											</td>
+										</tr>
+										{hasProperties && isSelected && isExpanded && (
+											<tr className="resource-table-detail-row">
+												<td colSpan={4} className="resource-table-detail-cell">
+													<div className="resource-table-detail-content">
+														{resourceProperties.map((prop) => (
+															<div
+																key={prop.key}
+																className={prop.type === "text" ? "resource-table-detail-field flex-grow-1" : "resource-table-detail-field resource-table-detail-field-fixed"}>
+																<Form.Label className="resource-table-detail-label">
+																	{prop.display_name}
+																	{prop.is_optional !== false && (
+																		<span className="resource-table-detail-optional"> (optional)</span>
+																	)}
+																</Form.Label>
+																{prop.type === "select" && prop.options ? (
+																	<Form.Select
+																		size="sm"
+																		value={(resourcePropertiesState[resource.id] || {})[prop.key] ?? prop.default_value ?? ""}
+																		onChange={(e) => handlePropertyChange(resource.id, prop.key, e.target.value)}
+																		className="resource-table-detail-input"
+																		onClick={(e) => e.stopPropagation()}>
+																		{prop.options.map((opt) => (
+																			<option key={opt.key} value={opt.key}>
+																				{opt.name}
+																			</option>
+																		))}
+																	</Form.Select>
+																) : (
+																	<Form.Control
+																		size="sm"
+																		type="text"
+																		placeholder={prop.helper_message || "Optional"}
+																		value={(resourcePropertiesState[resource.id] || {})[prop.key] ?? prop.default_value ?? ""}
+																		onChange={(e) => handlePropertyChange(resource.id, prop.key, e.target.value)}
+																		className="resource-table-detail-input"
+																		onClick={(e) => e.stopPropagation()}
+																	/>
+																)}
+															</div>
+														))}
+													</div>
+												</td>
+											</tr>
+										)}
+									</React.Fragment>
+								);
+							})}
+						</tbody>
+					</table>
+				</div>
+
+				{/* Pagination */}
+				<div className="resource-table-pagination">
+					<div className="d-flex align-items-center gap-2">
+						<Form.Select
+							size="sm"
+							value={pageSize}
+							onChange={(e) => {
+								setPageSize(Number(e.target.value));
+								setPage(1);
+							}}
+							className="resource-table-pagesize"
+							aria-label="Page size">
+							{PAGE_SIZE_OPTIONS.map((n) => (
+								<option key={n} value={n}>
+									{n} per page
+								</option>
+							))}
+						</Form.Select>
+						<span className="resource-table-pagination-info">
+							Page {page} of {totalPages} ({filteredResources.length} total)
+						</span>
+					</div>
+					<div className="d-flex gap-1">
+						<Button
+							variant="outline-secondary"
+							size="sm"
+							onClick={() => setPage((p) => Math.max(1, p - 1))}
+							disabled={page <= 1}
+							aria-label="Previous page">
+							<i className="bi bi-chevron-left" />
+						</Button>
+						<Button
+							variant="outline-secondary"
+							size="sm"
+							onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+							disabled={page >= totalPages}
+							aria-label="Next page">
+							<i className="bi bi-chevron-right" />
+						</Button>
+					</div>
 				</div>
 			</Modal.Body>
 			<Modal.Footer>
 				<div className="d-flex justify-content-between align-items-center w-100">
 					<div
-						className="selected-count"
+						className="resource-selection-count"
 						style={{
 							fontSize: "1rem",
 							fontWeight: "600",
-							color: selectedResources.length > 0 ? "#198754" : "#6c757d",
+							color: selectedResources.length > 0 ? "var(--color-primary)" : "var(--color-text-secondary)",
 						}}>
 						{selectedResources.length} resource{selectedResources.length !== 1 ? "s" : ""} selected
 					</div>
@@ -179,7 +359,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 								Cancel
 							</Button>
 						)}
-						<Button variant="primary" onClick={handleSave} disabled={selectedResources.length === 0}>
+						<Button variant="primary" onClick={handleSave} disabled={selectedResources.length === 0} className="btn-primary-wa">
 							Save Selection
 						</Button>
 					</div>

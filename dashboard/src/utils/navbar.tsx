@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Navbar, Nav, Button, Modal } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import "./navbar.css";
 import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
 import { useToast } from "./toast_context";
-import { useRefresh } from "./RefreshContext"; // Import the custom hook
+import { useRefresh } from "./RefreshContext";
 import { usePostHog } from "posthog-js/react";
 import WaveAssistLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
+import { getStoredAccessPlan } from "./plan";
 interface NavbarProps {
 	onToggleSidebar?: () => void;
 }
@@ -15,6 +17,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
 	const posthog = usePostHog();
+	const navNavigate = useNavigate();
 
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
@@ -40,10 +43,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 
-	// Get plan name: Deploy only visible to builder; Upgrade only for operator
-	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const isBuilderPlan = currentPlanName === "builder";
-	const isOperatorPlan = currentPlanName === "operator";
+	// Deploy only visible to builder; Starter sees upgrade CTA.
+	const currentAccessPlan = getStoredAccessPlan();
+	const isBuilderPlan = currentAccessPlan === "builder";
+	const isStarterPlan = currentAccessPlan === "starter";
 
 	const showDeployButton = !(isProjectPremium && !isUserPremium) && isBuilderPlan;
 
@@ -168,7 +171,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 						<img src={WaveAssistLogo} alt="WaveAssist" className="navbar-logo" style={{ height: "24px", maxWidth: "150px", width: "auto" }} />
 					</div>
 					<div className="ms-auto d-flex align-items-center flex-shrink-0 navbar-actions">
-						{!isOperatorPlan && (
+						{!isStarterPlan && (
 							<DarkDropdown
 								items={envItems}
 								keys={envKeys}
@@ -184,11 +187,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 								<i className="bi bi-cloud-arrow-up-fill"></i>
 							</Button>
 						)}
-						{isOperatorPlan && !isMobile && (
-							<Button variant="outline-secondary" onClick={() => window.open("https://waveassist.io/pricing", "_blank")}>
-								<i className="bi bi-star"></i>
-							</Button>
-						)}
+					{isStarterPlan && !isMobile && (
+						<Button variant="outline-secondary" onClick={() => navNavigate("/manage/credits?upgrade=true")}>
+							<i className="bi bi-star"></i>
+						</Button>
+					)}
 					</div>
 				</>
 			) : (
@@ -203,7 +206,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 								headerText="Select Assistant"
 								onItemSelect={handleProjectChange}
 							/>
-							{!isOperatorPlan && (
+							{!isStarterPlan && (
 								<DarkDropdown
 									items={envItems}
 									keys={envKeys}
@@ -220,12 +223,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 									Deploy
 								</Button>
 							)}
-							{isOperatorPlan && (
-								<Button variant="outline-secondary" onClick={() => window.open("https://waveassist.io/pricing", "_blank")}>
-									<i className="bi bi-star me-2"></i>
-									Upgrade
-								</Button>
-							)}
+						{isStarterPlan && (
+							<Button variant="outline-secondary" onClick={() => navNavigate("/manage/credits?upgrade=true")}>
+								<i className="bi bi-star me-2"></i>
+								Upgrade
+							</Button>
+						)}
 						</Nav>
 					</Navbar.Collapse>
 				</>

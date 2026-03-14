@@ -5,16 +5,17 @@ import { useRefresh } from "../utils/RefreshContext";
 import { Button, Form, Spinner, Modal } from "react-bootstrap";
 import { fetchTemplateApi, setDataForKeyApi, runDAGApi, fetchDataForKeyAPI, updateNodeApi, fetchNodesApi } from "../services/project_services";
 import { deployProjectApi } from "../services/navbar_services";
-import { fetchRunningDeploymentApi, stopDeploymentApi } from "../services/deployment_services";
+import { fetchRunningDeploymentApi, stopDeploymentApi, checkAssistantUpdateApi, upgradeAssistantApi } from "../services/deployment_services";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchAllProjectsAPI } from "../services/all_projects_services";
 import { fetchResourcesApi } from "../services/assistant_services";
+import { BASE_URL } from "../services/base_service";
 import { convertToString, determineDataType } from "../utils/shared_functions";
 import InputFactory from "./configuration/InputFactory";
 import ResourceSelectionPopup from "./ResourceSelectionPopup";
 import "./assistant_component.css";
 
-const OAUTH_INPUTS = ["github", "hubspot"];
+const OAUTH_INPUTS = ["github", "hubspot", "slack"];
 
 const AssistantComponent: React.FC = () => {
 	const { showToast } = useToast();
@@ -48,6 +49,7 @@ const AssistantComponent: React.FC = () => {
 	const [showResourcePopup, setShowResourcePopup] = useState(false);
 	const [currentProviderName, setCurrentProviderName] = useState<string>("");
 	const [currentInputKey, setCurrentInputKey] = useState<string>("");
+	const [currentResourceProperties, setCurrentResourceProperties] = useState<any[]>([]);
 	const [showWebhookModal, setShowWebhookModal] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [webhookCopied, setWebhookCopied] = useState(false);
@@ -55,6 +57,9 @@ const AssistantComponent: React.FC = () => {
 	const [templateData, setTemplateData] = useState<any | null>(null);
 	const [highlightResourceKeys, setHighlightResourceKeys] = useState<string[]>([]);
 	const [runOnceStarted, setRunOnceStarted] = useState(false);
+	const [updateAvailable, setUpdateAvailable] = useState(false);
+	const [, setUpdateCommitMessage] = useState("");
+	const [upgrading, setUpgrading] = useState(false);
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
 		try {
@@ -213,6 +218,37 @@ const AssistantComponent: React.FC = () => {
 		}
 		await fetch_wizard_inputs(templateKeyValue);
 		await fetchRunning();
+		await checkForUpdate();
+	};
+
+	const checkForUpdate = async () => {
+		try {
+			const data = await checkAssistantUpdateApi();
+			if (data.has_update) {
+				setUpdateAvailable(true);
+				setUpdateCommitMessage(data.latest_commit_message || "");
+			} else {
+				setUpdateAvailable(false);
+			}
+		} catch {
+			// Silently ignore — non-assistant projects or network issues
+		}
+	};
+
+	const handleUpgrade = async () => {
+		setUpgrading(true);
+		try {
+			await upgradeAssistantApi();
+
+			setUpdateAvailable(false);
+			showToast("Assistant upgraded successfully.", "success");
+			await refreshData();
+		} catch (error) {
+			console.error("Upgrade failed:", error);
+			showToast("Upgrade failed: " + error, "danger");
+		} finally {
+			setUpgrading(false);
+		}
 	};
 
 	useEffect(() => {
@@ -279,6 +315,7 @@ const AssistantComponent: React.FC = () => {
 			setResources(resources);
 			setCurrentProviderName(providerName);
 			setCurrentInputKey(inputData.key);
+			setCurrentResourceProperties(inputData.resource_properties || []);
 			setShowResourcePopup(true);
 			console.log("Resources fetched successfully for ", providerName, " : ", resources);
 		} catch (error) {
@@ -627,7 +664,7 @@ const AssistantComponent: React.FC = () => {
 
 	// Generate webhook URL
 	const generateWebhookUrl = (): string => {
-		const baseUrl = "https://api.waveassist.io/webhook/run";
+		const baseUrl = `${BASE_URL}/webhook/run`;
 		const uid = localStorage.getItem("uid");
 		const projectKey = localStorage.getItem("selected_project_key");
 		const envKey = projectKey + "_default";
@@ -662,6 +699,40 @@ const AssistantComponent: React.FC = () => {
 					<h3 className="assistant-title">Welcome, {userName}!</h3>
 				</div>
 
+				{/* Update Available Banner */}
+				{updateAvailable && (
+					<div className="row mb-3">
+						<div className="col-md-12">
+							<div className="assistant-update-banner">
+								<div className="d-flex align-items-center justify-content-between">
+									<div className="d-flex align-items-center">
+										<i className="bi bi-arrow-up-circle-fill me-3" style={{ fontSize: "1.5rem", color: "#1ED66C" }}></i>
+										<div>
+											<h6 className="mb-0 text-white">New version available</h6>
+											<p className="mb-0 text-muted" style={{ fontSize: "0.85rem" }}>
+												Upgrade your assistant to get the latest improvements.
+											</p>
+										</div>
+									</div>
+									<Button variant="outline-success" size="sm" onClick={handleUpgrade} disabled={upgrading} style={{ minWidth: "100px" }}>
+										{upgrading ? (
+											<>
+												<Spinner animation="border" size="sm" className="me-1" />
+												Upgrading...
+											</>
+										) : (
+											<>
+												{/* <i className="bi bi-arrow-up me-1"></i> */}
+												Upgrade
+											</>
+										)}
+									</Button>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
+
 				{/* Configuration Section */}
 				{(!isRunning || showConfigOverride) && !runOnceStarted && (
 					<div className="row">
@@ -682,7 +753,7 @@ const AssistantComponent: React.FC = () => {
 										</div>
 									) : (
 										<>
-											{wizardInputs.length === 0 ? (
+											{wizardInputs.length === 0 && optionalInputs.length === 0 ? (
 												<div className="text-center py-4">
 													<div className="mb-3">
 														<i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
@@ -1008,6 +1079,7 @@ const AssistantComponent: React.FC = () => {
 					onSave={handleResourceSave}
 					providerName={currentProviderName}
 					initiallySelectedResources={wizardSelectedResources[currentInputKey] || []}
+					resourceProperties={currentResourceProperties}
 				/>
 
 				{/* Webhook Modal */}

@@ -13,6 +13,7 @@ import { useToast } from "../utils/toast_context";
 import "./all_projects_component.css";
 
 import { usePostHog } from "posthog-js/react";
+import { hasBuilderAccess } from "../utils/plan";
 
 interface Project {
 	project_key: string;
@@ -108,6 +109,8 @@ const AllProjectsComponent: React.FC = () => {
 			localStorage.removeItem("projects_array");
 			localStorage.removeItem("selected_project_key");
 			localStorage.removeItem("user_data");
+			localStorage.removeItem("plan_name");
+			localStorage.removeItem("plan_access");
 			navigate("/login");
 		} catch (error) {
 			console.error("Error logging out:", error);
@@ -160,9 +163,8 @@ const AllProjectsComponent: React.FC = () => {
 			localStorage.setItem("selected_env_key", newProjectKey + "_default");
 			localStorage.setItem("is_project_premium", "false");
 
-			// Check user's plan to determine navigation destination
-			const planName = localStorage.getItem("plan_name");
-			const destination = planName === "operator" ? "runs" : "nodes";
+			// Builder = admin mode (can go to nodes); all other plans go to runs.
+			const destination = hasBuilderAccess() ? "nodes" : "runs";
 			navigate(`/manage/${destination}?project_key=${newProjectKey}`);
 		} catch (error) {
 			console.error("FetchAllProjects failed:", error);

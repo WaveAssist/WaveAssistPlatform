@@ -12,7 +12,6 @@ import PackagesComponent from "./components/project/packages_component";
 import EnvironmentsComponent from "./components/project/environments_component";
 import RunsComponent from "./components/project/runs_component";
 import RunDetailsComponent from "./components/project/run_details_component";
-import TestComponent from "./components/test_component";
 import Layout from "./utils/layout_sidebar";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -23,7 +22,7 @@ import "./App.css";
 import DeploymentsComponent from "./components/project/deployments_component";
 import LogsComponent from "./components/project/logs_component";
 import DeployComponent from "./components/deploy_component";
-import CreditsComponent from "./components/project/credits_component";
+import CreditsComponent from "./components/project/credits_dodo_component";
 import AssistantComponent from "./components/assistant_component";
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-RHQ9VZRVXH");
@@ -36,7 +35,6 @@ function App() {
 					<Routes>
 						<Route path="/login" element={<LoginComponent />} />
 						<Route path="/finish-signin" element={<FinishSignInComponent />} />
-						<Route path="/test" element={<TestComponent />} />
 						<Route path="/" element={<PrivateRoute component={AllProjectsComponent} />} />
 						<Route path="/manage" element={<PrivateRoute component={AllProjectsComponent} />} />
 						<Route path="/manage/projects" element={<PrivateRoute component={AllProjectsComponent} />} />

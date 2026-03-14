@@ -176,6 +176,15 @@
     color: #FFFFFF;
 }
 
+/* Update Banner */
+.assistant-update-banner {
+    background-color: #1C1F28;
+    border: 1px solid #2D313A;
+    border-left: 3px solid #1ED66C;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
 /* Running section */
 .assistant-running-card {
     background-color: #1C1F28;

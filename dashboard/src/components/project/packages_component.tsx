@@ -9,6 +9,7 @@ import Modal from "react-bootstrap/Modal";
 import { useRefresh } from "../../utils/RefreshContext";
 import "ag-grid-community/styles/ag-theme-balham.css";
 import PaywallBlock from "../PaywallBlock";
+import { hasBuilderAccess } from "../../utils/plan";
 
 const PackagesComponent: React.FC = () => {
 	const [packagesArray, setPackagesArray] = useState<any[]>([]);
@@ -20,8 +21,8 @@ const PackagesComponent: React.FC = () => {
 	const [packageVersion, setPackageVersion] = useState("");
 
 	// Only builder can access Packages (editor and operator cannot)
-	const currentPlanName = localStorage.getItem("plan_name") || "operator";
-	const shouldBlockPackages = currentPlanName !== "builder";
+	const isBuilderPlan = hasBuilderAccess();
+	const shouldBlockPackages = !isBuilderPlan;
 
 	const handleCloseVariableEditor = () => {
 		setShowPackageEditor(false);
@@ -228,7 +229,7 @@ const PackagesComponent: React.FC = () => {
 					</Modal.Footer>
 				</Modal.Body>
 			</Modal>
-			<PaywallBlock show={shouldBlockPackages} showUpgradeButton={currentPlanName === "operator"} />
+			<PaywallBlock show={shouldBlockPackages} showUpgradeButton={!isBuilderPlan} />
 		</div>
 	);
 };
