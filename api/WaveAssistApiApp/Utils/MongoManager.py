@@ -2,6 +2,8 @@ from WaveAssistApiApp.Utils.constants import *
 from pymongo import MongoClient
 import WaveAssistApiApp.Utils.utils as utils
 from WaveAssistApi.settings import MONGO_CONNECTION_STRING
+import uuid
+from datetime import datetime, timezone
 
 class MongoManager:
     ##Init Function
@@ -53,3 +55,32 @@ class MongoManager:
         self.client.close()
 
 
+DASHBOARD_TOKENS_DB = "wa_global"
+DASHBOARD_TOKENS_COLLECTION = "dashboard_tokens"
+
+
+class DashboardTokenManager:
+    """Manages opaque tokens that map to stored HTML dashboards."""
+
+    def __init__(self, connection_string=MONGO_CONNECTION_STRING):
+        self.client = MongoClient(connection_string)
+        self.collection = self.client[DASHBOARD_TOKENS_DB][DASHBOARD_TOKENS_COLLECTION]
+        self.collection.create_index("token", unique=True)
+
+    def create_token(self, uid, project_key, environment_key, data_key):
+        token = uuid.uuid4().hex
+        self.collection.insert_one({
+            "token": token,
+            "uid": uid,
+            "project_key": project_key,
+            "environment_key": environment_key,
+            "data_key": data_key,
+            "created_at": datetime.now(timezone.utc),
+        })
+        return token
+
+    def get_token(self, token):
+        return self.collection.find_one({"token": token}, {"_id": 0})
+
+    def close_connection(self):
+        self.client.close()

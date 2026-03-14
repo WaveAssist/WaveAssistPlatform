@@ -121,20 +121,18 @@ TASK_COMPLETED = 'COMPLETED'
 TASK_FAILED = 'FAILED'
 
 
-RAZORPAY_ID = 'rzp_live_SL8z1feuqGaz59'
-RAZORPAY_SECRET = 'REMOVED_CREDENTIAL'
-
-
-
-PAYPAL_CLIENT_ID="AQPRi0ROg3TN4djeqcXqBVlu150SiOH1gipJOPf5JDSOoiuCPswPWtL-a7TTdX8fV3buN9NB_lK3A651"
-PAYPAL_CLIENT_SECRET="REMOVED_CREDENTIAL"
-
-PAYPAL_SANDBOX_CLIENT_ID = 'Aflpky8qbfAzHqDTGchBTUCOxLXYG3YvuNdaT-FQlTlQtRbnYt7JaKxWo5Bjfprsj__G9qkfRPM-qy6R'
-PAYPAL_SANDBOX_CLIENT_SECRET = 'REMOVED_CREDENTIAL'
-
-
 FRONTEND_URL = "https://app.waveassist.io"
 
+# DoDo Payments — defaults when env vars are not set (override via .env)
+DODO_DEFAULT_BASE_URL = "https://test.dodopayments.com"
+DODO_DEFAULT_API_KEY = "REMOVED_CREDENTIAL"
+DODO_DEFAULT_CREDITS_PRODUCT_ID = "pdt_0NaPyV9FKMH7GIGolbb9F"
+DODO_DEFAULT_PLAN_PLUS_PRODUCT_ID = "pdt_0NaPycwuFyNMCmzeNdXHg"
+DODO_DEFAULT_PLAN_PRO_PRODUCT_ID = "pdt_0NaPygGAvjtv8llomfF6N"
 
 CREDITS_CHECK_INTERVAL_DEFAULT = 300   # 5 min
 CREDITS_CHECK_INTERVAL_FAST = 30       # 30 sec after payment
+
+# WaveAssist credits = OpenRouter credits * this multiplier.
+# Gives WaveAssist a 20% margin on every credit dollar.
+WAVEASSIST_CREDIT_MULTIPLIER = 1.25

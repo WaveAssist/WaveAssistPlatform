@@ -3,16 +3,24 @@ import uuid
 from django.shortcuts import render
 from .Utils.responseParser import ResponseParser
 from .models import *
-from .Utils.projectSetup import *
+from .Utils.projectSetup import (
+    get_config_yaml_from_github, validate_yaml_config, get_nodes_from_github,
+    create_nodes_from_yaml, link_node_dependencies,
+    configure_variables, get_latest_commit_sha,
+)
 from .Utils.constants import *
 from .Utils.utils import run_knock_workflow, track_posthog, get_repo_parts_from_url
 import base64
 import requests
 import yaml
-from WaveAssistApiApp import manage_views
+from WaveAssistApiApp import manage_views, deployment_views
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
 from django.http import HttpResponse
+from django.db import transaction
+import WaveAssistApiApp.Utils.validator as validator
+import WaveAssistApiApp.Utils.utils as utils
+
 
 def deploy_template(request):
     request.POST = request.POST.copy()
@@ -58,14 +66,20 @@ def deploy_template(request):
         else:
             return ResponseParser.getParsedErrorMessage("Project creation failed: " + response_data.get("message", "Unknown error"))
 
-        if should_install_requirements == "1":  
-            install_requirements_from_yaml(request, yaml_config, project_key)
+        if should_install_requirements == "1":
             configure_variables(uid, project_key, yaml_config)
 
         node_files = get_nodes_from_github(repo_name, owner)
         file_map = {n["node_name"]: n["content"] for n in node_files}
         created_nodes = create_nodes_from_yaml(project_object, nodes, file_map, timezone)
         link_node_dependencies(yaml_config, created_nodes)
+
+        try:
+            commit_sha, _ = get_latest_commit_sha(repo_name, owner)
+            project_object.deployed_commit_sha = commit_sha
+            project_object.save()
+        except Exception:
+            pass
     except Exception as e:
         print(f"❌ Error creating project or nodes: {str(e)}")
         return ResponseParser.getParsedErrorMessage("Project was not created")
@@ -82,6 +96,136 @@ def deploy_template(request):
     )
 
     return ResponseParser.getParsedSuccessMessage(project_object.get_dict(), '200', 'Project created successfully.')
+
+
+def check_assistant_update(request):
+
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=READ_GTE
+    )
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    template_key = project_object.template_key
+    if not template_key:
+        return ResponseParser.getParsedSuccessMessage(
+            {"has_update": False}, "200", "No template key — not an assistant project."
+        )
+
+    try:
+        assistant = Assistants.objects.get(assistant_key=template_key)
+    except Assistants.DoesNotExist:
+        return ResponseParser.getParsedSuccessMessage(
+            {"has_update": False}, "200", "Assistant not found for template key."
+        )
+
+    try:
+        owner, repo_name = get_repo_parts_from_url(assistant.github_url)
+        latest_sha, commit_message = get_latest_commit_sha(repo_name, owner)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(f"Failed to check for updates: {str(e)}")
+
+    current_sha = project_object.deployed_commit_sha or ""
+    has_update = not current_sha or current_sha != latest_sha
+
+    return ResponseParser.getParsedSuccessMessage(
+        {
+            "has_update": has_update,
+            "current_sha": current_sha,
+            "latest_sha": latest_sha,
+            "latest_commit_message": commit_message,
+        },
+        "200",
+        "Update check complete.",
+    )
+
+
+def upgrade_assistant(request):
+    success, message, user_object, project_object = validator.validate_user_and_project(
+        request, access_level_gte=ADMIN_GTE
+    )
+    if not success:
+        return ResponseParser.getParsedErrorMessage(message)
+
+    template_key = project_object.template_key
+    if not template_key:
+        return ResponseParser.getParsedErrorMessage("Project is not linked to an assistant template.")
+
+    try:
+        assistant = Assistants.objects.get(assistant_key=template_key)
+    except Assistants.DoesNotExist:
+        return ResponseParser.getParsedErrorMessage("Assistant not found.")
+
+    owner, repo_name = get_repo_parts_from_url(assistant.github_url)
+
+    try:
+        latest_sha, commit_message = get_latest_commit_sha(repo_name, owner)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(f"Failed to fetch latest version: {str(e)}")
+
+    if project_object.deployed_commit_sha == latest_sha:
+        return ResponseParser.getParsedErrorMessage("Already on the latest version.")
+
+    try:
+        yaml_config = get_config_yaml_from_github(repo_name, owner)
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(f"Failed to fetch config: {str(e)}")
+
+    is_valid, validation_msg = validate_yaml_config(yaml_config)
+    if not is_valid:
+        return ResponseParser.getParsedErrorMessage("Invalid config in new version: " + str(validation_msg))
+
+    was_running = Deployments.objects.filter(
+        project_object=project_object, is_running=True
+    ).exists()
+
+    try:
+        node_files = get_nodes_from_github(repo_name, owner)
+        file_map = {n["node_name"]: n["content"] for n in node_files}
+        nodes = yaml_config.get("nodes", [])
+
+        with transaction.atomic():
+            Nodes.objects.filter(project_object=project_object).delete()
+            timezone = request.POST.get('timezone', 'UTC')
+            created_nodes = create_nodes_from_yaml(project_object, nodes, file_map, timezone)
+            link_node_dependencies(yaml_config, created_nodes)
+            project_object.deployed_commit_sha = latest_sha
+            project_object.save()
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(f"Upgrade failed: {str(e)}")
+
+    if was_running:
+        data_run_key = utils.get_param(request, "data_run_key", f"{project_object.project_key}_default")
+        request.POST = request.POST.copy()
+        request.POST["uid"] = str(user_object.uid)
+        request.POST["project_key"] = project_object.project_key
+        request.POST["data_run_key"] = data_run_key
+        request.POST["version"] = f"upgrade_{latest_sha[:8]}_{uuid.uuid4().hex[:6]}"
+        deployment_response = deployment_views.deploy_project(request)
+        deployment_response_data = json.loads(deployment_response.content)
+        if deployment_response_data.get("success") != "1":
+            return ResponseParser.getParsedErrorMessage(
+                deployment_response_data.get("message", "Upgrade deployed code but failed to start deployment.")
+            )
+
+    track_posthog(
+        uid=str(user_object.uid),
+        event='assistant_upgraded',
+        props={
+            'project_key': project_object.project_key,
+            'template_key': template_key,
+            'new_sha': latest_sha,
+        }
+    )
+
+    return ResponseParser.getParsedSuccessMessage(
+        {
+            "new_sha": latest_sha,
+            "commit_message": commit_message,
+        },
+        "200",
+        "Assistant upgraded successfully.",
+    )
 
 
 def get_template(request, slug):

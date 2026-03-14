@@ -190,7 +190,10 @@ def check_account_credits(request):
         if is_stale:
             try:
                 credit_data = fetch_credits_from_openrouter(account.open_router_key)
-                new_credits_remaining = credit_data["limit_remaining"]
+                # Store and use WaveAssist credits (OpenRouter $ * multiplier), same as dashboard.
+                new_credits_remaining = round(
+                    credit_data["limit_remaining"] * WAVEASSIST_CREDIT_MULTIPLIER, 2
+                )
 
                 # If we're in fast-check mode (post-payment) and credits are now positive,
                 # the payment has reflected — reset back to default interval and clear the

@@ -23,6 +23,7 @@ class Account(models.Model):
     pip_requirements_array_json = models.TextField(default="[]")
     worker_service_arn = models.CharField(max_length=255, default="")
     open_router_key = models.CharField(max_length=255, default="", null=True)
+    open_router_key_hash = models.CharField(max_length=255, default="", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_working_running = models.BooleanField(default=True)
     is_premium = models.BooleanField(
@@ -230,6 +231,9 @@ class Project(models.Model):
     template_key = models.CharField(
         max_length=255, default="", null=True
     )  # Used for templates
+    deployed_commit_sha = models.CharField(
+        max_length=64, default="", null=True, blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -243,6 +247,7 @@ class Project(models.Model):
         project_dict["project_key"] = self.project_key
         project_dict["is_premium"] = self.is_premium
         project_dict["template_key"] = self.template_key
+        project_dict["deployed_commit_sha"] = self.deployed_commit_sha or ""
 
         for integration_object in self.integration_array.all():
             project_dict["integration_array"] = integration_object.get_dict()
@@ -554,11 +559,20 @@ class Payment(models.Model):
     id = models.AutoField(primary_key=True)
     account = models.ForeignKey("Account", on_delete=models.CASCADE)
     provider = models.CharField(
-        max_length=20, choices=[("razorpay", "RazorPay"), ("paypal", "PayPal")]
+        max_length=20, choices=[("dodopayments", "DoDoPayments")]
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default="USD")
     credits_in_usd = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    payment_type = models.CharField(
+        max_length=32,
+        choices=[
+            ("credits", "Credits"),
+            ("subscription_create", "Subscription Create"),
+            ("subscription_renewal", "Subscription Renewal"),
+        ],
+        default="credits",
+    )
     status = models.CharField(
         max_length=20,
         choices=[
@@ -570,9 +584,16 @@ class Payment(models.Model):
         default="pending",
     )
     provider_payment_id = models.CharField(max_length=255, unique=True)
+    external_checkout_id = models.CharField(max_length=255, blank=True, null=True)
+    external_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    external_subscription_id = models.CharField(max_length=255, blank=True, null=True)
+    external_invoice_id = models.CharField(max_length=255, blank=True, null=True)
+    invoice_url = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    metadata_json = models.TextField(default="{}")
     credits_granted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
         return f"Payment: {self.provider_payment_id} ({self.provider})"
@@ -585,15 +606,87 @@ class Payment(models.Model):
             "currency": self.currency,
             "status": self.status,
             "provider_payment_id": self.provider_payment_id,
+            "external_checkout_id": self.external_checkout_id,
+            "external_customer_id": self.external_customer_id,
+            "external_subscription_id": self.external_subscription_id,
+            "external_invoice_id": self.external_invoice_id,
+            "invoice_url": self.invoice_url,
             "description": self.description,
             "credits_in_usd": self.credits_in_usd,
+            "payment_type": self.payment_type,
             "credits_granted": self.credits_granted,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
         }
 
     class Meta:
         db_table = "WaveAssist_Payment"
         verbose_name = "Payment"
         verbose_name_plural = "Payments"
+
+
+class BillingSubscription(models.Model):
+    id = models.AutoField(primary_key=True)
+    account = models.ForeignKey("Account", on_delete=models.CASCADE)
+    provider = models.CharField(
+        max_length=20, choices=[("dodopayments", "DoDoPayments")], default="dodopayments"
+    )
+    external_subscription_id = models.CharField(max_length=255, unique=True)
+    external_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    plan_name = models.CharField(max_length=255, default="operator")
+    status = models.CharField(max_length=64, default="pending")
+    cancel_at_period_end = models.BooleanField(default=False)
+    current_period_start = models.DateTimeField(blank=True, null=True)
+    current_period_end = models.DateTimeField(blank=True, null=True)
+    canceled_at = models.DateTimeField(blank=True, null=True)
+    metadata_json = models.TextField(default="{}")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"BillingSubscription: {self.external_subscription_id} ({self.plan_name})"
+
+    def get_dict(self):
+        return {
+            "id": self.id,
+            "provider": self.provider,
+            "external_subscription_id": self.external_subscription_id,
+            "external_customer_id": self.external_customer_id,
+            "plan_name": self.plan_name,
+            "status": self.status,
+            "cancel_at_period_end": self.cancel_at_period_end,
+            "current_period_start": self.current_period_start,
+            "current_period_end": self.current_period_end,
+            "canceled_at": self.canceled_at,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    class Meta:
+        db_table = "WaveAssist_BillingSubscription"
+        verbose_name = "Billing Subscription"
+        verbose_name_plural = "Billing Subscriptions"
+
+
+class PaymentWebhookEvent(models.Model):
+    id = models.AutoField(primary_key=True)
+    provider = models.CharField(
+        max_length=20, choices=[("dodopayments", "DoDoPayments")], default="dodopayments"
+    )
+    event_id = models.CharField(max_length=255, unique=True)
+    event_type = models.CharField(max_length=255, default="")
+    payload_json = models.TextField(default="{}")
+    processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"PaymentWebhookEvent: {self.event_id} ({self.event_type})"
+
+    class Meta:
+        db_table = "WaveAssist_PaymentWebhookEvent"
+        verbose_name = "Payment Webhook Event"
+        verbose_name_plural = "Payment Webhook Events"
 
 
 class TokenAuthMethod(models.TextChoices):

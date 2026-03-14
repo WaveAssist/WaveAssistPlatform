@@ -125,8 +125,15 @@ def fetch_openrouter_credits(request, uid):
         print(f"Error fetching OpenRouter credits: {str(e)}")
         return ResponseParser.getParsedErrorMessage(f"Error fetching credits: {str(e)}")
 
+    m = WAVEASSIST_CREDIT_MULTIPLIER
+    wa_credits = {
+        "limit": round(credit_data["limit"] * m, 2),
+        "usage": round(credit_data["usage"] * m, 2),
+        "limit_remaining": round(credit_data["limit_remaining"] * m, 2),
+    }
+
     return ResponseParser.getParsedSuccessMessage(
-        credit_data, "200", "OpenRouter credits fetched successfully."
+        wa_credits, "200", "Credits fetched successfully."
     )
 
 

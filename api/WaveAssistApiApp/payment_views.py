@@ -1,412 +1,855 @@
+import base64
+import hashlib
+import hmac
 import json
-import uuid
 import os
-import razorpay
-from decimal import Decimal
+import uuid
+from decimal import Decimal, InvalidOperation
 
-from .Utils.utils import logger
-
-from .models import *
-from .Utils.responseParser import ResponseParser
-from .Utils.utils import create_openrouter_token
-from .Utils.constants import OPENROUTER_PROVISIONING_KEY
-from django.conf import settings
 import requests
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+
+from .models import Account, BillingSubscription, Payment, PaymentWebhookEvent, User
 from .Utils.constants import *
+from .Utils.responseParser import ResponseParser
+from .Utils.utils import logger, fetch_credits_from_openrouter
 
 
-# Initialize payment clients from environment variables
-try:
-    razorpay_client = razorpay.Client(
-        auth=(
-            os.environ.get("RAZORPAY_KEY_ID", RAZORPAY_ID),
-            os.environ.get("RAZORPAY_KEY_SECRET", RAZORPAY_SECRET),
-        )
+VALID_UPGRADE_PLANS = {
+    "plus": {"credits": 10, "price_usd": 9.99},
+    "pro": {"credits": 25, "price_usd": 19.99},
+}
+
+
+def _safe_decimal(raw_value, field_name):
+    try:
+        decimal_value = Decimal(str(raw_value))
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValueError(f"Invalid {field_name} format")
+    return decimal_value
+
+
+def _dodo_api_base_url():
+    return os.environ.get("DODO_PAYMENTS_BASE_URL", DODO_DEFAULT_BASE_URL).rstrip("/")
+
+
+def _dodo_api_key():
+    return os.environ.get("DODO_PAYMENTS_API_KEY", DODO_DEFAULT_API_KEY)
+
+
+def _dodo_webhook_secret():
+    return os.environ.get(
+        "DODO_PAYMENTS_WEBHOOK_SECRET",
+        "whsec_VxeHj+evY4vX3+cNWapZlQ5lxa2JVQA6",
     )
-except:
-    razorpay_client = None
 
 
-def get_paypal_access_token():
-    """Get PayPal V2 API access token using OAuth2 client credentials flow"""
-    try:
-        url = f"https://api-m.paypal.com/v1/oauth2/token"
-        headers = {
-            "Accept": "application/json",
-            "Accept-Language": "en_US",
-        }
-        data = {"grant_type": "client_credentials"}
-        auth = (
-            os.environ.get("PAYPAL_CLIENT_ID", PAYPAL_CLIENT_ID),
-            os.environ.get("PAYPAL_CLIENT_SECRET", PAYPAL_CLIENT_SECRET),
+def _dodo_request(method, path, payload=None, timeout=20):
+    api_key = _dodo_api_key()
+    if not api_key:
+        raise RuntimeError("DODO_PAYMENTS_API_KEY is not configured")
+
+    url = f"{_dodo_api_base_url()}{path}"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    response = requests.request(
+        method=method,
+        url=url,
+        headers=headers,
+        json=payload,
+        timeout=timeout,
+    )
+
+    if response.status_code >= 400:
+        raise RuntimeError(
+            f"Dodo API call failed ({response.status_code}): {response.text[:500]}"
         )
-        response = requests.post(url, headers=headers, data=data, auth=auth, timeout=10)
-        response.raise_for_status()
-        return response.json().get("access_token")
-    except Exception as e:
-        logger.error(f"Failed to get PayPal access token: {str(e)}")
-        return None
+
+    if not response.text:
+        return {}
+    return response.json()
 
 
-def create_payment_order(request):
-    """
-    Create payment order API with loader support
-    Returns status indicators for frontend loader management
-    """
-    # Validate required parameters
-    uid = request.POST.get("uid", "")
-    provider = request.POST.get("provider", "").lower()
-    amount = request.POST.get("amount", "")
-    currency = request.POST.get("currency", "")
-    credits_in_usd = request.POST.get("credits_in_usd", "0")
-    description = request.POST.get("description", "Payment")
 
+def _get_user_and_account(uid):
     if not uid:
-        return ResponseParser.getParsedErrorMessage("UID is required")
-
-    if not provider or provider not in ["razorpay", "paypal"]:
-        return ResponseParser.getParsedErrorMessage(
-            'Provider must be either "razorpay" or "paypal"'
-        )
-
-    if not amount:
-        return ResponseParser.getParsedErrorMessage("Amount is required")
-
-    try:
-        amount_decimal = Decimal(amount)
-        if amount_decimal <= 0:
-            return ResponseParser.getParsedErrorMessage("Amount must be greater than 0")
-    except:
-        return ResponseParser.getParsedErrorMessage("Invalid amount format")
-
-    # Set default currency based on provider
-    if not currency:
-        currency = "INR" if provider == "razorpay" else "USD"
-
-    # Validate currency
-    if currency not in ["USD", "INR"]:
-        return ResponseParser.getParsedErrorMessage("Currency must be USD or INR")
-
-    # Apply safe multiplier for INR to USD conversion
-    if currency == "INR":
-        safe_multiplier = 80
-        max_credits_allowed = amount_decimal / safe_multiplier
-    else:
-        # For USD, credits can equal payment amount
-        max_credits_allowed = amount_decimal
-
-    try:
-        credits_decimal = Decimal(credits_in_usd)
-        if credits_decimal < 0:
-            return ResponseParser.getParsedErrorMessage("Credits cannot be negative")
-        if credits_decimal > max_credits_allowed:
-            return ResponseParser.getParsedErrorMessage(
-                f"Credits cannot exceed {max_credits_allowed} USD for {amount_decimal} {currency}"
-            )
-    except:
-        return ResponseParser.getParsedErrorMessage("Invalid credits format")
-
-    # Get user from UID
+        raise ValueError("UID is required")
     try:
         user_object = User.objects.get(uid=uid)
-    except User.DoesNotExist:
-        return ResponseParser.getParsedErrorMessage("User not found")
+    except User.DoesNotExist as exc:
+        raise ValueError("User not found") from exc
 
-    # Get user's account
     try:
         account_object = Account.objects.get(created_by_user=user_object)
-    except Account.DoesNotExist:
-        return ResponseParser.getParsedErrorMessage("Account not found")
+    except Account.DoesNotExist as exc:
+        raise ValueError("Account not found") from exc
 
-    # Create payment order based on provider
-    if provider == "razorpay":
-        return create_razorpay_order(
-            account_object, amount_decimal, currency, description, credits_decimal
-        )
-    elif provider == "paypal":
-        return create_paypal_order(
-            account_object, amount_decimal, currency, description, credits_decimal
-        )
+    return user_object, account_object
 
 
-def create_razorpay_order(
-    account_object, amount, currency, description, credits_in_usd
-):
-    """Create RazorPay order"""
+def _extract_plan_name(description):
+    if description and description.startswith("plan_upgrade:"):
+        return description.split(":", 1)[1]
+    return ""
 
-    if not razorpay_client:
-        return ResponseParser.getParsedErrorMessage("RazorPay client not configured")
+
+def _utc_dt(raw_value):
+    if not raw_value:
+        return None
+    if isinstance(raw_value, str):
+        dt = parse_datetime(raw_value)
+        if dt:
+            return dt
+    return None
+
+
+def create_checkout(request):
+    uid = request.POST.get("uid", "")
+    use_case = request.POST.get("use_case", "").strip().lower()
+    amount = request.POST.get("amount", "")
+    credits_in_usd = request.POST.get("credits_in_usd", "0")
+    plan_name = request.POST.get("plan_name", "").strip().lower()
+    payment_type = request.POST.get("payment_type", "").strip().lower()
+
+    if not use_case:
+        if payment_type in ["plan_upgrade", "subscription", "subscription_create"]:
+            use_case = "subscription"
+        else:
+            use_case = "credits"
 
     try:
-        # Convert amount to paise (RazorPay expects amount in smallest currency unit)
-        amount_paise = int(amount * 100)
+        user_object, account_object = _get_user_and_account(uid)
+    except ValueError as exc:
+        return ResponseParser.getParsedErrorMessage(str(exc))
 
-        # Create RazorPay order
-        order_data = {
-            "amount": amount_paise,
-            "currency": currency,
-            "receipt": f"order_{uuid.uuid4().hex[:16]}",
-            "notes": {
-                "description": description,
-                "account_id": str(account_object.account_uid),
-            },
-        }
-
-        razorpay_order = razorpay_client.order.create(data=order_data)
-
-        # Create payment record in database
-        payment = Payment.objects.create(
-            account=account_object,
-            provider="razorpay",
-            amount=amount,
-            currency=currency,
-            credits_in_usd=credits_in_usd,
-            status="pending",
-            provider_payment_id=razorpay_order["id"],
-            description=description,
-        )
-
-        # Return order details for frontend
-        response_data = {
-            "order_id": razorpay_order["id"],
-            "amount": amount_paise,
-            "currency": currency,
-            "payment_id": payment.id,
-            "provider": "razorpay",
-        }
-
-        return ResponseParser.getParsedSuccessMessage(
-            response_data, "success", "RazorPay order created successfully"
-        )
-
-    except Exception as e:
+    if use_case not in ["credits", "subscription"]:
         return ResponseParser.getParsedErrorMessage(
-            f"Failed to create RazorPay order: {str(e)}"
+            'use_case must be either "credits" or "subscription"'
         )
 
-
-def create_paypal_order(account_object, amount, currency, description, credits_in_usd):
-    """Create PayPal V2 order"""
     try:
-        access_token = get_paypal_access_token()
-        if not access_token:
+        customer_email = user_object.username or ""
+        customer_name = user_object.name or account_object.account_name or "WaveAssist User"
+        customer_payload = {"email": customer_email, "name": customer_name}
+
+        metadata = {
+            "uid": uid,
+            "account_uid": account_object.account_uid,
+            "use_case": use_case,
+        }
+
+        return_url = f"{FRONTEND_URL}/manage/credits?checkout=complete"
+
+        if use_case == "subscription":
+            if plan_name not in VALID_UPGRADE_PLANS:
+                return ResponseParser.getParsedErrorMessage("Invalid plan_name")
+
+            plan_config = VALID_UPGRADE_PLANS[plan_name]
+            amount_decimal = Decimal(str(plan_config["price_usd"]))
+            credits_decimal = Decimal(str(plan_config["credits"]))
+            _plan_defaults = {
+                "PLUS": DODO_DEFAULT_PLAN_PLUS_PRODUCT_ID,
+                "PRO": DODO_DEFAULT_PLAN_PRO_PRODUCT_ID,
+            }
+            product_id = os.environ.get(
+                f"DODO_PLAN_{plan_name.upper()}_PRODUCT_ID",
+                _plan_defaults.get(plan_name.upper(), ""),
+            )
+            if not product_id:
+                return ResponseParser.getParsedErrorMessage(
+                    f"Missing DODO_PLAN_{plan_name.upper()}_PRODUCT_ID"
+                )
+
+            metadata["plan_name"] = plan_name
+            metadata["credits_in_usd"] = str(credits_decimal)
+
+            checkout_payload = {
+                "product_cart": [{"product_id": product_id, "quantity": 1}],
+                "customer": customer_payload,
+                "metadata": metadata,
+                "return_url": return_url,
+            }
+            payment_record_type = "subscription_create"
+            description = f"plan_upgrade:{plan_name}"
+        else:
+            if not amount:
+                return ResponseParser.getParsedErrorMessage("Amount is required")
+
+            amount_decimal = _safe_decimal(amount, "amount")
+            if amount_decimal <= 0:
+                return ResponseParser.getParsedErrorMessage(
+                    "Amount must be greater than 0"
+                )
+
+            credits_decimal = _safe_decimal(credits_in_usd, "credits")
+            if credits_decimal <= 0:
+                return ResponseParser.getParsedErrorMessage(
+                    "credits_in_usd must be greater than 0"
+                )
+            if credits_decimal > amount_decimal:
+                return ResponseParser.getParsedErrorMessage(
+                    "credits_in_usd cannot exceed amount"
+                )
+
+            product_id = os.environ.get(
+                "DODO_CREDITS_PRODUCT_ID", DODO_DEFAULT_CREDITS_PRODUCT_ID
+            )
+            if not product_id:
+                return ResponseParser.getParsedErrorMessage(
+                    "Missing DODO_CREDITS_PRODUCT_ID"
+                )
+
+            metadata["credits_in_usd"] = str(credits_decimal)
+
+            amount_cents = int(amount_decimal * 100)
+            checkout_payload = {
+                "product_cart": [
+                    {"product_id": product_id, "quantity": 1, "amount": amount_cents}
+                ],
+                "customer": customer_payload,
+                "metadata": metadata,
+                "return_url": return_url,
+            }
+            payment_record_type = "credits"
+            description = request.POST.get("description", "Credits Purchase")
+
+        dodo_response = _dodo_request("POST", "/checkouts", checkout_payload)
+        checkout_id = dodo_response.get("session_id", "")
+        checkout_url = dodo_response.get("checkout_url", "")
+        customer_id = ""
+
+        if not checkout_id or not checkout_url:
+            logger.error(f"Dodo response missing checkout fields: {dodo_response}")
             return ResponseParser.getParsedErrorMessage(
-                "Failed to authenticate with PayPal"
+                "Failed to initialize checkout with DodoPayments"
             )
 
-        url = f"https://api-m.paypal.com/v2/checkout/orders"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}",
-        }
-        payload = {
-            "intent": "CAPTURE",
-            "purchase_units": [
-                {
-                    "amount": {
-                        "currency_code": currency,
-                        "value": f"{amount:.2f}",
-                    },
-                    "description": description,
-                }
-            ],
-            "application_context": {
-                "brand_name": "WaveAssist",
-                "landing_page": "BILLING",  # Enables guest checkout (debit/credit card)
-                "user_action": "PAY_NOW",
-            },
-        }
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
-        response.raise_for_status()
-        order_data = response.json()
-
-        if order_data.get("status") not in ["CREATED", "APPROVED"]:
-            return ResponseParser.getParsedErrorMessage("Failed to create PayPal order")
-
-        # Create payment record in database
-        db_payment = Payment.objects.create(
+        payment = Payment.objects.create(
             account=account_object,
-            provider="paypal",
-            amount=amount,
-            currency=currency,
-            credits_in_usd=credits_in_usd,
+            provider="dodopayments",
+            amount=amount_decimal,
+            currency="USD",
+            credits_in_usd=credits_decimal,
+            payment_type=payment_record_type,
             status="pending",
-            provider_payment_id=order_data["id"],
+            provider_payment_id=checkout_id,
+            external_checkout_id=checkout_id,
+            external_customer_id=customer_id or "",
             description=description,
+            metadata_json=json.dumps(metadata),
         )
 
         response_data = {
-            "order_id": order_data["id"],  # v2 Order ID (e.g., 5O190127TN364715T)
-            "payment_id": db_payment.id,  # Internal DB payment ID
-            "amount": f"{amount:.2f}",
-            "currency": currency,
-            "provider": "paypal",
+            "provider": "dodopayments",
+            "payment_id": payment.id,
+            "checkout_id": checkout_id,
+            "checkout_url": checkout_url,
+            "currency": "USD",
+            "amount": str(amount_decimal),
+            "payment_type": payment_record_type,
         }
 
         return ResponseParser.getParsedSuccessMessage(
             response_data,
             "success",
-            "PayPal order created successfully",
+            "Dodo checkout created successfully",
         )
-    except Exception as e:
-        logger.error(f"Failed to create PayPal order: {str(e)}")
+    except Exception as exc:
+        logger.error(f"Failed to create Dodo checkout: {str(exc)}")
         return ResponseParser.getParsedErrorMessage(
-            f"Failed to create PayPal order: {str(e)}"
+            f"Failed to create Dodo checkout: {str(exc)}"
         )
+
+
+def create_payment_order(request):
+    # Backward-compatible alias used by older clients.
+    return create_checkout(request)
 
 
 def verify_payment(request):
-    uid = request.POST.get("uid", "")
-    provider_payment_id = request.POST.get("provider_payment_id", "")
-    signature = request.POST.get("signature", "")  # For RazorPay
-    razorpay_payment_id = request.POST.get("razorpay_payment_id", "")  # For RazorPay
-    paypal_payer_id = request.POST.get("paypal_payer_id", "")  # For PayPal
+    return ResponseParser.getParsedErrorMessage(
+        "Manual verify is disabled. Payment status is updated via webhooks."
+    )
 
-    if not uid or not provider_payment_id:
-        return ResponseParser.getParsedErrorMessage("Missing required parameters")
 
-    # Get user from UID
+def _verify_standard_webhook_signature(raw_body, webhook_id, webhook_timestamp, webhook_signature):
+    """Verify webhook using the Standard Webhooks specification.
+
+    Signed message = ``{webhook_id}.{webhook_timestamp}.{body}``
+    HMAC-SHA256 with the secret (base64-decoded if prefixed with ``whsec_``).
+    The ``webhook-signature`` header contains one or more space-separated
+    versioned signatures like ``v1,<base64>``."""
+
+    webhook_secret = _dodo_webhook_secret()
+    if not webhook_secret or not webhook_secret.strip():
+        logger.warning("Dodo webhook: secret is empty, rejecting (signature verification required)")
+        return False
+
+    if not webhook_id or not webhook_timestamp or not webhook_signature:
+        return False
+
+    secret = webhook_secret
+    if secret.startswith("whsec_"):
+        secret = secret[len("whsec_"):]
     try:
-        user_object = User.objects.get(uid=uid)
-    except User.DoesNotExist:
-        return ResponseParser.getParsedErrorMessage("User not found")
+        secret_bytes = base64.b64decode(secret)
+    except Exception:
+        secret_bytes = secret.encode("utf-8")
 
-    try:
-        payment = Payment.objects.get(provider_payment_id=provider_payment_id)
-    except Payment.DoesNotExist:
-        return ResponseParser.getParsedErrorMessage("Payment not found")
+    body_str = raw_body.decode("utf-8") if isinstance(raw_body, bytes) else raw_body
+    signed_content = f"{webhook_id}.{webhook_timestamp}.{body_str}"
+    expected = hmac.new(
+        secret_bytes, signed_content.encode("utf-8"), hashlib.sha256
+    ).digest()
+    expected_b64 = base64.b64encode(expected).decode("utf-8")
 
-    # Verify payment based on provider
-    if payment.provider == "razorpay":
-        return verify_razorpay_payment(
-            payment, provider_payment_id, signature, razorpay_payment_id
-        )
-    elif payment.provider == "paypal":
-        return verify_paypal_payment(payment, provider_payment_id, paypal_payer_id)
-    else:
-        return ResponseParser.getParsedErrorMessage("Invalid payment provider")
+    for part in webhook_signature.split(" "):
+        part = part.strip()
+        if not part:
+            continue
+        tag_and_sig = part.split(",", 1)
+        sig_b64 = tag_and_sig[1] if len(tag_and_sig) == 2 else tag_and_sig[0]
+        if hmac.compare_digest(sig_b64, expected_b64):
+            return True
+    return False
 
 
-def verify_razorpay_payment(
-    payment, provider_payment_id, signature, razorpay_payment_id
+def _mark_payment_completed(
+    payment,
+    provider_payment_id="",
+    customer_id="",
+    subscription_id="",
+    invoice_id="",
+    invoice_url="",
+    metadata=None,
 ):
-    """Verify RazorPay payment"""
+    metadata = metadata or {}
+    payment.status = "completed"
 
-    if not razorpay_client:
-        logger.error("RazorPay client not configured")
-        return ResponseParser.getParsedErrorMessage("RazorPay client not configured")
+    if provider_payment_id:
+        payment.provider_payment_id = provider_payment_id
+    if customer_id:
+        payment.external_customer_id = customer_id
+    if subscription_id:
+        payment.external_subscription_id = subscription_id
+    if invoice_id:
+        payment.external_invoice_id = invoice_id
+    if invoice_url:
+        payment.invoice_url = invoice_url
+    if metadata:
+        payment.metadata_json = json.dumps(metadata)
 
-    try:
-        # Verify payment signature
-        params_dict = {
-            "razorpay_payment_id": razorpay_payment_id,
-            "razorpay_order_id": payment.provider_payment_id,
-            "razorpay_signature": signature,
-        }
+    account = payment.account
+    upgrade_plan = _extract_plan_name(payment.description)
 
-        razorpay_client.utility.verify_payment_signature(params_dict)
+    if payment.payment_type in ["subscription_create", "subscription_renewal"] and (
+        upgrade_plan in VALID_UPGRADE_PLANS
+    ):
+        account.plan_name = upgrade_plan
+        account.save()
 
-        # Get payment details
-        payment_details = razorpay_client.payment.fetch(razorpay_payment_id)
-
-        if payment_details["status"] == "captured":
-            payment.status = "completed"
-            payment.save()
-
-            # Add credits to OpenRouter if credits were purchased and haven't been granted yet
-            if payment.credits_in_usd > 0 and not payment.credits_granted:
-                credits_added = add_credits_to_openrouter(
-                    payment.account, payment.credits_in_usd
-                )
-                if credits_added:
-                    payment.credits_granted = True
-                    payment.save()
-                    # Drop check interval to 30s so agents pick up restored credits quickly
-                    account = payment.account
-                    account.credits_check_interval = CREDITS_CHECK_INTERVAL_FAST
-                    account.save()
-                else:
-                    logger.error(f"Failed to add credits to OpenRouter.")
-            else:
-                logger.info(f"Skipping credits addition.")
-
-            return ResponseParser.getParsedSuccessMessage(
-                payment.get_dict(), "success", "Payment verified successfully"
+        if subscription_id:
+            subscription, _ = BillingSubscription.objects.get_or_create(
+                external_subscription_id=subscription_id,
+                defaults={
+                    "account": account,
+                    "provider": "dodopayments",
+                    "plan_name": upgrade_plan,
+                },
             )
-        else:
-            logger.info(f"Payment not captured.")
-            payment.status = "failed"
-            payment.save()
+            subscription.account = account
+            subscription.external_customer_id = customer_id or subscription.external_customer_id
+            subscription.plan_name = upgrade_plan
+            subscription.status = "active"
+            subscription.metadata_json = json.dumps(metadata)
+            subscription.save()
 
-            return ResponseParser.getParsedErrorMessage("Payment verification failed")
-
-    except Exception as e:
-        logger.error(f"Exception during RazorPay payment verification: {str(e)}")
-        payment.status = "failed"
-        payment.save()
-        return ResponseParser.getParsedErrorMessage(
-            f"Payment verification failed: {str(e)}"
+    if payment.credits_in_usd > 0 and not payment.credits_granted:
+        is_renewal = payment.payment_type == "subscription_renewal"
+        plan_monthly_credits = VALID_UPGRADE_PLANS.get(upgrade_plan, {}).get("credits", 0) if is_renewal else 0
+        credits_added = add_credits_to_openrouter(
+            account, payment.credits_in_usd,
+            is_renewal=is_renewal,
+            plan_monthly_credits=plan_monthly_credits,
         )
-
-
-def verify_paypal_payment(payment, provider_payment_id, payer_id):
-    """Verify PayPal V2 payment"""
-    try:
-        access_token = get_paypal_access_token()
-        if not access_token:
-            return ResponseParser.getParsedErrorMessage(
-                "Failed to authenticate with PayPal"
+        if credits_added:
+            payment.credits_granted = True
+            account.credits_check_interval = CREDITS_CHECK_INTERVAL_FAST
+            account.save()
+        else:
+            logger.error(
+                f"Failed to add credits to OpenRouter for payment {payment.id}"
             )
 
-        url = f"https://api-m.paypal.com/v2/checkout/orders/{provider_payment_id}/capture"
+    payment.save()
+
+
+def _remove_credits_from_openrouter(account_object, credits_in_usd):
+    try:
+        key_hash = account_object.open_router_key_hash or ""
+        if not key_hash:
+            logger.error(
+                f"No OpenRouter key hash for account: {account_object.account_uid}"
+            )
+            return False
+
+        credit_data = fetch_credits_from_openrouter(account_object.open_router_key)
+        current_limit = float(credit_data["limit"])
+        credits_float = float(credits_in_usd) / WAVEASSIST_CREDIT_MULTIPLIER
+        new_limit = max(0.0, current_limit - credits_float)
+
+        url = "https://openrouter.ai/api/v1/keys"
         headers = {
+            "Authorization": f"Bearer {OPENROUTER_PROVISIONING_KEY}",
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}",
         }
-        response = requests.post(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        capture_data = response.json()
+        update_response = requests.patch(
+            f"{url}/{key_hash}", json={"limit": new_limit}, headers=headers, timeout=10
+        )
+        update_response.raise_for_status()
+        return True
+    except Exception as e:
+        logger.error(
+            f"Unexpected error reversing credits on OpenRouter for account {account_object.account_uid}: {str(e)}"
+        )
+        return False
 
-        if capture_data.get("status") == "COMPLETED":
-            payment.status = "completed"
-            payment.save()
 
-            # Add credits to OpenRouter if needed
-            if payment.credits_in_usd > 0 and not payment.credits_granted:
-                credits_added = add_credits_to_openrouter(
-                    payment.account, payment.credits_in_usd
-                )
-                if credits_added:
-                    payment.credits_granted = True
-                    payment.save()
-                    # Drop check interval to 30s so agents pick up restored credits quickly
-                    account = payment.account
-                    account.credits_check_interval = CREDITS_CHECK_INTERVAL_FAST
-                    account.save()
-                else:
-                    logger.error("Failed to add credits to OpenRouter")
+def _mark_payment_refunded(payment, metadata=None):
+    metadata = metadata or {}
 
-            return ResponseParser.getParsedSuccessMessage(
-                payment.get_dict(),
-                "success",
-                "Payment verified successfully",
+    if payment.status == "refunded":
+        return
+
+    account = payment.account
+
+    # Reverse OpenRouter credits only if we had previously granted them.
+    if payment.credits_granted and payment.credits_in_usd > 0:
+        credits_reversed = _remove_credits_from_openrouter(account, payment.credits_in_usd)
+        if not credits_reversed:
+            raise RuntimeError(
+                f"Failed to reverse OpenRouter credits for refunded payment {payment.id}"
             )
+
+    payment.status = "refunded"
+    if metadata:
+        payment.metadata_json = json.dumps(metadata)
+    payment.save()
+
+    if payment.payment_type in ["subscription_create", "subscription_renewal"]:
+        account.plan_name = "operator"
+        account.save()
+
+        subscription_id = payment.external_subscription_id or ""
+        if subscription_id:
+            subscription = BillingSubscription.objects.filter(
+                external_subscription_id=subscription_id
+            ).first()
+            if subscription:
+                subscription.status = "canceled"
+                subscription.cancel_at_period_end = False
+                subscription.canceled_at = timezone.now()
+                subscription.save()
+
+
+def _apply_subscription_state(
+    account,
+    subscription_id,
+    customer_id,
+    plan_name,
+    status,
+    cancel_at_period_end=False,
+    current_period_start=None,
+    current_period_end=None,
+    canceled_at=None,
+    metadata=None,
+):
+    if not subscription_id:
+        return
+
+    metadata = metadata or {}
+    subscription, _ = BillingSubscription.objects.get_or_create(
+        external_subscription_id=subscription_id,
+        defaults={
+            "account": account,
+            "provider": "dodopayments",
+            "plan_name": plan_name or "operator",
+            "status": status or "pending",
+        },
+    )
+
+    if customer_id:
+        subscription.external_customer_id = customer_id
+    if plan_name:
+        subscription.plan_name = plan_name
+    if status:
+        subscription.status = status
+    subscription.cancel_at_period_end = bool(cancel_at_period_end)
+    subscription.current_period_start = current_period_start
+    subscription.current_period_end = current_period_end
+    subscription.canceled_at = canceled_at
+    subscription.metadata_json = json.dumps(metadata)
+    subscription.account = account
+    subscription.save()
+
+    if plan_name in VALID_UPGRADE_PLANS and status in ["active", "trialing"]:
+        account.plan_name = plan_name
+        account.save()
+    elif status in ["canceled", "cancelled"]:
+        # If cancellation is at period end, keep access until expiry.
+        if not bool(cancel_at_period_end):
+            account.plan_name = "operator"
+            account.save()
+    elif status in ["expired", "ended", "past_due", "paused"]:
+        # past_due / paused: no paid access until subscription is active again.
+        # Re-upgrade automatically when subscription becomes active (e.g. renewed).
+        account.plan_name = "operator"
+        account.save()
+
+
+def _find_payment_by_event(event_data):
+    # DoDo sends checkout_session_id which maps to our session_id stored at creation
+    checkout_id = event_data.get("checkout_id", "")
+    if checkout_id:
+        payment = Payment.objects.filter(external_checkout_id=checkout_id).first()
+        if payment:
+            return payment
+        payment = Payment.objects.filter(provider_payment_id=checkout_id).first()
+        if payment:
+            return payment
+
+    # DoDo payment_id from payment.succeeded webhook
+    dodo_payment_id = event_data.get("payment_id", "")
+    if dodo_payment_id:
+        payment = Payment.objects.filter(provider_payment_id=dodo_payment_id).first()
+        if payment:
+            return payment
+
+    metadata = event_data.get("metadata", {})
+    internal_id = metadata.get("payment_id")
+    if internal_id:
+        try:
+            return Payment.objects.get(id=int(internal_id))
+        except Exception:
+            pass
+
+    subscription_id = event_data.get("subscription_id", "")
+    if subscription_id:
+        return (
+            Payment.objects.filter(external_subscription_id=subscription_id)
+            .order_by("-created_at")
+            .first()
+        )
+    return None
+
+
+def _find_refund_target_payment(event_data):
+    provider_payment_id = event_data.get("payment_id", "")
+    if provider_payment_id:
+        payment = Payment.objects.filter(provider_payment_id=provider_payment_id).first()
+        if payment:
+            return payment
+
+    checkout_id = event_data.get("checkout_id", "")
+    if checkout_id:
+        payment = Payment.objects.filter(external_checkout_id=checkout_id).first()
+        if payment:
+            return payment
+
+    invoice_id = event_data.get("invoice_id", "")
+    if invoice_id:
+        payment = Payment.objects.filter(external_invoice_id=invoice_id).first()
+        if payment:
+            return payment
+
+    metadata = event_data.get("metadata", {})
+    internal_id = metadata.get("payment_id")
+    if internal_id:
+        try:
+            return Payment.objects.get(id=int(internal_id))
+        except Exception:
+            pass
+
+    return None
+
+
+def _create_renewal_payment_from_event(event_data):
+    subscription_id = event_data.get("subscription_id", "")
+    if not subscription_id:
+        return None
+
+    subscription = BillingSubscription.objects.filter(
+        external_subscription_id=subscription_id
+    ).first()
+    if not subscription:
+        return None
+
+    invoice_id = event_data.get("invoice_id", "")
+    provider_payment_id = (
+        event_data.get("payment_id")
+        or event_data.get("checkout_id")
+        or invoice_id
+        or f"dodo_renewal_{uuid.uuid4().hex[:20]}"
+    )
+
+    existing_payment = Payment.objects.filter(provider_payment_id=provider_payment_id).first()
+    if existing_payment:
+        return existing_payment
+
+    plan_config = VALID_UPGRADE_PLANS.get(subscription.plan_name, {})
+    amount = Decimal(str(plan_config.get("price_usd", 0)))
+    credits = Decimal(str(plan_config.get("credits", 0)))
+
+    return Payment.objects.create(
+        account=subscription.account,
+        provider="dodopayments",
+        amount=amount,
+        currency="USD",
+        credits_in_usd=credits,
+        payment_type="subscription_renewal",
+        status="pending",
+        provider_payment_id=provider_payment_id,
+        external_checkout_id=event_data.get("checkout_id", ""),
+        external_customer_id=event_data.get("customer_id", ""),
+        external_subscription_id=subscription_id,
+        external_invoice_id=invoice_id or "",
+        invoice_url=event_data.get("invoice_url", ""),
+        description=f"plan_upgrade:{subscription.plan_name}",
+        metadata_json=json.dumps(event_data.get("metadata", {})),
+    )
+
+
+def _normalize_event_payload(payload):
+    """Normalize a DoDo webhook payload into a flat dict.
+
+    DoDo payload structure (Standard Webhooks)::
+
+        {
+            "business_id": "...",
+            "type": "payment.succeeded",      # event type
+            "timestamp": "ISO 8601",
+            "data": {
+                "payload_type": "Payment",     # or Subscription, Refund, ...
+                "payment_id": "...",
+                "total_amount": 999,           # cents
+                "currency": "USD",
+                "customer": {"customer_id": "...", "email": "..."},
+                "subscription_id": "...",      # present for subscription payments
+                "metadata": {...},
+                ...
+            }
+        }
+    """
+    data = payload.get("data", {}) if isinstance(payload.get("data"), dict) else {}
+    customer = data.get("customer", {}) if isinstance(data.get("customer"), dict) else {}
+    metadata = data.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = payload.get("metadata", {})
+    if not isinstance(metadata, dict):
+        metadata = {}
+
+    event_type = (payload.get("type") or "unknown").lower()
+
+    normalized = {
+        "event_id": payload.get("id") or payload.get("event_id") or uuid.uuid4().hex,
+        "event_type": event_type,
+        "payload_type": str(data.get("payload_type", "")).lower(),
+        "status": str(data.get("status", "") or "").lower(),
+        "payment_id": (
+            data.get("payment_id", "")
+            or data.get("original_payment_id", "")
+            or data.get("parent_payment_id", "")
+            or ""
+        ),
+        "refund_id": data.get("refund_id", "") or data.get("id", "") or "",
+        "checkout_id": data.get("checkout_session_id", "")
+        or data.get("checkout_id", "")
+        or "",
+        "customer_id": customer.get("customer_id", "")
+        or data.get("customer_id", "")
+        or "",
+        "subscription_id": data.get("subscription_id", "") or "",
+        "invoice_id": data.get("invoice_id", "") or "",
+        "invoice_url": data.get("invoice_url", "") or "",
+        "total_amount": data.get("total_amount", 0),
+        "currency": data.get("currency", "USD"),
+        "plan_name": (
+            metadata.get("plan_name", "")
+            or data.get("plan_name", "")
+            or ""
+        ).lower(),
+        "metadata": metadata,
+        "current_period_start": _utc_dt(data.get("current_period_start")),
+        "current_period_end": _utc_dt(data.get("current_period_end")),
+        "canceled_at": _utc_dt(data.get("canceled_at")),
+        "cancel_at_period_end": bool(data.get("cancel_at_period_end")),
+    }
+    return normalized
+
+
+def dodo_webhook(request):
+    raw_body = request.body or b""
+
+    webhook_id = (
+        request.headers.get("webhook-id")
+        or request.META.get("HTTP_WEBHOOK_ID", "")
+    )
+    webhook_timestamp = (
+        request.headers.get("webhook-timestamp")
+        or request.META.get("HTTP_WEBHOOK_TIMESTAMP", "")
+    )
+    webhook_signature = (
+        request.headers.get("webhook-signature")
+        or request.META.get("HTTP_WEBHOOK_SIGNATURE", "")
+    )
+
+    if not _verify_standard_webhook_signature(
+        raw_body, webhook_id, webhook_timestamp, webhook_signature
+    ):
+        return ResponseParser.getParsedErrorMessage("Invalid webhook signature")
+
+    try:
+        payload = json.loads(raw_body.decode("utf-8"))
+    except Exception:
+        return ResponseParser.getParsedErrorMessage("Invalid JSON payload")
+
+    if not isinstance(payload, dict):
+        return ResponseParser.getParsedErrorMessage("Webhook payload must be a JSON object")
+
+    event_data = _normalize_event_payload(payload)
+    webhook_event, created = PaymentWebhookEvent.objects.get_or_create(
+        event_id=event_data["event_id"],
+        defaults={
+            "provider": "dodopayments",
+            "event_type": event_data["event_type"],
+            "payload_json": json.dumps(payload),
+            "processed": False,
+        },
+    )
+
+    if not created and webhook_event.processed:
+        return ResponseParser.getParsedSuccessMessage(
+            {"event_id": webhook_event.event_id},
+            "success",
+            "Event already processed",
+        )
+
+    webhook_event.event_type = event_data["event_type"]
+    webhook_event.payload_json = json.dumps(payload)
+
+    try:
+        event_type = event_data["event_type"]
+
+        is_payment_succeeded = event_type == "payment.succeeded"
+        is_payment_failed = event_type == "payment.failed"
+        is_subscription_event = event_type.startswith("subscription.")
+        is_refund_event = event_type.startswith("refund.")
+
+        if is_refund_event:
+            payment = _find_refund_target_payment(event_data)
         else:
+            payment = _find_payment_by_event(event_data)
+
+        if not payment and is_payment_succeeded and event_data["subscription_id"]:
+            payment = _create_renewal_payment_from_event(event_data)
+
+        if payment and is_payment_succeeded:
+            _mark_payment_completed(
+                payment=payment,
+                provider_payment_id=event_data["payment_id"],
+                customer_id=event_data["customer_id"],
+                subscription_id=event_data["subscription_id"],
+                invoice_id=event_data["invoice_id"],
+                invoice_url=event_data["invoice_url"],
+                metadata=event_data["metadata"],
+            )
+        elif payment and is_payment_failed and payment.status != "completed":
             payment.status = "failed"
             payment.save()
-            return ResponseParser.getParsedErrorMessage("Payment capture failed")
-    except Exception as e:
-        logger.error(f"Exception during PayPal payment verification: {str(e)}")
-        payment.status = "failed"
-        payment.save()
-        return ResponseParser.getParsedErrorMessage(
-            f"Payment verification failed: {str(e)}"
+        elif payment and is_refund_event:
+            _mark_payment_refunded(
+                payment=payment,
+                metadata=event_data["metadata"],
+            )
+        elif is_refund_event and not payment:
+            logger.warning(
+                "Dodo refund webhook received but no matching payment found "
+                f"(payment_id={event_data.get('payment_id', '')}, refund_id={event_data.get('refund_id', '')})"
+            )
+
+        if is_subscription_event and event_data["subscription_id"]:
+            account = None
+            if payment:
+                account = payment.account
+            else:
+                subscription = BillingSubscription.objects.filter(
+                    external_subscription_id=event_data["subscription_id"]
+                ).first()
+                if subscription:
+                    account = subscription.account
+
+            if account:
+                sub_status_map = {
+                    "subscription.active": "active",
+                    "subscription.renewed": "active",
+                    "subscription.on_hold": "on_hold",
+                    "subscription.cancelled": "canceled",
+                    "subscription.failed": "failed",
+                    "subscription.expired": "expired",
+                    "subscription.past_due": "past_due",
+                    "subscription.paused": "paused",
+                }
+                effective_status = sub_status_map.get(
+                    event_type,
+                    event_data["status"] or "active",
+                )
+                inferred_plan = event_data["plan_name"]
+                if not inferred_plan and payment:
+                    inferred_plan = _extract_plan_name(payment.description)
+
+                _apply_subscription_state(
+                    account=account,
+                    subscription_id=event_data["subscription_id"],
+                    customer_id=event_data["customer_id"],
+                    plan_name=inferred_plan,
+                    status=effective_status,
+                    cancel_at_period_end=event_data["cancel_at_period_end"],
+                    current_period_start=event_data["current_period_start"],
+                    current_period_end=event_data["current_period_end"],
+                    canceled_at=event_data["canceled_at"],
+                    metadata=event_data["metadata"],
+                )
+
+        webhook_event.processed = True
+        webhook_event.processed_at = timezone.now()
+        webhook_event.save()
+    except Exception as exc:
+        logger.error(f"Failed processing Dodo webhook: {str(exc)}")
+        # Still mark processed and return 200 so DoDo does not retry forever
+        # for unknown or malformed events (e.g. many event types configured).
+        webhook_event.processed = True
+        webhook_event.processed_at = timezone.now()
+        webhook_event.save()
+        return ResponseParser.getParsedSuccessMessage(
+            {"event_id": webhook_event.event_id},
+            "success",
+            "Webhook received (processing error logged)",
         )
+
+    return ResponseParser.getParsedSuccessMessage(
+        {"event_id": webhook_event.event_id},
+        "success",
+        "Webhook processed successfully",
+    )
 
 
 def get_payment_history(request):
     """
-    GET API to retrieve payment history for a user
+    API to retrieve payment history for a user
     Required parameters:
     - uid: User UID
     """
@@ -444,35 +887,76 @@ def get_payment_history(request):
         )
 
 
-def payment_success_handler(request):
-    """
-    Handle PayPal V2 payment success redirect
-    This view receives the redirect from PayPal and can trigger verification
-    """
-    order_id = request.GET.get("token")  # V2 uses 'token' parameter for order ID
-    payer_id = request.GET.get("PayerID")
+def get_billing_overview(request):
+    uid = request.POST.get("uid", "")
+    try:
+        _, account_object = _get_user_and_account(uid)
+    except ValueError as exc:
+        return ResponseParser.getParsedErrorMessage(str(exc))
 
-    if not order_id:
-        return ResponseParser.getParsedErrorMessage("Order ID is required")
-
-    # Log the success redirect for debugging
-    print(
-        f"PayPal V2 success redirect received - OrderID: {order_id}, PayerID: {payer_id}"
+    latest_subscription = (
+        BillingSubscription.objects.filter(account=account_object).order_by("-updated_at").first()
     )
+    recent_payments = Payment.objects.filter(account=account_object).order_by("-created_at")[:20]
 
-    # Return success response that frontend can handle
     return ResponseParser.getParsedSuccessMessage(
         {
-            "order_id": order_id,
-            "payer_id": payer_id,
-            "message": "Payment approved by PayPal. Please verify payment on your end.",
+            "account_plan_name": account_object.plan_name,
+            "subscription": latest_subscription.get_dict() if latest_subscription else None,
+            "payments": [payment.get_dict() for payment in recent_payments],
         },
         "success",
-        "Payment approved by PayPal",
+        "Billing overview retrieved successfully",
     )
 
 
-def add_credits_to_openrouter(account_object, credits_in_usd):
+def create_portal_session(request):
+    uid = request.POST.get("uid", "")
+    try:
+        _, account_object = _get_user_and_account(uid)
+    except ValueError as exc:
+        return ResponseParser.getParsedErrorMessage(str(exc))
+
+    latest_subscription = (
+        BillingSubscription.objects.filter(account=account_object).order_by("-updated_at").first()
+    )
+    latest_payment = Payment.objects.filter(account=account_object).order_by("-created_at").first()
+
+    customer_id = ""
+    if latest_subscription and latest_subscription.external_customer_id:
+        customer_id = latest_subscription.external_customer_id
+    elif latest_payment and latest_payment.external_customer_id:
+        customer_id = latest_payment.external_customer_id
+
+    if not customer_id:
+        return ResponseParser.getParsedErrorMessage(
+            "No billing customer found for this account"
+        )
+
+    try:
+        path = f"/customers/{customer_id}/customer-portal/session"
+        dodo_response = _dodo_request("POST", path)
+        portal_url = dodo_response.get("link", "")
+
+        if not portal_url:
+            logger.error(f"Dodo portal response missing 'link': {dodo_response}")
+            return ResponseParser.getParsedErrorMessage(
+                "Failed to create billing portal session"
+            )
+
+        return ResponseParser.getParsedSuccessMessage(
+            {"portal_url": portal_url},
+            "success",
+            "Billing portal session created successfully",
+        )
+    except Exception as exc:
+        logger.error(f"Failed to create Dodo portal session: {str(exc)}")
+        return ResponseParser.getParsedErrorMessage(
+            f"Failed to create billing portal session: {str(exc)}"
+        )
+
+
+def add_credits_to_openrouter(account_object, credits_in_usd, is_renewal=False, plan_monthly_credits=0):
     try:
         # If user already has a key, add credits to it
         url = "https://openrouter.ai/api/v1/keys"
@@ -481,32 +965,39 @@ def add_credits_to_openrouter(account_object, credits_in_usd):
             "Content-Type": "application/json",
         }
 
-        # First, get the current key details
-        response = requests.get(url, headers=headers, timeout=10)
-
-        response.raise_for_status()
-        keys_data = response.json()
-
-        # Find the user's key
-        user_key = None
-
-        for key in keys_data.get("data", []):
-            if key.get("name") == account_object.account_uid:
-                user_key = key
-                break
-
-        if not user_key:
+        # Resolve the key hash needed for PATCH.
+        key_hash = account_object.open_router_key_hash or ""
+        if not key_hash:
             logger.error(
-                f"No OpenRouter key found for account: {account_object.account_uid}"
+                f"No OpenRouter key hash for account: {account_object.account_uid}"
             )
             return False
 
-        # Update the key with additional credits
-        key_hash = user_key.get("hash")
-        current_limit = user_key.get("limit", 0)
-        # Convert Decimal to float for JSON serialization
-        credits_float = float(credits_in_usd)
-        new_limit = float(current_limit + credits_float)
+        if is_renewal and plan_monthly_credits > 0:
+            # On renewal, enforce 3-month rollover cap before adding new credits.
+            # Cap = 2x monthly (so after adding 1 new month the max possible is 3x).
+            # Fetch live balance via user's own key to get accurate usage + remaining.
+            credit_data = fetch_credits_from_openrouter(account_object.open_router_key)
+            remaining_wa = credit_data["limit_remaining"] * WAVEASSIST_CREDIT_MULTIPLIER
+            usage_or = credit_data["usage"]
+
+            rollover_cap_wa = float(plan_monthly_credits) * 2
+            capped_remaining_wa = min(remaining_wa, rollover_cap_wa)
+
+            new_balance_wa = capped_remaining_wa + float(credits_in_usd)
+            new_limit = usage_or + new_balance_wa / WAVEASSIST_CREDIT_MULTIPLIER
+            logger.info(
+                f"Renewal rollover cap applied for {account_object.account_uid}: "
+                f"remaining_wa={remaining_wa:.2f}, cap={rollover_cap_wa:.2f}, "
+                f"capped={capped_remaining_wa:.2f}, new_balance_wa={new_balance_wa:.2f}"
+            )
+        else:
+            # First-time subscription or top-up: add on top of current limit.
+            # credits_in_usd is in WaveAssist credits; convert to real OpenRouter dollars.
+            credit_data = fetch_credits_from_openrouter(account_object.open_router_key)
+            current_limit = credit_data["limit"]
+            credits_float = float(credits_in_usd) / WAVEASSIST_CREDIT_MULTIPLIER
+            new_limit = float(current_limit + credits_float)
 
         update_payload = {"limit": new_limit}
 

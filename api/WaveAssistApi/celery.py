@@ -6,7 +6,6 @@ from celery import Celery
 from django.conf import settings
 
 REDIS_URL = os.getenv('REDIS_URL', 'redis://master.waveassistredis.jcqnm3.use1.cache.amazonaws.com:6379/0')
-# REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
 # Configure the Django version of the Celery app to use the same broker and backend
 app = Celery('WaveAssistApi',

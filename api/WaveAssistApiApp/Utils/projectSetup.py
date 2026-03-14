@@ -6,7 +6,6 @@ from .constants import ADMIN_GTE, GITHUB_USERNAME, GITHUB_TOKEN
 from WaveAssistApiApp.models import Project, DataRuns, AccessProvided, Nodes
 from django_celery_beat.models import CrontabSchedule, IntervalSchedule
 from WaveAssistApiApp import deployment_views
-from WaveAssistApiApp import debug_views
 from django.test import Client
 import json
 
@@ -100,22 +99,13 @@ def get_nodes_from_github(repo_name, owner='WaveAssist', branch='main'):
     return node_files
 
 
-def install_requirements_from_yaml(request, yaml_config, project_key):
-    """Install all packages listed in the 'requirements' key of the YAML"""
-    packages = yaml_config.get("requirements", [])
-    print(f"Installing packages: {packages}")
-    for package_name in packages:
-        package_version=None
-        request.POST = request.POST.copy()
-        if '==' in package_name:
-            package_name, package_version = package_name.split('==')
-        ##Add project_key
-        request.POST['project_key'] = project_key
-        request.POST['package_name'] = package_name
-        request.POST['timeout'] = 5
-        if package_version:
-            request.POST['package_version'] = package_version
-        debug_views.install_package(request)  # Fire and forget — you can handle response if needed
+def get_latest_commit_sha(repo_name, owner='WaveAssist', branch='main'):
+    url = f"https://api.github.com/repos/{owner}/{repo_name}/commits/{branch}"
+    resp = requests.get(url, auth=(GITHUB_USERNAME, GITHUB_TOKEN))
+    if resp.status_code != 200:
+        raise Exception(f"Failed to fetch latest commit: {resp.status_code}")
+    data = resp.json()
+    return data["sha"], data["commit"]["message"]
 
 
 def get_config_yaml_from_github(repo_name, owner='WaveAssist', branch='main'):

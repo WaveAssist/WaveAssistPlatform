@@ -13,6 +13,8 @@ from .models import (
     Account,
     Assistants,
     Payment,
+    BillingSubscription,
+    PaymentWebhookEvent,
     Provider,
 )
 
@@ -207,6 +209,8 @@ class PaymentAdmin(admin.ModelAdmin):
         "credits_in_usd",
         "status",
         "provider_payment_id",
+        "payment_type",
+        "external_subscription_id",
         "credits_granted",
         "created_at",
     )
@@ -214,6 +218,40 @@ class PaymentAdmin(admin.ModelAdmin):
     list_filter = ("provider", "status", "currency", "credits_granted", "created_at")
     readonly_fields = ("id", "created_at")
     list_editable = ("status", "credits_granted")
+
+
+@admin.register(BillingSubscription)
+class BillingSubscriptionAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "account",
+        "provider",
+        "external_subscription_id",
+        "plan_name",
+        "status",
+        "cancel_at_period_end",
+        "current_period_end",
+        "created_at",
+    )
+    search_fields = ("external_subscription_id", "external_customer_id", "account__account_name")
+    list_filter = ("provider", "status", "cancel_at_period_end", "created_at")
+    readonly_fields = ("id", "created_at", "updated_at")
+
+
+@admin.register(PaymentWebhookEvent)
+class PaymentWebhookEventAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "provider",
+        "event_id",
+        "event_type",
+        "processed",
+        "created_at",
+        "processed_at",
+    )
+    search_fields = ("event_id", "event_type")
+    list_filter = ("provider", "processed", "created_at")
+    readonly_fields = ("id", "created_at", "processed_at")
 
 
 @admin.register(Provider)

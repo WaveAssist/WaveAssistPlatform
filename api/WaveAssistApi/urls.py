@@ -29,6 +29,7 @@ from WaveAssistApiApp import (
     run_views,
     payment_views,
     providers,
+    public_dashboard_views,
 )
 
 from django.views.decorators.csrf import csrf_exempt
@@ -246,6 +247,16 @@ urlpatterns = [
     ),
     ##Assistant URL's
     path(
+        "assistant/check_update/",
+        csrf_exempt(template_views.check_assistant_update),
+        name="check_assistant_update",
+    ),
+    path(
+        "assistant/upgrade/",
+        csrf_exempt(template_views.upgrade_assistant),
+        name="upgrade_assistant",
+    ),
+    path(
         "assistants/list_assistants/",
         csrf_exempt(template_views.list_assistants),
         name="list_assistants",
@@ -289,6 +300,11 @@ urlpatterns = [
         name="create_payment_order",
     ),
     path(
+        "payment/create_checkout/",
+        csrf_exempt(payment_views.create_checkout),
+        name="create_checkout",
+    ),
+    path(
         "payment/verify_payment/",
         csrf_exempt(payment_views.verify_payment),
         name="verify_payment",
@@ -297,6 +313,21 @@ urlpatterns = [
         "payment/get_payment_history/",
         csrf_exempt(payment_views.get_payment_history),
         name="get_payment_history",
+    ),
+    path(
+        "payment/billing_overview/",
+        csrf_exempt(payment_views.get_billing_overview),
+        name="billing_overview",
+    ),
+    path(
+        "payment/create_portal_session/",
+        csrf_exempt(payment_views.create_portal_session),
+        name="create_portal_session",
+    ),
+    path(
+        "payment/webhooks/dodo/",
+        csrf_exempt(payment_views.dodo_webhook),
+        name="dodo_webhook",
     ),
     path(
         "providers/initiate/",
@@ -312,5 +343,16 @@ urlpatterns = [
         "providers/fetch_resources/",
         csrf_exempt(providers.fetch_resources),
         name="fetch_resources",
+    ),
+    ##Public Dashboard URL's
+    path(
+        "dashboard/generate_link/",
+        csrf_exempt(public_dashboard_views.generate_dashboard_link),
+        name="generate_dashboard_link",
+    ),
+    path(
+        "d/<str:token>/",
+        public_dashboard_views.view_dashboard,
+        name="view_dashboard",
     ),
 ]

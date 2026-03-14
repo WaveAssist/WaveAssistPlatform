@@ -495,7 +495,11 @@ def get_database_name(user_object):
 
 
 def create_openrouter_token(uid, grant_usd=2):
-    """Create an OpenRouter API token for the given user."""
+    """Create an OpenRouter API token for the given user.
+
+    Returns (key, hash) tuple, or (None, None) on failure.
+    The hash is used for direct PATCH requests without listing all keys.
+    """
     try:
         url = "https://openrouter.ai/api/v1/keys"
         headers = {
@@ -506,10 +510,12 @@ def create_openrouter_token(uid, grant_usd=2):
         response = requests.post(url, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
-        return data.get("key") or data.get("token")
+        key = data.get("key") or data.get("token")
+        key_hash = data.get("hash") or data.get("key_hash") or ""
+        return key, key_hash
     except Exception as e:
         print("Error creating openrouter token:", str(e))
-        return None
+        return None, None
 
 
 def generate_filter_pattern(node_key_csv, project_object):
