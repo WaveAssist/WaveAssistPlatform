@@ -16,7 +16,7 @@ class Account(models.Model):
     account_name = models.CharField(max_length=255, default="", null=True)
     account_uid = models.CharField(editable=False, unique=True, max_length=255)
     created_by_user = models.ForeignKey("User", on_delete=models.CASCADE)
-    plan_name = models.CharField(max_length=255, default="operator", null=True)
+    plan_name = models.CharField(max_length=255, default="starter", null=True)
     mongo_db_url = models.CharField(max_length=255, default="", null=True)
     db_name = models.CharField(max_length=255, default="", null=True)
     celery_queue = models.CharField(max_length=255, default="", null=True)
@@ -72,6 +72,7 @@ class User(models.Model):
     password = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255, default="", null=True)
     can_create_projects = models.BooleanField(default=False)
+    is_super_admin = models.BooleanField(default=False)
     firebase_uid = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -85,10 +86,11 @@ class User(models.Model):
         user_dict["username"] = self.username
         user_dict["uid"] = self.uid
         user_dict["can_create_projects"] = self.can_create_projects
+        user_dict["is_super_admin"] = self.is_super_admin
 
         # ✅ Fetch related account (if any)
         account = Account.objects.filter(created_by_user=self).first()
-        user_dict["plan_name"] = account.plan_name if account else "operator"
+        user_dict["plan_name"] = account.plan_name if account else "starter"
 
         return user_dict
 
@@ -633,7 +635,7 @@ class BillingSubscription(models.Model):
     )
     external_subscription_id = models.CharField(max_length=255, unique=True)
     external_customer_id = models.CharField(max_length=255, blank=True, null=True)
-    plan_name = models.CharField(max_length=255, default="operator")
+    plan_name = models.CharField(max_length=255, default="starter")
     status = models.CharField(max_length=64, default="pending")
     cancel_at_period_end = models.BooleanField(default=False)
     current_period_start = models.DateTimeField(blank=True, null=True)

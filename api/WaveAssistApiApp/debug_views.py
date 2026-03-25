@@ -70,6 +70,9 @@ def fetch_logs(request):
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    is_super_admin, admin_message = validator.validate_super_admin(user_object)
+    if not is_super_admin:
+        return ResponseParser.getParsedErrorMessage(admin_message)
 
     # Parameters
     log_group_name = request.POST.get('log_group_name', '/ecs/WaveAssistWorkerTasks')
@@ -108,6 +111,10 @@ def fetch_logs(request):
 
 
 def fetch_installed_packages(request):
+    return ResponseParser.getParsedErrorMessage(
+        "Package management is currently disabled."
+    )
+
     #TCW
     request.POST = request.POST.copy()
     request.POST['code_to_run'] = FETCH_INSTALL_PACKAGES_CODE
@@ -162,6 +169,10 @@ def run_task():
 
 
 def uninstall_package(request): ##TCW
+    return ResponseParser.getParsedErrorMessage(
+        "Package management is currently disabled."
+    )
+
     request.POST = request.POST.copy()
     package_name = request.POST.get('package_name', '')
     package_version = request.POST.get('package_version', None)
@@ -190,6 +201,10 @@ def run_task():
 
 
 def install_package(request):
+    return ResponseParser.getParsedErrorMessage(
+        "Package management is currently disabled."
+    )
+
     request.POST = request.POST.copy()
     package_name = request.POST.get('package_name')
     package_version = request.POST.get('package_version', None)
@@ -216,6 +231,10 @@ def run_task():
 
 
 def reinstall_package(request):
+    return ResponseParser.getParsedErrorMessage(
+        "Package management is currently disabled."
+    )
+
     request.POST = request.POST.copy()
     package_name = request.POST.get('package_name')
     request.POST['code_to_run'] = code_to_run_upgrade_package(package_name)

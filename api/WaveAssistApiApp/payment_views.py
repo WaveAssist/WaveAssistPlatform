@@ -441,7 +441,7 @@ def _mark_payment_refunded(payment, metadata=None):
     payment.save()
 
     if payment.payment_type in ["subscription_create", "subscription_renewal"]:
-        account.plan_name = "operator"
+        account.plan_name = "starter"
         account.save()
 
         subscription_id = payment.external_subscription_id or ""
@@ -477,7 +477,7 @@ def _apply_subscription_state(
         defaults={
             "account": account,
             "provider": "dodopayments",
-            "plan_name": plan_name or "operator",
+            "plan_name": plan_name or "starter",
             "status": status or "pending",
         },
     )
@@ -502,12 +502,12 @@ def _apply_subscription_state(
     elif status in ["canceled", "cancelled"]:
         # If cancellation is at period end, keep access until expiry.
         if not bool(cancel_at_period_end):
-            account.plan_name = "operator"
+            account.plan_name = "starter"
             account.save()
     elif status in ["expired", "ended", "past_due", "paused"]:
         # past_due / paused: no paid access until subscription is active again.
         # Re-upgrade automatically when subscription becomes active (e.g. renewed).
-        account.plan_name = "operator"
+        account.plan_name = "starter"
         account.save()
 
 

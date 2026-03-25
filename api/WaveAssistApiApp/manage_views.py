@@ -350,20 +350,7 @@ def create_project(request):  ##TCW
                 except Exception as e:
                     pass
 
-        # create a default node if should_create_node is true
-        if str(should_create_nodes) == "1":
-            try:
-                for node in DEFAULT_NODES_ARRAY:
-                    request.POST = request.POST.copy()
-                    request.POST["name"] = node["name"]
-                    request.POST["is_starting_node"] = node["is_starting_node"]
-                    request.POST["is_enabled"] = node["is_enabled"]
-                    request.POST["run_after_nodes_csv"] = node.get(
-                        "run_after_nodes_csv", ""
-                    )
-                    create_node(request)
-            except Exception as e:
-                print("Error creating default nodes: " + str(e))
+        # Default node bootstrap is intentionally disabled.
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(
             "Project access creation failed: " + str(e)
@@ -389,6 +376,9 @@ def delete_data_key(request):  ##TCW
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    is_super_admin, admin_message = validator.validate_super_admin(user_object)
+    if not is_super_admin:
+        return ResponseParser.getParsedErrorMessage(admin_message)
 
     ##Fetch Values
     data_key = request.POST.get("data_key", "")
@@ -412,6 +402,15 @@ def delete_data_key(request):  ##TCW
 
 
 def create_data_key(request):  ##TCW
+    uid = request.POST.get("uid", "")
+    try:
+        user_object = User.objects.get(uid=uid)
+    except:
+        return ResponseParser.getParsedErrorMessage("User not found.")
+    is_super_admin, admin_message = validator.validate_super_admin(user_object)
+    if not is_super_admin:
+        return ResponseParser.getParsedErrorMessage(admin_message)
+
     request.POST = request.POST.copy()
     data_type = request.POST.get("data_type", "string")
     if data_type == "json" or data_type == "dataframe":
@@ -431,6 +430,9 @@ def fetch_project_variables(request):  # TCW
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    is_super_admin, admin_message = validator.validate_super_admin(user_object)
+    if not is_super_admin:
+        return ResponseParser.getParsedErrorMessage(admin_message)
 
     all_data_keys = set()
 
@@ -463,18 +465,11 @@ def fetch_nodes(request):  # TCW
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
-    ##Fetch account info
-    account_object = Account.objects.get(created_by_user=user_object)
-    is_operator = account_object.plan_name == "operator"
-
     ##Nodes
     node_array = project_object.nodes_set.all().order_by(Lower("node_key"))
     node_dict_array = []
     for node_object in node_array:
-        if is_operator:
-            node_dict = node_object.get_dict_safe()
-        else:
-            node_dict = node_object.get_dict()
+        node_dict = node_object.get_dict()
         node_dict_array.append(node_dict)
     data_dict = {"node_array": node_dict_array, "is_premium": project_object.is_premium}
     return ResponseParser.getParsedSuccessMessage(
@@ -654,6 +649,9 @@ def create_node(request):  ##TCW
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    is_super_admin, admin_message = validator.validate_super_admin(user_object)
+    if not is_super_admin:
+        return ResponseParser.getParsedErrorMessage(admin_message)
 
     node_name = request.POST.get("name", "")
     node_key = node_name.lower().replace(" ", "_")
@@ -725,6 +723,9 @@ def update_node(request):  ## TCW
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    is_super_admin, admin_message = validator.validate_super_admin(user_object)
+    if not is_super_admin:
+        return ResponseParser.getParsedErrorMessage(admin_message)
 
     node_key = request.POST.get("node_key", "")
     try:
@@ -824,6 +825,9 @@ def delete_node(request):  # TWC
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    is_super_admin, admin_message = validator.validate_super_admin(user_object)
+    if not is_super_admin:
+        return ResponseParser.getParsedErrorMessage(admin_message)
     node_key = request.POST.get("node_key", "")
     try:
         node_object = Nodes.objects.get(
@@ -854,6 +858,9 @@ def update_code(request):  # TWC
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
+    is_super_admin, admin_message = validator.validate_super_admin(user_object)
+    if not is_super_admin:
+        return ResponseParser.getParsedErrorMessage(admin_message)
 
     try:
         node_object = Nodes.objects.get(

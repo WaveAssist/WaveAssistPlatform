@@ -24,6 +24,14 @@ def validate_user_and_project(request, access_level_gte=1):
     return True, '', user_object, project_object
 
 
+def validate_super_admin(user_object):
+    if not user_object:
+        return False, "User not found"
+    if not getattr(user_object, "is_super_admin", False):
+        return False, "Super admin access required"
+    return True, ""
+
+
 def validate_crontab_fields(minute, hour, day_of_month, month_of_year, day_of_week, timezone):
     # Allow * or */N (e.g. */2, */30) plus numeric ranges/steps/lists
     cron_regex = re.compile(

@@ -21,9 +21,17 @@ from .models import (
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "username", "company_name", "uid", "created_at")
+    list_display = (
+        "id",
+        "name",
+        "username",
+        "company_name",
+        "uid",
+        "is_super_admin",
+        "created_at",
+    )
     search_fields = ("name", "username", "company_name")
-    list_filter = ("created_at", "company_name")
+    list_filter = ("created_at", "company_name", "is_super_admin")
     readonly_fields = ("id", "created_at")
 
 
