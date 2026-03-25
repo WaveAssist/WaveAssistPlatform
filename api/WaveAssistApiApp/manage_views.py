@@ -723,9 +723,6 @@ def update_node(request):  ## TCW
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
-    is_super_admin, admin_message = validator.validate_super_admin(user_object)
-    if not is_super_admin:
-        return ResponseParser.getParsedErrorMessage(admin_message)
 
     node_key = request.POST.get("node_key", "")
     try:
