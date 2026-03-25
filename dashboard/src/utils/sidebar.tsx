@@ -5,7 +5,6 @@ import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 import WavePredictLogo from "../assets/Logo/Wave_Predict_W_Logo.png";
 import { useEffect, useState } from "react";
 import Joyride, { Step } from "react-joyride";
-import { normalizeAccessPlan } from "./plan";
 interface SidebarProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -14,13 +13,10 @@ interface SidebarProps {
 	onToggleCollapse?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapsed = false, onToggleCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName, isCollapsed = false, onToggleCollapse }) => {
 	const location = useLocation();
 	const [runTour, setRunTour] = useState(false);
 
-	const currentPlanSource = planName || localStorage.getItem("plan_access") || localStorage.getItem("plan_name");
-	// Builder = admin/test mode (extra customization modules unlocked).
-	const isBuilderPlan = normalizeAccessPlan(currentPlanSource) === "builder";
 
 	useEffect(() => {
 		const isNewUser = localStorage.getItem("is_new_user");
@@ -266,109 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName, isCollapse
 					</Link>
 				</li>
 
-				{/* Variables - Only visible to builder */}
-				{isBuilderPlan && (
-					<li className="nav-item">
-						<Link
-							to="/manage/variables"
-							className={`nav-link ${location.pathname === "/manage/variables" ? "active" : "text-white"} mb-1 variables-link ${
-								isCollapsed ? "collapsed-nav-link" : ""
-							}`}
-							onClick={handleNavClick}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-table"></i>
-									</div>
-									<span>Variables</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-table me-2"></i>
-									Variables
-								</>
-							)}
-						</Link>
-					</li>
-				)}
-
-				{/* Environments - Only visible to builder */}
-				{isBuilderPlan && (
-					<li className="nav-item">
-						<Link
-							to="/manage/environments"
-							className={`nav-link ${location.pathname === "/manage/environments" ? "active" : "text-white"} mb-1 ${
-								isCollapsed ? "collapsed-nav-link" : ""
-							}`}
-							onClick={handleNavClick}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-stack"></i>
-									</div>
-									<span>Environments</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-stack me-2"></i>
-									Environments
-								</>
-							)}
-						</Link>
-					</li>
-				)}
-
-				{/* Packages - Only visible to builder */}
-				{isBuilderPlan && (
-					<li className="nav-item">
-						<Link
-							to="/manage/packages"
-							className={`nav-link ${location.pathname === "/manage/packages" ? "active" : "text-white"} mb-1 ${
-								isCollapsed ? "collapsed-nav-link" : ""
-							}`}
-							onClick={handleNavClick}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-box-seam"></i>
-									</div>
-									<span>Packages</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-box-seam me-2"></i>
-									Packages
-								</>
-							)}
-						</Link>
-					</li>
-				)}
-
-				{/* Logs - Only visible to builder */}
-				{isBuilderPlan && (
-					<li className="nav-item">
-						<Link
-							to="/manage/logs"
-							className={`nav-link ${location.pathname === "/manage/logs" ? "active" : "text-white"} mb-1 ${
-								isCollapsed ? "collapsed-nav-link" : ""
-							}`}
-							onClick={handleNavClick}>
-							{isCollapsed ? (
-								<>
-									<div className="nav-icon">
-										<i className="bi bi-journal-text"></i>
-									</div>
-									<span>Logs</span>
-								</>
-							) : (
-								<>
-									<i className="bi bi-journal-text me-2"></i>
-									Logs
-								</>
-							)}
-						</Link>
-					</li>
-				)}
+				{/* Variables / Environments / Packages / Logs are intentionally hidden from sidebar. */}
 
 			</ul>
 

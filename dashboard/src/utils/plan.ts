@@ -1,5 +1,5 @@
 export type DisplayPlan = "STARTER" | "PLUS" | "PRO";
-export type AccessPlan = "starter" | "plus" | "pro" | "builder";
+export type AccessPlan = "starter" | "plus" | "pro";
 
 const VALID_PAID_PLANS = new Set(["plus", "pro"]);
 
@@ -7,7 +7,6 @@ const toPlanToken = (plan: unknown): string => String(plan || "").trim().toLower
 
 export const normalizeAccessPlan = (plan: unknown): AccessPlan => {
 	const token = toPlanToken(plan);
-	if (token === "builder") return "builder";
 	if (VALID_PAID_PLANS.has(token)) return token as AccessPlan;
 	return "starter";
 };
@@ -40,4 +39,14 @@ export const getStoredDisplayPlan = (): DisplayPlan => {
 	return normalizeDisplayPlan(localStorage.getItem("plan_access"));
 };
 
-export const hasBuilderAccess = (): boolean => getStoredAccessPlan() === "builder";
+export const hasSuperAdminAccess = (): boolean => {
+	try {
+		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+		return Boolean(userData?.is_super_admin);
+	} catch {
+		return false;
+	}
+};
+
+// Backward-compatible alias for existing call sites.
+export const hasBuilderAccess = (): boolean => hasSuperAdminAccess();

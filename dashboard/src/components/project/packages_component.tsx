@@ -9,7 +9,6 @@ import Modal from "react-bootstrap/Modal";
 import { useRefresh } from "../../utils/RefreshContext";
 import "ag-grid-community/styles/ag-theme-balham.css";
 import PaywallBlock from "../PaywallBlock";
-import { hasBuilderAccess } from "../../utils/plan";
 
 const PackagesComponent: React.FC = () => {
 	const [packagesArray, setPackagesArray] = useState<any[]>([]);
@@ -20,15 +19,18 @@ const PackagesComponent: React.FC = () => {
 	const [packageName, setPackageName] = useState("");
 	const [packageVersion, setPackageVersion] = useState("");
 
-	// Only builder can access Packages (editor and operator cannot)
-	const isBuilderPlan = hasBuilderAccess();
-	const shouldBlockPackages = !isBuilderPlan;
+	const shouldBlockPackages = true;
 
 	const handleCloseVariableEditor = () => {
 		setShowPackageEditor(false);
 	};
 
 	const fetchPackages = async () => {
+		if (shouldBlockPackages) {
+			setPackagesArray([]);
+			setLoading(false);
+			return;
+		}
 		try {
 			setLoading(true);
 			const response = await fetchPackagesApi();
@@ -46,6 +48,7 @@ const PackagesComponent: React.FC = () => {
 	};
 
 	const handleShowVariableEditor = () => {
+		if (shouldBlockPackages) return;
 		setPackageName("");
 		setPackageVersion("");
 		setShowPackageEditor(true);
@@ -72,6 +75,7 @@ const PackagesComponent: React.FC = () => {
 	};
 
 	const handleDelete = async (packageDict: any) => {
+		if (shouldBlockPackages) return;
 		var package_name = packageDict.package_name;
 		var message = "Are you sure you want to remove this package: " + package_name + "?";
 		const confirmDelete = window.confirm(message);
@@ -89,6 +93,7 @@ const PackagesComponent: React.FC = () => {
 	};
 
 	const handleReinstall = async (packageDict: any) => {
+		if (shouldBlockPackages) return;
 		var package_name = packageDict.package_name;
 		var message = "Are you sure you want to reinstall & upgrade this package: " + package_name + "?";
 		const confirmReinstall = window.confirm(message);
@@ -106,6 +111,7 @@ const PackagesComponent: React.FC = () => {
 	};
 
 	const handleAddPackage = async () => {
+		if (shouldBlockPackages) return;
 		try {
 			if (!packageName) {
 				showToast("Package Name is required.", "danger");
@@ -229,7 +235,7 @@ const PackagesComponent: React.FC = () => {
 					</Modal.Footer>
 				</Modal.Body>
 			</Modal>
-			<PaywallBlock show={shouldBlockPackages} showUpgradeButton={!isBuilderPlan} />
+			<PaywallBlock show={shouldBlockPackages} showUpgradeButton={false} message="Package management is currently disabled." />
 		</div>
 	);
 };

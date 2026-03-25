@@ -12,7 +12,7 @@ import { useRefresh } from "../../utils/RefreshContext";
 import Editor from "@monaco-editor/react";
 import { ColDef } from "ag-grid-community";
 import PaywallBlock from "../PaywallBlock";
-import { hasBuilderAccess } from "../../utils/plan";
+import { hasSuperAdminAccess } from "../../utils/plan";
 
 /**
  * Clipboard button used inside the Variable‐table.
@@ -58,9 +58,8 @@ const VariablesComponent: React.FC = () => {
 	const [variableKey, setVariableKey] = useState("");
 	const { shouldRefresh } = useRefresh();
 	const gridRef = useRef<AgGridReactType | null>(null);
-	// Only builder can access Variables (editor and operator cannot)
-	const isBuilderPlan = hasBuilderAccess();
-	const shouldBlockNodes = !isBuilderPlan;
+	const isSuperAdmin = hasSuperAdminAccess();
+	const shouldBlockNodes = !isSuperAdmin;
 	const handleCloseVariableEditor = () => {
 		setShowVariableEditor(false);
 	};
@@ -99,6 +98,11 @@ const VariablesComponent: React.FC = () => {
 		setShowDataViewer(false);
 	};
 	const fetchVariables = async () => {
+		if (!isSuperAdmin) {
+			setVariablesArray([]);
+			setLoading(false);
+			return;
+		}
 		setLoading(true);
 		try {
 			const data = await fetchVariablesApi();
@@ -173,6 +177,7 @@ const VariablesComponent: React.FC = () => {
 	};
 
 	const handleCreateVariable = async () => {
+		if (!isSuperAdmin) return;
 		try {
 			await createVariableApi(variableKey, newDataType);
 			showToast("Variable created successfully.", "success");
@@ -189,8 +194,12 @@ const VariablesComponent: React.FC = () => {
 	};
 
 	useEffect(() => {
+		if (!isSuperAdmin) {
+			setLoading(false);
+			return;
+		}
 		fetchVariables();
-	}, [shouldRefresh]);
+	}, [shouldRefresh, isSuperAdmin]);
 
 	const getEditedDataArray = () => {
 		const updatedData: any[] = [];
@@ -470,7 +479,7 @@ const VariablesComponent: React.FC = () => {
 					</Form>
 				</Modal.Body>
 			</Modal>
-			<PaywallBlock show={shouldBlockNodes} showUpgradeButton={!isBuilderPlan} />
+			<PaywallBlock show={shouldBlockNodes} showUpgradeButton={false} message="Super admin access is required to manage variables." />
 		</div>
 	);
 };

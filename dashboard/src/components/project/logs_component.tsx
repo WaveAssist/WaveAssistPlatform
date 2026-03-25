@@ -8,7 +8,7 @@ import { fetchNodesApi } from "../../services/project_services";
 import { LazyLog, ScrollFollow } from "@melloware/react-logviewer";
 import { Button } from "react-bootstrap";
 import PaywallBlock from "../PaywallBlock";
-import { hasBuilderAccess } from "../../utils/plan";
+import { hasSuperAdminAccess } from "../../utils/plan";
 
 const LogsComponent: React.FC = () => {
 	const { shouldRefresh } = useRefresh();
@@ -19,9 +19,8 @@ const LogsComponent: React.FC = () => {
 	const [selectedSystemKey, _] = useState("celery-worker");
 	const [selectedNodeKey, setSelectedNodeKey] = useState("All");
 
-	// Only builder can access Logs (editor and operator cannot)
-	const isBuilderPlan = hasBuilderAccess();
-	const shouldBlockLogs = !isBuilderPlan;
+	const isSuperAdmin = hasSuperAdminAccess();
+	const shouldBlockLogs = !isSuperAdmin;
 	// const systemName = ["Worker", "API", "Redis", "MongoDB", "Dashboard"];
 	// const systemKeys = ["celery-worker", "django", "redis", "mongodb", "dashboard"];
 
@@ -47,6 +46,11 @@ const LogsComponent: React.FC = () => {
 	// 	return index >= 0 ? systemName[index] : "Select System";
 	// };
 	const fetchNodes = async () => {
+		if (!isSuperAdmin) {
+			setNodesArray([]);
+			setLoading(false);
+			return;
+		}
 		try {
 			const data = await fetchNodesApi();
 			setNodesArray(data.node_array);
@@ -59,6 +63,7 @@ const LogsComponent: React.FC = () => {
 	};
 
 	const fetchLogs = async () => {
+		if (!isSuperAdmin) return;
 		try {
 			const data = await fetchLogsApi(selectedSystemKey, selectedNodeKey, nodesArray);
 			const logs = data.logs;
@@ -75,8 +80,12 @@ const LogsComponent: React.FC = () => {
 	};
 
 	useEffect(() => {
+		if (!isSuperAdmin) {
+			setLoading(false);
+			return;
+		}
 		fetchNodes();
-	}, [shouldRefresh]);
+	}, [shouldRefresh, isSuperAdmin]);
 
 	useEffect(() => {
 		if (nodesArray.length > 0) {
@@ -91,7 +100,7 @@ const LogsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<PaywallBlock show={shouldBlockLogs} showUpgradeButton={!isBuilderPlan} />
+			<PaywallBlock show={shouldBlockLogs} showUpgradeButton={false} message="Super admin access is required to view logs." />
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
 				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-start align-items-center mb-3">

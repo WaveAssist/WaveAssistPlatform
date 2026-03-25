@@ -8,7 +8,7 @@ import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext";
 import { usePostHog } from "posthog-js/react";
 import WaveAssistLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
-import { getStoredAccessPlan } from "./plan";
+import { getStoredAccessPlan, hasSuperAdminAccess } from "./plan";
 interface NavbarProps {
 	onToggleSidebar?: () => void;
 }
@@ -43,9 +43,9 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 
-	// Deploy only visible to builder; Starter sees upgrade CTA.
+	// Deploy only visible to super admin; Starter sees upgrade CTA.
 	const currentAccessPlan = getStoredAccessPlan();
-	const isBuilderPlan = currentAccessPlan === "builder";
+	const isBuilderPlan = hasSuperAdminAccess();
 	const isStarterPlan = currentAccessPlan === "starter";
 
 	const showDeployButton = !(isProjectPremium && !isUserPremium) && isBuilderPlan;
