@@ -178,7 +178,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 				<div className="resource-search-wrapper">
 					<Form.Control
 						type="text"
-						placeholder="Search repositories..."
+						placeholder="Search..."
 						value={filterText}
 						onChange={(e) => {
 							setFilterText(e.target.value);
@@ -193,8 +193,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 					<table className="resource-table">
 						<thead>
 							<tr>
-								<th className="resource-table-col-chevron" style={{ width: 30 }} aria-label="Expand" />
-								<th className="resource-table-col-resource">Resource</th>
+								{hasProperties && <th className="resource-table-col-chevron" style={{ width: 30 }} aria-label="Expand" />}
 								<th className="resource-table-col-name">Name</th>
 								<th className="resource-table-col-select" style={{ width: 150 }}>
 									Select
@@ -219,22 +218,23 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 												}
 											}}
 											aria-expanded={isSelected ? isExpanded : undefined}>
-											<td className="resource-table-col-chevron align-middle">
-												{isSelected ? (
-													<span
-														className={`resource-table-chevron ${isExpanded ? "resource-table-chevron-expanded" : ""}`}
-														onClick={(e) => {
-															e.stopPropagation();
-															toggleExpand(resource.id);
-														}}
-														aria-hidden>
-														<i className="bi bi-chevron-right" />
-													</span>
-												) : (
-													<span className="resource-table-chevron-placeholder" aria-hidden />
-												)}
-											</td>
-											<td className="align-middle resource-table-cell-id">{resource.id}</td>
+											{hasProperties && (
+												<td className="resource-table-col-chevron align-middle">
+													{isSelected ? (
+														<span
+															className={`resource-table-chevron ${isExpanded ? "resource-table-chevron-expanded" : ""}`}
+															onClick={(e) => {
+																e.stopPropagation();
+																toggleExpand(resource.id);
+															}}
+															aria-hidden>
+															<i className="bi bi-chevron-right" />
+														</span>
+													) : (
+														<span className="resource-table-chevron-placeholder" aria-hidden />
+													)}
+												</td>
+											)}
 											<td className="align-middle resource-table-cell-name">{resource.name}</td>
 											<td className="align-middle resource-table-cell-select">
 												<Button
@@ -251,7 +251,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 										</tr>
 										{hasProperties && isSelected && isExpanded && (
 											<tr className="resource-table-detail-row">
-												<td colSpan={4} className="resource-table-detail-cell">
+												<td colSpan={hasProperties ? 3 : 2} className="resource-table-detail-cell">
 													<div className="resource-table-detail-content">
 														{resourceProperties.map((prop) => (
 															<div
