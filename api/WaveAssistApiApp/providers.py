@@ -429,6 +429,9 @@ def fetch_resources(request):
             )
         response.raise_for_status()
         items_data = response.json()
+        if graphql_query and "errors" in items_data:
+            error_msg = items_data["errors"][0].get("message", "GraphQL error")
+            return ResponseParser.getParsedErrorMessage(f"Error fetching resources: {error_msg}")
 
         # Extract list of items via items_key or default "data"; always normalize to list
         items_key = single_resource_config_dict.get("items_key")
