@@ -13,6 +13,7 @@ import { BASE_URL } from "../services/base_service";
 import { convertToString, determineDataType } from "../utils/shared_functions";
 import InputFactory from "./configuration/InputFactory";
 import ResourceSelectionPopup from "./ResourceSelectionPopup";
+import { PROVIDER_CONFIGS } from "./configuration/providerConfigs";
 import "./assistant_component.css";
 
 const OAUTH_INPUTS = ["github", "hubspot", "slack"];
@@ -401,8 +402,8 @@ const AssistantComponent: React.FC = () => {
 				// Not valid JSON, treat as regular string - already handled above
 			}
 
-			// For OAuth inputs, also check if at least 1 resource is selected
-			if (OAUTH_INPUTS.includes(input.type)) {
+			// For OAuth inputs that require resource selection, also check if at least 1 resource is selected
+			if (OAUTH_INPUTS.includes(input.type) && PROVIDER_CONFIGS[input.type]?.hasSelectResources) {
 				const selectedResources = wizardSelectedResources[input.key];
 				if (!selectedResources || !Array.isArray(selectedResources) || selectedResources.length === 0) {
 					return true;
@@ -536,9 +537,9 @@ const AssistantComponent: React.FC = () => {
 			return;
 		}
 
-		// Validate that OAuth inputs have at least 1 resource selected
+		// Validate that OAuth inputs that require resource selection have at least 1 resource selected
 		const oauthInputsWithoutResources = wizardInputs.filter((input) => {
-			if (OAUTH_INPUTS.includes(input.type)) {
+			if (OAUTH_INPUTS.includes(input.type) && PROVIDER_CONFIGS[input.type]?.hasSelectResources) {
 				const selectedResources = wizardSelectedResources[input.key];
 				return !selectedResources || !Array.isArray(selectedResources) || selectedResources.length === 0;
 			}
