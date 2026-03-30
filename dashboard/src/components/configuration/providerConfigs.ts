@@ -297,6 +297,7 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
 		displayName: "Linear",
 		description: "Connect Linear to access issues, cycles, and project tracking",
 		brandColor: "#5E6AD2",
+		iconImage: "/providers/linear.png",
 		hasSelectResources: true,
 		selectResourcesLabel: "Select Teams",
 		hasManualToken: true,
