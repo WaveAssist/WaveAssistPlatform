@@ -16,7 +16,7 @@ import ResourceSelectionPopup from "./ResourceSelectionPopup";
 import { PROVIDER_CONFIGS } from "./configuration/providerConfigs";
 import "./assistant_component.css";
 
-const OAUTH_INPUTS = ["github", "hubspot", "slack"];
+const OAUTH_INPUTS = ["github", "hubspot", "slack", "linear"];
 
 const AssistantComponent: React.FC = () => {
 	const { showToast } = useToast();
