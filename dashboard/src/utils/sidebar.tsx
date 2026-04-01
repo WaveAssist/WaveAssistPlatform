@@ -3,8 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import "./sidebar.css";
 import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
 import WavePredictLogo from "../assets/Logo/Wave_Predict_W_Logo.png";
-import { useEffect, useState } from "react";
-import Joyride, { Step } from "react-joyride";
 interface SidebarProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -15,32 +13,6 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName, isCollapsed = false, onToggleCollapse }) => {
 	const location = useLocation();
-	const [runTour, setRunTour] = useState(false);
-
-
-	useEffect(() => {
-		const isNewUser = localStorage.getItem("is_new_user");
-		const modulesTour = localStorage.getItem("modules_tour");
-
-		if (modulesTour === null && isNewUser === "true") {
-			setRunTour(true);
-			localStorage.setItem("is_new_user", "false");
-			localStorage.setItem("modules_tour", "true");
-		}
-	}, []);
-
-	const steps: Step[] = [
-		{
-			target: ".variables-link",
-			content: "View and manage your variables here.",
-		},
-		{
-			target: ".keys-link",
-			content: "Download your keys to integrate with external services.",
-			locale: { last: "Got it" },
-		},
-	];
-
 	const handleNavClick = () => {
 		if (window.innerWidth < 768) {
 			onClose();
@@ -49,45 +21,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName,
 
 	return (
 		<div className={`side-div d-flex flex-column flex-shrink-0 p-3 ${isOpen ? "" : "d-none d-md-flex"} ${isCollapsed ? "sidebar-collapsed" : ""}`}>
-			<Joyride
-				steps={steps}
-				run={runTour}
-				showProgress
-				showSkipButton
-				continuous
-				styles={{
-					options: {
-						arrowColor: "#0D1B2A",
-						backgroundColor: "#0D1B2A",
-						primaryColor: "#1ED66C",
-						textColor: "#FFFFFF",
-						width: 300,
-						zIndex: 10000,
-					},
-					tooltipContainer: {
-						textAlign: "left",
-						padding: "16px",
-						borderRadius: "12px",
-					},
-					buttonNext: {
-						backgroundColor: "#1ED66C",
-						color: "#000",
-					},
-					buttonBack: {
-						color: "#bbb",
-						marginRight: 8,
-					},
-					buttonClose: {
-						color: "#aaa",
-					},
-				}}
-				callback={(data) => {
-					if (data.status === "finished" || data.status === "skipped") {
-						setRunTour(false);
-					}
-				}}
-			/>
-
 			<div className="d-flex flex-column me-md-auto w-100">
 				{!isCollapsed ? (
 					<div className="d-flex align-items-center justify-content-between">

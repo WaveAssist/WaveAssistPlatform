@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Joyride, { Step } from "react-joyride";
-
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Spinner from "react-bootstrap/Spinner";
@@ -34,21 +32,6 @@ const AllProjectsComponent: React.FC = () => {
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const posthog = usePostHog();
-
-	const [runTour, setRunTour] = useState(false);
-	const steps: Step[] = [
-		{
-			target: ".add-project-card",
-			content: "Create a new project from scratch.",
-			disableBeacon: true,
-		},
-		{
-			target: ".use-template-button",
-			content: "Or start quickly with a assistant template.",
-			disableBeacon: true,
-			locale: { last: "Ok" },
-		},
-	];
 
 	useEffect(() => {
 		fetchData();
@@ -86,12 +69,7 @@ const AllProjectsComponent: React.FC = () => {
 			}
 
 			if (data.project_array.length === 0) {
-				const tourCompleted = localStorage.getItem("create_project_tour_completed");
-				if (tourCompleted == null) {
-					setRunTour(true);
-					localStorage.setItem("create_project_tour_completed", "true");
-					localStorage.setItem("is_new_user", "true");
-				}
+				localStorage.setItem("is_new_user", "true");
 			}
 			localStorage.setItem("projects_array", JSON.stringify(data.project_array));
 		} catch (error) {
@@ -347,47 +325,6 @@ const AllProjectsComponent: React.FC = () => {
 					</div>
 				</Modal.Footer>
 			</Modal>
-			<Joyride
-				steps={steps}
-				run={runTour}
-				continuous={true}
-				showSkipButton={true}
-				showProgress={true}
-				disableCloseOnEsc={true}
-				disableOverlayClose={true}
-				floaterProps={{ disableAnimation: true }}
-				callback={(data) => {
-					if (data.status === "finished" || data.status === "skipped") {
-						setRunTour(false);
-					}
-				}}
-				styles={{
-					options: {
-						arrowColor: "#0D1B2A", // blue-black background
-						backgroundColor: "#0D1B2A",
-						primaryColor: "#1ED66C", // brand green button
-						textColor: "#FFFFFF",
-						width: 300,
-						zIndex: 10000,
-					},
-					tooltipContainer: {
-						textAlign: "left",
-						padding: "16px",
-						borderRadius: "12px",
-					},
-					buttonNext: {
-						backgroundColor: "#1ED66C", // brand green
-						color: "#000",
-					},
-					buttonBack: {
-						color: "#bbb",
-						marginRight: 8,
-					},
-					buttonClose: {
-						color: "#aaa",
-					},
-				}}
-			/>
 		</div>
 	);
 };

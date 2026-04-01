@@ -1,6 +1,5 @@
 import React, { useEffect, useState, Suspense, useRef } from "react";
 import { usePostHog } from "posthog-js/react";
-import Joyride, { Step } from "react-joyride";
 import { Node as RFNode, Edge as RFEdge } from "reactflow";
 import {
 	fetchNodesApi,
@@ -71,7 +70,6 @@ const NodesComponent: React.FC = () => {
 	const [showEmailWebhook, setShowEmailWebhook] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [copied, setCopied] = useState(false);
-	const [runTour, setRunTour] = useState(false);
 	const [emailWebhook, setEmailWebhook] = useState("");
 	// Default to flow view always; do not restore table view from localStorage
 	const [view, setView] = useState<"flow" | "table">("flow");
@@ -118,14 +116,6 @@ const NodesComponent: React.FC = () => {
 	const showAddNodeButton = isBuilderPlan && !(isProjectPremium && !isUserPremium);
 
 	const navigate = useNavigate();
-	const steps: Step[] = [
-		{
-			target: ".play-button-step", // The plus icon button
-			content: "Click on the play button to run your workflow",
-			disableBeacon: true,
-			locale: { last: "Ok" },
-		},
-	];
 
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
@@ -499,12 +489,6 @@ const NodesComponent: React.FC = () => {
 			setRfEdges(rfEdges);
 			const startNode = nodes_array.find((n: any) => n.is_starting_node);
 			setStartingNodeKey(startNode ? startNode.node_key : nodes_array[0]?.node_key || null);
-			const is_template_run = localStorage.getItem("is_template_run");
-			const tourCompleted = localStorage.getItem("run_node_tour") === "true";
-			if (!tourCompleted && is_template_run === "true") {
-				setRunTour(true);
-				localStorage.setItem("run_node_tour", "true");
-			}
 			setLoading(false);
 		} catch (error) {
 			console.error("FetchNodesApi failed:", error);
@@ -1432,46 +1416,6 @@ const NodesComponent: React.FC = () => {
 					)}
 				</Modal.Footer>
 			</Modal>
-
-			<Joyride
-				steps={steps}
-				run={runTour}
-				showProgress
-				showSkipButton
-				continuous
-				styles={{
-					options: {
-						arrowColor: "#0D1B2A",
-						backgroundColor: "#0D1B2A",
-						primaryColor: "#1ED66C",
-						textColor: "#FFFFFF",
-						width: 300,
-						zIndex: 10000,
-					},
-					tooltipContainer: {
-						textAlign: "left",
-						padding: "16px",
-						borderRadius: "12px",
-					},
-					buttonNext: {
-						backgroundColor: "#1ED66C",
-						color: "#000",
-					},
-					buttonBack: {
-						color: "#bbb",
-						marginRight: 8,
-					},
-					buttonClose: {
-						color: "#aaa",
-					},
-				}}
-				callback={(data) => {
-					if (["finished", "skipped"].includes(data.status)) {
-						setRunTour(false);
-						localStorage.setItem("create_node_tour_completed", "true");
-					}
-				}}
-			/>
 
 			<PaywallModal
 				show={showPaywall}
