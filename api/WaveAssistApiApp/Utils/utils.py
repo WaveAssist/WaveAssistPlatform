@@ -510,8 +510,9 @@ def create_openrouter_token(uid, grant_usd=round(2 / WAVEASSIST_CREDIT_MULTIPLIE
         response = requests.post(url, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
-        key = data.get("key") or data.get("token")
-        key_hash = data.get("hash") or data.get("key_hash") or ""
+        inner = data.get("data", {})
+        key = data.get("key") or inner.get("key") or inner.get("token")
+        key_hash = inner.get("hash") or inner.get("key_hash") or ""
         return key, key_hash
     except Exception as e:
         print("Error creating openrouter token:", str(e))
