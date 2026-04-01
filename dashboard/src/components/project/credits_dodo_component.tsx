@@ -41,7 +41,7 @@ const CreditsDodoComponent: React.FC = () => {
 	const navigate = useNavigate();
 	const [currentPlan, setCurrentPlan] = useState(getStoredDisplayPlan());
 	const [creditsData, setCreditsData] = useState<CreditsData | null>(null);
-	const [billingOverview, setBillingOverview] = useState<BillingOverview | null>(null);
+	const [, setBillingOverview] = useState<BillingOverview | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 	const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -151,14 +151,7 @@ const CreditsDodoComponent: React.FC = () => {
 
 	const serviceFee = purchaseAmount * SERVICE_FEE_RATE;
 	const creditTotal = purchaseAmount + serviceFee;
-	const formatStatusLabel = (value: string) =>
-		(value || "")
-			.split("_")
-			.map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : part))
-			.join(" ");
-	const subscriptionStatus = billingOverview?.subscription?.status;
-	const subscriptionSummary =
-		currentPlan === "STARTER" ? "STARTER" : subscriptionStatus ? `${currentPlan} (${formatStatusLabel(subscriptionStatus)})` : currentPlan;
+	const subscriptionSummary = currentPlan;
 
 	if (loading) {
 		return (
