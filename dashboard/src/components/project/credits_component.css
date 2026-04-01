@@ -223,6 +223,71 @@
     cursor: not-allowed;
 }
 
+/* ── Checkout Success Banner ── */
+
+.checkout-success-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: rgba(30, 214, 108, 0.1);
+    border: 1px solid rgba(30, 214, 108, 0.3);
+    border-radius: 10px;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1.5rem;
+    color: #1ED66C;
+    font-size: 0.92rem;
+    font-weight: 500;
+    animation: bannerSlideIn 0.35s ease-out;
+}
+
+.checkout-success-banner i.bi-check-circle-fill {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.checkout-banner-dismiss {
+    background: none;
+    border: none;
+    color: #1ED66C;
+    cursor: pointer;
+    margin-left: auto;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.checkout-banner-dismiss:hover {
+    opacity: 1;
+}
+
+@keyframes bannerSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Manage Billing hint ── */
+
+.manage-billing-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+.manage-billing-hint {
+    font-size: 0.75rem;
+    color: #71717a;
+    font-weight: 400;
+}
+
 /* ── Buy Credits Card (paid users) ── */
 
 .buy-credits-card {

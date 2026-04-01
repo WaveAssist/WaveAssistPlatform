@@ -21,7 +21,7 @@ interface CreditsData {
 
 interface BillingOverview {
 	account_plan_name: string;
-	subscription: { plan_name: string; status: string } | null;
+	subscription: { plan_name: string; status: string; external_customer_id?: string } | null;
 	payments: Array<{
 		id: number;
 		amount: string;
@@ -30,6 +30,7 @@ interface BillingOverview {
 		payment_type: string;
 		created_at?: string;
 		invoice_url?: string;
+		external_customer_id?: string;
 	}>;
 }
 
@@ -49,6 +50,8 @@ const CreditsDodoComponent: React.FC = () => {
 	const [isCustomSelected, setIsCustomSelected] = useState(false);
 	const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 	const [isBillingLoading, setIsBillingLoading] = useState(false);
+	const [hasBillingCustomer, setHasBillingCustomer] = useState(false);
+	const [showCheckoutBanner, setShowCheckoutBanner] = useState(false);
 
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
@@ -73,6 +76,10 @@ const CreditsDodoComponent: React.FC = () => {
 		} else {
 			setCurrentPlan(getStoredDisplayPlan());
 		}
+		// Determine if user has a Dodo customer ID (same logic as backend create_portal_session)
+		const subCustomer = data?.subscription?.external_customer_id;
+		const payCustomer = data?.payments?.find((p: { external_customer_id?: string }) => p.external_customer_id)?.external_customer_id;
+		setHasBillingCustomer(!!(subCustomer || payCustomer));
 	};
 
 	const refreshBillingState = async () => {
@@ -147,6 +154,16 @@ const CreditsDodoComponent: React.FC = () => {
 			setShowUpgradeModal(true);
 			navigate(location.pathname, { replace: true });
 		}
+		// Detect return from Dodo checkout
+		if (params.get("checkout") === "complete" && params.get("status") === "succeeded") {
+			setShowCheckoutBanner(true);
+			navigate(location.pathname, { replace: true });
+			setTimeout(() => refreshBillingState(), 5000);
+			setTimeout(async () => {
+				await refreshUserProfile();
+				await refreshBillingState();
+			}, 15000);
+		}
 	}, [location.search, isPaidPlan, loading]);
 
 	const serviceFee = purchaseAmount * SERVICE_FEE_RATE;
@@ -166,6 +183,16 @@ const CreditsDodoComponent: React.FC = () => {
 	return (
 		<div className="main-container credits-container">
 			<div className="mt-3 d-flex flex-column">
+				{showCheckoutBanner && (
+					<div className="checkout-success-banner">
+						<i className="bi bi-check-circle-fill"></i>
+						<span>Payment successful! Your credits may take a moment to reflect here.</span>
+						<button className="checkout-banner-dismiss" onClick={() => setShowCheckoutBanner(false)}>
+							<i className="bi bi-x-lg"></i>
+						</button>
+					</div>
+				)}
+
 				<div className="credits-header">
 					<div className="credits-header-left">
 						<h3 className="credits-title">Billing</h3>
@@ -249,7 +276,10 @@ const CreditsDodoComponent: React.FC = () => {
 						<h5 className="buy-credits-title subscription-billing-title">Subscription & Billing</h5>
 						<span className="subscription-billing-status">{subscriptionSummary}</span>
 					</div>
-					<button className="manage-billing-btn" onClick={handleOpenBillingPortal} disabled={isBillingLoading}>{isBillingLoading ? "Opening..." : "Manage Billing"}</button>
+					<div className="manage-billing-wrapper">
+						<button className="manage-billing-btn" onClick={handleOpenBillingPortal} disabled={isBillingLoading || !hasBillingCustomer}>{isBillingLoading ? "Opening..." : "Manage Billing"}</button>
+						{!hasBillingCustomer && <span className="manage-billing-hint">Available after your first purchase</span>}
+					</div>
 				</div>
 			</div>
 
