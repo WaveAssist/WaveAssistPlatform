@@ -24,6 +24,7 @@ import LogsComponent from "./components/project/logs_component";
 import DeployComponent from "./components/deploy_component";
 import CreditsComponent from "./components/project/credits_dodo_component";
 import AssistantComponent from "./components/assistant_component";
+import UpgradeComponent from "./components/upgrade_component";
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-RHQ9VZRVXH");
 
@@ -49,6 +50,7 @@ function App() {
 						<Route path="/manage/deployments" element={<PrivateRoute component={DeploymentsComponent} layout={Layout} />} />
 						<Route path="/manage/data-view" element={<PrivateRoute component={DataViewComponent} layout={Layout} />} />
 						<Route path="/manage/logs" element={<PrivateRoute component={LogsComponent} layout={Layout} />} />
+						<Route path="/upgrade" element={<PrivateRoute component={UpgradeComponent} />} />
 						<Route path="/deploy" element={<DeployComponent />} />
 					</Routes>
 				</section>

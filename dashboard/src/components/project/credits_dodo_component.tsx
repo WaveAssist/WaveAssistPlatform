@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { usePostHog } from "posthog-js/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Modal, Spinner } from "react-bootstrap";
@@ -8,6 +8,8 @@ import { refreshUserProfile } from "../../services/login_services";
 import { useToast } from "../../utils/toast_context";
 import { useRefresh } from "../../utils/RefreshContext";
 import { getStoredDisplayPlan, persistUserPlan } from "../../utils/plan";
+import { useDodoCheckout } from "../../hooks/useDodoCheckout";
+import { PLANS } from "../../utils/plans";
 import "./project_components.css";
 import "./credits_component.css";
 
@@ -31,45 +33,15 @@ interface BillingOverview {
 	}>;
 }
 
-interface PlanOption {
-	key: string;
-	label: string;
-	price: number;
-	credits: number;
-	features: string[];
-	recommended?: boolean;
-}
-
-type DodoSdk = {
-	Initialize: (config: {
-		mode: "test" | "live";
-		displayType: "overlay";
-		onEvent: (event: { event_type?: string; data?: { message?: string } }) => void;
-	}) => void;
-	Checkout: {
-		open: (args: { checkoutUrl: string }) => void;
-	};
-};
-
 const PAID_DISPLAY_PLANS = ["PLUS", "PRO"];
 const SERVICE_FEE_RATE = 0.18;
-// Official overlay SDK (CDN). Docs: https://docs.dodopayments.com — use "test" or "live"
-const DODO_CHECKOUT_SCRIPT =
-	import.meta.env.VITE_DODO_CHECKOUT_SCRIPT ||
-	"https://cdn.jsdelivr.net/npm/dodopayments-checkout@latest/dist/index.js";
-const DODO_MODE = (import.meta.env.VITE_DODO_MODE || "test") as "test" | "live";
-
-const PLANS: PlanOption[] = [
-	{ key: "plus", label: "Plus", price: 9.99, credits: 10, features: ["$10 credits/month", "Unlimited runs", "Email support"] },
-	{ key: "pro", label: "Pro", price: 19.99, credits: 25, features: ["$25 credits/month", "Unlimited runs", "Priority support"], recommended: true },
-];
 
 const CreditsDodoComponent: React.FC = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [currentPlan, setCurrentPlan] = useState(getStoredDisplayPlan());
 	const [creditsData, setCreditsData] = useState<CreditsData | null>(null);
-	const [billingOverview, setBillingOverview] = useState<BillingOverview | null>(null);
+	const [, setBillingOverview] = useState<BillingOverview | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 	const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -81,67 +53,9 @@ const CreditsDodoComponent: React.FC = () => {
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
 	const posthog = usePostHog();
+	const { openDodoCheckout } = useDodoCheckout();
 	// Always drive UI from normalized account plan set during login parsing.
 	const isPaidPlan = PAID_DISPLAY_PLANS.includes(currentPlan);
-	const dodoInitialized = useRef(false);
-	const onEventRef = useRef<(msg: string) => void>(() => {});
-
-	const loadDodoCheckoutScript = async (): Promise<void> => {
-		if ((window as any).DodoPayments || (window as any).DodoPaymentsCheckout?.DodoPayments) return;
-		await new Promise<void>((resolve, reject) => {
-			const existingScript = document.querySelector(`script[src="${DODO_CHECKOUT_SCRIPT}"]`);
-			if (existingScript) {
-				existingScript.addEventListener("load", () => resolve(), { once: true });
-				existingScript.addEventListener("error", () => reject(new Error("DoDo SDK load failed")), { once: true });
-				return;
-			}
-			const script = document.createElement("script");
-			script.src = DODO_CHECKOUT_SCRIPT;
-			script.async = true;
-			script.onload = () => resolve();
-			script.onerror = () => reject(new Error("DoDo SDK load failed"));
-			document.body.appendChild(script);
-		});
-	};
-
-	const getDodoPayments = (): DodoSdk | null => {
-		const w = window as any;
-		return w.DodoPayments ?? w.DodoPaymentsCheckout?.DodoPayments ?? null;
-	};
-
-	const openDodoCheckout = async (checkoutUrl: string) => {
-		try {
-			await loadDodoCheckoutScript();
-			const DodoPayments = getDodoPayments();
-			if (!DodoPayments?.Checkout?.open) {
-				window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-				return;
-			}
-			if (!dodoInitialized.current) {
-				DodoPayments.Initialize({
-					mode: DODO_MODE,
-					displayType: "overlay",
-					onEvent: (event: { event_type?: string; data?: { message?: string } }) => {
-						const t = event?.event_type ?? "";
-						if (t === "checkout.opened") onEventRef.current("opened");
-						if (t === "checkout.error") {
-							onEventRef.current("error");
-							showToast(event?.data?.message ?? "Checkout error", "danger");
-						}
-						if (t === "checkout.closed") onEventRef.current("closed");
-					},
-				});
-				dodoInitialized.current = true;
-			}
-			onEventRef.current = (msg) => {
-				if (msg === "opened" || msg === "closed" || msg === "error") setIsPaymentLoading(false);
-			};
-			DodoPayments.Checkout.open({ checkoutUrl });
-		} catch {
-			window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-			setIsPaymentLoading(false);
-		}
-	};
 
 	const fetchCredits = async () => {
 		const data = await fetchCreditsApi();
@@ -181,19 +95,23 @@ const CreditsDodoComponent: React.FC = () => {
 			if (response.success !== "1" || !response?.data?.checkout_url) {
 				throw new Error(response.message || "Could not create checkout");
 			}
-			await openDodoCheckout(response.data.checkout_url);
-			showToast("Checkout opened. Status updates after payment confirmation.", "info");
 			try {
 				posthog?.capture("payment_initiated", { type: opts.useCase, plan: opts.planName, amount: opts.amount, currency: "USD" });
 			} catch (_err) {}
-			setTimeout(() => refreshBillingState(), 5000);
-			setTimeout(async () => {
-				await refreshUserProfile();
-				await refreshBillingState();
-			}, 15000);
+			await openDodoCheckout(response.data.checkout_url, {
+				onOpened: () => setIsPaymentLoading(false),
+				onClosed: () => {
+					setIsPaymentLoading(false);
+					setTimeout(() => refreshBillingState(), 5000);
+					setTimeout(async () => {
+						await refreshUserProfile();
+						await refreshBillingState();
+					}, 15000);
+				},
+				onError: () => setIsPaymentLoading(false),
+			});
 		} catch {
 			showToast("Payment failed. Please try again.", "danger");
-		} finally {
 			setIsPaymentLoading(false);
 		}
 	};
@@ -233,14 +151,7 @@ const CreditsDodoComponent: React.FC = () => {
 
 	const serviceFee = purchaseAmount * SERVICE_FEE_RATE;
 	const creditTotal = purchaseAmount + serviceFee;
-	const formatStatusLabel = (value: string) =>
-		(value || "")
-			.split("_")
-			.map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : part))
-			.join(" ");
-	const subscriptionStatus = billingOverview?.subscription?.status;
-	const subscriptionSummary =
-		currentPlan === "STARTER" ? "STARTER" : subscriptionStatus ? `${currentPlan} (${formatStatusLabel(subscriptionStatus)})` : currentPlan;
+	const subscriptionSummary = currentPlan;
 
 	if (loading) {
 		return (
