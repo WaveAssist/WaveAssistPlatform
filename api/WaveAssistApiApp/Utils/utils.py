@@ -494,7 +494,7 @@ def get_database_name(user_object):
     return "wa_" + str(user_object.uid)[:20]
 
 
-def create_openrouter_token(uid, grant_usd=2):
+def create_openrouter_token(uid, grant_usd=round(2 / WAVEASSIST_CREDIT_MULTIPLIER, 4)):
     """Create an OpenRouter API token for the given user.
 
     Returns (key, hash) tuple, or (None, None) on failure.
