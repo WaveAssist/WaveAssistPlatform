@@ -410,15 +410,28 @@ def fetch_resources(request):
         url = single_resource_config_dict.get("endpoint", "")
         headers = {"Authorization": f"Bearer {access_token_data}"}
 
-        # Make API request
-        response = requests.request(
-            single_resource_config_dict.get("method", "GET"),
-            url,
-            headers=headers,
-            timeout=30,
-        )
+        # Make API request — use GraphQL POST if graphql_query is defined, otherwise generic REST
+        graphql_query = single_resource_config_dict.get("graphql_query")
+        if graphql_query:
+            headers["Content-Type"] = "application/json"
+            response = requests.post(
+                url,
+                json={"query": graphql_query},
+                headers=headers,
+                timeout=30,
+            )
+        else:
+            response = requests.request(
+                single_resource_config_dict.get("method", "GET"),
+                url,
+                headers=headers,
+                timeout=30,
+            )
         response.raise_for_status()
         items_data = response.json()
+        if graphql_query and "errors" in items_data:
+            error_msg = items_data["errors"][0].get("message", "GraphQL error")
+            return ResponseParser.getParsedErrorMessage(f"Error fetching resources: {error_msg}")
 
         # Extract list of items via items_key or default "data"; always normalize to list
         items_key = single_resource_config_dict.get("items_key")
