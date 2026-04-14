@@ -5,6 +5,7 @@ django-redis==5.2.0
 numpy==1.21.5
 pandas==2.0.3
 pymongo[srv]==3.12.1
+composio==0.11.5
 boto3==1.28.58
 celery==5.5.3
 django-celery-beat==2.8.1
