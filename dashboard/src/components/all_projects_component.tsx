@@ -11,7 +11,7 @@ import { useToast } from "../utils/toast_context";
 import "./all_projects_component.css";
 
 import { usePostHog } from "posthog-js/react";
-import { hasBuilderAccess } from "../utils/plan";
+import { hasSuperAdminAccess } from "../utils/plan";
 
 interface Project {
 	project_key: string;
@@ -142,7 +142,7 @@ const AllProjectsComponent: React.FC = () => {
 			localStorage.setItem("is_project_premium", "false");
 
 			// Builder = admin mode (can go to nodes); all other plans go to runs.
-			const destination = hasBuilderAccess() ? "nodes" : "runs";
+			const destination = hasSuperAdminAccess() ? "nodes" : "runs";
 			navigate(`/manage/${destination}?project_key=${newProjectKey}`);
 		} catch (error) {
 			console.error("FetchAllProjects failed:", error);

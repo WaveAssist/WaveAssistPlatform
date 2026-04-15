@@ -45,10 +45,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 
 	// Deploy only visible to super admin; Starter sees upgrade CTA.
 	const currentAccessPlan = getStoredAccessPlan();
-	const isBuilderPlan = hasSuperAdminAccess();
+	const isSuperAdmin = hasSuperAdminAccess();
 	const isStarterPlan = currentAccessPlan === "starter";
 
-	const showDeployButton = !(isProjectPremium && !isUserPremium) && isBuilderPlan;
+	const showDeployButton = !(isProjectPremium && !isUserPremium) && isSuperAdmin;
 
 	useEffect(() => {
 		fetchEnvironments();
@@ -171,7 +171,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 						<img src={WaveAssistLogo} alt="WaveAssist" className="navbar-logo" style={{ height: "24px", maxWidth: "150px", width: "auto" }} />
 					</div>
 					<div className="ms-auto d-flex align-items-center flex-shrink-0 navbar-actions">
-						{!isStarterPlan && (
+						{isSuperAdmin && (
 							<DarkDropdown
 								items={envItems}
 								keys={envKeys}
@@ -206,7 +206,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 								headerText="Select Assistant"
 								onItemSelect={handleProjectChange}
 							/>
-							{!isStarterPlan && (
+							{isSuperAdmin && (
 								<DarkDropdown
 									items={envItems}
 									keys={envKeys}

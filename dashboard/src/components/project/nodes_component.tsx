@@ -32,7 +32,7 @@ import dagre from "dagre";
 import { Position } from "reactflow";
 import { applyNodeChanges, NodeChange } from "reactflow";
 import PaywallBlock from "../PaywallBlock";
-import { hasBuilderAccess } from "../../utils/plan";
+import { hasSuperAdminAccess } from "../../utils/plan";
 
 // Constants for node size
 const NODE_WIDTH = 250;
@@ -110,10 +110,10 @@ const NodesComponent: React.FC = () => {
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 
 	// Plan: builder = admin mode (full edit/delete/run); all plans can view Nodes (no paywall)
-	const isBuilderPlan = hasBuilderAccess();
+	const isSuperAdmin = hasSuperAdminAccess();
 	const shouldBlockNodes = false;
 
-	const showAddNodeButton = isBuilderPlan && !(isProjectPremium && !isUserPremium);
+	const showAddNodeButton = isSuperAdmin && !(isProjectPremium && !isUserPremium);
 
 	const navigate = useNavigate();
 
@@ -250,11 +250,11 @@ const NodesComponent: React.FC = () => {
 				is_premium: n.is_premium,
 				scheduleLabel: getScheduleLabel(n),
 				onView: () => handleViewCode(n),
-				onEdit: isBuilderPlan ? () => handleEdit(n) : undefined,
-				onDelete: isBuilderPlan ? () => handleDelete(n) : undefined,
-				onRun: isBuilderPlan ? () => handleRun(n) : undefined,
+				onEdit: isSuperAdmin ? () => handleEdit(n) : undefined,
+				onDelete: isSuperAdmin ? () => handleDelete(n) : undefined,
+				onRun: isSuperAdmin ? () => handleRun(n) : undefined,
 				canRun: n.is_starting_node,
-				canEdit: isBuilderPlan,
+				canEdit: isSuperAdmin,
 				label: n.name,
 			},
 			position: { x: 0, y: 0 }, // Placeholder — dagre sets actual values
@@ -732,7 +732,7 @@ const NodesComponent: React.FC = () => {
 
 	const ActionButtons = (params: any) => {
 		// Actions (Edit, Delete, Run) only shown for builder
-		if (!isBuilderPlan) return null;
+		if (!isSuperAdmin) return null;
 		const isProjectPremium = localStorage.getItem("is_project_premium") === "true";
 		const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 		const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
@@ -870,7 +870,7 @@ const NodesComponent: React.FC = () => {
 			minWidth: 120,
 			resizable: true,
 		},
-		...(isBuilderPlan ? [{ headerName: "Actions", cellRenderer: ActionButtons, width: 180, minWidth: 140, resizable: true }] : []),
+		...(isSuperAdmin ? [{ headerName: "Actions", cellRenderer: ActionButtons, width: 180, minWidth: 140, resizable: true }] : []),
 	];
 
 	const isStartingNode = watch("is_starting_node");
@@ -955,7 +955,7 @@ const NodesComponent: React.FC = () => {
 					<Button variant="secondary" onClick={handleClose}>
 						Close
 					</Button>
-					{isBuilderPlan && (
+					{isSuperAdmin && (
 						<Button variant="primary" onClick={handleSave}>
 							Save
 						</Button>
@@ -1400,7 +1400,7 @@ const NodesComponent: React.FC = () => {
 								View Runs
 							</Button>
 						</>
-					) : isBuilderPlan ? (
+					) : isSuperAdmin ? (
 						<Button
 							variant="primary"
 							className="w-100"

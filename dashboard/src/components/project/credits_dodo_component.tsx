@@ -82,9 +82,9 @@ const CreditsDodoComponent: React.FC = () => {
 		setHasBillingCustomer(!!(subCustomer || payCustomer));
 	};
 
-	const refreshBillingState = async () => {
+	const refreshBillingState = async (showSpinner = false) => {
 		try {
-			setLoading(true);
+			if (showSpinner) setLoading(true);
 			await Promise.all([fetchCredits(), fetchBillingData()]);
 		} catch {
 			showToast("Failed to load billing details.", "warning");
@@ -139,7 +139,7 @@ const CreditsDodoComponent: React.FC = () => {
 	};
 
 	useEffect(() => {
-		refreshBillingState();
+		refreshBillingState(true);
 	}, [shouldRefresh]);
 
 	useEffect(() => {
@@ -201,7 +201,7 @@ const CreditsDodoComponent: React.FC = () => {
 							{currentPlan}
 						</span>
 					</div>
-					<button className="refresh-btn" onClick={refreshBillingState} title="Refresh">
+					<button className="refresh-btn" onClick={() => refreshBillingState()} title="Refresh">
 						<i className="bi bi-arrow-clockwise"></i>
 					</button>
 				</div>

@@ -47,6 +47,3 @@ export const hasSuperAdminAccess = (): boolean => {
 		return false;
 	}
 };
-
-// Backward-compatible alias for existing call sites.
-export const hasBuilderAccess = (): boolean => hasSuperAdminAccess();
