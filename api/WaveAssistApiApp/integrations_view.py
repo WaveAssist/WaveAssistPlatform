@@ -1,9 +1,12 @@
 """
-integrations_view.py — read-only catalog of Composio toolkits + actions.
+integrations_view.py — read-only catalog of Composio toolkits, actions,
+and model recommendations.
 
 Backed by Mongo `waveassist_integrations` (collections: tool_toolkits,
-tool_actions), populated by Scripts/IntegrationAgent. No auth — browsing
-the catalog is public.
+tool_actions, model_recommendations). Populated by:
+  - Scripts/IntegrationAgent (toolkits, actions)
+  - Scripts/ModelRegistry/load_recommendations.py (model_recommendations)
+No auth — browsing the catalog is public.
 """
 
 import json
@@ -23,6 +26,16 @@ os.environ.setdefault("COMPOSIO_API_KEY", COMPOSIO_API_KEY)
 INTEGRATIONS_DB = "waveassist_integrations"
 TOOLKITS_COLL = "tool_toolkits"
 ACTIONS_COLL = "tool_actions"
+MODEL_RECOMMENDATIONS_COLL = "model_recommendations"
+
+_MODEL_RECOMMENDATION_FIELDS = {
+    "_id": 0,
+    "purpose": 1,
+    "default": 1,
+    "pro": 1,
+    "description": 1,
+    "updated_at": 1,
+}
 
 _TOOLKIT_FIELDS = {
     "_id": 0,
@@ -163,6 +176,25 @@ def list_actions(request, slug):
 
     return ResponseParser.getParsedSuccessMessage(
         data={"toolkit_slug": slug, "actions": actions, "count": len(actions)},
+        status="200",
+        message="OK",
+    )
+
+
+def list_model_recommendations(request):
+    """GET /api/v1/models/recommendations — full purpose → {default, pro} catalog."""
+    try:
+        coll = _db()[MODEL_RECOMMENDATIONS_COLL]
+        rows = list(
+            coll.find({}, _MODEL_RECOMMENDATION_FIELDS).sort("purpose", ASCENDING)
+        )
+    except Exception as e:
+        return ResponseParser.getParsedErrorMessage(
+            f"Failed to fetch model recommendations: {str(e)[:200]}"
+        )
+
+    return ResponseParser.getParsedSuccessMessage(
+        data={"recommendations": rows, "count": len(rows)},
         status="200",
         message="OK",
     )

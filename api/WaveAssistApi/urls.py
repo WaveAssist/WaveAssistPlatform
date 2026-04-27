@@ -375,6 +375,11 @@ urlpatterns = [
         csrf_exempt(integrations_view.list_connections),
         name="list_connections",
     ),
+    path(
+        "api/v1/models/recommendations",
+        csrf_exempt(integrations_view.list_model_recommendations),
+        name="list_model_recommendations",
+    ),
     ##Public Dashboard URL's
     path(
         "dashboard/generate_link/",
