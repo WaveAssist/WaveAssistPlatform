@@ -227,6 +227,21 @@ def initiate_connection(request):
     if not toolkit_slug:
         return ResponseParser.getParsedErrorMessage("Missing toolkit_slug")
 
+    # Some toolkits (e.g. Confluence/Jira) require extra init fields like `subdomain`.
+    # Accept `extra_params` as a JSON object (string or dict) and forward to Composio.
+    raw_extra = get_param(request, "extra_params", "")
+    if isinstance(raw_extra, dict):
+        extra_params = raw_extra
+    elif raw_extra:
+        try:
+            extra_params = json.loads(raw_extra)
+            if not isinstance(extra_params, dict):
+                return ResponseParser.getParsedErrorMessage("extra_params must be a JSON object")
+        except Exception as e:
+            return ResponseParser.getParsedErrorMessage(f"Invalid JSON in extra_params: {str(e)[:120]}")
+    else:
+        extra_params = {}
+
     toolkit = _db()[TOOLKITS_COLL].find_one(
         {"slug": toolkit_slug},
         {"_id": 0, "slug": 1, "name": 1, "oauth_config_id": 1, "apikey_config_id": 1, "other_auth_id": 1},
@@ -249,16 +264,19 @@ def initiate_connection(request):
     user_id = f"{user_object.uid}_{project_object.project_key}"
 
     try:
-        req = _composio().connected_accounts.initiate(
-            user_id=user_id,
-            auth_config_id=auth_config_id,
-        )
+        initiate_kwargs = {
+            "user_id": user_id,
+            "auth_config_id": auth_config_id,
+        }
+        if extra_params:
+            initiate_kwargs["config"] = extra_params
+        req = _composio().connected_accounts.initiate(**initiate_kwargs)
         redirect_url = getattr(req, "redirect_url", None) or getattr(req, "redirectUrl", None)
         connection_id = getattr(req, "id", None) or getattr(req, "connection_id", None)
         status_val = getattr(req, "status", None)
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(
-            f"Failed to initiate connection: {str(e)[:200]}", error_code="E_EXEC"
+            f"Failed to initiate connection: {str(e)[:2000]}", error_code="E_EXEC"
         )
 
     return ResponseParser.getParsedSuccessMessage(
