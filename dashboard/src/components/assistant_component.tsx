@@ -203,7 +203,7 @@ const AssistantComponent: React.FC = () => {
 	const refreshData = async () => {
 		// Get template key and fetch wizard inputs
 		const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
-		let templateKeyValue = projectData.template_key || localStorage.getItem("template_key") || "";
+		let templateKeyValue = projectData.template_key || projectData.project_key || localStorage.getItem("template_key") || "";
 
 		if (templateKeyValue === "") {
 			// Determine template key based on project type
@@ -587,7 +587,11 @@ const AssistantComponent: React.FC = () => {
 				// Push event to Google Tag Manager
 				const projectKey = localStorage.getItem("selected_project_key");
 				const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
-				const assistantKey = projectData.template_key || "unknown_assistant";
+				// Curated assistants log their template_key directly (e.g. "gitzoid").
+				// WaveMaker-built projects log under a wavemaker: namespace so analytics
+				// dashboards can distinguish the two cohorts cleanly.
+				const assistantKey = projectData.template_key
+					|| (projectData.project_key ? `wavemaker:${projectData.project_key}` : "unknown_assistant");
 				const uid = localStorage.getItem("uid");
 
 				// Track deployment success

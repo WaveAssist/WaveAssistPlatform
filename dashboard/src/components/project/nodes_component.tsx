@@ -171,7 +171,7 @@ const NodesComponent: React.FC = () => {
 		if (location.state?.openWizard) {
 			// Get template key and fetch wizard inputs immediately
 			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
-			let templateKey = projectData.template_key || location.state?.templateKey || localStorage.getItem("template_key") || "";
+			let templateKey = projectData.template_key || projectData.project_key || location.state?.templateKey || localStorage.getItem("template_key") || "";
 
 			if (templateKey === "") {
 				//ToDo: Temporary. Remove this once we have a way to set the template key in the project data.

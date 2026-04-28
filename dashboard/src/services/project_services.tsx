@@ -258,7 +258,11 @@ export const runDAGApi = async (nodeKey: string | null, selected_env: string): P
 };
 
 // fetchTemplateApi
+// Always passes uid as a query param. The backend treats it as required
+// for WaveMaker-built projects (auth gate via AccessProvided) and ignores
+// it for curated assistants (public catalog).
 export const fetchTemplateApi = async (template_key: string): Promise<any> => {
 	const path = `fetch_assistant/${template_key}/`;
-	return callGetApi(path, new URLSearchParams());
+	const params = new URLSearchParams({ uid: localStorage.getItem("uid") || "" });
+	return callGetApi(path, params);
 };

@@ -158,7 +158,7 @@ const RunsComponent: React.FC = () => {
 	const fetch_default_message_from_assistant = async (): Promise<string | null> => {
 		try {
 			const projectData = JSON.parse(localStorage.getItem("selected_project") || "{}");
-			const templateKey = projectData.template_key || localStorage.getItem("template_key") || "";
+			const templateKey = projectData.template_key || projectData.project_key || localStorage.getItem("template_key") || "";
 			if (!templateKey) return null;
 			const response = await fetchTemplateApi(templateKey);
 			const msg = response?.output_default_message;
