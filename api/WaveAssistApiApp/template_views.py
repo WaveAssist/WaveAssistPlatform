@@ -74,12 +74,16 @@ def deploy_template(request):
         created_nodes = create_nodes_from_yaml(project_object, nodes, file_map, timezone)
         link_node_dependencies(yaml_config, created_nodes)
 
+        # Persist the source repo URL on the Project so future upgrades
+        # (especially for WaveMaker-built projects without a template_key)
+        # know where to pull from.
+        project_object.github_url = repo_url
         try:
             commit_sha, _ = get_latest_commit_sha(repo_name, owner)
             project_object.deployed_commit_sha = commit_sha
-            project_object.save()
         except Exception:
             pass
+        project_object.save()
     except Exception as e:
         print(f"❌ Error creating project or nodes: {str(e)}")
         return ResponseParser.getParsedErrorMessage("Project was not created")
@@ -106,21 +110,29 @@ def check_assistant_update(request):
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
+    # Resolve the source repo URL: curated templates use Assistants.github_url
+    # (looked up via template_key); WaveMaker-built projects use the URL stored
+    # directly on Project.github_url.
     template_key = project_object.template_key
-    if not template_key:
+    source_repo_url = ""
+    if template_key:
+        try:
+            assistant = Assistants.objects.get(assistant_key=template_key)
+            source_repo_url = assistant.github_url
+        except Assistants.DoesNotExist:
+            return ResponseParser.getParsedSuccessMessage(
+                {"has_update": False}, "200", "Assistant not found for template key."
+            )
+    elif project_object.github_url:
+        source_repo_url = project_object.github_url
+
+    if not source_repo_url:
         return ResponseParser.getParsedSuccessMessage(
-            {"has_update": False}, "200", "No template key — not an assistant project."
+            {"has_update": False}, "200", "Project has no upgrade source."
         )
 
     try:
-        assistant = Assistants.objects.get(assistant_key=template_key)
-    except Assistants.DoesNotExist:
-        return ResponseParser.getParsedSuccessMessage(
-            {"has_update": False}, "200", "Assistant not found for template key."
-        )
-
-    try:
-        owner, repo_name = get_repo_parts_from_url(assistant.github_url)
+        owner, repo_name = get_repo_parts_from_url(source_repo_url)
         latest_sha, commit_message = get_latest_commit_sha(repo_name, owner)
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f"Failed to check for updates: {str(e)}")
@@ -147,16 +159,24 @@ def upgrade_assistant(request):
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
 
+    # Resolve the source repo URL: curated templates use Assistants.github_url
+    # (looked up via template_key); WaveMaker-built projects use the URL stored
+    # directly on Project.github_url.
     template_key = project_object.template_key
-    if not template_key:
-        return ResponseParser.getParsedErrorMessage("Project is not linked to an assistant template.")
+    source_repo_url = ""
+    if template_key:
+        try:
+            assistant = Assistants.objects.get(assistant_key=template_key)
+            source_repo_url = assistant.github_url
+        except Assistants.DoesNotExist:
+            return ResponseParser.getParsedErrorMessage("Assistant not found.")
+    elif project_object.github_url:
+        source_repo_url = project_object.github_url
 
-    try:
-        assistant = Assistants.objects.get(assistant_key=template_key)
-    except Assistants.DoesNotExist:
-        return ResponseParser.getParsedErrorMessage("Assistant not found.")
+    if not source_repo_url:
+        return ResponseParser.getParsedErrorMessage("Project has no upgrade source.")
 
-    owner, repo_name = get_repo_parts_from_url(assistant.github_url)
+    owner, repo_name = get_repo_parts_from_url(source_repo_url)
 
     try:
         latest_sha, commit_message = get_latest_commit_sha(repo_name, owner)

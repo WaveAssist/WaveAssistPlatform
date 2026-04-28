@@ -232,7 +232,10 @@ class Project(models.Model):
     )  # True if the project is premium, False if free
     template_key = models.CharField(
         max_length=255, default="", null=True
-    )  # Used for templates
+    )  # Used for curated assistant templates (links to Assistants table)
+    github_url = models.CharField(
+        max_length=500, default="", null=True, blank=True
+    )  # Source repo URL — populated by deploy_template; used as the upgrade source for projects without template_key (e.g. WaveMaker-built assistants)
     deployed_commit_sha = models.CharField(
         max_length=64, default="", null=True, blank=True
     )
@@ -249,6 +252,7 @@ class Project(models.Model):
         project_dict["project_key"] = self.project_key
         project_dict["is_premium"] = self.is_premium
         project_dict["template_key"] = self.template_key
+        project_dict["github_url"] = self.github_url or ""
         project_dict["deployed_commit_sha"] = self.deployed_commit_sha or ""
 
         for integration_object in self.integration_array.all():
