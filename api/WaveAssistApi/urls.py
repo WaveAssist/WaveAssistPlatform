@@ -33,7 +33,7 @@ from WaveAssistApiApp import (
 )
 
 from django.views.decorators.csrf import csrf_exempt
-from WaveAssistApiApp import manage_views, integrations_view
+from WaveAssistApiApp import manage_views, integrations_view, wavemaker_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -379,6 +379,11 @@ urlpatterns = [
         "api/v1/models/recommendations",
         csrf_exempt(integrations_view.list_model_recommendations),
         name="list_model_recommendations",
+    ),
+    path(
+        "api/v1/wavemaker/materialize_assistant",
+        csrf_exempt(wavemaker_views.materialize_assistant),
+        name="wavemaker_materialize_assistant",
     ),
     ##Public Dashboard URL's
     path(
