@@ -49,7 +49,7 @@ def deploy_template(request):
         return ResponseParser.getParsedErrorMessage("Error with yaml: " + str(message))
 
     project_name = yaml_config.get("name", "")
-    project_key = f"{project_name.lower()}_{uuid.uuid4().hex[:4]}"
+    project_key = f"{project_name.lower().replace(' ', '_')}_{uuid.uuid4().hex[:4]}"
     nodes = yaml_config.get("nodes", [])
 
 
