@@ -65,14 +65,13 @@ def fetch_logs_from_aws(start_datetime, end_datetime, log_group_name, filter_pat
 
 
 def fetch_logs(request):
+    # Project READ_GTE is enough — log content is scoped to the project_key
+    # filter pattern, so users can only see logs for projects they can read.
     success, message, user_object, project_object = validator.validate_user_and_project(
         request, access_level_gte=READ_GTE
     )
     if not success:
         return ResponseParser.getParsedErrorMessage(message)
-    is_super_admin, admin_message = validator.validate_super_admin(user_object)
-    if not is_super_admin:
-        return ResponseParser.getParsedErrorMessage(admin_message)
 
     # Parameters
     log_group_name = request.POST.get('log_group_name', '/ecs/WaveAssistWorkerTasks')
