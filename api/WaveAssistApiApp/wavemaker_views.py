@@ -15,6 +15,7 @@ only owns the GitHub side — keeps the WaveAssist GH token off clients.
 """
 
 import base64
+import hashlib
 import json
 import re
 import time
@@ -31,6 +32,16 @@ from .Utils.constants import GITHUB_TOKEN, GITHUB_USERNAME, ADMIN_GTE
 
 GITHUB_API = "https://api.github.com"
 MAX_WAVEMAKER_ASSISTANTS_PER_USER = 25
+
+
+def _owner_tag(uid: str) -> str:
+    """
+    Stable per-uid token written into a repo's GitHub description on
+    create. On update, the request's uid must hash to the same token —
+    that's how we authorize a push without a Project row existing.
+    """
+    digest = hashlib.sha256(f"wm:{uid}".encode("utf-8")).hexdigest()[:16]
+    return f"wm-owner:{digest}"
 
 
 def _gh(method: str, path: str, body: dict = None) -> requests.Response:
@@ -53,13 +64,17 @@ def _slugify(name: str) -> str:
     return s[:40] or "assistant"
 
 
-def _create_repo(repo_name: str, description: str) -> str:
+def _create_repo(repo_name: str, description: str, owner_tag: str) -> str:
+    """Create a private repo under the WaveAssist account, embedding the
+    owner_tag in the description for later auth on update."""
     existing = _gh("GET", f"/repos/{GITHUB_USERNAME}/{repo_name}")
     if existing.status_code == 200:
         return f"{GITHUB_USERNAME}/{repo_name}"
+    desc_user = (description or "")[:300]
+    full_description = f"{desc_user} [{owner_tag}]".strip()
     resp = _gh("POST", "/user/repos", {
         "name": repo_name,
-        "description": (description or "")[:350],
+        "description": full_description[:350],
         "private": True,
         "auto_init": True,
     })
@@ -68,6 +83,15 @@ def _create_repo(repo_name: str, description: str) -> str:
     full = resp.json().get("full_name", f"{GITHUB_USERNAME}/{repo_name}")
     time.sleep(2)  # GH eventual consistency before pushing files
     return full
+
+
+def _verify_repo_owner(repo_full_name: str, expected_tag: str) -> bool:
+    """Fetch repo, confirm the owner_tag is in its description."""
+    resp = _gh("GET", f"/repos/{repo_full_name}")
+    if resp.status_code != 200:
+        return False
+    desc = (resp.json().get("description") or "")
+    return expected_tag in desc
 
 
 def _push_file(repo_full_name: str, file_path: str, content: str, message: str) -> bool:
@@ -151,26 +175,13 @@ def materialize_assistant(request):
     except yaml.YAMLError as e:
         return ResponseParser.getParsedErrorMessage(f"Invalid config_yaml: {e}")
 
-    is_update = bool(existing_project_key)
+    owner_tag = _owner_tag(uid)
+    is_update = bool(existing_repo_url)
 
     if is_update:
-        # Authorize against the existing project.
-        try:
-            project_object = Project.objects.get(project_key=existing_project_key)
-        except Project.DoesNotExist:
-            return ResponseParser.getParsedErrorMessage("existing_project_key not found")
-
-        has_admin = AccessProvided.objects.filter(
-            project_object=project_object,
-            user_object=user_object,
-            project_access_type__gte=ADMIN_GTE,
-            type=0,
-        ).exists()
-        if not has_admin:
-            return ResponseParser.getParsedErrorMessage("Not authorized to update this project")
-
-        if not existing_repo_url:
-            return ResponseParser.getParsedErrorMessage("existing_repo_url required on update")
+        # Auth: the repo's GitHub description must contain this user's
+        # owner_tag. This works whether or not deploy_template ever
+        # ran (so orphan repos can still be updated by their creator).
         parts = existing_repo_url.rstrip("/").split("/")
         if len(parts) < 2:
             return ResponseParser.getParsedErrorMessage("Malformed existing_repo_url")
@@ -178,10 +189,15 @@ def materialize_assistant(request):
         if not repo_full_name.startswith(f"{GITHUB_USERNAME}/"):
             return ResponseParser.getParsedErrorMessage("existing_repo_url must point at the WaveAssist GitHub account")
 
+        if not _verify_repo_owner(repo_full_name, owner_tag):
+            return ResponseParser.getParsedErrorMessage("Not authorized to update this repo")
+
         repo_url = existing_repo_url
         commit_prefix = "Update assistant via WaveMaker"
     else:
-        # Per-user assistant cap (creates only).
+        # Per-user assistant cap (creates only). Counts deployed projects
+        # via AccessProvided — orphan repos (deploy_template failed) are
+        # not counted here, which is acceptable at current scale.
         if _project_count_for_user(user_object) >= MAX_WAVEMAKER_ASSISTANTS_PER_USER:
             return ResponseParser.getParsedErrorMessage(
                 f"Project limit reached ({MAX_WAVEMAKER_ASSISTANTS_PER_USER}). Delete unused projects and try again."
@@ -190,7 +206,7 @@ def materialize_assistant(request):
         slug = _slugify(assistant_name)
         repo_name = f"wa-{slug}-{uuid.uuid4().hex[:6]}"
         try:
-            repo_full_name = _create_repo(repo_name, yaml_config.get("description", ""))
+            repo_full_name = _create_repo(repo_name, yaml_config.get("description", ""), owner_tag)
         except Exception as e:
             return ResponseParser.getParsedErrorMessage(str(e))
 
