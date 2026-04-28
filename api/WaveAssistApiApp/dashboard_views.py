@@ -175,12 +175,41 @@ def cli_login_status(request, session_id):
 
 def fetch_assistant(request, assistant_key):
     try:
+        # Resolve the source repo URL. Two cases:
+        #   - Curated assistant: assistant_key matches an Assistants row.
+        #     Public — no auth (curated catalog is browsable).
+        #   - WaveMaker-built project: assistant_key is the Project.project_key.
+        #     Auth-gated — caller must be a user with READ access on the project,
+        #     because Project.github_url + variable names are user-private.
+        assistant = None
+        project = None
+        repo_url = ""
         try:
             assistant = Assistants.objects.get(assistant_key=assistant_key)
-        except Exception as e:
+            repo_url = assistant.github_url or ""
+        except Assistants.DoesNotExist:
+            try:
+                project = Project.objects.get(project_key=assistant_key)
+                repo_url = project.github_url or ""
+            except Project.DoesNotExist:
+                pass
+
+        if not repo_url:
             return ResponseParser.getParsedErrorMessage("Assistant not found.", 404)
 
-        owner, repo_name = get_repo_parts_from_url(assistant.github_url)
+        # Auth gate for the WaveMaker (Project) branch only.
+        if project is not None:
+            uid = (utils.get_param(request, "uid", "") or "").strip()
+            if not uid:
+                return ResponseParser.getParsedErrorMessage("Missing uid", 401)
+            try:
+                user_object = User.objects.get(uid=uid)
+            except User.DoesNotExist:
+                return ResponseParser.getParsedErrorMessage("User not found", 401)
+            if not utils.does_user_have_access_to_project(user_object, project, access_gte=READ_GTE):
+                return ResponseParser.getParsedErrorMessage("Not authorized for this project", 403)
+
+        owner, repo_name = get_repo_parts_from_url(repo_url)
         yaml_config = get_config_yaml_from_github(repo_name, owner)
         is_valid, message = validate_yaml_config(yaml_config)
 
@@ -198,7 +227,20 @@ def fetch_assistant(request, assistant_key):
             v for v in variables if v.get("is_optional", True) == True
         ]
         variables = [v for v in variables if v.get("is_optional", True) == False]
-        assistant_dict = assistant.get_dict()
+
+        # Build the response dict from whichever source we resolved.
+        if assistant is not None:
+            assistant_dict = assistant.get_dict()
+        else:
+            # WaveMaker-built project: synthesise the same shape from the Project
+            # + yaml_config so the dashboard renders identically.
+            assistant_dict = {
+                "id": project.id,
+                "name": project.name or yaml_config.get("name", ""),
+                "assistant_key": project.project_key,
+                "github_url": project.github_url or "",
+                "credits_needed_per_unit": 0.0,
+            }
         assistant_dict["input_array"] = variables
         assistant_dict["optional_input_array"] = optional_variables
         assistant_dict["success_message"] = success_message
