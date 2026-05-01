@@ -16,7 +16,7 @@ from celery_app import app
 def unlock_all(**kwargs):
     clear_locks(app)
 
-@app.task(base=Singleton,unique_on=['collection_key','task_key'], bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10}, acks_late=True)
+@app.task(base=Singleton,unique_on=['collection_key','task_key'], lock_expiry=300, bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 1, 'countdown': 10}, acks_late=True)
 def run_task(*args, task_dict=None, collection_key=None, task_key=None, run_id=None, **kwargs):
     # Task dict needs node_key, project_key and code_to_run
     try:
