@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from django.shortcuts import render
 from .Utils.responseParser import ResponseParser
@@ -49,22 +50,49 @@ def deploy_template(request):
         return ResponseParser.getParsedErrorMessage("Error with yaml: " + str(message))
 
     project_name = yaml_config.get("name", "")
-    project_key = f"{project_name.lower().replace(' ', '_')}_{uuid.uuid4().hex[:4]}"
     nodes = yaml_config.get("nodes", [])
 
+    # WaveMaker may pre-create the deploy-target project (so the user can
+    # authorize Composio services on it during build). When `target_project_key`
+    # is provided, we skip create_project and install nodes into that existing
+    # project. The format must exactly match what create_project would have
+    # generated: lowercase slug + "_" + 4 hex chars. We also refuse to install
+    # if the target already has nodes — caller must use upgrade_assistant for
+    # that case.
+    target_project_key = (request.POST.get('target_project_key', '') or "").strip()
+    if target_project_key:
+        if not re.match(r'^[a-z0-9_]+_[a-f0-9]{4}$', target_project_key):
+            return ResponseParser.getParsedErrorMessage(
+                "target_project_key invalid format (expected '{slug}_{4-hex}')"
+            )
+        try:
+            project_object = Project.objects.get(project_key=target_project_key)
+        except Project.DoesNotExist:
+            return ResponseParser.getParsedErrorMessage("Target project not found")
+        if not utils.does_user_have_access_to_project(
+            user_object, project_object, access_gte=ADMIN_GTE
+        ):
+            return ResponseParser.getParsedErrorMessage("No access to target project")
+        if Nodes.objects.filter(project_object=project_object).exists():
+            return ResponseParser.getParsedErrorMessage(
+                "Target project already has nodes; use upgrade_assistant"
+            )
+        project_key = project_object.project_key
+    else:
+        project_key = f"{project_name.lower().replace(' ', '_')}_{uuid.uuid4().hex[:4]}"
+        request.POST['project_key'] = project_key
+        request.POST['project_name'] = project_name
+        request.POST['is_premium'] = False
+        create_project_response = manage_views.create_project(request)
+        response_data = json.loads(create_project_response.content)
+        if response_data.get("success") != "1":
+            return ResponseParser.getParsedErrorMessage(
+                "Project creation failed: " + response_data.get("message", "Unknown error")
+            )
+        project_key = response_data["data"]["project_key"]
+        project_object = Project.objects.get(project_key=project_key)
 
-    request.POST['project_key'] = project_key
-    request.POST['project_name'] = project_name
-    request.POST['is_premium'] = False
-    create_project_response = manage_views.create_project(request)
-    response_data = json.loads(create_project_response.content)
-    
     try:
-        if response_data.get("success") == "1":
-            project_key = response_data["data"]["project_key"]
-            project_object = Project.objects.get(project_key=project_key)
-        else:
-            return ResponseParser.getParsedErrorMessage("Project creation failed: " + response_data.get("message", "Unknown error"))
 
         if should_install_requirements == "1":
             configure_variables(uid, project_key, yaml_config)
