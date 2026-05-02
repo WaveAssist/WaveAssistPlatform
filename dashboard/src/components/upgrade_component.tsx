@@ -219,7 +219,7 @@ const UpgradeComponent: React.FC = () => {
 
 				<div className="upgrade-page-footer">
 					<a
-						href="https://waveassist.io/pricing"
+						href="https://waveassist.ai/pricing"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="upgrade-pricing-link">

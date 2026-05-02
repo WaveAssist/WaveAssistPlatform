@@ -1421,7 +1421,7 @@ const NodesComponent: React.FC = () => {
 				show={showPaywall}
 				onHide={() => setShowPaywall(false)}
 				onPay={() => {
-					window.open("https://waveassist.io/pricing", "_blank");
+					window.open("https://waveassist.ai/pricing", "_blank");
 					setShowPaywall(false);
 				}}
 			/>

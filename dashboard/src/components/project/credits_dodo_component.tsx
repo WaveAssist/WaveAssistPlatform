@@ -305,7 +305,7 @@ const CreditsDodoComponent: React.FC = () => {
 						))}
 					</div>
 					<div className="upgrade-footer">
-						<a href="https://waveassist.io/pricing" target="_blank" rel="noopener noreferrer" className="upgrade-pricing-link">
+						<a href="https://waveassist.ai/pricing" target="_blank" rel="noopener noreferrer" className="upgrade-pricing-link">
 							<i className="bi bi-box-arrow-up-right"></i>
 							View full pricing & plan details
 						</a>

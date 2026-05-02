@@ -1126,7 +1126,7 @@ const AssistantComponent: React.FC = () => {
 
 							<div className="mt-3">
 								<a
-									href="https://waveassist.io/blog/how-to-set-up-github-webhook-for-waveassist"
+									href="https://waveassist.ai/blog/how-to-set-up-github-webhook-for-waveassist"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="text-success text-decoration-none">
