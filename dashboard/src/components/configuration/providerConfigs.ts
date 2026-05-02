@@ -335,7 +335,7 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
 		manualTokenLabel: "Access Token",
 		manualTokenHelp: "Enter your GitHub Access Token.",
 		manualTokenHelpLinkText: "How to find?",
-		manualTokenHelpLinkUrl: "https://waveassist.io/blog/how-to-get-your-github-token-for-gitzoid",
+		manualTokenHelpLinkUrl: "https://waveassist.ai/blog/how-to-get-your-github-token-for-gitzoid",
 		validateToken: validateGitHubToken,
 		authType: "oauth",
 	},
