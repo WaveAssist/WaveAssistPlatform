@@ -26,7 +26,7 @@ AWSS3_SECRET = "AWSS3_SECRET"
 COMPOSIO_API_KEY = "REMOVED_CREDENTIAL"
 
 # Gmail SMTP credentials
-MAILER_LOGIN_EMAIL = 'kakshil.shah@waveassist.io'
+MAILER_LOGIN_EMAIL = 'kakshil.shah@waveassist.ai'
 MAILER_LOGIN_EMAIL_PASSWORD = '***REDACTED-CREDENTIAL***'
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 587
@@ -109,7 +109,7 @@ GET_STARTED_DATA = {
 
 # SendGrid settings
 SEND_GRID_KEY = "REMOVED_CREDENTIAL"
-DEFAULT_FROM_EMAIL = "WaveAssist Updates <updates@waveassist.io>"
+DEFAULT_FROM_EMAIL = "WaveAssist Updates <updates@waveassist.ai>"
 
 
 DEFAULT_NODES_ARRAY = [

@@ -1020,7 +1020,7 @@ def get_email_template_credits_limit_reached(
         )
     else:
         cta_label = "Upgrade Plan"
-        cta_url = "https://waveassist.io/pricing"
+        cta_url = "https://waveassist.ai/pricing"
         plan_message = (
             f"Your free credits have run out. Upgrade to <strong>Plus</strong> or <strong>Pro</strong> "
             f"to get monthly credits and keep <strong>{assistant_name}</strong> running."
@@ -1075,7 +1075,7 @@ def get_email_template_credits_limit_reached(
                     <!-- Logo -->
                     <tr>
                         <td align="center" style="padding:48px 40px 0 40px;" class="content-padding">
-                            <img src="https://waveassist.io/images/logo/WaveAssist-W.png" alt="WaveAssist" width="80"
+                            <img src="https://waveassist.ai/images/logo/WaveAssist-W.png" alt="WaveAssist" width="80"
                                 style="display:block;max-width:80px;height:auto;margin:0 auto;" />
                         </td>
                     </tr>
@@ -1153,7 +1153,7 @@ def get_email_template_credits_limit_reached(
                         <td align="center" style="padding:20px 40px 48px 40px;">
                             <p style="margin:0;font-size:13px;">
                                 <span class="muted-text" style="color:#71717a;">Questions? </span>
-                                <a href="mailto:support@waveassist.io" target="_blank" class="secondary-link"
+                                <a href="mailto:support@waveassist.ai" target="_blank" class="secondary-link"
                                    style="color:#a1a1aa;text-decoration:underline;">Contact support</a>
                             </p>
                         </td>
