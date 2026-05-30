@@ -435,6 +435,7 @@ def fetch_project_variables(request):  # TCW
         return ResponseParser.getParsedErrorMessage(admin_message)
 
     all_data_keys = set()
+    key_to_type = {}
 
     ##Fetch all MongoKeys for project.
     mongo_db_name = utils.get_database_name(user_object)
@@ -446,11 +447,29 @@ def fetch_project_variables(request):  # TCW
     for data_run_object in data_runs_array:
         collection_key = data_run_object.data_run_key
         collection = mongo_manager.database[collection_key]
-        unique_iodata_keys = set(collection.distinct("IODataKey"))
-        all_data_keys.update(unique_iodata_keys)
+        # Project only the key + type fields. We deliberately exclude the DATA
+        # blob so listing variables never loads the (potentially huge) values —
+        # this is what lets the dashboard render the list in a single request
+        # instead of one fetch_data_for_key call per variable.
+        cursor = collection.find({}, {IO_DATA_KEY: 1, DATA_TYPE_KEY: 1, "_id": 0})
+        for document in cursor:
+            io_key = document.get(IO_DATA_KEY)
+            if not io_key:
+                continue
+            all_data_keys.add(io_key)
+            # First non-empty type wins if a key exists across environments.
+            if io_key not in key_to_type:
+                key_to_type[io_key] = document.get(DATA_TYPE_KEY, "string")
 
     ##Get data for project
-    output_dict = {"data_keys": list(all_data_keys)}
+    variables = [
+        {"key": data_key, "data_type": key_to_type.get(data_key, "string")}
+        for data_key in all_data_keys
+    ]
+    output_dict = {
+        "data_keys": list(all_data_keys),  # retained for backward compatibility
+        "variables": variables,  # key + data_type, so the client needs no per-key calls
+    }
 
     return ResponseParser.getParsedSuccessMessage(
         output_dict, "200", "Project Variables fetched successfully."
