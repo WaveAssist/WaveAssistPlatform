@@ -106,25 +106,16 @@ const VariablesComponent: React.FC = () => {
 		setLoading(true);
 		try {
 			const data = await fetchVariablesApi();
-			var flatKeys = data.data_keys;
-			const rowData = await Promise.all(
-				flatKeys.map(async (variable: any) => {
-					try {
-						const varData = await fetchDataForKeyAPI(variable);
-						return {
-							key: variable,
-							value: variable,
-							dataType: varData.data_type,
-						};
-					} catch (error) {
-						return {
-							key: variable,
-							value: variable,
-							dataType: null,
-						};
-					}
-				})
-			);
+			// The list endpoint returns each key's data_type, so we render the
+			// table from a single request. Previously we fired one fetchDataForKeyAPI
+			// call per variable (1 + N requests, each pulling the full data blob) just
+			// to show the type badge — that scaled terribly for long-running agents.
+			// The actual value is still lazy-loaded on demand via "View Data".
+			const rowData = (data.variables || []).map((variable: any) => ({
+				key: variable.key,
+				value: variable.key,
+				dataType: variable.data_type,
+			}));
 
 			setVariablesArray(rowData);
 			setLoading(false);
