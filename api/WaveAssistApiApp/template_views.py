@@ -7,7 +7,7 @@ from .models import *
 from .Utils.projectSetup import (
     get_config_yaml_from_github, validate_yaml_config, get_nodes_from_github,
     create_nodes_from_yaml, link_node_dependencies,
-    configure_variables, get_latest_commit_sha,
+    configure_variables, get_latest_commit_sha, get_wanted_node_files,
 )
 from .Utils.constants import *
 from .Utils.utils import run_knock_workflow, track_posthog, get_repo_parts_from_url
@@ -97,7 +97,7 @@ def deploy_template(request):
         if should_install_requirements == "1":
             configure_variables(uid, project_key, yaml_config)
 
-        node_files = get_nodes_from_github(repo_name, owner)
+        node_files = get_nodes_from_github(repo_name, owner, wanted_files=get_wanted_node_files(nodes))
         file_map = {n["node_name"]: n["content"] for n in node_files}
         created_nodes = create_nodes_from_yaml(project_object, nodes, file_map, timezone)
         link_node_dependencies(yaml_config, created_nodes)
@@ -228,9 +228,9 @@ def upgrade_assistant(request):
     ).exists()
 
     try:
-        node_files = get_nodes_from_github(repo_name, owner)
-        file_map = {n["node_name"]: n["content"] for n in node_files}
         nodes = yaml_config.get("nodes", [])
+        node_files = get_nodes_from_github(repo_name, owner, wanted_files=get_wanted_node_files(nodes))
+        file_map = {n["node_name"]: n["content"] for n in node_files}
 
         with transaction.atomic():
             Nodes.objects.filter(project_object=project_object).delete()

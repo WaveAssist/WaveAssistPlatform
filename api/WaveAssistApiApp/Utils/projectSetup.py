@@ -72,11 +72,31 @@ def link_node_dependencies(yaml_config, created_nodes):
         node_object.save()
 
 
-def get_nodes_from_github(repo_name, owner='WaveAssist', branch='main'):
+def get_wanted_node_files(nodes):
+    """Base names (without .py) of the source files referenced by config nodes."""
+    return {
+        node.get("file_name", "").split("/")[-1].replace(".py", "")
+        for node in (nodes or [])
+        if node.get("file_name")
+    }
+
+
+def get_nodes_from_github(repo_name, owner='WaveAssist', branch='main', wanted_files=None):
+    """Fetch node source files for a repo from GitHub.
+
+    When `wanted_files` is provided (a set/iterable of file base names without the
+    ".py" suffix, e.g. the `file_name`s referenced by nodes in config.yaml), only
+    those files are fetched. This avoids pulling every .py in the repo (tests,
+    helpers, etc.) which both wastes time and burns GitHub rate limit. When it is
+    None we fall back to fetching all .py files (legacy behavior).
+    """
     repo = f"{owner}/{repo_name}"
     tree_url = f"https://api.github.com/repos/{repo}/git/trees/{branch}?recursive=1"
+    wanted = set(wanted_files) if wanted_files is not None else None
     try:
-        tree_resp = requests.get(tree_url, auth=(GITHUB_USERNAME, GITHUB_TOKEN))
+        tree_resp = requests.get(
+            tree_url, auth=(GITHUB_USERNAME, GITHUB_TOKEN), timeout=(5, 30)
+        )
         tree_data = tree_resp.json()
     except Exception as e:
         print(f"[ERROR] Fetching repo tree failed: {e}")
@@ -84,24 +104,30 @@ def get_nodes_from_github(repo_name, owner='WaveAssist', branch='main'):
 
     node_files = []
     for item in tree_data.get("tree", []):
-        if item["type"] == "blob" and item["path"].endswith(".py"):
-            file_url = f"https://api.github.com/repos/{repo}/contents/{item['path']}?ref={branch}"
-            try:
-                file_resp = requests.get(file_url, auth=(GITHUB_USERNAME, GITHUB_TOKEN))
-                content = file_resp.json().get("content", "")
-                if content:
-                    node_files.append({
-                        "node_name": item["path"].split("/")[-1].replace(".py", ""),
-                        "content": base64.b64decode(content).decode("utf-8")
-                    })
-            except Exception as e:
-                print(f"[SKIP] {item['path']}: {e}")
+        if item["type"] != "blob" or not item["path"].endswith(".py"):
+            continue
+        node_name = item["path"].split("/")[-1].replace(".py", "")
+        if wanted is not None and node_name not in wanted:
+            continue
+        file_url = f"https://api.github.com/repos/{repo}/contents/{item['path']}?ref={branch}"
+        try:
+            file_resp = requests.get(
+                file_url, auth=(GITHUB_USERNAME, GITHUB_TOKEN), timeout=(5, 30)
+            )
+            content = file_resp.json().get("content", "")
+            if content:
+                node_files.append({
+                    "node_name": node_name,
+                    "content": base64.b64decode(content).decode("utf-8")
+                })
+        except Exception as e:
+            print(f"[SKIP] {item['path']}: {e}")
     return node_files
 
 
 def get_latest_commit_sha(repo_name, owner='WaveAssist', branch='main'):
     url = f"https://api.github.com/repos/{owner}/{repo_name}/commits/{branch}"
-    resp = requests.get(url, auth=(GITHUB_USERNAME, GITHUB_TOKEN))
+    resp = requests.get(url, auth=(GITHUB_USERNAME, GITHUB_TOKEN), timeout=(5, 30))
     if resp.status_code != 200:
         raise Exception(f"Failed to fetch latest commit: {resp.status_code}")
     data = resp.json()
@@ -110,7 +136,7 @@ def get_latest_commit_sha(repo_name, owner='WaveAssist', branch='main'):
 
 def get_config_yaml_from_github(repo_name, owner='WaveAssist', branch='main'):
     url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/config.yaml?ref={branch}"
-    resp = requests.get(url, auth=(GITHUB_USERNAME, GITHUB_TOKEN))
+    resp = requests.get(url, auth=(GITHUB_USERNAME, GITHUB_TOKEN), timeout=(5, 30))
     if resp.status_code != 200:
         raise Exception("Failed to fetch config.yaml")
     content = resp.json().get("content", "")
