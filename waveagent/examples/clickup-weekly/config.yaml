@@ -1,0 +1,50 @@
+name: ClickUp Weekly Summary
+description: "Every Monday at 9am UTC, reads your ClickUp tasks updated in the last 7 days and emails you a summary."
+output_default_message: "Weekly ClickUp summary email sent."
+configuration_helper_message: "Add your ClickUp personal API token, then adjust the schedule if you like."
+
+requirements:
+  - requests
+
+nodes:
+  - key: fetch_clickup
+    name: FetchClickUp
+    file_name: fetch_clickup.py
+    starting_node: true
+    schedule:
+      cron: "0 9 * * 1"
+      timezone: "UTC"
+
+  - key: email_summary
+    name: EmailSummary
+    file_name: email_summary.py
+    run_after:
+      - fetch_clickup
+
+variables:
+  - name: clickup_token
+    key: clickup_token
+    display_name: ClickUp API token
+    type: password
+    value: ""
+    is_optional: false
+    helper_message: "Settings → Apps → Generate (personal API token). Starts with pk_."
+
+  - name: schedule
+    key: schedule
+    display_name: Schedule
+    type: "schedule"
+    value:
+      cron: "0 9 * * 1"
+      timezone: "UTC"
+    is_optional: false
+    helper_message: "When to send the weekly ClickUp summary."
+    options:
+      - name: Weekly (Mon 9am)
+        key:
+          cron: "0 9 * * 1"
+          timezone: "UTC"
+      - name: Daily (9am)
+        key:
+          cron: "0 9 * * *"
+          timezone: "UTC"

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WaveAgent — How people use it (hosted)</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --panel:#111726; --panel2:#0d1320; --line:#1d2740;
+    --ink:#e9eef9; --muted:#8a97b4; --code:#0b1322;
+    --cc:#f0a23a; --cursor:#5b9dff; --mcp:#46e0a0; --pub:#b98cff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55;
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 22px 80px}
+  header h1{font-size:30px;margin:0 0 6px;letter-spacing:-.4px}
+  header p{color:var(--muted);font-size:15px;margin:0;max-width:780px}
+  .tag{display:inline-block;background:#0f3d2e;color:#46e0a0;border:1px solid #1c7a57;
+    border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;margin-left:8px;vertical-align:middle}
+  .oneline{margin:22px 0 6px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:12px;padding:14px 18px;font-size:13.5px;color:#c7d2ec}
+  .oneline b{color:#fff}.oneline code{color:#9fe7c4}
+  .nokey{margin-top:10px;font-size:12.5px;color:var(--muted)}
+  .nokey b{color:#ffce85}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:26px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;display:flex;flex-direction:column}
+  .card .top{padding:16px 18px 14px;border-top:3px solid var(--c)}
+  .card .who{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--c);font-weight:700}
+  .card h2{font-size:18px;margin:4px 0 6px}
+  .card .sub{color:var(--muted);font-size:12.5px;margin:0}
+  .body{padding:4px 18px 18px;flex:1}
+  ol{counter-reset:s;list-style:none;margin:0;padding:0}
+  ol li{position:relative;padding:9px 0 9px 30px;border-top:1px solid #161f33;font-size:13px}
+  ol li:first-child{border-top:none}
+  ol li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:9px;
+    width:20px;height:20px;border-radius:50%;background:var(--c);color:#0a0e1a;
+    font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .t{font-weight:600;color:#eef3ff} .d{color:var(--muted);font-size:12px;margin-top:2px}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;margin:7px 0 0;
+    padding:9px 11px;overflow-x:auto;font-size:11.5px;line-height:1.45;color:#cfe1ff;white-space:pre}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .auth{font-size:11.5px;color:var(--muted);padding:10px 18px;border-top:1px solid #161f33;background:var(--panel2)}
+  .auth b{color:#cdd9f5}
+  .warn{color:#ffce85}
+  h3.sec{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:#9fb0d6;
+    margin:40px 0 14px;font-weight:700;border-bottom:1px solid var(--line);padding-bottom:9px}
+  .pub{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--pub);
+    border-radius:12px;padding:18px 20px}
+  .pub .lead{font-size:13.5px;color:#cdd9f5;margin:0 0 12px}
+  .psteps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:760px){.psteps{grid-template-columns:1fr}}
+  .pstep{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .pstep .n{color:var(--pub);font-weight:800;font-size:12px}
+  .pstep .h{font-weight:600;font-size:13px;margin:2px 0 2px}
+  .pstep .x{color:var(--muted);font-size:12px}
+  .pstep code{color:#d9c7ff}
+  .enables{color:var(--mcp);font-size:11.5px;margin-top:6px}
+  .foot{color:var(--muted);font-size:12.5px;margin-top:30px;border-top:1px solid var(--line);padding-top:16px}
+  .foot code{color:#9fb6e6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>WaveAgent — how people use it <span class="tag">hosted · zero-install</span></h1>
+    <p>The WaveAssist MCP server is <b>hosted</b>. A user adds one <b>URL</b> with their <b>WaveAssist UID</b> in a header — exactly like a Slack or GitHub MCP — then describes the agent they want. The host's coding agent builds, live-tests, and deploys it on a schedule.</p>
+    <div class="nokey"><b>No <code>uv</code>, no Python, no install.</b> On hosts with native remote-MCP it's literally just the URL; on the rest, one <code>npx mcp-remote</code> bridge. The UID in the header is the only auth — no login step.</div>
+  </header>
+
+  <div class="oneline">
+    <b>The universal flow:</b> &nbsp;add <code>https://mcp.waveassist.io/mcp</code> with <code>Authorization: Bearer &lt;UID&gt;</code>&nbsp;→&nbsp;add the skill (the build brain)&nbsp;→&nbsp;say <code>“using waveassist, build an agent that … every Monday 9am”</code>&nbsp;→&nbsp;it designs nodes, writes code, deploys <b>unarmed</b>, runs a live test, and <b>arms the schedule only when green</b>.
+  </div>
+
+  <div class="grid">
+
+    <!-- CLAUDE CODE -->
+    <div class="card" style="--c:var(--cc)">
+      <div class="top">
+        <div class="who">End user · Claude Code</div>
+        <h2>Add URL + skill</h2>
+        <p class="sub">Remote server via <code>claude mcp add</code>; skill via the plugin.</p>
+      </div>
+      <div class="body">
+        <ol>
+          <li><span class="t">Add the hosted server</span><pre>claude mcp add --transport http \
+  waveassist https://mcp.waveassist.io/mcp \
+  --header "Authorization: Bearer &lt;UID&gt;"</pre></li>
+          <li><span class="t">Add the skill (build brain)</span><pre>/plugin marketplace add WaveAssist/WaveAgent
+/plugin install waveassist@waveassist-marketplace</pre></li>
+          <li><span class="t">Build it</span><pre>using waveassist, build an agent
+that emails me my GitHub issues
+every weekday at 9am</pre></li>
+        </ol>
+      </div>
+      <div class="auth"><b>Auth:</b> your UID is in the header — no login step. (The plugin can also ship the URL so you only set one env var.)</div>
+    </div>
+
+    <!-- CURSOR -->
+    <div class="card" style="--c:var(--cursor)">
+      <div class="top">
+        <div class="who">End user · Cursor</div>
+        <h2>Add URL + skill folder</h2>
+        <p class="sub">A URL in <code>.cursor/mcp.json</code> + the skill in <code>.cursor/skills</code>.</p>
+      </div>
+      <div class="body">
+        <ol>
+          <li><span class="t">Add the server</span><div class="d">to <code>.cursor/mcp.json</code> (or <code>~/.cursor/mcp.json</code>)</div><pre>{ "mcpServers": { "waveassist": {
+  "url": "https://mcp.waveassist.io/mcp",
+  "headers": {
+    "Authorization": "Bearer &lt;UID&gt;"
+  }
+} } }</pre></li>
+          <li><span class="t">Copy the skill</span><pre>cp -r cursor/skills/waveassist-build-deploy \
+  .cursor/skills/</pre></li>
+          <li><span class="t">Restart + enable</span><div class="d">Settings → MCP, toggle <code>waveassist</code> ON (8 tools).</div></li>
+          <li><span class="t">Build it</span><pre>using waveassist, build an agent that…</pre></li>
+        </ol>
+      </div>
+      <div class="auth"><b>Auth:</b> the UID in the header — no <code>waveassist_login</code> needed.</div>
+    </div>
+
+    <!-- GENERIC MCP -->
+    <div class="card" style="--c:var(--mcp)">
+      <div class="top">
+        <div class="who">End user · any MCP host</div>
+        <h2>One URL, anywhere</h2>
+        <p class="sub">Claude Desktop, Windsurf, VS Code, custom clients.</p>
+      </div>
+      <div class="body">
+        <ol>
+          <li><span class="t">Native remote support → just the URL</span><pre>{ "url": "https://mcp.waveassist.io/mcp",
+  "headers": {
+    "Authorization": "Bearer &lt;UID&gt;"
+  } }</pre></li>
+          <li><span class="t">No native remote? bridge with npx</span><div class="d">no Python — same shim a ClickUp MCP uses</div><pre>{ "command": "npx", "args": ["-y",
+  "mcp-remote",
+  "https://mcp.waveassist.io/mcp",
+  "--header",
+  "Authorization: Bearer &lt;UID&gt;"] }</pre></li>
+          <li><span class="t warn">⚠ Load the skill manually</span><div class="d">no plugin = no auto-load</div><pre>Read &lt;repo&gt;/skill/SKILL.md and
+follow it (load the sub-skills too).</pre></li>
+          <li><span class="t">Build it</span><pre>using waveassist, build an agent that…</pre></li>
+        </ol>
+      </div>
+      <div class="auth"><b>Same everywhere:</b> the UID rides in the header; the server reads it per request (multi-tenant).</div>
+    </div>
+
+  </div>
+
+  <!-- MAINTAINER -->
+  <h3 class="sec">Make it live — host the server (free) + publish the skill</h3>
+  <div class="pub">
+    <p class="lead">Two things power the above. <b>Host the MCP server</b> (one small container) so the URL exists, and <b>publish the skill</b> (GitHub → Claude Code marketplace; copied for Cursor/generic). The same server already runs over HTTP; auth is the per-request <code>Bearer &lt;UID&gt;</code> header.</p>
+    <div class="psteps">
+      <div class="pstep"><div class="n">1 · Host it (free)</div><div class="h">Deploy the container</div><div class="x">Scale-to-zero free tiers fit an idle MCP server. Point <code>mcp.waveassist.io</code> at it. Full CI/CD + the recommended free service in <code>docs/HOSTING.md</code>.</div><pre>cd mcp
+docker build -t waveassist-mcp .
+# deploy to your free host; it serves /mcp</pre></div>
+      <div class="pstep"><div class="n">2 · Publish the skill</div><div class="h">Public GitHub repo</div><div class="x">Push <code>WaveAssist/WaveAgent</code> public.</div><pre>gh repo create WaveAssist/WaveAgent \
+  --public --source=. --push</pre><div class="enables">→ enables the Claude Code plugin (skill) + the Cursor/generic skill copy</div></div>
+      <div class="pstep"><div class="n">3 · Harden (before public)</div><div class="h">Scoped key vs raw UID</div><div class="x">Swap the raw-UID header for a scoped, revocable key (or OAuth, so the plugin can ship a static URL + browser login). Private-beta-fine as-is.</div></div>
+    </div>
+    <p class="x" style="margin:13px 0 0;font-size:12px;color:var(--muted)"><b style="color:#cdd9f5">No PyPI needed for the hosted path</b> — the server runs on your host, not on the user's machine. (PyPI/<code>uvx</code> stays as the optional <i>self-host / dev</i> route.) Per-user agent registry is a local file on the host — mount a volume for durability; see <code>docs/HOSTING.md</code>.</p>
+  </div>
+
+  <p class="foot">
+    Hosting + CI/CD: <code>docs/HOSTING.md</code>. Full step-by-step: <code>INSTALL.md</code>. Overview: <code>docs/OVERVIEW.html</code>. Live test evidence: <code>docs/TEST_REPORT.html</code>.<br>
+    Verified: the server runs over streamable-HTTP and authenticates each request from the <code>Authorization: Bearer &lt;UID&gt;</code> header (multi-tenant). The hosted URL <code>mcp.waveassist.io</code> goes live once you deploy the container.
+  </p>
+
+</div>
+</body>
+</html>

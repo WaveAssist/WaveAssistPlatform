@@ -1,0 +1,30 @@
+{
+  "name": "waveassist-marketplace",
+  "description": "Official WaveAssist plugin marketplace for building and deploying recurring agents",
+  "owner": {
+    "name": "WaveAssist",
+    "email": "support@waveassist.io"
+  },
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "waveassist",
+      "displayName": "WaveAssist",
+      "source": {
+        "source": "github",
+        "repo": "WaveAssist/WaveAgent",
+        "path": "plugin"
+      },
+      "description": "Build and deploy deterministic, recurring WaveAssist agents from natural language.",
+      "version": "0.1.0",
+      "author": {
+        "name": "WaveAssist"
+      },
+      "homepage": "https://waveassist.io",
+      "repository": "https://github.com/WaveAssist/WaveAgent",
+      "license": "MIT",
+      "keywords": ["agent", "automation", "scheduling", "deployment"],
+      "category": "productivity"
+    }
+  ]
+}

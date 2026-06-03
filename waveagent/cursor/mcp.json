@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "waveassist": {
+      "command": "uvx",
+      "args": ["waveassist-mcp"],
+      "env": {
+        "WAVEASSIST_API_BASE": "https://api.waveassist.io",
+        "WAVEASSIST_APP_BASE": "https://app.waveassist.io"
+      }
+    }
+  }
+}

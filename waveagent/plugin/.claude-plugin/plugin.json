@@ -1,0 +1,23 @@
+{
+  "name": "waveassist",
+  "displayName": "WaveAssist",
+  "version": "0.1.0",
+  "description": "Build and deploy deterministic, recurring WaveAssist agents from natural language. Gather requirements, design nodes, write code, deploy, test, and schedule — all from your editor.",
+  "author": {
+    "name": "WaveAssist"
+  },
+  "homepage": "https://waveassist.io",
+  "repository": "https://github.com/WaveAssist/WaveAgent",
+  "license": "MIT",
+  "keywords": ["agent", "automation", "scheduling", "deployment", "waveassist"],
+  "mcpServers": {
+    "waveassist": {
+      "command": "uvx",
+      "args": ["--from", "${CLAUDE_PLUGIN_ROOT}/mcp", "waveassist-mcp"],
+      "env": {
+        "WAVEASSIST_API_BASE": "https://api.waveassist.io",
+        "WAVEASSIST_APP_BASE": "https://app.waveassist.io"
+      }
+    }
+  }
+}

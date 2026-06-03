@@ -1,0 +1,172 @@
+{
+  "uid_masked": "2fec42dd\u20263ccf",
+  "token_masked": "pk_17662\u2026E1TH",
+  "project_key": "clickup_weekly_summary_a50d",
+  "dashboard_url": "https://app.waveassist.io/project/clickup_weekly_summary_a50d",
+  "steps": [
+    {
+      "name": "ClickUp token verified directly",
+      "status": "PASS",
+      "detail": "1 workspace(s); 0 task(s) updated in last 7 days"
+    },
+    {
+      "name": "set_key clickup_token (default + test envs)",
+      "status": "PASS",
+      "detail": {
+        "environments": [
+          "clickup_weekly_summary_a50d_default",
+          "clickup_weekly_summary_a50d_test"
+        ],
+        "ok": true
+      }
+    },
+    {
+      "name": "set_key lookback_days (test window)",
+      "status": "PASS",
+      "detail": {
+        "value": "400",
+        "ok": true
+      }
+    },
+    {
+      "name": "test_agent (dry run, real ClickUp + call_llm)",
+      "status": "PASS",
+      "detail": {
+        "overall": "SUCCESS",
+        "nodes": [
+          {
+            "node_key": "fetch_clickup",
+            "node_name": "FetchClickUp",
+            "status": "SUCCESS",
+            "error": null
+          },
+          {
+            "node_key": "email_summary",
+            "node_name": "EmailSummary",
+            "status": "SUCCESS",
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "KV inspection (clickup_tasks stored by the node)",
+      "status": "PASS",
+      "detail": "100 task(s) stored; error=''"
+    }
+  ],
+  "direct_clickup": {
+    "teams": [
+      {
+        "id": "9016836550",
+        "name": "WaveAssist"
+      }
+    ],
+    "recent_task_count": 0,
+    "sample_tasks": []
+  },
+  "set_key": {
+    "ok": true,
+    "environments": [
+      "clickup_weekly_summary_a50d_default",
+      "clickup_weekly_summary_a50d_test"
+    ]
+  },
+  "lookback_days": "400",
+  "test_run": {
+    "overall": "SUCCESS",
+    "is_green": true,
+    "run_id": "48605830-153a-4261-bcbe-9225b2097f52",
+    "dag_key": "DAG_clickup_weekly_summary_a50d_fetch_clickup_test_run_clickup_weekly_summary_a50d_test_2026-06-03 11:13:52.862309",
+    "nodes": [
+      {
+        "node_key": "fetch_clickup",
+        "node_name": "FetchClickUp",
+        "status": "SUCCESS",
+        "error": null
+      },
+      {
+        "node_key": "email_summary",
+        "node_name": "EmailSummary",
+        "status": "SUCCESS",
+        "error": null
+      }
+    ],
+    "display_output_preview": {
+      "html_content": "<div style=\"font-family:Inter,sans-serif;\"><p style=\"font-size:13px;color:#888;\">Preview (test run \u2014 email not sent):</p><div style=\"font-family:Inter,-apple-system,sans-serif;max-width:640px;\"><h2 style=\"font-size:20px;margin:0 0 4px;\">WaveAssist Week: Product Features &amp; Accelerator Applications in Motion</h2><p style=\"font-size:13px;color:#888;margin:0 0 16px;\">100 task(s) updated recently</p><p style=\"font-size:14px;\">This week focuses on shipping core product features, processing accelerator applications, and building out infrastructure improvements.</p><ul style=\"padding-left:18px;font-size:14px;\"><li style=\"margin-bottom:6px;\">Product launches: PayPal mobile fix, WordPress redirect with SEO tracking, and Product Hunt launch all in progress</li><li style=\"margin-bottom:6px;\">Predictor tools ramping up: Crypto and Metals Predictor features queued for development</li><li style=\"margin-bottom:6px;\">Accelerator pipeline active: 5 applications submitted (Y Combinator, Alchemist, Antler, Iterative, Techstars) with 11 more awaiting responses</li><li style=\"margin-bottom:6px;\">Infrastructure upgrades underway: PyMongo migration, S3 helper library, payment gateways, and multi-deploy options in the queue</li><li style=\"margin-bottom:6px;\">Agent marketplace taking shape: Frontend pricing and secure isPremium handling being implemented</li><li style=\"margin-bottom:6px;\">Flow approvals complete: 16 agent templates (Word Wizard, DadJoke, CryptoBeat, etc.) approved and ready to go</li></ul><p style=\"font-size:12px;color:#aaa;margin-top:20px;\">Sent by your WaveAssist ClickUp Weekly agent.</p></div></div>",
+      "type": "preview"
+    }
+  },
+  "kv": {
+    "clickup_tasks_count": 100,
+    "clickup_tasks_sample": [
+      {
+        "name": "Redirect WP dot com with SEO Tracked",
+        "status": "to do",
+        "assignees": [],
+        "url": "https://app.clickup.com/t/86d00czmj",
+        "list": "Operators",
+        "workspace": "WaveAssist"
+      },
+      {
+        "name": "PayPall Popup mobile Fix",
+        "status": "to do",
+        "assignees": [],
+        "url": "https://app.clickup.com/t/86d08tbf7",
+        "list": "Bugs",
+        "workspace": "WaveAssist"
+      },
+      {
+        "name": "Crypto Predictor",
+        "status": "to do",
+        "assignees": [],
+        "url": "https://app.clickup.com/t/86d08qxf6",
+        "list": "WaveOfAssistants",
+        "workspace": "WaveAssist"
+      },
+      {
+        "name": "Metals Predictor",
+        "status": "to do",
+        "assignees": [],
+        "url": "https://app.clickup.com/t/86d08qxf1",
+        "list": "WaveOfAssistants",
+        "workspace": "WaveAssist"
+      },
+      {
+        "name": "Project Management Summary Assistant",
+        "status": "to do",
+        "assignees": [],
+        "url": "https://app.clickup.com/t/86czzat5d",
+        "list": "WaveOfAssistants",
+        "workspace": "WaveAssist"
+      },
+      {
+        "name": "GitZoid PR Review Assistant",
+        "status": "to do",
+        "assignees": [],
+        "url": "https://app.clickup.com/t/86czzat4c",
+        "list": "WaveOfAssistants",
+        "workspace": "WaveAssist"
+      },
+      {
+        "name": "Launch WP on PH",
+        "status": "to do",
+        "assignees": [],
+        "url": "https://app.clickup.com/t/86d00czhf",
+        "list": "Operators",
+        "workspace": "WaveAssist"
+      },
+      {
+        "name": "Email to add WavePredict existing customers",
+        "status": "to do",
+        "assignees": [],
+        "url": "https://app.clickup.com/t/86d00czj3",
+        "list": "Operators",
+        "workspace": "WaveAssist"
+      }
+    ],
+    "clickup_error": ""
+  },
+  "unit_tests": "20 passed (see pytest)",
+  "finished": true
+}

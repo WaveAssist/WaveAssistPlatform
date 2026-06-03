@@ -1,0 +1,59 @@
+# Auto-deploy the hosted WaveAssist MCP server to Google Cloud Run on every push to
+# main. Uses Workload Identity Federation (no long-lived JSON keys).
+#
+# ONE-TIME SETUP (gcloud commands) is in docs/HOSTING.md → "Where to host".
+# Replace the two placeholders below: <PROJECT_NUMBER> and the project id `waveassist`.
+name: Deploy MCP to Cloud Run
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mcp/**"
+      - ".github/workflows/deploy-mcp.yml"
+
+permissions:
+  contents: read
+  id-token: write          # required for Workload Identity Federation
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: waveassist
+      REGION: us-central1
+      SERVICE: waveassist-mcp
+      IMAGE: us-central1-docker.pkg.dev/waveassist/mcp/waveassist-mcp
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/providers/github
+          service_account: gh-deployer@waveassist.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      - name: Build & push image
+        working-directory: mcp           # the Dockerfile lives here
+        run: |
+          docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
+          docker push $IMAGE:${{ github.sha }}
+          docker push $IMAGE:latest
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.IMAGE }}:${{ github.sha }}
+          # --allow-unauthenticated: MCP clients can't do Google IAM; our own
+          # Authorization: Bearer <UID> header handles tenancy.
+          # --timeout=3600: don't cut long streamable-HTTP/SSE sessions.
+          flags: --allow-unauthenticated --port=8000 --timeout=3600 --min-instances=0 --max-instances=2
+          env_vars: |
+            WAVEASSIST_API_BASE=https://api.waveassist.io
+            WAVEASSIST_APP_BASE=https://app.waveassist.io
+            WAVEASSIST_HOME=/data/.waveassist

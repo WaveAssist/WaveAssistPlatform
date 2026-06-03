@@ -1,0 +1,27 @@
+# Render blueprint — the QUICKEST free deploy of the hosted MCP server.
+# Setup: push this repo to GitHub, then on render.com → "New +" → "Blueprint" →
+# pick the repo. Render reads this file, builds mcp/Dockerfile, and auto-deploys on
+# every push to the connected branch. HTTPS + a custom domain are included.
+#
+# Caveats (fine for a beta — see docs/HOSTING.md):
+#   * the FREE web service sleeps after ~15 min idle (~1-min cold start)
+#   * FREE has no persistent disk → WAVEASSIST_HOME is ephemeral (dedup registry
+#     resets on redeploy). Make the registry stateless before prod.
+services:
+  - type: web
+    name: waveassist-mcp
+    runtime: docker
+    rootDir: mcp                 # the Dockerfile lives in mcp/
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    autoDeploy: true             # CI/CD: redeploy on push to the connected branch
+    envVars:
+      - key: WAVEASSIST_API_BASE
+        value: https://api.waveassist.io
+      - key: WAVEASSIST_APP_BASE
+        value: https://app.waveassist.io
+      - key: WAVEASSIST_HOME
+        value: /data/.waveassist
+    # Render injects $PORT; the server reads it (serve_http). No healthCheckPath:
+    # Render's port check is enough (the /mcp endpoint isn't a plain GET 200).
