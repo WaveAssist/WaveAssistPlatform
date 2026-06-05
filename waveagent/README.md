@@ -1,32 +1,32 @@
 # WaveAgent
 
 **Build & deploy deterministic, recurring [WaveAssist](https://waveassist.io)
-agents from inside your coding agent — Claude Code or Cursor — in plain English.**
+agents from inside your coding agent (Claude Code or Cursor) in plain English.**
 
 > *"using waveassist, with my UID, build an agent that reads my ClickUp and emails
 > me a weekly summary"*
 
 …and your coding agent gathers the requirements, designs the nodes, writes the
 code, deploys it to your WaveAssist account, runs a **live test**, and puts it on a
-schedule — only going live once the test is green.
+schedule. It goes live once the test is green.
 
 No Composio. No `call_tool`. You connect any tool by putting an API key in
-WaveAssist's key-value store; generated nodes read it with plain `requests`.
-Runtime language reasoning uses `call_llm` (WaveAssist's own LLM key — you don't
+WaveAssist's key-value store, and generated nodes read it with plain `requests`.
+Runtime language reasoning uses `call_llm` (WaveAssist's own LLM key, you don't
 provide one).
 
 ---
 
-## How it works — the host agent is the brain
+## How it works (the host agent is the brain)
 
 WaveAgent has three layers, shipped together:
 
-1. **A portable SKILL** (`skill/`) — the build-time brain your coding agent
+1. **A portable SKILL** (`skill/`). The build-time brain your coding agent
    follows: the orchestration loop, the node-authoring contract, the keys-in-KV
    integration pattern. Identical behaviour in Claude Code and Cursor.
-2. **A thin MCP server** (`mcp/`) — ~8 typed tools wrapping the WaveAssist HTTP
+2. **A thin MCP server** (`mcp/`). ~8 typed tools wrapping the WaveAssist HTTP
    API. **No reasoning lives here.**
-3. **Packaging** — a Claude Code **plugin** (`plugin/`) for one-command install,
+3. **Packaging.** a Claude Code **plugin** (`plugin/`) for one-command install,
    and a **Cursor mirror** (`cursor/`).
 
 ```
@@ -121,35 +121,31 @@ The agent fetches the build guide from the server, so the MCP URL is all you nee
 
 ## Publishing
 
-Maintainer path (see **[INSTALL.md §D](INSTALL.md#d-publishing-maintainer--what-you-must-do-so-the-above-works)**):
+It is already live. The server is hosted at `https://mcp.waveassist.ai/mcp` and the
+public repo is at `github.com/WaveAssist/WaveAgent`. Full maintainer steps are in
+[INSTALL.md](INSTALL.md) under "D. Publishing (maintainer)". In short:
 
-- **Standalone GitHub repo** (`gh repo create WaveAssist/WaveAgent --public …`) →
-  enables the Claude Code marketplace. No Anthropic approval — the root
-  `.claude-plugin/marketplace.json` resolves directly.
-- **Hosted server** (Google Cloud Run, free tier) → `https://mcp.waveassist.ai/mcp`,
-  the zero-install path every host uses. CI/CD: push to `main` auto-deploys.
-- **PyPI publish** *(optional)* → only enables the self-run `uvx waveassist-mcp`
-  alternative; the hosted URL doesn't need it.
-- **Future releases:** bump the version **in lockstep** across all 4 files
-  (`plugin/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`,
-  `mcp/pyproject.toml`, `plugin/mcp/pyproject.toml`), then commit, tag, re-upload.
+1. Public GitHub repo. Enables the Claude Code marketplace. No Anthropic approval, because the root `.claude-plugin/marketplace.json` resolves directly.
+2. Hosted server on Google Cloud Run, free tier. This is the zero-install path every host uses. Pushing to `main` with changes under `mcp/` auto-deploys it.
+3. PyPI publish is optional. It only enables the self-run `uvx waveassist-mcp` path. The hosted URL does not need it.
+4. For each release, bump the version in lockstep across four files: `plugin/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `mcp/pyproject.toml`, and `plugin/mcp/pyproject.toml`. Then commit, tag, and push.
   PyPI versions are immutable.
 
 ## What the agent does, step by step
 
-1. **Auth** — `waveassist_login` with your WaveAssist UID.
-2. **Gather** — cadence, sources + keys, the transform, the output.
-3. **Design nodes** — proposes a small DAG and **confirms with you** before coding.
-4. **Collect keys (smart)** — reuses any key already available (host MCP
-   connectors / env / KV) before asking; when it must ask, it shows you exactly
+1. **Auth.** `waveassist_login` with your WaveAssist UID.
+2. **Gather.** cadence, sources + keys, the transform, the output.
+3. **Design nodes.** proposes a small DAG and **confirms with you** before coding.
+4. **Collect keys (smart).** reuses any key already available (host MCP
+   connectors / env / KV) before asking. When it must ask, it shows you exactly
    **how to get the token**.
-5. **Write code** — flat `{node}.py` + `config.yaml`, to the contract.
-6. **Deploy unarmed** — code is pushed and installed, but the schedule does not
+5. **Write code.** flat `{node}.py` + `config.yaml`, to the contract.
+6. **Deploy unarmed.** code is pushed and installed, but the schedule does not
    fire yet.
-7. **Test** — a real dry-run on WaveAssist infra (side-effects gated by
+7. **Test.** a real dry-run on WaveAssist infra (side-effects gated by
    `is_test_run()`), with per-node status + an output preview.
 8. **Fix** until green.
-9. **Arm** the schedule — only on a green test.
+9. **Arm** the schedule, only on a green test.
 
 ## Quick start
 
@@ -162,15 +158,15 @@ See **[INSTALL.md](INSTALL.md)** for Claude Code and Cursor setup. In short:
 
 ## Proven end-to-end
 
-The included example — **[`examples/clickup-weekly/`](examples/clickup-weekly/)**
-(ClickUp → weekly email) — was generated to the contract and run through the full
+The included example **[`examples/clickup-weekly/`](examples/clickup-weekly/)**
+(ClickUp to weekly email) was generated to the contract and run through the full
 pipeline against a live WaveAssist account: **create → materialize → install →
 update → set key → dry-run test (green) → arm schedule.** It's the golden template
 the SKILL teaches.
 
 ## Status (v1)
 
-- **For:** a **private beta** — auth is by WaveAssist UID, which is fine for trusted
+- **For:** a **private beta.** Auth is by WaveAssist UID, which is fine for trusted
   users.
 - **Working now:** the whole build→test→deploy→schedule loop against the existing
   WaveAssist API, with open natural-language generation kept reliable by the
@@ -178,7 +174,7 @@ the SKILL teaches.
 - **Deferred to a hardening phase (the gate to public launch):** a scoped/revocable
   API key (vs raw UID), a write-only "secret" KV type + out-of-band key entry, a
   server-side validate-only endpoint, and per-key rate limiting. See
-  [docs/SPEC.md](docs/SPEC.md) §3.
+  [docs/SPEC.md](docs/SPEC.md), section 3.
 
 ## Layout
 
@@ -198,7 +194,7 @@ the SKILL teaches.
 - The node runtime wraps each flat node file into `def run_task():` and calls it
   (`WaveAssistApi/.../Utils/utils.py:get_code_for_node`); the worker
   (`WaveAssistWorkerEngine/Engine/TaskRunner.py`) catches only `Exception`. So a
-  node must **never** use `exit()`/`sys.exit()`/`raise SystemExit` — a `SystemExit`
+  node must **never** use `exit()`/`sys.exit()`/`raise SystemExit`. A `SystemExit`
   (a `BaseException`) propagates past the completion log and the node is stuck
   `STARTED`. The bundled skills teach the fall-through idiom. ⚠️ The upstream
   `Assistants/WaveMaker/skills/waveassist-sdk.md` (lines ~31, ~260) still has the
