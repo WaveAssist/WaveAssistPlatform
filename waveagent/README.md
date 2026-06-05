@@ -41,21 +41,83 @@ You ──▶ coding agent (Claude Code / Cursor)
 
 ## Using it
 
-Three ways to install — see **[INSTALL.md](INSTALL.md)** for full steps.
+You need a **WaveAssist UID** (get one at [app.waveassist.io](https://app.waveassist.io)).
+Pick your tool below. Full detail in [INSTALL.md](INSTALL.md).
 
-- **Claude Code (plugin):** `/plugin marketplace add WaveAssist/WaveAgent` →
-  `/plugin install waveassist@waveassist-marketplace` (auto-loads server + skill). → [§A](INSTALL.md#a-claude-code-plugin)
-- **Cursor (MCP + skill):** add the **hosted URL** `https://mcp.waveassist.ai/mcp`
-  (with header `Authorization: Bearer <YOUR_UID>`) to `.cursor/mcp.json`, then copy
-  the `waveassist-build-deploy` skill folder into `.cursor/skills/`. → [§B](INSTALL.md#b-cursor-mcp--skill)
-- **Any other MCP host:** the same hosted URL + Bearer header in the host's MCP
-  config, then load the skill yourself (read `skill/SKILL.md`) — generic hosts don't
-  auto-load it. → [§C](INSTALL.md#c-any-other-mcp-host-claude-desktop-windsurf-vs-code-custom)
+### Claude Code
 
-Authentication is your **WaveAssist UID**: on the hosted paths it rides in the
-`Authorization: Bearer <UID>` header (no login step); on a self-run server, call the
-`waveassist_login` tool with your UID. Then, everywhere, say
-**"using waveassist, build an agent that …"**.
+Step 1. Add the hosted server (paste your UID).
+
+```
+claude mcp add --transport http waveassist https://mcp.waveassist.ai/mcp --header "Authorization: Bearer YOUR_UID"
+```
+
+Step 2. Add the build skill.
+
+```
+/plugin marketplace add WaveAssist/WaveAgent
+/plugin install waveassist@waveassist-marketplace
+```
+
+Step 3. Build an agent (just describe it).
+
+```
+using waveassist, build an agent that emails me my GitHub issues every weekday at 9am
+```
+
+### Cursor
+
+Step 1. Add the hosted server. Put this in `.cursor/mcp.json` (paste your UID).
+
+```json
+{
+  "mcpServers": {
+    "waveassist": {
+      "url": "https://mcp.waveassist.ai/mcp",
+      "headers": { "Authorization": "Bearer YOUR_UID" }
+    }
+  }
+}
+```
+
+Step 2. Restart Cursor. Open Settings, go to MCP, confirm the `waveassist` server is ON.
+
+Step 3. Build an agent.
+
+```
+using waveassist, build an agent that emails me a weekly summary of my ClickUp tasks
+```
+
+The agent loads the build instructions automatically by calling the
+`waveassist_build_guide` tool. That is all you need. (Optional, for the smoothest
+experience, copy the `cursor/skills/waveassist-build-deploy` folder into
+`.cursor/skills/` so the guide is always in context.)
+
+### Any other MCP host (Claude Desktop, Windsurf, VS Code, custom)
+
+Step 1. Add the hosted server to the host MCP config (paste your UID).
+
+```json
+{
+  "mcpServers": {
+    "waveassist": {
+      "url": "https://mcp.waveassist.ai/mcp",
+      "headers": { "Authorization": "Bearer YOUR_UID" }
+    }
+  }
+}
+```
+
+Step 2. Restart the host. Confirm the 8 `waveassist_` tools appear.
+
+Step 3. Build an agent.
+
+```
+using waveassist, build an agent that posts a daily standup summary to Slack
+```
+
+Authentication is your UID in the `Authorization` header. There is no login step.
+The agent fetches the build guide from the server, so the MCP URL is all you need.
 
 ## Publishing
 
