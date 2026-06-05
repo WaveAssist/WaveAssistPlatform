@@ -435,8 +435,17 @@ def serve_http() -> None:
     https://mcp.waveassist.io/mcp. Auth is per-request via the
     `Authorization: Bearer <WaveAssist-UID>` header (multi-tenant). Configure host/port
     with WAVEASSIST_MCP_HOST / PORT (or WAVEASSIST_MCP_PORT)."""
+    from mcp.server.transport_security import TransportSecuritySettings
+
     mcp.settings.host = os.environ.get("WAVEASSIST_MCP_HOST", "0.0.0.0")
     mcp.settings.port = int(os.environ.get("PORT") or os.environ.get("WAVEASSIST_MCP_PORT", "8000"))
+    # The SDK's DNS-rebinding protection only accepts localhost Host headers (it
+    # exists to protect LOCAL servers from malicious browser pages). A hosted,
+    # public, header-authenticated server is exactly the case it must be off for —
+    # otherwise every request via run.app / mcp.waveassist.io gets HTTP 421.
+    mcp.settings.transport_security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=False
+    )
     mcp.run(transport="streamable-http")
 
 

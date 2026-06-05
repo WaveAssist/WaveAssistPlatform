@@ -1,0 +1,11 @@
+# Keep the Cloud Run source upload small — only the package matters
+# (the Dockerfile COPYs pyproject.toml, README.md, src/).
+.gcloudignore
+.venv/
+__pycache__/
+*.pyc
+dist/
+*.egg-info/
+tests/
+scripts/
+.pytest_cache/
