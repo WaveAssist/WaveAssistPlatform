@@ -3,10 +3,11 @@
 Install WaveAgent in your editor or MCP host, then build & deploy recurring WaveAssist agents in plain English.
 
 > **Prerequisites**
-> - **`uv`** must be installed — the MCP server launches via `uvx` (ships with `uv`).
->   Install it: `curl -LsSf https://astral.sh/uv/install.sh | sh`. `uv` must be on
->   your `PATH` at runtime (the server launches via `uvx` every session).
 > - **A WaveAssist UID** — get one from [app.waveassist.io](https://app.waveassist.io).
+>   That's all for the **hosted** paths (§B/§C) — they're a URL + your UID in a header.
+> - **`uv`** is needed **only for §A (the Claude Code plugin)**, which runs a bundled
+>   copy of the server via `uvx`: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+>   (must be on `PATH` at runtime).
 
 ---
 
@@ -50,21 +51,20 @@ Install WaveAgent in your editor or MCP host, then build & deploy recurring Wave
 ## B. Cursor (MCP + skill)
 
 1. **Add the server** to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global) —
-   published form:
+   the **hosted URL** (zero install, no `uv`):
    ```json
    {
      "mcpServers": {
        "waveassist": {
-         "command": "uvx",
-         "args": ["waveassist-mcp"],
-         "env": {
-           "WAVEASSIST_API_BASE": "https://api.waveassist.io",
-           "WAVEASSIST_APP_BASE": "https://app.waveassist.io"
+         "url": "https://mcp.waveassist.ai/mcp",
+         "headers": {
+           "Authorization": "Bearer <YOUR_WAVEASSIST_UID>"
          }
        }
      }
    }
    ```
+   Your UID rides in the header — that's the whole auth (no login tool needed).
 2. **Install the skill** — copy the **whole** skill folder (sub-skills + `examples/`,
    not just `SKILL.md`) into a skills root at the **same scope** as your `mcp.json`:
    ```bash
@@ -75,42 +75,51 @@ Install WaveAgent in your editor or MCP host, then build & deploy recurring Wave
    `.cursor/rules` and **NOT** `AGENTS.md`.
 3. **Restart Cursor.** Open Settings (**Cmd+Shift+J**) → **MCP** and confirm the
    `waveassist` server toggle is **ON** and shows its **8 tools**.
-4. **Authenticate** — ask the agent to `Call waveassist_login with uid <YOUR_UID>`,
-   then `Call waveassist_status` to confirm.
+4. **Verify** — ask the agent to `Call waveassist_status` → expect
+   `uid_present: true, transport: http` (auth came from the header).
 5. **Build:**
    ```
    using waveassist, build an agent that ...
    ```
 
-> **Dev alternative (contributors).** End-users use `uvx waveassist-mcp` (from PyPI).
-> The repo also ships a local-dev form for testing a checkout before publish — set
-> `"args"` to `["--from", "/ABSOLUTE/PATH/TO/WaveAgent/mcp", "waveassist-mcp"]`.
+> **Self-run alternative (contributors / offline).** Instead of the hosted URL you can
+> run the server locally: `"command": "uvx"`, `"args": ["--from",
+> "/ABSOLUTE/PATH/TO/WaveAgent/mcp", "waveassist-mcp"]` (requires `uv`), then
+> authenticate with the `waveassist_login` tool.
 
 ---
 
 ## C. Any other MCP host (Claude Desktop, Windsurf, VS Code, custom)
 
-1. **Add to the host's MCP config.** (Claude Desktop:
-   Settings → Developer → Edit Config → `claude_desktop_config.json`.)
+1. **Add to the host's MCP config** — the **hosted URL** (zero install). Hosts with
+   native remote-MCP support:
    ```json
    {
      "mcpServers": {
        "waveassist": {
-         "command": "uvx",
-         "args": ["waveassist-mcp"],
-         "env": {
-           "WAVEASSIST_UID": "<your-uid>"
+         "url": "https://mcp.waveassist.ai/mcp",
+         "headers": {
+           "Authorization": "Bearer <YOUR_WAVEASSIST_UID>"
          }
        }
      }
    }
    ```
-   **Alternative without `uvx`:** `pip install waveassist-mcp`, then set
-   `"command"` to the **absolute path** to that Python and `"args"` to
-   `["-m", "waveassist_mcp"]`.
+   **Hosts without native remote MCP** (e.g. older Claude Desktop) — bridge with
+   `npx mcp-remote` (no Python needed):
+   ```json
+   {
+     "mcpServers": {
+       "waveassist": {
+         "command": "npx",
+         "args": ["-y", "mcp-remote", "https://mcp.waveassist.ai/mcp",
+                  "--header", "Authorization: Bearer <YOUR_WAVEASSIST_UID>"]
+       }
+     }
+   }
+   ```
 2. **Restart the host** and confirm the **8 `waveassist_` tools** appear.
-3. **Authenticate** — call `waveassist_login(uid="<your-uid>")`
-   (or set `WAVEASSIST_UID` in `env`).
+3. **Auth is the header** — verify with `waveassist_status()` → `uid_present: true`.
 4. **IMPORTANT LIMITATION — no skill auto-load.** A generic host won't auto-load
    the skill, and the MCP server is a thin pipe with **no reasoning**, so you
    **must supply the skill yourself**: clone the repo and tell the agent to
@@ -150,7 +159,8 @@ Install WaveAgent in your editor or MCP host, then build & deploy recurring Wave
    **No Anthropic approval needed** for a self-hosted marketplace —
    `/plugin marketplace add WaveAssist/WaveAgent` resolves the root
    `.claude-plugin/marketplace.json` directly.
-4. **Build + publish to PyPI** (this is what makes `uvx waveassist-mcp` work for
+4. **(Optional) Build + publish to PyPI** — NOT needed for the hosted URL; only
+   enables the self-run `uvx waveassist-mcp` path (it's what makes that work for
    Cursor/generic users):
    ```bash
    ( cd mcp && python3 -m build )
@@ -200,7 +210,7 @@ WaveAgent/
 │       └── examples/clickup-weekly/
 │
 ├── cursor/                          # Cursor package
-│   ├── mcp.json                     # MCP config (published: uvx waveassist-mcp)
+│   ├── mcp.json                     # MCP config (hosted URL + Bearer UID)
 │   └── skills/waveassist-build-deploy/
 │       ├── SKILL.md
 │       ├── waveassist-sdk.md

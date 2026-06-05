@@ -72,7 +72,7 @@
   </header>
 
   <div class="oneline">
-    <b>The universal flow:</b> &nbsp;add <code>https://mcp.waveassist.io/mcp</code> with <code>Authorization: Bearer &lt;UID&gt;</code>&nbsp;→&nbsp;add the skill (the build brain)&nbsp;→&nbsp;say <code>“using waveassist, build an agent that … every Monday 9am”</code>&nbsp;→&nbsp;it designs nodes, writes code, deploys <b>unarmed</b>, runs a live test, and <b>arms the schedule only when green</b>.
+    <b>The universal flow:</b> &nbsp;add <code>https://mcp.waveassist.ai/mcp</code> with <code>Authorization: Bearer &lt;UID&gt;</code>&nbsp;→&nbsp;add the skill (the build brain)&nbsp;→&nbsp;say <code>“using waveassist, build an agent that … every Monday 9am”</code>&nbsp;→&nbsp;it designs nodes, writes code, deploys <b>unarmed</b>, runs a live test, and <b>arms the schedule only when green</b>.
   </div>
 
   <div class="grid">
@@ -87,7 +87,7 @@
       <div class="body">
         <ol>
           <li><span class="t">Add the hosted server</span><pre>claude mcp add --transport http \
-  waveassist https://mcp.waveassist.io/mcp \
+  waveassist https://mcp.waveassist.ai/mcp \
   --header "Authorization: Bearer &lt;UID&gt;"</pre></li>
           <li><span class="t">Add the skill (build brain)</span><pre>/plugin marketplace add WaveAssist/WaveAgent
 /plugin install waveassist@waveassist-marketplace</pre></li>
@@ -109,7 +109,7 @@ every weekday at 9am</pre></li>
       <div class="body">
         <ol>
           <li><span class="t">Add the server</span><div class="d">to <code>.cursor/mcp.json</code> (or <code>~/.cursor/mcp.json</code>)</div><pre>{ "mcpServers": { "waveassist": {
-  "url": "https://mcp.waveassist.io/mcp",
+  "url": "https://mcp.waveassist.ai/mcp",
   "headers": {
     "Authorization": "Bearer &lt;UID&gt;"
   }
@@ -132,13 +132,13 @@ every weekday at 9am</pre></li>
       </div>
       <div class="body">
         <ol>
-          <li><span class="t">Native remote support → just the URL</span><pre>{ "url": "https://mcp.waveassist.io/mcp",
+          <li><span class="t">Native remote support → just the URL</span><pre>{ "url": "https://mcp.waveassist.ai/mcp",
   "headers": {
     "Authorization": "Bearer &lt;UID&gt;"
   } }</pre></li>
           <li><span class="t">No native remote? bridge with npx</span><div class="d">no Python — same shim a ClickUp MCP uses</div><pre>{ "command": "npx", "args": ["-y",
   "mcp-remote",
-  "https://mcp.waveassist.io/mcp",
+  "https://mcp.waveassist.ai/mcp",
   "--header",
   "Authorization: Bearer &lt;UID&gt;"] }</pre></li>
           <li><span class="t warn">⚠ Load the skill manually</span><div class="d">no plugin = no auto-load</div><pre>Read &lt;repo&gt;/skill/SKILL.md and
@@ -156,7 +156,7 @@ follow it (load the sub-skills too).</pre></li>
   <div class="pub">
     <p class="lead">Two things power the above. <b>Host the MCP server</b> (one small container) so the URL exists, and <b>publish the skill</b> (GitHub → Claude Code marketplace; copied for Cursor/generic). The same server already runs over HTTP; auth is the per-request <code>Bearer &lt;UID&gt;</code> header.</p>
     <div class="psteps">
-      <div class="pstep"><div class="n">1 · Host it (free)</div><div class="h">Deploy the container</div><div class="x">Scale-to-zero free tiers fit an idle MCP server. Point <code>mcp.waveassist.io</code> at it. Full CI/CD + the recommended free service in <code>docs/HOSTING.md</code>.</div><pre>cd mcp
+      <div class="pstep"><div class="n">1 · Host it (free)</div><div class="h">Deploy the container</div><div class="x">Scale-to-zero free tiers fit an idle MCP server. Point <code>mcp.waveassist.ai</code> at it. Full CI/CD + the recommended free service in <code>docs/HOSTING.md</code>.</div><pre>cd mcp
 docker build -t waveassist-mcp .
 # deploy to your free host; it serves /mcp</pre></div>
       <div class="pstep"><div class="n">2 · Publish the skill</div><div class="h">Public GitHub repo</div><div class="x">Push <code>WaveAssist/WaveAgent</code> public.</div><pre>gh repo create WaveAssist/WaveAgent \
@@ -168,7 +168,7 @@ docker build -t waveassist-mcp .
 
   <p class="foot">
     Hosting + CI/CD: <code>docs/HOSTING.md</code>. Full step-by-step: <code>INSTALL.md</code>. Overview: <code>docs/OVERVIEW.html</code>. Live test evidence: <code>docs/TEST_REPORT.html</code>.<br>
-    Verified: the server runs over streamable-HTTP and authenticates each request from the <code>Authorization: Bearer &lt;UID&gt;</code> header (multi-tenant). The hosted URL <code>mcp.waveassist.io</code> goes live once you deploy the container.
+    Verified: the server runs over streamable-HTTP and authenticates each request from the <code>Authorization: Bearer &lt;UID&gt;</code> header (multi-tenant). The hosted URL <code>mcp.waveassist.ai</code> goes live once you deploy the container.
   </p>
 
 </div>

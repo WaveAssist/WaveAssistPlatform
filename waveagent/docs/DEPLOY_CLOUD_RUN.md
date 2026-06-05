@@ -1,6 +1,6 @@
 # Deploy the WaveAssist MCP server to Google Cloud Run — start to finish
 
-Goal: a live `https://mcp.waveassist.io/mcp` that any host adds with
+Goal: a live `https://mcp.waveassist.ai/mcp` that any host adds with
 `Authorization: Bearer <UID>`. Order: push to GitHub → fast first deploy → CI/CD on
 push → custom domain → verify.
 
@@ -109,12 +109,12 @@ git commit -am "wire Cloud Run CI/CD" && git push
 
 ---
 
-## Phase 4 — Custom domain `mcp.waveassist.io`
+## Phase 4 — Custom domain `mcp.waveassist.ai`
 
 **Quick (beta) — Cloud Run domain mapping:**
 ```bash
 gcloud run domain-mappings create --service waveassist-mcp \
-  --domain mcp.waveassist.io --region us-central1
+  --domain mcp.waveassist.ai --region us-central1
 ```
 It prints DNS records (a CNAME/A) — add them at your DNS provider. (This path is
 Preview-grade; fine for a beta.)
@@ -131,7 +131,7 @@ then point an `A` record at the forwarding-rule IP. Full commands in
 
 ## Phase 5 — Verify + roll out
 
-1. `https://mcp.waveassist.io/mcp` resolves over HTTPS.
+1. `https://mcp.waveassist.ai/mcp` resolves over HTTPS.
 2. Add it to Cursor / Claude Code with your UID header (configs in `docs/USAGE.html`)
    and run *"check my waveassist status"* → `uid_present: true`.
 3. Build a real agent end-to-end: *"using waveassist, build an agent that …"*.

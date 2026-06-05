@@ -31,7 +31,7 @@ cd mcp
 docker build -t waveassist-mcp .
 docker run -p 8000:8000 -v waveassist-data:/data/.waveassist waveassist-mcp
 ```
-Then put it behind TLS at **`https://mcp.waveassist.io/mcp`** (your load balancer /
+Then put it behind TLS at **`https://mcp.waveassist.ai/mcp`** (your load balancer /
 ingress terminates TLS; the container speaks plain HTTP on `$PORT`). Works on any
 container host (Cloud Run, Fly, Render, ECS, …) — they set `$PORT`, which the
 server honours.
@@ -81,7 +81,7 @@ gcloud iam service-accounts add-iam-policy-binding $SA --project $PROJECT_ID --r
 echo "Put this PROJECT_NUMBER in deploy-mcp.yml: $PN"
 ```
 
-**Custom domain `mcp.waveassist.io`:** map it via a serverless NEG behind a global
+**Custom domain `mcp.waveassist.ai`:** map it via a serverless NEG behind a global
 external ALB (managed TLS) — the GA path; `gcloud run domain-mappings` is still Preview.
 If `waveassist.io` DNS is on Cloudflare, set the `mcp` record to **DNS-only (grey
 cloud)** so cert validation isn't intercepted.
@@ -104,7 +104,7 @@ beta on Cloud Run now and move the identical image to ECS Express Mode for prod.
   MCP sessions from being cut at the default; Render/Koyeb idle spin-down will also drop
   an idle-but-open session.
 
-## How end users connect (once it's live at mcp.waveassist.io)
+## How end users connect (once it's live at mcp.waveassist.ai)
 
 Every host config is just a URL + the user's UID in a Bearer header — the same
 shape as their existing Slack/GitHub MCP entries.
@@ -112,13 +112,13 @@ shape as their existing Slack/GitHub MCP entries.
 **Cursor / Claude Code / any host with native remote-MCP support:**
 ```json
 "waveassist": {
-  "url": "https://mcp.waveassist.io/mcp",
+  "url": "https://mcp.waveassist.ai/mcp",
   "headers": { "Authorization": "Bearer <YOUR_WAVEASSIST_UID>" }
 }
 ```
 Claude Code (CLI) equivalent:
 ```bash
-claude mcp add --transport http waveassist https://mcp.waveassist.io/mcp \
+claude mcp add --transport http waveassist https://mcp.waveassist.ai/mcp \
   --header "Authorization: Bearer <YOUR_WAVEASSIST_UID>"
 ```
 
@@ -127,7 +127,7 @@ claude mcp add --transport http waveassist https://mcp.waveassist.io/mcp \
 ```json
 "waveassist": {
   "command": "npx",
-  "args": ["-y", "mcp-remote", "https://mcp.waveassist.io/mcp",
+  "args": ["-y", "mcp-remote", "https://mcp.waveassist.ai/mcp",
            "--header", "Authorization: Bearer <YOUR_WAVEASSIST_UID>"]
 }
 ```

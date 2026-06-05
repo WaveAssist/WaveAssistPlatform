@@ -13,7 +13,7 @@ dependencies = [
 
 [project.scripts]
 waveassist-mcp = "waveassist_mcp.server:main"            # stdio (local: Claude Code / Cursor)
-waveassist-mcp-http = "waveassist_mcp.server:serve_http"  # streamable-HTTP (hosted at mcp.waveassist.io)
+waveassist-mcp-http = "waveassist_mcp.server:serve_http"  # streamable-HTTP (hosted at mcp.waveassist.ai)
 
 [build-system]
 requires = ["hatchling"]

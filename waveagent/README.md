@@ -45,10 +45,12 @@ Three ways to install — see **[INSTALL.md](INSTALL.md)** for full steps.
 
 - **Claude Code (plugin):** `/plugin marketplace add WaveAssist/WaveAgent` →
   `/plugin install waveassist@waveassist-marketplace` (auto-loads server + skill). → [§A](INSTALL.md#a-claude-code-plugin)
-- **Cursor (MCP + skill):** add `uvx waveassist-mcp` to `.cursor/mcp.json`, then copy
+- **Cursor (MCP + skill):** add the **hosted URL** `https://mcp.waveassist.ai/mcp`
+  (with header `Authorization: Bearer <YOUR_UID>`) to `.cursor/mcp.json`, then copy
   the `waveassist-build-deploy` skill folder into `.cursor/skills/`. → [§B](INSTALL.md#b-cursor-mcp--skill)
-- **Any other MCP host:** add `uvx waveassist-mcp` to the host config, then load the
-  skill yourself (read `skill/SKILL.md`) — generic hosts don't auto-load it. → [§C](INSTALL.md#c-any-other-mcp-host-claude-desktop-windsurf-vs-code-custom)
+- **Any other MCP host:** the same hosted URL + Bearer header in the host's MCP
+  config, then load the skill yourself (read `skill/SKILL.md`) — generic hosts don't
+  auto-load it. → [§C](INSTALL.md#c-any-other-mcp-host-claude-desktop-windsurf-vs-code-custom)
 
 Then, everywhere: **authenticate** (`waveassist_login` with your UID), then say
 **"using waveassist, build an agent that …"**.
@@ -60,8 +62,10 @@ Maintainer path (see **[INSTALL.md §D](INSTALL.md#d-publishing-maintainer--what
 - **Standalone GitHub repo** (`gh repo create WaveAssist/WaveAgent --public …`) →
   enables the Claude Code marketplace. No Anthropic approval — the root
   `.claude-plugin/marketplace.json` resolves directly.
-- **PyPI publish** (`cd mcp && python3 -m build` → `twine upload`) → enables
-  `uvx waveassist-mcp` for Cursor and generic hosts.
+- **Hosted server** (Google Cloud Run, free tier) → `https://mcp.waveassist.ai/mcp`,
+  the zero-install path every host uses. CI/CD: push to `main` auto-deploys.
+- **PyPI publish** *(optional)* → only enables the self-run `uvx waveassist-mcp`
+  alternative; the hosted URL doesn't need it.
 - **Future releases:** bump the version **in lockstep** across all 4 files
   (`plugin/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`,
   `mcp/pyproject.toml`, `plugin/mcp/pyproject.toml`), then commit, tag, re-upload.
