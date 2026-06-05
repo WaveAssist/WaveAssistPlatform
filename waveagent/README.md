@@ -52,7 +52,9 @@ Three ways to install — see **[INSTALL.md](INSTALL.md)** for full steps.
   config, then load the skill yourself (read `skill/SKILL.md`) — generic hosts don't
   auto-load it. → [§C](INSTALL.md#c-any-other-mcp-host-claude-desktop-windsurf-vs-code-custom)
 
-Then, everywhere: **authenticate** (`waveassist_login` with your UID), then say
+Authentication is your **WaveAssist UID**: on the hosted paths it rides in the
+`Authorization: Bearer <UID>` header (no login step); on a self-run server, call the
+`waveassist_login` tool with your UID. Then, everywhere, say
 **"using waveassist, build an agent that …"**.
 
 ## Publishing
