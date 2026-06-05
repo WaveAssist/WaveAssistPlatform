@@ -26,7 +26,7 @@ WaveAgent has three layers, shipped together:
    integration pattern. Identical behaviour in Claude Code and Cursor.
 2. **A thin MCP server** (`mcp/`). ~8 typed tools wrapping the WaveAssist HTTP
    API. **No reasoning lives here.**
-3. **Packaging.** a Claude Code **plugin** (`plugin/`) for one-command install,
+3. **Packaging.** A Claude Code **plugin** (`plugin/`) for one-command install,
    and a **Cursor mirror** (`cursor/`).
 
 ```
@@ -134,15 +134,15 @@ public repo is at `github.com/WaveAssist/WaveAgent`. Full maintainer steps are i
 ## What the agent does, step by step
 
 1. **Auth.** `waveassist_login` with your WaveAssist UID.
-2. **Gather.** cadence, sources + keys, the transform, the output.
-3. **Design nodes.** proposes a small DAG and **confirms with you** before coding.
-4. **Collect keys (smart).** reuses any key already available (host MCP
+2. **Gather.** Cadence, sources + keys, the transform, the output.
+3. **Design nodes.** Proposes a small DAG and **confirms with you** before coding.
+4. **Collect keys (smart).** Reuses any key already available (host MCP
    connectors / env / KV) before asking. When it must ask, it shows you exactly
    **how to get the token**.
-5. **Write code.** flat `{node}.py` + `config.yaml`, to the contract.
-6. **Deploy unarmed.** code is pushed and installed, but the schedule does not
+5. **Write code.** Flat `{node}.py` + `config.yaml`, to the contract.
+6. **Deploy unarmed.** Code is pushed and installed, but the schedule does not
    fire yet.
-7. **Test.** a real dry-run on WaveAssist infra (side-effects gated by
+7. **Test.** A real dry-run on WaveAssist infra (side-effects gated by
    `is_test_run()`), with per-node status + an output preview.
 8. **Fix** until green.
 9. **Arm** the schedule, only on a green test.
