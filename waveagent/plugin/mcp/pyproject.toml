@@ -21,6 +21,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/waveassist_mcp"]
+# The bundled guide markdown under _skill/ is included automatically (it lives
+# inside the package dir). waveassist_build_guide reads it at runtime.
 
 [tool.pytest.ini_options]
 # Only collect the real unit tests; scripts/ holds live drivers that read env at

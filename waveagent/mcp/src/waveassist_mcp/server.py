@@ -86,6 +86,45 @@ def _mask(secret: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# build guide (the brain, served on demand)
+# --------------------------------------------------------------------------- #
+_SKILL_DIR = os.path.join(os.path.dirname(__file__), "_skill")
+_GUIDE_ORDER = [
+    "SKILL.md",
+    "integrations-without-composio.md",
+    "waveassist-sdk.md",
+    "prompt-writing-with-call-llm.md",
+    "email-html-design.md",
+]
+
+
+@mcp.tool()
+def waveassist_build_guide() -> str:
+    """Return the WaveAssist agent-authoring guide (the build brain).
+
+    CALL THIS FIRST whenever you are about to build, design, or write code for a
+    WaveAssist agent. The other tools are a thin deploy pipe with no reasoning of
+    their own — this guide carries the orchestration loop, the node-authoring
+    contract (flat files wrapped in run_task(), never exit()/SystemExit, is_test_run
+    gating, the display_output contract), the config.yaml schema, the available
+    runtime packages, and the no-Composio integration pattern. Following it is what
+    makes a generated agent actually deploy and run green.
+    """
+    parts = []
+    for name in _GUIDE_ORDER:
+        path = os.path.join(_SKILL_DIR, name)
+        try:
+            with open(path, encoding="utf-8") as f:
+                parts.append(f"\n\n===== {name} =====\n\n{f.read()}")
+        except OSError:
+            continue
+    if not parts:
+        return ("Guide files not bundled with this server build. Read the skill at "
+                "https://github.com/WaveAssist/WaveAgent/tree/main/skill and follow it.")
+    return "".join(parts).strip()
+
+
+# --------------------------------------------------------------------------- #
 # auth
 # --------------------------------------------------------------------------- #
 @mcp.tool()
@@ -149,6 +188,8 @@ def waveassist_status() -> dict:
         "api_base": config.api_base(),
         "app_base": config.app_base(),
         "agents": registry.all_agents(uid),
+        "next": "Before building any agent, call waveassist_build_guide to load the "
+                "node-authoring contract.",
     }
 
 

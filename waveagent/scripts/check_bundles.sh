@@ -107,6 +107,15 @@ if ! diff -u mcp/pyproject.toml plugin/mcp/pyproject.toml >/tmp/check_bundles.di
   status=1
 fi
 
+# --- the guide bundled INTO the server package must match the source skill/ ---
+for f in "${SKILL_FILES[@]}"; do
+  if ! diff -u "skill/$f" "mcp/src/waveassist_mcp/_skill/$f" >/tmp/check_bundles.diff 2>&1; then
+    echo "DRIFT: mcp/src/waveassist_mcp/_skill/$f differs from skill/$f"
+    cat /tmp/check_bundles.diff
+    status=1
+  fi
+done
+
 rm -f /tmp/check_bundles.diff
 
 if [ "$status" -eq 0 ]; then
