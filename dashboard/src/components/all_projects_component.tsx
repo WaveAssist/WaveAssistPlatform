@@ -188,6 +188,16 @@ const AllProjectsComponent: React.FC = () => {
 					</div>
 				</div>
 				<div className="col-6 d-flex flex-row flex-nowrap justify-content-end align-items-center button-row">
+					<button
+						className="btn btn-outline-secondary btn-sm ms-2"
+						title="Copy your User ID"
+						onClick={() => {
+							navigator.clipboard.writeText(localStorage.getItem("uid") || "");
+							showToast("User ID copied to clipboard", "success");
+						}}>
+						<i className="bi bi-person"></i>
+						<span className="d-none d-md-inline ms-1">User ID</span>
+					</button>
 					<a
 						href="https://waveassist.ai/assistants"
 						target="_self"
@@ -195,10 +205,6 @@ const AllProjectsComponent: React.FC = () => {
 						className="btn btn-outline-secondary btn-sm ms-2 use-template-button">
 						<i className="bi bi-copy"></i>
 						<span className="d-none d-md-inline ms-1">Assistants</span>
-					</a>
-					<a href="https://docs.waveassist.io" target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary btn-sm ms-2">
-						<i className="bi bi-journal-text"></i>
-						<span className="d-none d-md-inline ms-1">Docs</span>
 					</a>
 					<button className="btn btn-outline-secondary btn-sm logout_button ms-2 me-2" onClick={handleLogout}>
 						<i className="bi bi-box-arrow-right"></i>
