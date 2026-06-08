@@ -193,6 +193,29 @@ def waveassist_status() -> dict:
     }
 
 
+@mcp.tool()
+def waveassist_list_projects() -> dict:
+    """List the WaveAssist projects in your account (live, server-side) — and
+    double as a connectivity check.
+
+    The UID is the token: a successful return means your UID is accepted. Use
+    this to confirm the connection before building, or to find an existing
+    project's `project_key`. Returns {ok, count, projects:[{project_key, name,
+    github_url, ...}], uid (masked)}.
+    """
+    try:
+        uid = _require_uid()
+        client = _client()
+        try:
+            projects = client.fetch_all_projects(uid)
+        finally:
+            client.close()
+        return {"ok": True, "count": len(projects), "projects": projects,
+                "uid": _mask(uid)}
+    except Exception as e:  # noqa: BLE001
+        return _err(e)
+
+
 # --------------------------------------------------------------------------- #
 # build + deploy
 # --------------------------------------------------------------------------- #
@@ -306,6 +329,79 @@ def waveassist_set_key(
 # --------------------------------------------------------------------------- #
 # test
 # --------------------------------------------------------------------------- #
+def _run_and_poll(
+    client: "WaveAssistClient",
+    uid: str,
+    project_key: str,
+    env: str,
+    start_node_key: str,
+    timeout_seconds: int,
+    *,
+    is_test: bool,
+) -> dict:
+    """Seed `_is_test_run`, fire a one-off run against `env`, poll to completion,
+    and return the structured result. Shared by the dry test (is_test=True, TEST
+    env) and the live run (is_test=False, DEFAULT env). The caller owns the
+    client's lifecycle."""
+    terminal = {"SUCCESS", "FAILED"}
+    our = None
+    node_runs: list = []
+    overall = None
+
+    # Baseline existing runs so we can identify the one we trigger. The celery
+    # task id from run_dag is NOT the DagRuns.run_id, so we correlate by finding
+    # the newest dag run that wasn't there before.
+    before = {r.get("run_id") for r in client.fetch_dag_runs(uid, project_key, env)}
+    client.set_data_for_key(
+        uid, project_key, env, "_is_test_run", "true" if is_test else "false", "string"
+    )
+    run = client.run_dag(uid, project_key, env, start_node_key or None)
+    dag_key = (run.get("dag") or {}).get("key")
+
+    deadline = time.time() + max(15, int(timeout_seconds))
+    while time.time() < deadline:
+        time.sleep(3)
+        dag_runs = client.fetch_dag_runs(uid, project_key, env)
+        fresh = [r for r in dag_runs if r.get("run_id") not in before]
+        if not fresh:
+            continue
+        our = fresh[0]  # newest first (ordered by -created_at)
+        overall = our.get("status")
+        try:
+            node_runs = client.fetch_node_runs(uid, project_key, env, our.get("run_id"))
+        except WaveAssistError:
+            node_runs = []
+        if overall in terminal:
+            break
+
+    dag_run_id = our.get("run_id") if our else None
+    preview = None
+    if dag_run_id:
+        preview = client.fetch_data_for_key(
+            uid, project_key, env, "display_output", run_based=True, run_id=dag_run_id
+        ) or client.fetch_data_for_key(uid, project_key, env, "display_output")
+
+    nodes = [
+        {
+            "node_key": n.get("node_key"),
+            "node_name": n.get("node_name"),
+            "status": n.get("status"),
+            "error": n.get("traceback") or n.get("error") or n.get("logs"),
+        }
+        for n in node_runs
+    ]
+    overall = overall or "UNKNOWN"
+    return {
+        "ok": True,
+        "overall": overall,
+        "is_green": overall == "SUCCESS",
+        "run_id": dag_run_id,
+        "dag_key": dag_key,
+        "nodes": nodes,
+        "display_output_preview": preview,
+    }
+
+
 @mcp.tool()
 def waveassist_test_agent(
     project_key: str, start_node_key: str = "", timeout_seconds: int = 120
@@ -317,70 +413,48 @@ def waveassist_test_agent(
     Polls until the run finishes (or timeout). Returns overall status, per-node
     status + tracebacks, and any display_output preview.
 
-    ALWAYS run this and confirm it is green before waveassist_arm_schedule.
+    ALWAYS run this (or waveassist_run_agent) and confirm SUCCESS before
+    waveassist_arm_schedule.
     """
     try:
         uid = _require_uid()
-        env_test = f"{project_key}_test"
         client = _client()
-        terminal = {"SUCCESS", "FAILED"}
-        our = None
-        node_runs: list = []
-        overall = None
-        dag_key = None
         try:
-            # Baseline existing runs so we can identify the one we trigger. The
-            # celery task id from run_dag is NOT the DagRuns.run_id, so we correlate
-            # by finding the newest dag run that wasn't there before.
-            before = {r.get("run_id") for r in client.fetch_dag_runs(uid, project_key, env_test)}
-            client.set_data_for_key(uid, project_key, env_test, "_is_test_run", "true", "string")
-            run = client.run_dag(uid, project_key, env_test, start_node_key or None)
-            dag_key = (run.get("dag") or {}).get("key")
-
-            deadline = time.time() + max(15, int(timeout_seconds))
-            while time.time() < deadline:
-                time.sleep(3)
-                dag_runs = client.fetch_dag_runs(uid, project_key, env_test)
-                fresh = [r for r in dag_runs if r.get("run_id") not in before]
-                if not fresh:
-                    continue
-                our = fresh[0]  # newest first (ordered by -created_at)
-                overall = our.get("status")
-                try:
-                    node_runs = client.fetch_node_runs(uid, project_key, env_test, our.get("run_id"))
-                except WaveAssistError:
-                    node_runs = []
-                if overall in terminal:
-                    break
-
-            dag_run_id = our.get("run_id") if our else None
-            preview = None
-            if dag_run_id:
-                preview = client.fetch_data_for_key(
-                    uid, project_key, env_test, "display_output", run_based=True, run_id=dag_run_id
-                ) or client.fetch_data_for_key(uid, project_key, env_test, "display_output")
+            return _run_and_poll(
+                client, uid, project_key, f"{project_key}_test",
+                start_node_key, timeout_seconds, is_test=True,
+            )
         finally:
             client.close()
+    except Exception as e:  # noqa: BLE001
+        return _err(e)
 
-        nodes = [
-            {
-                "node_key": n.get("node_key"),
-                "node_name": n.get("node_name"),
-                "status": n.get("status"),
-                "error": n.get("traceback") or n.get("error") or n.get("logs"),
-            }
-            for n in node_runs
-        ]
-        overall = overall or "UNKNOWN"
-        return {
-            "ok": True,
-            "overall": overall,
-            "is_green": overall == "SUCCESS",
-            "run_id": dag_run_id,
-            "dag_key": dag_key,
-            "nodes": nodes,
-            "display_output_preview": preview,
-        }
+
+@mcp.tool()
+def waveassist_run_agent(
+    project_key: str, start_node_key: str = "", timeout_seconds: int = 120
+) -> dict:
+    """Run the LIVE agent once, right now, against its DEFAULT environment.
+
+    This is a real run — `_is_test_run` is set to false, so side-effects FIRE
+    (emails sent, external writes happen). It is NOT the same as arming: it
+    executes immediately and once, whereas waveassist_arm_schedule only puts the
+    agent on its recurring cron (which fires on the next scheduled tick, not now).
+
+    Use this to actually run a freshly-built agent and confirm it produces real
+    output. Polls to completion; returns overall status, per-node status +
+    tracebacks, and the display_output preview (same shape as waveassist_test_agent).
+    """
+    try:
+        uid = _require_uid()
+        client = _client()
+        try:
+            return _run_and_poll(
+                client, uid, project_key, f"{project_key}_default",
+                start_node_key, timeout_seconds, is_test=False,
+            )
+        finally:
+            client.close()
     except Exception as e:  # noqa: BLE001
         return _err(e)
 
@@ -411,17 +485,35 @@ def waveassist_run_logs(
 # --------------------------------------------------------------------------- #
 # arm / disarm schedule
 # --------------------------------------------------------------------------- #
+def _has_green_run(client: "WaveAssistClient", uid: str, project_key: str) -> bool:
+    """True if any prior run (test OR live env) finished SUCCESS. Used only to
+    warn before arming — never blocks."""
+    for env in (f"{project_key}_test", f"{project_key}_default"):
+        try:
+            runs = client.fetch_dag_runs(uid, project_key, env)
+        except WaveAssistError:
+            runs = []
+        if any(r.get("status") == "SUCCESS" for r in runs):
+            return True
+    return False
+
+
 @mcp.tool()
 def waveassist_arm_schedule(project_key: str, version: str = "") -> dict:
     """Arm the recurring schedule for a TESTED agent — it will now run on its
-    cron/interval. Only call after waveassist_test_agent is green. Clears the test
-    flag in the default environment. Returns {deployment_key, version, status}."""
+    cron/interval. Only call after a green test/run. Clears the test flag in the
+    default environment. Returns {deployment_key, version, status}.
+
+    Non-blocking: if no successful run is found for this project (test or live),
+    it still arms but returns a `warning` nudging you to test/run and confirm
+    green first."""
     try:
         uid = _require_uid()
         env_default = f"{project_key}_default"
         version = version.strip() or f"wa-{int(time.time())}"
         client = _client()
         try:
+            green_seen = _has_green_run(client, uid, project_key)
             client.set_data_for_key(uid, project_key, env_default, "_is_test_run", "false", "string")
             dep = client.deploy_project(uid, project_key, env_default, version)
         finally:
@@ -434,9 +526,16 @@ def waveassist_arm_schedule(project_key: str, version: str = "") -> dict:
                     registry.put(uid, slug, {"deployment_key": deployment_key, "version": version})
                     break
         result = {"ok": True, "status": "armed", "deployment_key": deployment_key, "version": version}
+        warnings = []
+        if not green_seen:
+            warnings.append("No successful run found for this project (test or live). "
+                            "Arming anyway — run waveassist_test_agent / waveassist_run_agent "
+                            "and confirm green first.")
         if not deployment_key:
-            result["warning"] = ("Backend returned no deployment.key; "
-                                 "disarm will require an explicit deployment_key.")
+            warnings.append("Backend returned no deployment.key; "
+                            "disarm will require an explicit deployment_key.")
+        if warnings:
+            result["warning"] = " ".join(warnings)
         return result
     except Exception as e:  # noqa: BLE001
         return _err(e)

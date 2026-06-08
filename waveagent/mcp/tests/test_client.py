@@ -164,6 +164,44 @@ def test_deploy_project_posts_form(client):
 
 
 # --------------------------------------------------------------------------- #
+# fetch_all_projects — live project list (uid is the token)
+# --------------------------------------------------------------------------- #
+@respx.mock
+def test_fetch_all_projects_unwraps_project_array(client):
+    """POST /manage/fetch_all_projects/ with just uid -> returns project_array."""
+    route = respx.post(f"{BASE}/manage/fetch_all_projects/").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "success": "1",
+                "data": {
+                    "project_array": [
+                        {"project_key": "a_ab12", "name": "A", "github_url": "https://github.com/wa/a"},
+                        {"project_key": "b_cd34", "name": "B", "github_url": ""},
+                    ]
+                },
+            },
+        )
+    )
+    out = client.fetch_all_projects(uid="test-uid-1234")
+    assert out == [
+        {"project_key": "a_ab12", "name": "A", "github_url": "https://github.com/wa/a"},
+        {"project_key": "b_cd34", "name": "B", "github_url": ""},
+    ]
+    req = route.calls.last.request
+    assert req.headers["content-type"].startswith("application/x-www-form-urlencoded")
+    assert parse_qs(req.content.decode())["uid"] == ["test-uid-1234"]
+
+
+@respx.mock
+def test_fetch_all_projects_empty_when_missing_key(client):
+    respx.post(f"{BASE}/manage/fetch_all_projects/").mock(
+        return_value=httpx.Response(200, json={"success": "1", "data": {}})
+    )
+    assert client.fetch_all_projects(uid="u") == []
+
+
+# --------------------------------------------------------------------------- #
 # fetch_data_for_key — None on "Data not found"
 # --------------------------------------------------------------------------- #
 @respx.mock

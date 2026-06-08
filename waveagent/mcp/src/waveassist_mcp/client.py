@@ -158,6 +158,13 @@ class WaveAssistClient:
             "/assistant/check_update/", {"uid": uid, "project_key": project_key}
         )
 
+    def fetch_all_projects(self, uid: str) -> list:
+        """List the user's projects (the uid is the token). Returns the
+        project_array (each dict carries project_key, name, github_url, …), or
+        [] if absent."""
+        data = self._post_form("/manage/fetch_all_projects/", {"uid": uid})
+        return (data or {}).get("project_array", []) if isinstance(data, dict) else []
+
     # ------------------------------------------------------------------ #
     # key-value store
     # ------------------------------------------------------------------ #

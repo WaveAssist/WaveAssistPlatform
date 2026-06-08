@@ -59,7 +59,7 @@ against the **existing** API (UID auth), and is **tested live**. The
 security-driven hardening is explicitly **deferred to a later phase**.
 
 ### In scope (v1)
-- The SKILL bundle, the MCP server (8 tools over existing endpoints), the plugin +
+- The SKILL bundle, the MCP server (thin tools over existing endpoints), the plugin +
   Cursor mirror.
 - Open natural-language generation ("open is best, as long as it works"). Reliability
   is enforced **structurally**: the schedule is never armed until a live test passes.
@@ -168,11 +168,13 @@ load-bearing facts the client must respect:
 |---|---|---|
 | `waveassist_login` | login + cli status poll | Browser CLI-login → save uid locally |
 | `waveassist_status` | (local config only) | whoami (uid present + api/app base) + locally-registered agents (local config only; no API call) |
+| `waveassist_list_projects` | fetch_all_projects | List the account's **live** projects (uid is the token); doubles as the connectivity check |
 | `waveassist_deploy_agent` | create_project + materialize + deploy_template **or** materialize(update) + upgrade_assistant | **Idempotent** by a stable local registry (`~/.waveassist/waveagent.json`). Deploys **unarmed**. Returns `{ok, mode: "created"|"updated", slug, project_key, repo_url, env_default, env_test, dashboard_url}` |
 | `waveassist_set_key` | set_data_for_key (×2 envs) | Store an integration key into `<key>_default` **and** `<key>_test` |
-| `waveassist_test_agent` | seed `_is_test_run` + run_dag + poll runs | Dry-run on infra; return per-node status, tracebacks, and any `display_output` preview |
+| `waveassist_test_agent` | seed `_is_test_run=true` + run_dag + poll runs | Dry-run on infra (TEST env); return per-node status, tracebacks, and any `display_output` preview |
+| `waveassist_run_agent` | seed `_is_test_run=false` + run_dag + poll runs | **Live** one-off run now (DEFAULT env); side-effects fire. Distinct from arming |
 | `waveassist_run_logs` | fetch_dag_runs / fetch_node_runs | Debug a run for self-fix |
-| `waveassist_arm_schedule` | deploy_project | Arm the recurring schedule after a green test |
+| `waveassist_arm_schedule` | deploy_project | Arm the recurring schedule after a green run (fires on next cron tick, not now); warns if no green run on record |
 | `waveassist_disarm_schedule` | stop_deployment | Pause/stop a live agent |
 
 State: a local registry `~/.waveassist/waveagent.json` maps a logical agent slug →
@@ -203,13 +205,17 @@ route to upgrade. (Server-side stable identity is a hardening-phase concern.)
    and `integrations-without-composio.md`. Always: `is_test_run()` guards on side
    effects; the `display_output` contract.
 6. **Create + deploy unarmed** — `waveassist_deploy_agent`.
-7. **Test** — `waveassist_test_agent`; show node statuses + output preview.
+7. **Run + confirm** — always run at least once and confirm `SUCCESS`:
+   `waveassist_test_agent` (dry), and `waveassist_run_agent` for a real run when the
+   user wants live output. Show node statuses + output preview.
 8. **Self-fix** — on failure, read tracebacks, edit nodes, re-deploy (upgrade),
-   re-test. Loop until green.
-9. **Arm** — `waveassist_arm_schedule` only on green. Report dashboard URL.
+   re-run. Loop until green.
+9. **Arm** — `waveassist_arm_schedule` only on green (arming schedules the recurring
+   run; it does not fire immediately). Report dashboard URL.
 
-**Guarantee:** the schedule is **never armed before a green test** — this is how
-"open generation" stays "as long as it works."
+**Guarantee:** the schedule should **never be armed before a green run** — this is how
+"open generation" stays "as long as it works." Arm enforces this with a non-blocking
+warning when no green run is on record.
 
 `skill/` also contains:
 - `waveassist-sdk.md`, `prompt-writing-with-call-llm.md`, `email-html-design.md` —

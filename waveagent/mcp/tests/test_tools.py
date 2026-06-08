@@ -141,6 +141,40 @@ def test_deploy_agent_update_path():
 
 
 # --------------------------------------------------------------------------- #
+# waveassist_list_projects — live list + connectivity check
+# --------------------------------------------------------------------------- #
+@respx.mock
+def test_list_projects_returns_live_list():
+    route = respx.post(f"{BASE}/manage/fetch_all_projects/").mock(
+        return_value=httpx.Response(
+            200,
+            json=_env({"project_array": [
+                {"project_key": "a_ab12", "name": "A", "github_url": "https://github.com/wa/a"},
+                {"project_key": "b_cd34", "name": "B"},
+            ]}),
+        )
+    )
+
+    out = server.waveassist_list_projects()
+
+    assert out["ok"] is True
+    assert out["count"] == 2
+    assert [p["project_key"] for p in out["projects"]] == ["a_ab12", "b_cd34"]
+    assert [p["name"] for p in out["projects"]] == ["A", "B"]
+    assert out["uid"] == server._mask(TEST_UID)  # masked, never raw
+    # the uid was the only thing sent (uid is the token)
+    assert _form(route.calls.last.request)["uid"] == [TEST_UID]
+
+
+def test_list_projects_requires_auth(monkeypatch):
+    """No UID resolvable -> {ok:false} with the not-authenticated error, no HTTP."""
+    monkeypatch.setattr(server, "_resolve_uid", lambda: None)
+    out = server.waveassist_list_projects()
+    assert out["ok"] is False
+    assert "Not authenticated" in out["error"]
+
+
+# --------------------------------------------------------------------------- #
 # waveassist_set_key — writes BOTH envs
 # --------------------------------------------------------------------------- #
 @respx.mock
@@ -236,6 +270,62 @@ def test_test_agent_green():
 
 
 # --------------------------------------------------------------------------- #
+# waveassist_run_agent — LIVE one-off run (default env, _is_test_run=false)
+# --------------------------------------------------------------------------- #
+@respx.mock
+def test_run_agent_live_green():
+    """Sets _is_test_run=false in the DEFAULT env, runs the dag against default,
+    correlates the fresh SUCCESS run, returns is_green + preview. Side-effects
+    fire (this is the real run, not a dry test)."""
+    set_route = respx.post(f"{BASE}/data/set_data_for_key/").mock(
+        return_value=httpx.Response(200, json=_env({"data_key": "_is_test_run"}))
+    )
+    run_route = respx.post(f"{BASE}/deploy/run_dag/").mock(
+        return_value=httpx.Response(
+            200,
+            json=_env({"dag": {"key": "DAG_live", "is_running": True}, "run_id": "celery-live"}),
+        )
+    )
+    dag_runs_seq = [
+        httpx.Response(200, json=_env({"dag_run_array": []})),
+        httpx.Response(200, json=_env({"dag_run_array": [{"run_id": "dr-live", "status": "SUCCESS"}]})),
+    ]
+    respx.post(f"{BASE}/runs/fetch_dag_runs/").mock(
+        side_effect=lambda r: dag_runs_seq.pop(0) if dag_runs_seq else httpx.Response(
+            200, json=_env({"dag_run_array": [{"run_id": "dr-live", "status": "SUCCESS"}]})
+        )
+    )
+    respx.post(f"{BASE}/runs/fetch_node_runs/").mock(
+        return_value=httpx.Response(
+            200, json=_env({"node_runs": [{"node_key": "n1", "node_name": "Run", "status": "SUCCESS"}]})
+        )
+    )
+    respx.get(f"{BASE}/data/fetch_data_for_key/").mock(
+        return_value=httpx.Response(200, json={"success": "0", "message": "Data not found"})
+    )
+
+    out = server.waveassist_run_agent(project_key="my_agent_ab12", timeout_seconds=15)
+
+    assert out["ok"] is True
+    assert out["overall"] == "SUCCESS"
+    assert out["is_green"] is True
+    assert out["run_id"] == "dr-live"
+    assert out["dag_key"] == "DAG_live"
+    assert out["nodes"] == [
+        {"node_key": "n1", "node_name": "Run", "status": "SUCCESS", "error": None}
+    ]
+
+    # flag set to "false" in the DEFAULT env (live run, not a dry test)
+    first_set = json.loads(set_route.calls[0].request.content)
+    assert first_set["data_run_key"] == "my_agent_ab12_default"
+    assert first_set["data_key"] == "_is_test_run"
+    assert first_set["data"] == "false"
+
+    # the dag was run against the DEFAULT env
+    assert _form(run_route.calls.last.request)["data_run_key"] == ["my_agent_ab12_default"]
+
+
+# --------------------------------------------------------------------------- #
 # waveassist_arm_schedule — clears _is_test_run in default env, deploys
 # --------------------------------------------------------------------------- #
 @respx.mock
@@ -254,6 +344,10 @@ def test_arm_schedule():
     dep_route = respx.post(f"{BASE}/deploy/deploy_project/").mock(
         return_value=httpx.Response(200, json=_env({"deployment": {"key": "dep-xyz"}}))
     )
+    # a green run exists -> no warning
+    respx.post(f"{BASE}/runs/fetch_dag_runs/").mock(
+        return_value=httpx.Response(200, json=_env({"dag_run_array": [{"run_id": "dr-1", "status": "SUCCESS"}]}))
+    )
 
     out = server.waveassist_arm_schedule(project_key="my_agent_ab12", version="v9")
 
@@ -261,6 +355,7 @@ def test_arm_schedule():
     assert out["status"] == "armed"
     assert out["deployment_key"] == "dep-xyz"
     assert out["version"] == "v9"
+    assert "warning" not in out  # green run on record -> no nudge
 
     # flag cleared (set false) in the DEFAULT env
     set_body = json.loads(set_route.calls.last.request.content)
@@ -280,6 +375,36 @@ def test_arm_schedule():
 
 
 @respx.mock
+def test_arm_schedule_warns_without_green_run():
+    """No SUCCESS run in either env -> arms anyway (ok:true) but returns a
+    non-blocking warning nudging the user to test/run first."""
+    registry.put(
+        TEST_UID, "my_agent",
+        {"project_key": "my_agent_ab12", "repo_url": "https://github.com/wa/my-agent"},
+    )
+    respx.post(f"{BASE}/data/set_data_for_key/").mock(
+        return_value=httpx.Response(200, json=_env({"data_key": "_is_test_run"}))
+    )
+    respx.post(f"{BASE}/deploy/deploy_project/").mock(
+        return_value=httpx.Response(200, json=_env({"deployment": {"key": "dep-xyz"}}))
+    )
+    # neither env has a SUCCESS run (one FAILED, one empty)
+    runs_by_env = {
+        "my_agent_ab12_test": _env({"dag_run_array": [{"run_id": "dr-1", "status": "FAILED"}]}),
+        "my_agent_ab12_default": _env({"dag_run_array": []}),
+    }
+    respx.post(f"{BASE}/runs/fetch_dag_runs/").mock(
+        side_effect=lambda r: httpx.Response(200, json=runs_by_env[_form(r)["data_run_key"][0]])
+    )
+
+    out = server.waveassist_arm_schedule(project_key="my_agent_ab12", version="v1")
+    assert out["ok"] is True
+    assert out["status"] == "armed"
+    assert "warning" in out
+    assert "No successful run found" in out["warning"]
+
+
+@respx.mock
 def test_arm_schedule_autogenerates_version():
     """No version passed -> server mints a wa-<ts> version."""
     respx.post(f"{BASE}/data/set_data_for_key/").mock(
@@ -287,6 +412,9 @@ def test_arm_schedule_autogenerates_version():
     )
     dep_route = respx.post(f"{BASE}/deploy/deploy_project/").mock(
         return_value=httpx.Response(200, json=_env({"deployment": {"key": "dep-1"}}))
+    )
+    respx.post(f"{BASE}/runs/fetch_dag_runs/").mock(
+        return_value=httpx.Response(200, json=_env({"dag_run_array": [{"run_id": "dr-1", "status": "SUCCESS"}]}))
     )
 
     out = server.waveassist_arm_schedule(project_key="solo_ab12")
