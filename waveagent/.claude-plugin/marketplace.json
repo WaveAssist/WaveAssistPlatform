@@ -16,7 +16,7 @@
         "path": "plugin"
       },
       "description": "Build and deploy deterministic, recurring WaveAssist agents from natural language.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "WaveAssist"
       },

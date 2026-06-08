@@ -27,18 +27,23 @@ the reasoning and code-writing. This works identically in Claude Code and Cursor
 |---|---|
 | `waveassist_login` | Save the user's WaveAssist UID (pass `uid=...` if they give one, else browser login). |
 | `waveassist_status` | Check login + list agents already built on this machine. |
+| `waveassist_list_projects` | List the account's **live** projects (the UID is the token). Also the **connectivity check** — a successful return means the UID is accepted. Use to confirm the connection or find an existing `project_key`. |
 | `waveassist_deploy_agent` | Create or **update** an agent + install nodes — **unarmed** (schedule does not fire). Idempotent by `slug`. |
 | `waveassist_set_key` | Store an integration key/secret in the agent's key-value store (both default + test envs). |
-| `waveassist_test_agent` | **Dry-run** on infra (sets `_is_test_run`, so guarded side-effects are skipped). Returns per-node status + `display_output`. |
+| `waveassist_test_agent` | **Dry-run** on infra (sets `_is_test_run=true`, so guarded side-effects are skipped). Returns per-node status + `display_output`. |
+| `waveassist_run_agent` | **LIVE one-off run** right now (sets `_is_test_run=false`, side-effects FIRE). Distinct from arming — runs immediately and once. |
 | `waveassist_run_logs` | Fetch run statuses / tracebacks to debug. |
-| `waveassist_arm_schedule` | Arm the recurring schedule — **only after a green test**. |
+| `waveassist_arm_schedule` | Arm the recurring schedule — **only after a green run**. Does NOT run now; fires on the next cron tick. |
 | `waveassist_disarm_schedule` | Stop a live agent. |
 
 ## The loop — do these in order
 
 ### 0. Auth
 Call `waveassist_status`. If not logged in, ask the user for their WaveAssist UID
-and call `waveassist_login(uid=...)` (or `waveassist_login()` for browser login).
+and call `waveassist_login(uid=...)` (or `waveassist_login()` for browser login). To
+verify the connection actually works (the UID is the token), call
+`waveassist_list_projects` — a successful return confirms it and shows existing
+projects.
 
 ### 1. Gather requirements
 Ask only what you need, briefly:
@@ -87,21 +92,30 @@ Call `waveassist_deploy_agent(name, config_yaml, code_files, slug=...)`. It
 creates the project, pushes the code, and installs the nodes **without arming the
 schedule**. Re-running it for the same `slug` updates in place.
 
-### 6. Test (dry run)
-Call `waveassist_set_key` for each integration key (if not already), then
-`waveassist_test_agent(project_key)`. It seeds `_is_test_run`, runs on infra, and
-returns per-node status + tracebacks + the `display_output` preview. Show the user
-the result.
+### 6. Run it — ALWAYS run at least once, then confirm SUCCESS
+A built agent is not done until you have **seen it run green**. Confirming success
+is the goal of this step.
+- Call `waveassist_set_key` for each integration key (if not already).
+- Run the dry test: `waveassist_test_agent(project_key)` — seeds `_is_test_run=true`,
+  runs on infra with side-effects skipped, returns per-node status + tracebacks +
+  the `display_output` preview.
+- When the user wants to see **real** output (an email actually sent, a real write),
+  also do a live run: `waveassist_run_agent(project_key)` — side-effects FIRE.
+- Read the result (and `waveassist_run_logs` if needed) and **confirm
+  `overall == SUCCESS`**. Show the user. Do not move on while it is FAILED/UNKNOWN.
 
 ### 7. Fix until green
-If a node is `FAILED`, read its traceback (in the test result or via
+If a node is `FAILED`, read its traceback (in the run result or via
 `waveassist_run_logs`), edit the node file, `waveassist_deploy_agent` again (it
-updates), and re-test. Loop until `is_green` is true.
+updates), and re-run. Loop until `is_green` is true.
 
 ### 8. Arm on green — never before
-Only when the test is green: `waveassist_arm_schedule(project_key)`. Report the
-dashboard URL. The agent now runs on its schedule. (`waveassist_disarm_schedule`
-stops it.)
+Only after a green run: `waveassist_arm_schedule(project_key)`. **Arming only puts
+the agent on its recurring cron — it does NOT run immediately; it fires on the next
+scheduled tick.** For an immediate live run use `waveassist_run_agent`. Arm will
+still proceed if it sees no green run on record, but it returns a `warning` — treat
+that as a signal you skipped the confirm step. Report the dashboard URL.
+(`waveassist_disarm_schedule` stops it.)
 
 ---
 
@@ -202,6 +216,35 @@ variables:                         # what the dashboard collects / lets the user
 - `deploy` does **not** validate "exactly one starting_node" or that every `run_after`
   target resolves — a malformed graph deploys clean and fails only at the test step.
   That's why `waveassist_test_agent` is the real gate; always run it before arming.
+
+### Variable `type:` values (the dashboard form fields)
+Each `variables:` entry's `type:` controls the dashboard input widget. The common,
+working set (use these):
+
+| `type` | Widget / use |
+|---|---|
+| `text` (default) | free text |
+| `password` / `secret` | API keys / tokens (masked) — use for **all** integration credentials |
+| `number` | numeric input |
+| `boolean` / `toggle` | on/off |
+| `select` / `dropdown` | one of `options:` (provide an `options:` list) |
+| `multiselect` | many of `options:` |
+| `list` / `chips` | a free list of strings |
+| `email` / `url` / `tel` | validated text |
+| `textarea` | long / multi-line text |
+| `schedule` | cron/interval picker; supports preset `options:` (see the schema above) |
+
+Finance agents also have `stock` / `crypto` / `commodity` selectors. The full,
+authoritative list lives in `WaveAssistDashboard` → `InputFactory.tsx`.
+
+**Integrations use DIRECT KEYS — not OAuth, not Composio.** Always reach an external
+service with `requests` + a token read from the KV store, exposed as a
+`type: password` (or `secret`) variable. **Do NOT use the OAuth provider input
+types** (`slack`, `gmail`, `jira`, `notion`, …): they are not fully wired, and OAuth
+tokens expire — wrong for an unattended scheduled agent. Even for the partially-working
+providers (GitHub, ClickUp, HubSpot), use a durable personal access token / API key.
+If a provider is **OAuth-only with no API-key option**, tell the user it is not
+supported yet — never broker a token via Composio. (See `integrations-without-composio.md`.)
 
 ## A complete golden example
 See `./examples/clickup-weekly/` (config.yaml + `fetch_clickup.py` +

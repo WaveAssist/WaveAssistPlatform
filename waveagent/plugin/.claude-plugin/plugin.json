@@ -1,7 +1,7 @@
 {
   "name": "waveassist",
   "displayName": "WaveAssist",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Build and deploy deterministic, recurring WaveAssist agents from natural language. Gather requirements, design nodes, write code, deploy, test, and schedule — all from your editor.",
   "author": {
     "name": "WaveAssist"
