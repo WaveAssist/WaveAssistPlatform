@@ -33,7 +33,7 @@ from WaveAssistApiApp import (
 )
 
 from django.views.decorators.csrf import csrf_exempt
-from WaveAssistApiApp import manage_views, integrations_view, wavemaker_views
+from WaveAssistApiApp import manage_views, wavemaker_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -343,42 +343,6 @@ urlpatterns = [
         "providers/fetch_resources/",
         csrf_exempt(providers.fetch_resources),
         name="fetch_resources",
-    ),
-    ##Integrations (Composio catalog) URL's
-    path(
-        "api/v1/tools/toolkits",
-        csrf_exempt(integrations_view.list_toolkits),
-        name="list_toolkits",
-    ),
-    path(
-        "api/v1/tools/toolkits/<str:slug>/actions",
-        csrf_exempt(integrations_view.list_actions),
-        name="list_actions",
-    ),
-    path(
-        "api/v1/tools/toolkits/<str:slug>/actions/<str:action_slug>",
-        csrf_exempt(integrations_view.get_action_schema),
-        name="get_action_schema",
-    ),
-    path(
-        "api/v1/tools/execute",
-        csrf_exempt(integrations_view.execute_tool),
-        name="execute_tool",
-    ),
-    path(
-        "api/v1/tools/connect",
-        csrf_exempt(integrations_view.initiate_connection),
-        name="initiate_connection",
-    ),
-    path(
-        "api/v1/tools/connections",
-        csrf_exempt(integrations_view.list_connections),
-        name="list_connections",
-    ),
-    path(
-        "api/v1/models/recommendations",
-        csrf_exempt(integrations_view.list_model_recommendations),
-        name="list_model_recommendations",
     ),
     path(
         "api/v1/wavemaker/materialize_assistant",
