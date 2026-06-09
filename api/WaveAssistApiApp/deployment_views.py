@@ -296,89 +296,90 @@ def run_dag(request):  ##TCW
 
     start_node_key = request.POST.get("start_node_key", None)
 
-    if not start_node_key or start_node_key == "":
-        try:
-            start_node = Nodes.objects.get(
-                project_object=project_object,
-                is_enabled=True,
-                is_starting_node=True,
-            )
-        except Exception as e:
-            return ResponseParser.getParsedErrorMessage(
-                "Error in fetching the start node, or invalid start node: " + str(e)
-            )
-    else:
-        # start_node_key was provided, fetch the specific node
-        try:
-            start_node = Nodes.objects.get(
-                node_key=start_node_key,
-                project_object=project_object,
-                is_enabled=True,
-                is_starting_node=True,
-            )
-        except Exception as e:
-            return ResponseParser.getParsedErrorMessage(
-                "Error in fetching the start node, or invalid start node: " + str(e)
-            )
-
     all_nodes = project_object.nodes_set.filter(is_enabled=True)
-    success, node_list, message = utils.check_dag(start_node, all_nodes)
-    if not success:
-        return ResponseParser.getParsedErrorMessage(message)
 
-    #### ------ Validations End -------- ####
-
-    ##Create DAG object
-    dag_key = (
-        "DAG_"
-        + str(project_object.project_key)
-        + "_"
-        + start_node.node_key
-        + "_test_run_"
-        + data_run_object.data_run_key
-        + "_"
-        + str(datetime.now())
-    )
-    dag_object = DAG.objects.create(
-        key=dag_key,
-        start_node=start_node,
-        is_running=True,
-    )
-    dag_object.save()
-    dag_object.node_array.set(node_list)
-    dag_object.save()
-
-    data_dict, dependency_dict = utils.get_data_and_dependencies_for_dag(
-        project_object, node_list, user_object.uid
-    )
-    dag_kwargs = {
-        "dependencies_dict": dependency_dict,
-        "data_dict": data_dict,
-        "collection_key": data_run_object.data_run_key,
-        "dag_key": dag_key,
-    }
+    # Resolve the starting node(s) to run. A project may have MULTIPLE starting nodes
+    # (one independent DAG per connected subgraph), so we must NOT .get() a single one —
+    # that raises MultipleObjectsReturned. With a key, run that node; without a key, run
+    # every starting node (each as its own DAG), mirroring deploy_project.
+    if start_node_key:
+        start_nodes = list(Nodes.objects.filter(
+            node_key=start_node_key,
+            project_object=project_object,
+            is_enabled=True,
+            is_starting_node=True,
+        ))
+    else:
+        start_nodes = list(Nodes.objects.filter(
+            project_object=project_object,
+            is_enabled=True,
+            is_starting_node=True,
+        ))
+    if not start_nodes:
+        return ResponseParser.getParsedErrorMessage(
+            "Error in fetching the start node, or invalid start node."
+        )
 
     account_object = utils.fetch_account_object_for_user(user_object)
     if not account_object:
         return ResponseParser.getParsedErrorMessage("Account not found for the user.")
     queue_name = account_object.celery_queue
 
-    print("Sending task: " + str(dag_kwargs) + ", queue: " + queue_name)
-    result = app.send_task(DAG_TASK, kwargs=dag_kwargs, queue=queue_name)
-    # result = app.send_task(DAG_TASK, kwargs=dag_kwargs)
+    #### ------ Validations End -------- ####
 
-    output_dict = {"dag": dag_object.get_dict()}
-    output_dict["run_id"] = result.id
+    runs = []
+    for start_node in start_nodes:
+        success, node_list, message = utils.check_dag(start_node, all_nodes)
+        if not success:
+            return ResponseParser.getParsedErrorMessage(message)
 
-    ##Track PostHog event
-    utils.track_posthog(
-        uid=str(user_object.uid),
-        event="dag_run_started",
-        props={
-            "project_key": project_object.project_key,
-            "start_node_key": start_node_key,
-        },
-    )
+        ##Create DAG object
+        dag_key = (
+            "DAG_"
+            + str(project_object.project_key)
+            + "_"
+            + start_node.node_key
+            + "_test_run_"
+            + data_run_object.data_run_key
+            + "_"
+            + str(datetime.now())
+        )
+        dag_object = DAG.objects.create(
+            key=dag_key,
+            start_node=start_node,
+            is_running=True,
+        )
+        dag_object.save()
+        dag_object.node_array.set(node_list)
+        dag_object.save()
+
+        data_dict, dependency_dict = utils.get_data_and_dependencies_for_dag(
+            project_object, node_list, user_object.uid
+        )
+        dag_kwargs = {
+            "dependencies_dict": dependency_dict,
+            "data_dict": data_dict,
+            "collection_key": data_run_object.data_run_key,
+            "dag_key": dag_key,
+        }
+
+        print("Sending task: " + str(dag_kwargs) + ", queue: " + queue_name)
+        result = app.send_task(DAG_TASK, kwargs=dag_kwargs, queue=queue_name)
+
+        runs.append({"dag": dag_object.get_dict(), "run_id": result.id})
+
+        ##Track PostHog event
+        utils.track_posthog(
+            uid=str(user_object.uid),
+            event="dag_run_started",
+            props={
+                "project_key": project_object.project_key,
+                "start_node_key": start_node.node_key,
+            },
+        )
+
+    output_dict = dict(runs[0])      # backward-compatible single-DAG shape (dag + run_id)
+    output_dict["runs"] = runs       # every started DAG (1 or more)
 
     return ResponseParser.getParsedSuccessMessage(
         output_dict, "200", "Successfully started the DAG"
