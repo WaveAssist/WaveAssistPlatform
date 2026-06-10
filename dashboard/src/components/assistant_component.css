@@ -195,13 +195,13 @@
 
 .assistant-stop-button {
     padding: 0.5rem 1rem;
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 /* Stock Search Styles */
 .stock-search-results-container {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background: #1C1F28;
+    border: 1px solid #2D313A;
     border-radius: 8px;
     max-height: 200px;
     overflow-y: auto;
@@ -213,22 +213,22 @@
 }
 
 .stock-search-result:hover {
-    background-color: #e9ecef;
+    background-color: #16181F;
 }
 
 /* Dark theme for stock search */
 .main-container .stock-search-results-container {
-    background: #2b3548;
-    border-color: #2b3548;
+    background: #1C1F28;
+    border-color: #2D313A;
 }
 
 .main-container .stock-search-result {
     color: #ffffff;
-    border-bottom-color: #2b3548;
+    border-bottom-color: #2D313A;
 }
 
 .main-container .stock-search-result:hover {
-    background-color: #1f2633;
+    background-color: #16181F;
 }
 
 .main-container .stock-search-result .fw-bold {
@@ -236,7 +236,7 @@
 }
 
 .main-container .stock-search-result .text-muted {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: #A1A1AA !important;
 }
 
 .stock-selected-badge {
@@ -277,7 +277,7 @@
 
 .form-control, .form-select {
     border-radius: 8px;
-    border: 1px solid #ced4da;
+    border: 1px solid #2D313A;
     padding: 10px 12px;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
@@ -294,7 +294,7 @@
 }
 
 .main-container .assistant-title {
-    color: rgba(255, 255, 255, 0.8);
+    color: #FFFFFF;
 }
 
 .main-container .assistant-status-card {
@@ -307,7 +307,7 @@
 }
 
 .main-container .assistant-status-label {
-    color: rgba(255, 255, 255, 0.6);
+    color: #A1A1AA;
 }
 
 .main-container .assistant-details {
@@ -315,7 +315,7 @@
 }
 
 .main-container .assistant-detail-label {
-    color: rgba(255, 255, 255, 0.6);
+    color: #A1A1AA;
 }
 
 .main-container .assistant-detail-value {
@@ -367,11 +367,11 @@
 }
 
 .main-container .text-muted {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: #A1A1AA !important;
 }
 
 .main-container .form-text {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: #A1A1AA !important;
 }
 
 /* GitHub Input Dark Theme */
@@ -403,7 +403,7 @@
 }
 
 .main-container .github-input-container .small {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: #A1A1AA !important;
 }
 
 /* Optional Inputs Section */
@@ -453,11 +453,11 @@
 }
 
 .main-container .optional-inputs-section .form-text {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: #A1A1AA !important;
 }
 
 .main-container .optional-inputs-section .text-muted {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: #A1A1AA !important;
 }
 
 /* Temporary highlight for "Select Resources" buttons */

@@ -260,7 +260,7 @@ const NodesComponent: React.FC = () => {
 			position: { x: 0, y: 0 }, // Placeholder — dagre sets actual values
 			style: {
 				background: "#1C1F28",
-				border: `2px solid ${n.is_enabled ? "#1ED66C" : "#d9534f"}`,
+				border: `1px solid ${n.is_enabled ? "#1ED66C" : "#d9534f"}`,
 				color: "#fff",
 				borderRadius: 8,
 				fontSize: 13,
@@ -274,10 +274,10 @@ const NodesComponent: React.FC = () => {
 				target: n.node_key,
 				animated: true,
 				style: {
-					stroke: "#49d078", // or your preferred green
+					stroke: "#1ED66C",
 					strokeWidth: 1.5,
 				},
-				markerEnd: { type: "arrowclosed", color: "#49d078" },
+				markerEnd: { type: "arrowclosed", color: "#1ED66C" },
 			})),
 		);
 

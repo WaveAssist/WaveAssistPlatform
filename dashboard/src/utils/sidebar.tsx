@@ -108,6 +108,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName,
 					</Link>
 				</li>
 
+				{/* Knowledge - Visible for all plans */}
+				<li className="nav-item">
+					<Link
+						to="/manage/knowledge"
+						className={`nav-link ${location.pathname === "/manage/knowledge" ? "active" : "text-white"} mb-1 ${
+							isCollapsed ? "collapsed-nav-link" : ""
+						}`}
+						onClick={handleNavClick}
+						title={isCollapsed ? "Knowledge" : ""}>
+						{isCollapsed ? (
+							<>
+								<div className="nav-icon">
+									<i className="bi bi-lightbulb"></i>
+								</div>
+								<span>Knowledge</span>
+							</>
+						) : (
+							<>
+								<i className="bi bi-lightbulb me-2"></i>
+								Knowledge
+							</>
+						)}
+					</Link>
+				</li>
+
 				{/* Deployments - Visible for all plans */}
 				<li className="nav-item">
 					<Link

@@ -59,7 +59,7 @@
     border: 1px solid #2D313A;
     color: #A1A1AA;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 6px;
     width: 40px;
     height: 40px;
     display: flex;
@@ -72,7 +72,7 @@
 .refresh-btn:hover {
     background-color: #1C1F28;
     color: #FFFFFF;
-    border-color: #3D414A;
+    border-color: #2D313A;
 }
 
 /* ── Available Credits Card ── */
@@ -284,7 +284,7 @@
 
 .manage-billing-hint {
     font-size: 0.75rem;
-    color: #71717a;
+    color: #A1A1AA;
     font-weight: 400;
 }
 
@@ -402,11 +402,11 @@
 }
 
 .custom-amount-input input::placeholder {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .dollar-sign {
-    color: #6c757d;
+    color: #A1A1AA;
     font-weight: 500;
     font-size: 0.9rem;
     margin-right: 0.25rem;
@@ -483,7 +483,7 @@
     border: none;
     color: #000;
     padding: 0.75rem 2.5rem;
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
@@ -491,7 +491,7 @@
 }
 
 .upgrade-card-btn:hover {
-    background-color: #17b85c;
+    background-color: #148F47;
     box-shadow: 0 0 24px rgba(30, 214, 108, 0.2);
     transform: translateY(-1px);
 }
@@ -503,7 +503,7 @@
 .upgrade-modal .modal-content {
     background-color: #0F1116;
     border: 1px solid #2D313A;
-    border-radius: 16px;
+    border-radius: 12px;
 }
 
 .upgrade-modal .modal-header {
@@ -551,7 +551,7 @@
 }
 
 .upgrade-plan-option:hover {
-    border-color: #3D414A;
+    border-color: #1ED66C;
 }
 
 .upgrade-plan-option.recommended {
@@ -615,7 +615,7 @@
     gap: 0.6rem;
     padding: 0.4rem 0;
     font-size: 0.88rem;
-    color: #d4d4d8;
+    color: #A1A1AA;
 }
 
 .plan-features-list li i {
@@ -628,7 +628,7 @@
 .plan-select-btn {
     width: 100%;
     padding: 0.7rem 1rem;
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
@@ -646,7 +646,7 @@
 }
 
 .plan-select-btn.primary:hover {
-    background-color: #17b85c;
+    background-color: #148F47;
     box-shadow: 0 0 20px rgba(30, 214, 108, 0.2);
 }
 
@@ -658,7 +658,7 @@
 
 .plan-select-btn.secondary:hover {
     background-color: #16181F;
-    border-color: #3D414A;
+    border-color: #2D313A;
 }
 
 .plan-select-btn:disabled {
@@ -672,7 +672,7 @@
 }
 
 .upgrade-footer-note {
-    color: #71717a;
+    color: #A1A1AA;
     font-size: 0.8rem;
     margin: 0 0 0.5rem 0;
 }
@@ -689,7 +689,7 @@
 }
 
 .upgrade-pricing-link:hover {
-    color: #17b85c;
+    color: #148F47;
     text-decoration: underline;
 }
 
@@ -718,7 +718,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
-    color: #d4d4d8;
+    color: #A1A1AA;
 }
 
 .summary-row:last-child {
@@ -748,7 +748,7 @@
 
 .indian-currency-amount {
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: #A1A1AA;
     font-weight: 500;
 }
 
@@ -768,7 +768,7 @@
     padding: 0.75rem 1.5rem;
     font-weight: 600;
     font-size: 1rem;
-    border-radius: 8px;
+    border-radius: 6px;
     border: none;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);

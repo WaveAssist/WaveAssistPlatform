@@ -12,6 +12,7 @@ import PackagesComponent from "./components/project/packages_component";
 import EnvironmentsComponent from "./components/project/environments_component";
 import RunsComponent from "./components/project/runs_component";
 import RunDetailsComponent from "./components/project/run_details_component";
+import KnowledgeComponent from "./components/project/knowledge_component";
 import Layout from "./utils/layout_sidebar";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -46,6 +47,7 @@ function App() {
 						<Route path="/manage/environments" element={<PrivateRoute component={EnvironmentsComponent} layout={Layout} />} />
 						<Route path="/manage/runs" element={<PrivateRoute component={RunsComponent} layout={Layout} />} />
 						<Route path="/manage/runs/:runId" element={<PrivateRoute component={RunDetailsComponent} layout={Layout} />} />
+						<Route path="/manage/knowledge" element={<PrivateRoute component={KnowledgeComponent} layout={Layout} />} />
 						<Route path="/manage/credits" element={<PrivateRoute component={CreditsComponent} layout={Layout} />} />
 						<Route path="/manage/deployments" element={<PrivateRoute component={DeploymentsComponent} layout={Layout} />} />
 						<Route path="/manage/data-view" element={<PrivateRoute component={DataViewComponent} layout={Layout} />} />

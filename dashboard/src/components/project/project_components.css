@@ -1,6 +1,6 @@
 
 .translucent_white{
-    color: rgba(255,255,255,0.80) !important;
+    color: #FFFFFF !important; /* design system: headings/primary text #FFFFFF */
   }
   html, body, #root, .main-container {
     height: 100%;
@@ -182,7 +182,7 @@
   display: block;
   margin: 0.5rem 0;
   font-size: 13px;
-  color: #adb5bd;      /* Bootstrap’s $gray-600 */
+  color: #A1A1AA;      /* design system: secondary text */
   line-height: 1.2;
 }
 /* React Flow Controls panel styling */
@@ -353,4 +353,53 @@
   border-color: #1ED66C !important;
   color: #000000 !important;
   box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+}
+/* ---------- Knowledge tab ---------- */
+@keyframes knowledgePulse {
+  0% { box-shadow: 0 0 0 0 rgba(30, 214, 108, 0.45); }
+  70% { box-shadow: 0 0 0 6px rgba(30, 214, 108, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(30, 214, 108, 0); }
+}
+
+.knowledge-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-primary, #1ED66C);
+  animation: knowledgePulse 2.4s ease-out infinite;
+  flex-shrink: 0;
+}
+
+.knowledge-card {
+  background-color: var(--color-bg-card, #1C1F28);
+  border: 1px solid var(--color-border, #2D313A);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.knowledge-card:hover {
+  border-color: var(--color-primary, #1ED66C);
+  box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+}
+
+.knowledge-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.knowledge-chevron {
+  color: #A1A1AA;
+  font-size: 13px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.knowledge-chevron.open {
+  transform: rotate(90deg);
 }

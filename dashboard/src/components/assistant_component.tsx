@@ -816,8 +816,8 @@ const AssistantComponent: React.FC = () => {
 												</Form>
 											)}
 											{templateData?.configuration_helper_message && (
-												<div className="alert bg-transparent border border-secondary text-secondary mb-4" style={{ fontSize: "0.8rem" }}>
-													<i className="bi bi-info-circle me-2 text-secondary"></i>
+												<div className="alert bg-transparent text-secondary-wa mb-4" style={{ fontSize: "0.8rem", border: "1px solid #2D313A" }}>
+													<i className="bi bi-info-circle me-2 text-secondary-wa"></i>
 													{templateData.configuration_helper_message}
 												</div>
 											)}
@@ -971,11 +971,11 @@ const AssistantComponent: React.FC = () => {
 				{isRunning && shouldShowGitHubWebhook() && (
 					<div className="row mt-3">
 						<div className="col-md-12">
-							<div className="assistant-config-card" style={{ borderLeft: "3px solid #2ea043" }}>
+							<div className="assistant-config-card" style={{ borderLeft: "3px solid #1ED66C" }}>
 								<div className="assistant-config-content">
 									<div className="d-flex align-items-start">
 										<div className="me-3">
-											<i className="bi bi-github" style={{ fontSize: "2rem", color: "#2ea043" }}></i>
+											<i className="bi bi-github" style={{ fontSize: "2rem", color: "#1ED66C" }}></i>
 										</div>
 										<div className="flex-grow-1">
 											<h6 className="text-white mb-2">Enable Real-time GitHub Connect (Optional)</h6>
@@ -1101,11 +1101,11 @@ const AssistantComponent: React.FC = () => {
 								<div className="input-group">
 									<input
 										type="text"
-										className="form-control bg-dark text-white border-secondary"
+										className="form-control text-white"
 										value={webhookUrl}
 										readOnly
 										disabled
-										style={{ fontFamily: "monospace", fontSize: "0.9rem" }}
+										style={{ fontFamily: "monospace", fontSize: "0.9rem", backgroundColor: "#1C1F28", border: "1px solid #2D313A" }}
 									/>
 									<Button variant="outline-success" onClick={handleCopyWebhook}>
 										{webhookCopied ? (
@@ -1122,7 +1122,7 @@ const AssistantComponent: React.FC = () => {
 									</Button>
 								</div>
 							</div>
-							<p className="text-secondary my-3">Use this webhook URL to run the agent in realtime.</p>
+							<p className="text-secondary-wa my-3">Use this webhook URL to run the agent in realtime.</p>
 
 							<div className="mt-3">
 								<a

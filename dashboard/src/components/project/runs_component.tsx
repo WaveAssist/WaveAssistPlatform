@@ -357,11 +357,11 @@ const RunsComponent: React.FC = () => {
 							)}
 						</button>
 						{isProcessing && progressData && (
-							<div className="d-flex align-items-center gap-2" style={{ fontSize: "11px", color: "#adb5bd" }}>
+							<div className="d-flex align-items-center gap-2" style={{ fontSize: "11px", color: "#A1A1AA" }}>
 								<div style={{ position: "relative", width: "40px", height: "40px" }}>
 									<svg width="40" height="40" style={{ transform: "rotate(-90deg)" }}>
 										{/* Background circle - dark theme */}
-										<circle cx="20" cy="20" r="16" fill="none" stroke="#2d3748" strokeWidth="3" />
+										<circle cx="20" cy="20" r="16" fill="none" stroke="#2D313A" strokeWidth="3" />
 										{/* Progress circle */}
 										<circle
 											cx="20"
@@ -589,8 +589,8 @@ const RunsComponent: React.FC = () => {
 											style={{
 												width: "100%",
 												height: "60vh",
-												border: "1px solid #ddd",
-												borderRadius: "4px",
+												border: "1px solid #2D313A",
+												borderRadius: "8px",
 												backgroundColor: "white",
 											}}
 											title="Run Output"

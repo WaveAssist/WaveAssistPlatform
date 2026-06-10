@@ -137,7 +137,7 @@ const DeploymentsComponent: React.FC = () => {
 								<div className="spinner-border text-success mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
 									<span className="visually-hidden">Loading...</span>
 								</div>
-								<div className="text-white">Loading deployments...</div>
+								<div style={{ color: "#A1A1AA" }}>Loading deployments...</div>
 							</div>
 						</div>
 					) : (

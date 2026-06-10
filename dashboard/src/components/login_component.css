@@ -20,8 +20,8 @@ wp_logo {
     padding-bottom: 20px !important;
     font-size: 18px;
     justify-content: center;
-    font-family: 'Roboto', sans-serif;
-    color: rgba(230,230,230,0.5);
+    font-family: 'Inter', sans-serif;
+    color: #A1A1AA;
   }
 .login-buttons {
 	width: 100%;
@@ -32,7 +32,7 @@ wp_logo {
 .login-buttons .btn {
 	padding: 0.75rem 1rem;
 	font-weight: 500;
-	border-radius: 8px;
+	border-radius: 6px;
 	transition: all 0.2s;
 }
 
@@ -54,14 +54,14 @@ wp_logo {
 }
 
 .email-input-container .form-control:focus {
-	background: #1a1d2a;
+	background: #1C1F28;
 	border-color: #1ED66C;
 	box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
 	color: #ffffff;
 }
 
 .email-input-container .form-control::placeholder {
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(255, 255, 255, 0.6);
 }
 
 .email-input-container .form-control.is-invalid {
@@ -88,11 +88,11 @@ wp_logo {
 .divider {
 	flex: 1;
 	height: 1px;
-	background: rgba(255, 255, 255, 0.2);
+	background: #2D313A;
 }
 
 .divider-text {
-	color: rgba(255, 255, 255, 0.6);
+	color: #A1A1AA;
 	padding: 0 1rem;
 	font-size: 0.875rem;
 }
@@ -105,16 +105,16 @@ wp_logo {
 }
 
 .text-muted {
-	color: rgba(255, 255, 255, 0.5) !important;
+	color: #A1A1AA !important;
 }
 
 /* More specific selector to override Bootstrap */
 .wa-card .text-muted {
-	color: rgba(255, 255, 255, 0.5) !important;
+	color: #A1A1AA !important;
 }
 
 .email-sent-container .text-muted {
-	color: rgba(255, 255, 255, 0.5) !important;
+	color: #A1A1AA !important;
 }
 
 .text-success {
@@ -123,15 +123,16 @@ wp_logo {
 
 .btn-outline-light {
 	color: #ffffff;
-	border-color: #ffffff;
+	border: 1px solid #2D313A;
 	background-color: transparent;
+	border-radius: 6px;
 	transition: all 0.2s;
 }
 
 .btn-outline-light:hover {
-	color: #000000;
-	background-color: #ffffff;
-	border-color: #ffffff;
+	color: #ffffff;
+	background-color: rgba(255, 255, 255, 0.05);
+	border-color: #2D313A;
 }
 
 .btn-primary {
@@ -169,7 +170,7 @@ wp_logo {
 	max-width: 420px;
 	background: #1C1F28;
 	border: 1px solid #2D313A;
-	border-radius: 1rem;
+	border-radius: 12px;
 	padding: 2.5rem;
 	text-align: center;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -177,7 +178,8 @@ wp_logo {
 
   .wa-title {
 	font-size: 1.3rem;
-	font-weight: 500;
+	font-weight: 600;
+	letter-spacing: -0.02em;
 	line-height: 1.1;
 	color: #ffffff;
   }
