@@ -53,6 +53,71 @@ def get_nested(data, path, default=None):
     return current
 
 
+# Safety cap on paginated provider fetches (e.g. 10 pages x per_page=100 = 1000 items)
+MAX_RESOURCE_PAGES = 10
+
+
+def _extract_items(items_data, resource_config):
+    """Extract the list of items from a provider response using items_key (or sane defaults)."""
+    items_key = resource_config.get("items_key")
+    if items_key:
+        items = get_nested(items_data, items_key, [])
+    else:
+        items = (
+            items_data
+            if isinstance(items_data, list)
+            else get_nested(items_data, "data", [])
+        )
+    return items if isinstance(items, list) else []
+
+
+def fetch_provider_items(resource_config, headers):
+    """
+    Fetch items from a provider's resource endpoint, following pagination when
+    resource_config["pagination"] is set. Supported pagination types:
+      - {"type": "link_header"}: follow RFC 5988 Link rel="next" (GitHub-style),
+        capped at MAX_RESOURCE_PAGES.
+
+    Returns (items, error_message): items is a list on success (error None),
+    or None with an error message. Raises on HTTP errors (requests exceptions).
+    """
+    url = resource_config.get("endpoint", "")
+
+    graphql_query = resource_config.get("graphql_query")
+    if graphql_query:
+        response = requests.post(
+            url,
+            json={"query": graphql_query},
+            headers={**headers, "Content-Type": "application/json"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        items_data = response.json()
+        if "errors" in items_data:
+            return None, items_data["errors"][0].get("message", "GraphQL error")
+        return _extract_items(items_data, resource_config), None
+
+    pagination_type = (resource_config.get("pagination") or {}).get("type")
+    items = []
+    next_url = url
+    pages_fetched = 0
+    while next_url and pages_fetched < MAX_RESOURCE_PAGES:
+        response = requests.request(
+            resource_config.get("method", "GET"),
+            next_url,
+            headers=headers,
+            timeout=30,
+        )
+        response.raise_for_status()
+        items.extend(_extract_items(response.json(), resource_config))
+        pages_fetched += 1
+        if pagination_type == "link_header":
+            next_url = response.links.get("next", {}).get("url")
+        else:
+            next_url = None
+    return items, None
+
+
 def refresh_access_token(uid, project_key, provider_name):
     """
     Refresh OAuth access token using the stored refresh token.
@@ -407,44 +472,12 @@ def fetch_resources(request):
         if not single_resource_config_dict:
             return ResponseParser.getParsedErrorMessage("Resource config not found")
 
-        url = single_resource_config_dict.get("endpoint", "")
         headers = {"Authorization": f"Bearer {access_token_data}"}
 
-        # Make API request — use GraphQL POST if graphql_query is defined, otherwise generic REST
-        graphql_query = single_resource_config_dict.get("graphql_query")
-        if graphql_query:
-            headers["Content-Type"] = "application/json"
-            response = requests.post(
-                url,
-                json={"query": graphql_query},
-                headers=headers,
-                timeout=30,
-            )
-        else:
-            response = requests.request(
-                single_resource_config_dict.get("method", "GET"),
-                url,
-                headers=headers,
-                timeout=30,
-            )
-        response.raise_for_status()
-        items_data = response.json()
-        if graphql_query and "errors" in items_data:
-            error_msg = items_data["errors"][0].get("message", "GraphQL error")
+        # Make API request(s) — follows pagination when configured on the provider
+        items, error_msg = fetch_provider_items(single_resource_config_dict, headers)
+        if error_msg:
             return ResponseParser.getParsedErrorMessage(f"Error fetching resources: {error_msg}")
-
-        # Extract list of items via items_key or default "data"; always normalize to list
-        items_key = single_resource_config_dict.get("items_key")
-        if items_key:
-            items = get_nested(items_data, items_key, [])
-        else:
-            items = (
-                items_data
-                if isinstance(items_data, list)
-                else get_nested(items_data, "data", [])
-            )
-        if not isinstance(items, list):
-            items = []
 
         # Extract resource information
         resources = []
