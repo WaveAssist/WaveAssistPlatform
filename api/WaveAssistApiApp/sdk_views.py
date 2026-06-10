@@ -19,6 +19,34 @@ from .models import Account
 MAX_FILE_SIZE_MB = 10
 MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
+# Cap on extra (cc + bcc) recipients per send. The primary To is always the account owner;
+# this bounds the blast radius so the endpoint can't be used as an open relay.
+MAX_EXTRA_RECIPIENTS = 50
+
+
+def _parse_recipients(raw, exclude=None):
+    """Parse a comma-separated recipient string into a clean, deduped, validated list.
+
+    Validates each address (Django email format), strips whitespace, and drops blanks,
+    invalid addresses, and case-insensitive duplicates — preserving order. Addresses whose
+    lowercased form is in ``exclude`` are also dropped (used to keep cc/bcc from repeating
+    the owner, and bcc from repeating cc). Returns an empty list for falsy input."""
+    if not raw:
+        return []
+    seen = set(exclude or set())
+    out = []
+    for part in str(raw).split(","):
+        addr = part.strip()
+        if not addr or addr.lower() in seen:
+            continue
+        try:
+            validate_email(addr)
+        except Exception:
+            continue
+        seen.add(addr.lower())
+        out.append(addr)
+    return out
+
 
 @require_POST
 def send_email(request):
@@ -44,6 +72,20 @@ def send_email(request):
         except Exception as e:
             return ResponseParser.getParsedErrorMessage("Invalid recipient email address.")
 
+        # Optional cc/bcc copies (owner is always the primary To). Each address is validated,
+        # deduped, and cross-deduped so no one is mailed twice: cc excludes the owner, and bcc
+        # excludes both the owner and anyone already on cc.
+        owner_key = {to_email.lower()}
+        cc_list = _parse_recipients(get_param(request, "cc"), exclude=owner_key)
+        bcc_list = _parse_recipients(
+            get_param(request, "bcc"),
+            exclude=owner_key | {a.lower() for a in cc_list},
+        )
+        if len(cc_list) + len(bcc_list) > MAX_EXTRA_RECIPIENTS:
+            return ResponseParser.getParsedErrorMessage(
+                f"Too many cc/bcc recipients (max {MAX_EXTRA_RECIPIENTS})."
+            )
+
         # Prepare Postmark client
         client = PostmarkClient(server_token=POSTMARK_API_TOKEN)
 
@@ -68,17 +110,23 @@ def send_email(request):
 
 
         try:
-            # Send the email
-            client.emails.send(
+            # Send the email. Cc/Bcc are only included when present (Postmark wants
+            # comma-separated strings) so the owner-only path is byte-for-byte unchanged.
+            send_kwargs = dict(
                 From=from_email,
                 To=to_email,
                 Subject=subject,
                 HtmlBody=html_content,
                 TrackOpens=True,
-                Attachments=attachments if attachments else None
+                Attachments=attachments if attachments else None,
             )
+            if cc_list:
+                send_kwargs["Cc"] = ",".join(cc_list)
+            if bcc_list:
+                send_kwargs["Bcc"] = ",".join(bcc_list)
+            client.emails.send(**send_kwargs)
             return ResponseParser.getParsedSuccessMessage(
-                {"status": "sent", "to_email": to_email},
+                {"status": "sent", "to_email": to_email, "cc": cc_list, "bcc": bcc_list},
                 '200',
                 "Email sent successfully via Postmark."
             )
@@ -86,9 +134,11 @@ def send_email(request):
             send_email_backup(from_email=from_email,
                               to_emails=to_email,
                               subject=subject,
-                              html_content=html_content)
+                              html_content=html_content,
+                              cc=cc_list,
+                              bcc=bcc_list)
             return ResponseParser.getParsedSuccessMessage(
-                {"status": "sent_backup", "to_email": to_email},
+                {"status": "sent_backup", "to_email": to_email, "cc": cc_list, "bcc": bcc_list},
                 '200',
                 "Email sent via backup method due to Postmark failure."
             )
@@ -102,25 +152,34 @@ from email.mime.text import MIMEText
 def send_email_backup(from_email,
                       to_emails,
                       subject,
-                      html_content) -> None:
+                      html_content,
+                      cc=None,
+                      bcc=None) -> None:
     try:
-        # Normalize recipients to a list
-        recipients = [to_emails] if isinstance(to_emails, str) else list(to_emails)
+        # Normalize recipients to lists
+        to_list = [to_emails] if isinstance(to_emails, str) else list(to_emails)
+        cc_list = list(cc or [])
+        bcc_list = list(bcc or [])
 
-        # Build the message
+        # Build the message. Cc is a visible header; Bcc is NOT a header (it stays hidden)
+        # but must still appear in the SMTP envelope so the server delivers to it.
         msg = MIMEMultipart()
         msg['From'] = from_email
-        msg['To'] = ', '.join(recipients)
+        msg['To'] = ', '.join(to_list)
+        if cc_list:
+            msg['Cc'] = ', '.join(cc_list)
         msg['Subject'] = subject
         msg.attach(MIMEText(html_content, 'html'))
+
+        envelope_recipients = to_list + cc_list + bcc_list
 
         # Connect to Gmail SMTP and send
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(MAILER_LOGIN_EMAIL, MAILER_LOGIN_EMAIL_PASSWORD)
-        server.sendmail(from_email, recipients, msg.as_string())
+        server.sendmail(from_email, envelope_recipients, msg.as_string())
         server.quit()
-        print(f"Email sent successfully to {recipients}")
+        print(f"Email sent successfully to {envelope_recipients}")
     except Exception as e:
         print(f"Failed to send email: {e}")
 
