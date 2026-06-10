@@ -130,13 +130,20 @@ def send_email(request):
                 '200',
                 "Email sent successfully via Postmark."
             )
-        except:
-            send_email_backup(from_email=from_email,
-                              to_emails=to_email,
-                              subject=subject,
-                              html_content=html_content,
-                              cc=cc_list,
-                              bcc=bcc_list)
+        except Exception as primary_error:
+            # Postmark failed — try the SMTP backup. If THAT also fails we must report an
+            # error, not success: a fake 200 here means silent data loss and defeats the
+            # SDK's retry logic.
+            backup_sent = send_email_backup(from_email=from_email,
+                                            to_emails=to_email,
+                                            subject=subject,
+                                            html_content=html_content,
+                                            cc=cc_list,
+                                            bcc=bcc_list)
+            if not backup_sent:
+                return ResponseParser.getParsedErrorMessage(
+                    f"Email send failed via both Postmark and backup: {str(primary_error)}"
+                )
             return ResponseParser.getParsedSuccessMessage(
                 {"status": "sent_backup", "to_email": to_email, "cc": cc_list, "bcc": bcc_list},
                 '200',
@@ -154,7 +161,9 @@ def send_email_backup(from_email,
                       subject,
                       html_content,
                       cc=None,
-                      bcc=None) -> None:
+                      bcc=None) -> bool:
+    """SMTP fallback. Returns True if the send succeeded, False otherwise — callers must
+    check the result; a False from here means the email was NOT delivered by either path."""
     try:
         # Normalize recipients to lists
         to_list = [to_emails] if isinstance(to_emails, str) else list(to_emails)
@@ -180,8 +189,10 @@ def send_email_backup(from_email,
         server.sendmail(from_email, envelope_recipients, msg.as_string())
         server.quit()
         print(f"Email sent successfully to {envelope_recipients}")
+        return True
     except Exception as e:
         print(f"Failed to send email: {e}")
+        return False
 
 
 def _send_credits_notification(to_email, assistant_name, required_credits, credits_remaining, plan_name=""):
@@ -205,15 +216,15 @@ def _send_credits_notification(to_email, assistant_name, required_credits, credi
         utils.logger.info(f"Credits notification email sent to {to_email}")
     except Exception as e:
         utils.logger.warning(f"Postmark failed for credits notification, trying backup: {e}")
-        try:
-            send_email_backup(
-                from_email=DEFAULT_FROM_EMAIL,
-                to_emails=to_email,
-                subject=subject,
-                html_content=html_content,
-            )
-        except Exception as backup_error:
-            utils.logger.error(f"Credits notification email failed entirely: {backup_error}")
+        # Best-effort internal notification: a dual failure is logged, not raised, but we
+        # must check the return value — send_email_backup reports failure as False.
+        if not send_email_backup(
+            from_email=DEFAULT_FROM_EMAIL,
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_content,
+        ):
+            utils.logger.error(f"Credits notification email failed entirely (Postmark: {e})")
 
 
 @require_POST
