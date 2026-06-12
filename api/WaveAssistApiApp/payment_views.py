@@ -398,6 +398,12 @@ def _remove_credits_from_openrouter(account_object, credits_in_usd):
             return False
 
         credit_data = fetch_credits_from_openrouter(account_object.open_router_key)
+        if credit_data["limit"] is None:
+            # Uncapped (unlimited) OpenRouter key — there is no spending limit to decrement.
+            logger.info(
+                f"Skipping credit removal for uncapped OpenRouter key: {account_object.account_uid}"
+            )
+            return True
         current_limit = float(credit_data["limit"])
         credits_float = float(credits_in_usd) / WAVEASSIST_CREDIT_MULTIPLIER
         new_limit = max(0.0, current_limit - credits_float)
@@ -973,11 +979,19 @@ def add_credits_to_openrouter(account_object, credits_in_usd, is_renewal=False, 
             )
             return False
 
+        # Both paths need the live OpenRouter balance (usage + remaining + current limit).
+        credit_data = fetch_credits_from_openrouter(account_object.open_router_key)
+        if credit_data["limit"] is None:
+            # Uncapped (unlimited) OpenRouter key — applying a finite limit here would CAP an
+            # unlimited key. There is nothing to add; treat as a no-op success.
+            logger.info(
+                f"Skipping credit add for uncapped OpenRouter key: {account_object.account_uid}"
+            )
+            return True
+
         if is_renewal and plan_monthly_credits > 0:
             # On renewal, enforce 3-month rollover cap before adding new credits.
             # Cap = 2x monthly (so after adding 1 new month the max possible is 3x).
-            # Fetch live balance via user's own key to get accurate usage + remaining.
-            credit_data = fetch_credits_from_openrouter(account_object.open_router_key)
             remaining_wa = credit_data["limit_remaining"] * WAVEASSIST_CREDIT_MULTIPLIER
             usage_or = credit_data["usage"]
 
@@ -994,7 +1008,6 @@ def add_credits_to_openrouter(account_object, credits_in_usd, is_renewal=False, 
         else:
             # First-time subscription or top-up: add on top of current limit.
             # credits_in_usd is in WaveAssist credits; convert to real OpenRouter dollars.
-            credit_data = fetch_credits_from_openrouter(account_object.open_router_key)
             current_limit = credit_data["limit"]
             credits_float = float(credits_in_usd) / WAVEASSIST_CREDIT_MULTIPLIER
             new_limit = float(current_limit + credits_float)

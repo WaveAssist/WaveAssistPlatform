@@ -260,17 +260,22 @@ def check_account_credits(request):
         if is_stale:
             try:
                 credit_data = fetch_credits_from_openrouter(account.open_router_key)
-                # Store and use WaveAssist credits (OpenRouter $ * multiplier), same as dashboard.
-                new_credits_remaining = round(
-                    credit_data["limit_remaining"] * WAVEASSIST_CREDIT_MULTIPLIER, 2
-                )
+                if credit_data["limit_remaining"] is None:
+                    # Uncapped OpenRouter key (no spending limit) → credits are effectively
+                    # unlimited. Store None to mean "unlimited" and skip the credit math.
+                    new_credits_remaining = None
+                else:
+                    # Store and use WaveAssist credits (OpenRouter $ * multiplier), same as dashboard.
+                    new_credits_remaining = round(
+                        credit_data["limit_remaining"] * WAVEASSIST_CREDIT_MULTIPLIER, 2
+                    )
 
-                # If we're in fast-check mode (post-payment) and credits are now positive,
-                # the payment has reflected — reset back to default interval and clear the
-                # notification flag so future exhaustion triggers a fresh email.
-                if account.credits_check_interval == CREDITS_CHECK_INTERVAL_FAST and new_credits_remaining > 0:
-                    account.credits_check_interval = CREDITS_CHECK_INTERVAL_DEFAULT
-                    account.credits_notification_sent = False
+                    # If we're in fast-check mode (post-payment) and credits are now positive,
+                    # the payment has reflected — reset back to default interval and clear the
+                    # notification flag so future exhaustion triggers a fresh email.
+                    if account.credits_check_interval == CREDITS_CHECK_INTERVAL_FAST and new_credits_remaining > 0:
+                        account.credits_check_interval = CREDITS_CHECK_INTERVAL_DEFAULT
+                        account.credits_notification_sent = False
 
                 account.credits_remaining = new_credits_remaining
                 account.credits_last_checked = now
@@ -284,7 +289,11 @@ def check_account_credits(request):
                         "Unable to determine credit balance — OpenRouter unreachable and no cached value."
                     )
 
-        credits_available = account.credits_remaining >= required_credits
+        # credits_remaining is None for uncapped (unlimited) OpenRouter keys → always available.
+        credits_available = (
+            account.credits_remaining is None
+            or account.credits_remaining >= required_credits
+        )
 
         if not credits_available and not account.credits_notification_sent:
             account.credits_notification_sent = True

@@ -1188,7 +1188,10 @@ def fetch_credits_from_openrouter(open_router_key: str) -> dict:
     Fetch credit balance from OpenRouter for a given API key.
     Retries once when limit_remaining is 0 — OpenRouter sometimes returns stale 0
     even when credits exist. Raises on any failure so callers can handle it.
-    Returns dict with keys: limit, usage, limit_remaining (all floats).
+    Returns dict with keys: limit, usage, limit_remaining.
+    `usage` is always a float. `limit` and `limit_remaining` are floats for capped keys,
+    but are None for uncapped keys (an OpenRouter key with no spending limit set) — None
+    means "unlimited", and every caller must handle it instead of doing arithmetic on it.
     """
     headers = {
         "Authorization": f"Bearer {open_router_key}",
@@ -1206,10 +1209,17 @@ def fetch_credits_from_openrouter(open_router_key: str) -> dict:
         for key in ("limit", "usage", "limit_remaining"):
             if key not in data:
                 raise KeyError(f"OpenRouter response missing '{key}' key")
+
+        # OpenRouter returns limit/limit_remaining = null for uncapped keys (no spending
+        # limit set); usage is still a number. Treat null as "unlimited" (None) instead of
+        # crashing on float(None) — the key is valid, it simply has no cap.
+        def _to_float(value):
+            return float(value) if value is not None else None
+
         return {
-            "limit": float(data["limit"]),
-            "usage": float(data["usage"]),
-            "limit_remaining": float(data["limit_remaining"]),
+            "limit": _to_float(data["limit"]),
+            "usage": float(data["usage"] or 0),
+            "limit_remaining": _to_float(data["limit_remaining"]),
         }
 
     result = _call()

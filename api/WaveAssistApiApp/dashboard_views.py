@@ -126,10 +126,15 @@ def fetch_openrouter_credits(request, uid):
         return ResponseParser.getParsedErrorMessage(f"Error fetching credits: {str(e)}")
 
     m = WAVEASSIST_CREDIT_MULTIPLIER
+
+    # limit / limit_remaining are None for uncapped (unlimited) OpenRouter keys.
+    def _wa(value):
+        return round(value * m, 2) if value is not None else None
+
     wa_credits = {
-        "limit": round(credit_data["limit"] * m, 2),
-        "usage": round(credit_data["usage"] * m, 2),
-        "limit_remaining": round(credit_data["limit_remaining"] * m, 2),
+        "limit": _wa(credit_data["limit"]),
+        "usage": _wa(credit_data["usage"]),
+        "limit_remaining": _wa(credit_data["limit_remaining"]),
     }
 
     return ResponseParser.getParsedSuccessMessage(
