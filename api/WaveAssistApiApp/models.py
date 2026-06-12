@@ -29,6 +29,9 @@ class Account(models.Model):
     is_premium = models.BooleanField(
         default=False
     )  # True if the account is premium, False if free
+    # WaveAssist credits left (OpenRouter limit_remaining * multiplier). None has TWO meanings:
+    # (a) never fetched yet, or (b) the OpenRouter key is uncapped → unlimited credits. Callers
+    # that gate on balance must treat None as "available" (see sdk_views.check_account_credits).
     credits_remaining = models.FloatField(null=True, blank=True, default=None)
     credits_last_checked = models.DateTimeField(null=True, blank=True)
     credits_check_interval = models.IntegerField(default=300)
