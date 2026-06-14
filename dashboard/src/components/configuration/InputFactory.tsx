@@ -13,6 +13,7 @@ import SecretInput from "./SecretInput";
 import ClickUpInput from "./ClickUpInput";
 import ScheduleInput from "./ScheduleInput";
 import ProviderInput from "./ProviderInput";
+import RepoGroupsInput from "./RepoGroupsInput";
 import { PROVIDER_CONFIGS } from "./providerConfigs";
 
 interface Option {
@@ -29,6 +30,8 @@ interface InputConfig {
 	display_name?: string;
 	placeholder?: string;
 	max_items?: number;
+	max_groups?: number;
+	depends_on?: string;
 	label?: string;
 }
 
@@ -38,6 +41,9 @@ interface InputFactoryProps {
 	onChange: (value: string) => void;
 	selectResources?: (inputData: any) => void;
 	selectedResources?: any;
+	// Selected resources of the input named by this input's `depends_on` (e.g. the github repos that a
+	// `repo_groups` input groups). Resolved by the parent so the group builder knows the repo list.
+	dependsOnResources?: Array<{ id?: string; name?: string } | string>;
 	onRefresh?: () => void;
 	isOptional?: boolean;
 	highlightSelectResources?: boolean;
@@ -49,11 +55,12 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 	onChange,
 	selectResources,
 	selectedResources,
+	dependsOnResources,
 	onRefresh,
 	isOptional = false,
 	highlightSelectResources = false,
 }) => {
-	const { key, type, options, helper_message, display_name, placeholder, max_items, label } = inputConfig;
+	const { key, type, options, helper_message, display_name, placeholder, max_items, max_groups, label } = inputConfig;
 
 	// Render appropriate input component based on type
 	const renderInput = () => {
@@ -114,6 +121,16 @@ const InputFactory: React.FC<InputFactoryProps> = ({
 			case "list":
 			case "chips":
 				return <ListInput value={value} onChange={onChange} placeholder={placeholder} maxItems={max_items} />;
+
+			case "repo_groups":
+				return (
+					<RepoGroupsInput
+						value={value}
+						onChange={onChange}
+						availableRepos={dependsOnResources}
+						maxGroups={max_groups}
+					/>
+				);
 
 			case "clickup":
 				return (

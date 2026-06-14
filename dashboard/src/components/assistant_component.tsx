@@ -776,6 +776,7 @@ const AssistantComponent: React.FC = () => {
 															onChange={(value) => handleWizardInputChange(input_dict.key, value)}
 															selectResources={handleSelectResources}
 															selectedResources={wizardSelectedResources[input_dict.key]}
+															dependsOnResources={input_dict.type === "repo_groups" ? wizardSelectedResources[input_dict.depends_on || "github"] : undefined}
 															onRefresh={refreshData}
 															highlightSelectResources={highlightResourceKeys.includes(input_dict.key)}
 														/>
@@ -804,6 +805,7 @@ const AssistantComponent: React.FC = () => {
 																			onChange={(value) => handleWizardInputChange(input_dict.key, value)}
 																			selectResources={handleSelectResources}
 																			selectedResources={wizardSelectedResources[input_dict.key]}
+																			dependsOnResources={input_dict.type === "repo_groups" ? wizardSelectedResources[input_dict.depends_on || "github"] : undefined}
 																			onRefresh={refreshData}
 																			isOptional={true}
 																			highlightSelectResources={highlightResourceKeys.includes(input_dict.key)}
