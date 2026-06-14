@@ -88,8 +88,9 @@ def fetch_node_runs(request):  # TCW
 
     for nr in node_runs:
         node_data = nr.get_dict()
-        node_data['node_key'] = nr.node_object.node_key
-        node_data['node_name'] = nr.node_object.name
+        # node_object may be NULL for runs whose Node was deleted by a project upgrade
+        node_data['node_key'] = nr.node_object.node_key if nr.node_object else 'deleted_node'
+        node_data['node_name'] = nr.node_object.name if nr.node_object else 'Deleted Node'
         node_run_array.append(node_data)
 
     data_dict = {

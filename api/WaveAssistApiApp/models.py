@@ -538,7 +538,10 @@ RUN_STATUS_CHOICES = [
 class NodeRuns(models.Model):
     id = models.AutoField(primary_key=True)
     dag_run_object = models.ForeignKey("DagRuns", on_delete=models.CASCADE)
-    node_object = models.ForeignKey("Nodes", on_delete=models.CASCADE)
+    # SET_NULL (not CASCADE): a project "Upgrade" deletes+recreates Nodes; CASCADE here
+    # would wipe the run-status history of every past DagRun. Keep the NodeRun rows so
+    # derived DagRun status survives an upgrade; the node link is allowed to go null.
+    node_object = models.ForeignKey("Nodes", on_delete=models.SET_NULL, null=True)
     status = models.CharField(
         max_length=20, choices=RUN_STATUS_CHOICES, default="PENDING"
     )
