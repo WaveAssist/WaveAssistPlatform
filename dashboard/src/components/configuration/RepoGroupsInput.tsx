@@ -65,7 +65,7 @@ const RepoGroupsInput: React.FC<RepoGroupsInputProps> = ({ value, onChange, avai
 	useEffect(() => {
 		if (!seeded.current && groups.length === 0 && repoIds.length > 0) {
 			seeded.current = true;
-			onChange(JSON.stringify([{ name: "All repositories", repos: [...repoIds], recipients: [] }]));
+			onChange(JSON.stringify([{ name: "Knowledge Digest", repos: [...repoIds], recipients: [] }]));
 		}
 	}, [groups, repoIds, onChange]);
 
