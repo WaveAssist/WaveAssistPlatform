@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import "./RepoGroupsInput.css";
 
@@ -57,6 +57,17 @@ const RepoGroupsInput: React.FC<RepoGroupsInputProps> = ({ value, onChange, avai
 		[availableRepos]
 	);
 	const [drafts, setDrafts] = useState<Record<number, string>>({});
+
+	// Auto-seed one group with all selected repos the first time the builder opens with none configured,
+	// so a user who just connects GitHub and clicks through still gets a working all-repos digest without
+	// having to create a group. Guarded by a ref so deleting every group later does not re-create one.
+	const seeded = useRef(false);
+	useEffect(() => {
+		if (!seeded.current && groups.length === 0 && repoIds.length > 0) {
+			seeded.current = true;
+			onChange(JSON.stringify([{ name: "All repositories", repos: [...repoIds], recipients: [] }]));
+		}
+	}, [groups, repoIds, onChange]);
 
 	const commit = (next: RepoGroup[]) => onChange(JSON.stringify(next));
 
@@ -177,7 +188,7 @@ const RepoGroupsInput: React.FC<RepoGroupsInputProps> = ({ value, onChange, avai
 							})}
 						</div>
 
-						<div className="repo-group-label">Recipients</div>
+						<div className="repo-group-label">Additional recipients</div>
 						<div className="repo-recipients">
 							{group.recipients.map((email) => (
 								<span className="repo-recipient-chip" key={email}>
