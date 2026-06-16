@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { usePostHog } from "posthog-js/react";
 import { useToast } from "../utils/toast_context";
 import { useRefresh } from "../utils/RefreshContext";
@@ -61,6 +61,8 @@ const AssistantComponent: React.FC = () => {
 	const [updateAvailable, setUpdateAvailable] = useState(false);
 	const [, setUpdateCommitMessage] = useState("");
 	const [upgrading, setUpgrading] = useState(false);
+	// Guards the connect-and-done auto-open so it fires at most once per page load.
+	const autoOpenedResourcesRef = useRef(false);
 	const fetch_wizard_inputs = async (template_key: string) => {
 		setWizardLoading(true);
 		try {
@@ -272,6 +274,32 @@ const AssistantComponent: React.FC = () => {
 
 		initializeComponent();
 	}, [searchParams]);
+
+	// Connect-and-done: after a fresh OAuth connect (is_integration_complete=1), auto-open the
+	// resource picker once for the first OAuth provider that still has no saved selection.
+	// The popup itself applies the sensible default (computeAutoSelection); we never clobber a
+	// provider that already has a non-empty saved selection.
+	useEffect(() => {
+		const integrationComplete = searchParams.get("is_integration_complete") === "1";
+		if (!integrationComplete || autoOpenedResourcesRef.current) return;
+		if (wizardInputs.length === 0) return; // wait until refreshData has loaded inputs/resources
+
+		const target = wizardInputs.find(
+			(input) =>
+				OAUTH_INPUTS.includes(input.type) &&
+				PROVIDER_CONFIGS[input.type]?.hasSelectResources &&
+				!(Array.isArray(wizardSelectedResources[input.key]) && wizardSelectedResources[input.key].length > 0)
+		);
+		if (target) {
+			autoOpenedResourcesRef.current = true;
+			handleSelectResources({
+				type: target.type,
+				key: target.key,
+				resource_properties: target.resource_properties || [],
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [searchParams, wizardInputs, wizardSelectedResources]);
 
 	// Fetch running deployment info
 	const fetchRunning = async () => {

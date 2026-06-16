@@ -52,6 +52,29 @@
 	outline: none;
 }
 
+/* Auto-select notice (first connect) */
+.resource-autoselect-notice {
+	flex-shrink: 0;
+	padding: 0 16px;
+	margin-bottom: 0.5rem;
+	color: var(--color-text-secondary);
+	font-size: 0.85rem;
+}
+
+/* Bulk action controls (Select all / Clear all) */
+.resource-bulk-actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-shrink: 0;
+	padding: 0 16px;
+	margin-bottom: 0.75rem;
+}
+
+.resource-bulk-btn {
+	font-size: 0.8rem;
+	border-radius: var(--radius-button);
+}
+
 .resource-selection-popup .modal-footer {
 	background-color: var(--color-bg-card);
 	border-top: 1px solid var(--color-border);

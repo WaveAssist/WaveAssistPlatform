@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import Modal from "react-bootstrap/Modal";
 import { Button, Form } from "react-bootstrap";
 import { useToast } from "../utils/toast_context";
+import { computeAutoSelection } from "./resourceAutoSelect";
 import "./ResourceSelectionPopup.css";
 
 interface Resource {
@@ -9,6 +10,8 @@ interface Resource {
 	name: string;
 	extra?: any;
 	properties?: Record<string, any>;
+	sort_key?: string | null;
+	archived?: boolean;
 }
 
 interface PropertyOption {
@@ -57,6 +60,11 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 	const [filterText, setFilterText] = useState("");
 	const [page, setPage] = useState(1);
 	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+	const [autoSelectNotice, setAutoSelectNotice] = useState<string>("");
+	// Initialize selection exactly ONCE per open. Without this, the effect's other deps
+	// (initiallySelectedResources / resources) change identity on any parent re-render (e.g. a toast
+	// auto-dismiss) and re-run the effect, clobbering the user's in-progress selection edits.
+	const initializedRef = useRef(false);
 
 	const hasProperties = resourceProperties.length > 0;
 
@@ -68,21 +76,37 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 		return defaults;
 	}, [resourceProperties]);
 
-	// Initialize selection and props when modal opens (all rows collapsed; only Select opens them)
+	// Initialize selection and props when modal opens (all rows collapsed; only Select opens them).
+	// First connect (no saved selection) auto-preselects via computeAutoSelection so it is
+	// connect-and-done; a saved selection is respected and never clobbered.
 	useEffect(() => {
-		if (isOpen) {
-			const ids = new Set(initiallySelectedResources.map((r) => r.id));
-			setSelectedIds(ids);
-			setExpandedRowId(null); // Default all collapsed; expand only when user clicks Select
-			const propsMap: Record<string, Record<string, any>> = {};
-			for (const res of initiallySelectedResources) {
-				propsMap[res.id] = res.properties ? { ...res.properties } : buildDefaultProperties();
-			}
-			setResourcePropertiesState(propsMap);
-			setFilterText("");
-			setPage(1);
+		if (!isOpen) {
+			initializedRef.current = false; // reset so the NEXT open initializes once
+			return;
 		}
-	}, [isOpen, initiallySelectedResources, buildDefaultProperties]);
+		if (initializedRef.current) return; // already initialized for this open — never clobber edits
+		initializedRef.current = true;
+
+		const hasSavedSelection = initiallySelectedResources.length > 0;
+		let ids: Set<string>;
+		if (hasSavedSelection) {
+			ids = new Set(initiallySelectedResources.map((r) => r.id));
+			setAutoSelectNotice("");
+		} else {
+			const auto = computeAutoSelection(resources, hasSavedSelection);
+			ids = new Set(auto.ids);
+			setAutoSelectNotice(auto.notice);
+		}
+		setSelectedIds(ids);
+		setExpandedRowId(null); // Default all collapsed; expand only when user clicks Select
+		const propsMap: Record<string, Record<string, any>> = {};
+		for (const res of initiallySelectedResources) {
+			propsMap[res.id] = res.properties ? { ...res.properties } : buildDefaultProperties();
+		}
+		setResourcePropertiesState(propsMap);
+		setFilterText("");
+		setPage(1);
+	}, [isOpen, initiallySelectedResources, resources, buildDefaultProperties]);
 
 	const filteredResources = useMemo(() => {
 		if (!filterText.trim()) return resources;
@@ -126,6 +150,32 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 		setExpandedRowId((current) => (current === resourceId ? null : resourceId)); // open this one only, or close if already open
 	}, []);
 
+	// Bulk: add every currently-filtered resource to the selection (search-aware).
+	const selectAllFiltered = useCallback(() => {
+		setSelectedIds((prev) => {
+			const next = new Set(prev);
+			for (const r of filteredResources) {
+				next.add(r.id);
+			}
+			return next;
+		});
+		setResourcePropertiesState((prev) => {
+			const next = { ...prev };
+			for (const r of filteredResources) {
+				if (!next[r.id]) next[r.id] = buildDefaultProperties();
+			}
+			return next;
+		});
+		setAutoSelectNotice("");
+	}, [filteredResources, buildDefaultProperties]);
+
+	// Bulk: clear the entire selection.
+	const clearAll = useCallback(() => {
+		setSelectedIds(new Set());
+		setExpandedRowId(null);
+		setAutoSelectNotice("");
+	}, []);
+
 	const handlePropertyChange = (resourceId: string, propKey: string, value: string) => {
 		setResourcePropertiesState((prev) => ({
 			...prev,
@@ -165,6 +215,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 		setSelectedIds(new Set());
 		setExpandedRowId(null);
 		setResourcePropertiesState({});
+		setAutoSelectNotice("");
 		onClose();
 	};
 
@@ -187,6 +238,29 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 						className="resource-search-input"
 						aria-label="Search resources"
 					/>
+				</div>
+
+				{autoSelectNotice && <div className="resource-autoselect-notice">{autoSelectNotice}</div>}
+
+				<div className="resource-bulk-actions">
+					<Button
+						variant="outline-secondary"
+						size="sm"
+						onClick={selectAllFiltered}
+						disabled={filteredResources.length === 0}
+						aria-label="Select all filtered resources"
+						className="resource-bulk-btn">
+						Select all{filterText.trim() ? " (filtered)" : ""}
+					</Button>
+					<Button
+						variant="outline-secondary"
+						size="sm"
+						onClick={clearAll}
+						disabled={selectedIds.size === 0}
+						aria-label="Clear all selected resources"
+						className="resource-bulk-btn">
+						Clear all
+					</Button>
 				</div>
 
 				<div className="resource-table-wrapper">
