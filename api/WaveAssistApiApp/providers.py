@@ -483,6 +483,10 @@ def fetch_resources(request):
         resources = []
         id_field = single_resource_config_dict.get("id_field")
         name_field = single_resource_config_dict.get("name_field")
+        # Sort/archive metadata for client-side default selection + recent-first ordering.
+        # Defaults match GitHub repo fields so it works without a DB resource_configs change.
+        sort_field = single_resource_config_dict.get("sort_field", "pushed_at")
+        archived_field = single_resource_config_dict.get("archived_field", "archived")
         for item in items:
             resource = {
                 "id": get_nested(item, id_field) if id_field else None,
@@ -494,7 +498,17 @@ def fetch_resources(request):
             for key, value in item.items():
                 if key not in excluded_keys:
                     resource["extra"][key] = value
+            # Promote sort/archive metadata to top level (kept in extra too for back-compat)
+            resource["sort_key"] = get_nested(item, sort_field)
+            resource["archived"] = bool(get_nested(item, archived_field, False))
             resources.append(resource)
+
+        # Most-recently-pushed first; None/missing sort_key sorts last. Coerce to str so a provider
+        # whose configured sort_field is numeric/bool (not an ISO-8601 timestamp) can never raise a
+        # mixed-type comparison and 500 the whole picker. For ISO-8601 UTC strings (GitHub
+        # pushed_at/updated_at) lexical order == chronological order; None/falsy -> "" sorts last.
+        resources.sort(key=lambda r: str(r.get("sort_key") or ""), reverse=True)
+
         return ResponseParser.getParsedSuccessMessage(
             {"resources": resources}, "200", "Resources fetched successfully"
         )
