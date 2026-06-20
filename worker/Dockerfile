@@ -23,6 +23,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /tmp/* /var/tmp/*
 
+# Install the Claude Code CLI (used by the `claude_cli_token` LLM provider, which
+# runs `claude -p` authenticated by an account's setup token). Native installer —
+# no Node.js required; lands in /root/.local/bin.
+RUN curl -fsSL https://claude.ai/install.sh | bash
+ENV PATH="/root/.local/bin:${PATH}"
+
 # Set the working directory in the container
 WORKDIR /app
 
