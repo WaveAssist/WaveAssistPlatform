@@ -1,3 +1,4 @@
+import time
 import uuid
 import base64
 import requests
@@ -136,11 +137,21 @@ def get_latest_commit_sha(repo_name, owner='WaveAssist', branch='main'):
 
 def get_config_yaml_from_github(repo_name, owner='WaveAssist', branch='main'):
     url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/config.yaml?ref={branch}"
-    resp = requests.get(url, auth=(GITHUB_USERNAME, GITHUB_TOKEN), timeout=(5, 30))
-    if resp.status_code != 200:
-        raise Exception("Failed to fetch config.yaml")
-    content = resp.json().get("content", "")
-    return yaml.safe_load(base64.b64decode(content).decode("utf-8"))
+    # A freshly-created repo's first commit can lag in GitHub's Contents API, so a
+    # read-back immediately after the push 404s even though the file is there.
+    # Retry on 404 (propagation lag); bail fast on any other status (auth / rate
+    # limit are not transient and shouldn't be hammered).
+    last_status = None
+    for _ in range(5):
+        resp = requests.get(url, auth=(GITHUB_USERNAME, GITHUB_TOKEN), timeout=(5, 30))
+        last_status = resp.status_code
+        if resp.status_code == 200:
+            content = resp.json().get("content", "")
+            return yaml.safe_load(base64.b64decode(content).decode("utf-8"))
+        if resp.status_code != 404:
+            break
+        time.sleep(2)
+    raise Exception(f"Failed to fetch config.yaml (last status {last_status})")
 
 
 
