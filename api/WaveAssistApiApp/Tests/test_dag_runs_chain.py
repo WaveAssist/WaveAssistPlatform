@@ -42,6 +42,23 @@ class LabelFallbackPureTest(TestCase):
         self.assertEqual(_humanize_schedule(Node()), "every 2 minutes")
         self.assertEqual(_humanize_schedule(None), "")
 
+    def test_humanize_cron_common_shapes(self):
+        from WaveAssistApiApp.run_views import _humanize_cron
+
+        class C:
+            pass
+
+        def cron(mn, hr, dom, mon, dow):
+            c = C()
+            c.minute, c.hour, c.day_of_month, c.month_of_year, c.day_of_week = mn, hr, dom, mon, dow
+            return c
+
+        self.assertEqual(_humanize_cron(cron("*/2", "*", "*", "*", "*")), "every 2 minutes")
+        self.assertEqual(_humanize_cron(cron("0", "6", "*", "*", "*")), "daily 06:00")
+        self.assertEqual(_humanize_cron(cron("30", "8", "*", "*", "1")), "weekly Mon 08:30")
+        self.assertEqual(_humanize_cron(cron("0", "*/3", "*", "*", "*")), "every 3 hours")
+        self.assertTrue(_humanize_cron(cron("15,45", "*", "*", "*", "*")).startswith("cron"))
+
 
 class FetchDagRunsChainTest(BuildTestCase):
     """DB integration: chain_label per run, idle batch flag, and status-wins for FAILED runs."""
