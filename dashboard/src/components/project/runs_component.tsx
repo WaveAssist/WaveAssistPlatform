@@ -28,6 +28,20 @@ const formatTimestamp = (timestamp: string) => {
 	return `${datePart} ${timePart}.${milliseconds}`;
 };
 
+// Short "x ago" for the chain cards + activity feed.
+const relativeTime = (ts: string): string => {
+	if (!ts) return "";
+	const diff = Date.now() - new Date(ts).getTime();
+	if (isNaN(diff)) return "";
+	const s = Math.max(0, Math.floor(diff / 1000));
+	if (s < 60) return `${s}s ago`;
+	const m = Math.floor(s / 60);
+	if (m < 60) return `${m}m ago`;
+	const h = Math.floor(m / 60);
+	if (h < 24) return `${h}h ago`;
+	return `${Math.floor(h / 24)}d ago`;
+};
+
 const RunsComponent: React.FC = () => {
 	const [runsArray, setRunsArray] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -134,6 +148,8 @@ const RunsComponent: React.FC = () => {
 	const [loadingOutputRunId, setLoadingOutputRunId] = useState<string | null>(null);
 	const [isLoadingRunDetails, setIsLoadingRunDetails] = useState(false);
 	const [runProgress, setRunProgress] = useState<Record<string, { totalTime: number; progress: number; remaining: number }>>({});
+	const [viewMode, setViewMode] = useState<"summary" | "all">("summary");
+	const [selectedChain, setSelectedChain] = useState<string | null>(null);
 
 	const handleLoadingComplete = useCallback(() => {
 		console.log("onLoadingComplete called, setting isLoadingRunDetails to false");
@@ -470,15 +486,156 @@ const RunsComponent: React.FC = () => {
 		},
 	];
 
+	// ---- Summary view: chain status cards (or single-chain banner) + an activity feed ----
+	const stateOf = (r: any): { txt: string; color: string } => {
+		if (!r) return { txt: "Scheduled · not yet run", color: "#5b6472" };
+		if (r.status === "STARTED" || r.status === "RUNNING") {
+			const p = runProgress[r.run_id];
+			return { txt: p ? `Running · ${p.remaining >= 60 ? "~" + Math.round(p.remaining / 60) + "m left" : Math.round(p.remaining) + "s left"}` : "Running", color: "#1ED66C" };
+		}
+		if (r.status === "FAILED") return { txt: "Failed", color: "#F85149" };
+		if (r.is_idle) return { txt: "Idle", color: "#9aa4b2" };
+		return { txt: "Done", color: "#1ED66C" };
+	};
+	const chipColor = (label: string): string => {
+		let h = 0;
+		for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) % 360;
+		return `hsl(${h}, 55%, 62%)`;
+	};
+
+	const renderChainRuns = (label: string, chainRuns: any[]) => {
+		const row: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, background: "#1C1F28", border: "1px solid #2D313A", borderRadius: 10, padding: "9px 13px", marginBottom: 8 };
+		return (
+			<div style={{ marginTop: 16 }}>
+				<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+					<button className="btn btn-sm btn-outline-secondary" style={{ borderRadius: 6, fontSize: 12 }} onClick={() => setSelectedChain(null)}>← All chains</button>
+					<span style={{ color: "#FFFFFF", fontWeight: 700, letterSpacing: "-0.02em" }}>{label}</span>
+					<span style={{ color: "#A1A1AA", fontSize: 12 }}>{chainRuns.length} runs</span>
+				</div>
+				{chainRuns.map((r) => {
+					const st = stateOf(r);
+					return (
+						<div key={`cd-${r.run_id}`} style={row}>
+							<span style={{ color: st.color, fontSize: 12, fontWeight: 700, minWidth: 64 }}>{st.txt.split(" · ")[0]}</span>
+							<div style={{ flex: 1, color: "#A1A1AA", fontSize: 12 }}>{formatTimestamp(r.started_at)}</div>
+							<button className="btn btn-sm btn-outline-secondary" style={{ borderRadius: 6, fontSize: 11 }} onClick={() => handleViewDetails(r)}>Status</button>
+							<button className="btn btn-sm btn-outline-secondary" style={{ borderRadius: 6, fontSize: 11 }} onClick={() => handleViewOutput(r.run_id)}>Output</button>
+							<span style={{ color: "#A1A1AA", fontSize: 12 }}>{relativeTime(r.started_at || r.finished_at)}</span>
+						</div>
+					);
+				})}
+			</div>
+		);
+	};
+
+	const renderSummary = () => {
+		const runs = runsArray;
+		const order: string[] = [];
+		const byChain: Record<string, any[]> = {};
+		runs.forEach((r) => {
+			const label = r.chain_label || "Run";
+			if (!byChain[label]) { byChain[label] = []; order.push(label); }
+			byChain[label].push(r);
+		});
+		const multi = order.length > 1;
+
+		// FAILED runs are never folded into the idle heartbeat — a real failure must always surface.
+		const idleByChain: Record<string, number> = {};
+		runs.forEach((r) => { if (r.is_idle && r.status !== "FAILED") { const k = r.chain_label || "Run"; idleByChain[k] = (idleByChain[k] || 0) + 1; } });
+
+		// Acted = anything worth its own row: every FAILED run, plus non-idle successes. (Live runs
+		// appear in the cards/banner, not the feed, to avoid double-rendering.)
+		const acted = runs.filter((r) => r.status === "FAILED" || (r.status === "SUCCESS" && !r.is_idle));
+		const first = runs.length ? runs[runs.length - 1] : null;
+		const firstAlreadyShown = !!first && (first.status === "FAILED" || (first.status === "SUCCESS" && !first.is_idle));
+
+		const cardStyle: React.CSSProperties = { background: "#1C1F28", border: "1px solid #2D313A", borderRadius: 12, padding: 14, position: "relative", flex: "1 1 200px", minWidth: 180, cursor: "pointer", transition: "border-color 0.15s" };
+		const rowStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, background: "#1C1F28", border: "1px solid #2D313A", borderRadius: 10, padding: "9px 13px" };
+		const chip = (label: string) => (
+			<span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 6, color: chipColor(label), background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>{label}</span>
+		);
+		const outBtn = (runId: string) => (
+			<button className="btn btn-sm btn-outline-secondary" style={{ borderRadius: 6, fontSize: 11 }} onClick={() => handleViewOutput(runId)}>View</button>
+		);
+
+		const cards = order.map((label) => {
+			const latest = byChain[label][0];
+			const st = stateOf(latest);
+			return (
+				<div key={label} style={{ ...cardStyle, borderColor: selectedChain === label ? "#1ED66C" : "#2D313A" }} onClick={() => setSelectedChain(selectedChain === label ? null : label)} title="See this chain's runs">
+					<div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "12px 0 0 12px" }} />{latest && runProgress[latest.run_id] && (<div style={{ position: "absolute", right: 12, top: 12, width: 34, height: 34 }}><svg width="34" height="34" style={{ transform: "rotate(-90deg)" }}><circle cx="17" cy="17" r="14" fill="none" stroke="#2D313A" strokeWidth="3" /><circle cx="17" cy="17" r="14" fill="none" stroke="#1ED66C" strokeWidth="3" strokeDasharray={`${(runProgress[latest.run_id].progress / 100) * 87.96} 87.96`} strokeLinecap="round" /></svg><div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: 9, fontWeight: 700, color: "#1ED66C" }}>{runProgress[latest.run_id].progress.toFixed(0)}%</div></div>)}
+					<div style={{ fontWeight: 700, fontSize: 14, color: "#FFFFFF", letterSpacing: "-0.02em" }}>{label}</div>
+					<div style={{ color: st.color, fontSize: 12, fontWeight: 700, marginTop: 6 }}>● {st.txt}</div>
+					<div style={{ color: "#FFFFFF", fontSize: 12, marginTop: 8 }}>
+						{latest ? (latest.is_idle ? "No action this cycle" : latest.status === "FAILED" ? "Last run failed" : "Last run completed") : ""}
+					</div>
+					<div style={{ color: "#A1A1AA", fontSize: 11, marginTop: 3 }}>
+						{latest ? relativeTime(latest.finished_at || latest.started_at) : ""}{latest?.cadence ? ` · ${latest.cadence}` : ""}
+					</div>
+				</div>
+			);
+		});
+
+		const feed: React.ReactNode[] = [];
+		acted.forEach((r) => feed.push(
+			<div key={`act-${r.run_id}`} style={rowStyle}>
+				{multi && chip(r.chain_label || "Run")}
+				<div style={{ flex: 1 }}><b style={{ color: r.status === "FAILED" ? "#F85149" : "#E6EDF3" }}>{r.status === "FAILED" ? "Run failed" : "Completed"}</b></div>
+				{outBtn(r.run_id)}<span style={{ color: "#A1A1AA", fontSize: 12 }}>{relativeTime(r.started_at || r.finished_at)}</span>
+			</div>
+		));
+		Object.keys(idleByChain).forEach((label) => feed.push(
+			<div key={`hb-${label}`} style={{ ...rowStyle, background: "#10151c", borderStyle: "dashed", color: "#A1A1AA" }}>
+				{multi && chip(label)}<div style={{ flex: 1, fontSize: 12.5 }}>{idleByChain[label]} idle check{idleByChain[label] === 1 ? "" : "s"} — nothing to do</div>
+			</div>
+		));
+		if (first && !firstAlreadyShown) feed.push(
+			<div key={`first-${first.run_id}`} style={{ ...rowStyle, borderLeft: "3px solid #1ED66C" }}>
+				{multi && chip(first.chain_label || "Run")}<div style={{ flex: 1, fontSize: 12.5 }}>First run</div>
+				{outBtn(first.run_id)}<span style={{ color: "#A1A1AA", fontSize: 12 }}>{formatTimestamp(first.started_at)}</span>
+			</div>
+		);
+
+		const banner = (() => {
+			const latest = runs[0];
+			const st = stateOf(latest);
+			return (
+				<div style={{ ...rowStyle, padding: "14px 16px" }}>
+					<span style={{ color: st.color }}>●</span>
+					<div style={{ flex: 1 }}><b>{st.txt}</b>
+						<div style={{ color: "#A1A1AA", fontSize: 11 }}>{latest ? relativeTime(latest.finished_at || latest.started_at) : ""}{latest?.cadence ? ` · ${latest.cadence}` : ""}</div>
+					</div>
+				</div>
+			);
+		})();
+
+		return (
+			<div style={{ overflowY: "auto", flex: 1 }}>
+				{runs.length === 0 ? (
+					<div style={{ color: "#A1A1AA", padding: 20 }}>No runs yet.</div>
+				) : (
+					<>
+						{multi ? <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>{cards}</div> : banner}
+						{selectedChain && byChain[selectedChain] ? renderChainRuns(selectedChain, byChain[selectedChain]) : <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 18 }}>{feed}</div>}
+					</>
+				)}
+			</div>
+		);
+	};
+
 	return (
 		<div className="main-container">
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
 				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-between align-items-center mb-3">
 						<h3 className="translucent_white mb-0">Runs</h3>
-						<Button variant="dark" onClick={fetchRuns}>
-							<span className="bi bi-arrow-clockwise"></span>
-						</Button>
+						<div className="d-flex gap-2">
+							<Button variant={viewMode === "summary" ? "success" : "dark"} size="sm" onClick={() => setViewMode("summary")}>Summary</Button>
+							<Button variant={viewMode === "all" ? "success" : "dark"} size="sm" onClick={() => setViewMode("all")}>All runs</Button>
+							<Button variant="dark" size="sm" onClick={fetchRuns}>
+								<span className="bi bi-arrow-clockwise"></span>
+							</Button>
+						</div>
 					</div>
 
 					{isLoading && runsArray.length === 0 ? (
@@ -493,6 +650,8 @@ const RunsComponent: React.FC = () => {
 								<div className="text-white">Loading runs...</div>
 							</div>
 						</div>
+					) : viewMode === "summary" ? (
+						renderSummary()
 					) : (
 						<div className="ag-theme-custom grid-container" style={{ flex: 1 }}>
 							<AgGridReact
