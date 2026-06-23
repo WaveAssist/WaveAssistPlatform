@@ -28,6 +28,7 @@ def create_nodes_from_yaml(project_object, nodes, file_map, timezone):
             name=name,
             python_code=python_code,
             is_starting_node=node.get("starting_node", False),
+            chain_label=(node.get("chain_label") or None),
             is_enabled=True,
             schedule_type=schedule_type,
             crontab_schedule=cron_obj,

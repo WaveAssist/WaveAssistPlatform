@@ -677,6 +677,7 @@ def create_node(request):  ##TCW
     is_enabled = bool(int(request.POST.get("is_enabled", "0")))
 
     is_starting_node = bool(int(request.POST.get("is_starting_node", "0")))
+    chain_label = (request.POST.get("chain_label", "") or "").strip() or None
     schedule_type = request.POST.get("schedule_type", "none").lower()
     success, message, interval_object, crontab_object, run_after_nodes_array = (
         validator.validate_and_get_intervals(request, project_object)
@@ -709,6 +710,7 @@ waveassist.init()
                 is_enabled=is_enabled,
                 name=node_name,
                 is_starting_node=is_starting_node,
+                chain_label=chain_label,
                 schedule_type=schedule_type,
                 interval_schedule=interval_object,
                 crontab_schedule=crontab_object,

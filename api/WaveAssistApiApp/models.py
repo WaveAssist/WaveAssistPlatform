@@ -319,6 +319,9 @@ class Nodes(models.Model):
 
     ##RunType
     is_starting_node = models.BooleanField(default=False)
+    # Human label for this chain's runs in the dashboard (from config.yaml `chain_label`). Only
+    # meaningful on starting nodes. Null => the dashboard falls back to the project name (+#index).
+    chain_label = models.CharField(max_length=120, null=True, blank=True)
     schedule_type = models.CharField(
         max_length=10, choices=SCHEDULE_TYPE_CHOICES, default="interval"
     )
@@ -342,6 +345,7 @@ class Nodes(models.Model):
         node_dict["node_key"] = self.node_key
         node_dict["python_code"] = self.python_code
         node_dict["is_starting_node"] = self.is_starting_node
+        node_dict["chain_label"] = self.chain_label
         node_dict["is_enabled"] = self.is_enabled
         node_dict["schedule_type"] = self.schedule_type
         node_dict["interval_schedule"] = str(self.interval_schedule)
