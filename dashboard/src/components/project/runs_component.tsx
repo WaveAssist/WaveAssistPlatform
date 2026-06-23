@@ -229,7 +229,7 @@ const RunsComponent: React.FC = () => {
 			if (isSuccess) {
 				const defaultMsg = await fetch_default_message_from_assistant();
 				if (defaultMsg && defaultMsg.trim().length > 0) {
-					const html = `<h1 style="font-size: 24px;  color: #222222;">${defaultMsg}</h1>`;
+					const html = `<div style="font-family: Inter, sans-serif; font-size: 14px; line-height: 1.6; color: #374151;">${defaultMsg}</div>`;
 					setOutputHtmlContent(html);
 					setShowOutputModal(true);
 				} else {
