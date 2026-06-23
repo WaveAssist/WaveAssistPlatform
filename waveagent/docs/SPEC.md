@@ -48,7 +48,9 @@ the server pipeline.
   pulled from the KV store).
 - **`call_llm` is allowed and encouraged** for *runtime* reasoning inside
   generated nodes. It routes through WaveAssist's own server-side OpenRouter key,
-  so generated nodes need **no** user LLM key.
+  so generated nodes need **no** user LLM key. (Projects that want to bring their
+  own — Azure, a Claude subscription via `claude_cli_token`, or a specific
+  OpenRouter key — can set a per-model `llm_models` registry; see the SDK README.)
 - **Auth by WaveAssist UID** obtained at login.
 - **Cross-host:** must work in Claude Code **and** Cursor.
 

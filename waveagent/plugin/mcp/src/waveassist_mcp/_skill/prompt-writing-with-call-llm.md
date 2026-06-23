@@ -14,9 +14,9 @@ three questions:
 3. How do I structure the prompt so the model actually produces what
    I want?
 
-## Provider note — OpenRouter (current)
+## Provider note — OpenRouter by default, any provider per model
 
-`call_llm` currently routes through **OpenRouter**, so model names
+By default `call_llm` routes through **OpenRouter**, so model names
 follow OpenRouter's `provider/model` format:
 
 | `model` value | Provider routed |
@@ -26,15 +26,26 @@ follow OpenRouter's `provider/model` format:
 | `openai/gpt-5-mini` | OpenAI GPT-5 Mini |
 | `google/gemini-2.5-flash` | Google Gemini 2.5 Flash |
 
-This is implementation-specific and may change — if the provider layer
-moves, model strings move with it. Always read the current default from
-`fetch_data("model_name", default=DEFAULT_MODEL)` rather than
-hardcoding.
+This is the default and needs no setup beyond the OpenRouter key. None of
+what follows changes how you write prompts or response models — they work
+unchanged across every provider. Always read the model from
+`fetch_data("model_name", default=DEFAULT_MODEL)` rather than hardcoding.
 
-A dev-only escape hatch exists: setting `LLM_PROVIDER=claude_cli` in
-the environment routes calls through the local Claude CLI (Claude Max
-subscription, no API credits used). This is for local testing; the
-same prompts and response models work unchanged.
+**Per-model providers (`llm_models` registry).** A project can store an
+`llm_models` registry, keyed by the `model` string you pass, so individual
+models route to a different provider: Azure (chat, or the Responses API for
+reasoning / "pro" models), a Claude **subscription** via `claude_cli_token`
+(the headless path that runs on the WaveAssist cloud workers — no API
+credits), the local Claude CLI (`claude_cli`), or an explicit OpenRouter
+entry. Each entry is self-contained (provider + real model id + credentials
++ Azure `api_type`); a model not in the registry falls back to the
+OpenRouter default. Set it with `store_data("llm_models", {...})` (or the
+MCP's `set_key`, `data_type="json"`). See the SDK README's "Per-model
+providers (`llm_models` registry)" section for the entry shapes.
+
+**Dev escape hatch.** Setting `LLM_PROVIDER=claude_cli` in the environment
+routes every call through the local Claude CLI (Claude Max / Pro
+subscription, no API credits) — handy for local testing.
 
 ## The signature
 

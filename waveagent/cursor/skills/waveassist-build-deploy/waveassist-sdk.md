@@ -281,6 +281,13 @@ Raises `RuntimeError` on any failure envelope; catch with generic
 Structured LLM call with Pydantic-enforced output. See the dedicated
 skill `prompt-writing-with-call-llm.md` for everything this does.
 
+Routes through **OpenRouter** by default. A project can store an
+`llm_models` registry to route individual models to Azure (chat or the
+Responses API), a Claude subscription (`claude_cli_token`, runs headless on
+the WaveAssist cloud workers), the local Claude CLI, or OpenRouter — per
+model, no code change. See the provider note in
+`prompt-writing-with-call-llm.md`.
+
 ### `is_test_run()` / `check_credits_and_notify()` / `send_email()`
 
 - `is_test_run()` — returns `True` during the user's "dry-run preview"
