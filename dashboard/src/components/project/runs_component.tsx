@@ -305,8 +305,10 @@ const RunsComponent: React.FC = () => {
 
 			resizable: true,
 			cellRenderer: (params: any) => {
-				const status = params.value === "STARTED" ? "PROCESSING" : params.value;
-				const isSuccess = status === "SUCCESS";
+				const rawStatus = params.value === "STARTED" ? "PROCESSING" : params.value;
+				const isIdle = params.data?.is_idle && rawStatus === "SUCCESS";
+				const status = isIdle ? "Idle" : rawStatus;
+				const isSuccess = !isIdle && status === "SUCCESS";
 				return (
 					<span
 						className={`badge ${isSuccess ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}
@@ -559,18 +561,21 @@ const RunsComponent: React.FC = () => {
 		);
 
 		const cards = order.map((label) => {
-			const latest = byChain[label][0];
-			const st = stateOf(latest);
+			const chainRunsForLabel = byChain[label];
+			const activeRun = chainRunsForLabel.find((r: any) => r.status === "STARTED" || r.status === "RUNNING");
+			const latest = chainRunsForLabel[0];
+			const displayRun = activeRun || latest;
+			const st = stateOf(displayRun);
 			return (
 				<div key={label} style={{ ...cardStyle, borderColor: selectedChain === label ? "#1ED66C" : "#2D313A" }} onClick={() => setSelectedChain(selectedChain === label ? null : label)} title="See this chain's runs">
-					<div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "12px 0 0 12px" }} />{latest && runProgress[latest.run_id] && (<div style={{ position: "absolute", right: 12, top: 12, width: 34, height: 34 }}><svg width="34" height="34" style={{ transform: "rotate(-90deg)" }}><circle cx="17" cy="17" r="14" fill="none" stroke="#2D313A" strokeWidth="3" /><circle cx="17" cy="17" r="14" fill="none" stroke="#1ED66C" strokeWidth="3" strokeDasharray={`${(runProgress[latest.run_id].progress / 100) * 87.96} 87.96`} strokeLinecap="round" /></svg><div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: 9, fontWeight: 700, color: "#1ED66C" }}>{runProgress[latest.run_id].progress.toFixed(0)}%</div></div>)}
+					<div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "12px 0 0 12px" }} />{displayRun && runProgress[displayRun.run_id] && (<div style={{ position: "absolute", right: 12, top: 12, width: 34, height: 34 }}><svg width="34" height="34" style={{ transform: "rotate(-90deg)" }}><circle cx="17" cy="17" r="14" fill="none" stroke="#2D313A" strokeWidth="3" /><circle cx="17" cy="17" r="14" fill="none" stroke="#1ED66C" strokeWidth="3" strokeDasharray={`${(runProgress[displayRun.run_id].progress / 100) * 87.96} 87.96`} strokeLinecap="round" /></svg><div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: 9, fontWeight: 700, color: "#1ED66C" }}>{runProgress[displayRun.run_id].progress.toFixed(0)}%</div></div>)}
 					<div style={{ fontWeight: 700, fontSize: 14, color: "#FFFFFF", letterSpacing: "-0.02em" }}>{label}</div>
 					<div style={{ color: st.color, fontSize: 12, fontWeight: 700, marginTop: 6 }}>● {st.txt}</div>
 					<div style={{ color: "#FFFFFF", fontSize: 12, marginTop: 8 }}>
-						{latest ? (latest.is_idle ? "No action this cycle" : latest.status === "FAILED" ? "Last run failed" : "Last run completed") : ""}
+						{activeRun ? "Run in progress" : (latest ? (latest.is_idle ? "No action this cycle" : latest.status === "FAILED" ? "Last run failed" : "Last run completed") : "")}
 					</div>
 					<div style={{ color: "#A1A1AA", fontSize: 11, marginTop: 3 }}>
-						{latest ? relativeTime(latest.finished_at || latest.started_at) : ""}{latest?.cadence ? ` · ${latest.cadence}` : ""}
+						{displayRun ? relativeTime(displayRun.finished_at || displayRun.started_at) : ""}{displayRun?.cadence ? ` · ${displayRun.cadence}` : ""}
 					</div>
 				</div>
 			);
@@ -591,19 +596,21 @@ const RunsComponent: React.FC = () => {
 		));
 		if (first && !firstAlreadyShown) feed.push(
 			<div key={`first-${first.run_id}`} style={{ ...rowStyle, borderLeft: "3px solid #1ED66C" }}>
-				{multi && chip(first.chain_label || "Run")}<div style={{ flex: 1, fontSize: 12.5 }}>First run</div>
+				{multi && chip(first.chain_label || "Run")}<div style={{ flex: 1, fontSize: 12.5, color: "#E6EDF3" }}>First run</div>
 				{outBtn(first.run_id)}<span style={{ color: "#A1A1AA", fontSize: 12 }}>{formatTimestamp(first.started_at)}</span>
 			</div>
 		);
 
 		const banner = (() => {
+			const activeRun = runs.find((r: any) => r.status === "STARTED" || r.status === "RUNNING");
 			const latest = runs[0];
-			const st = stateOf(latest);
+			const displayRun = activeRun || latest;
+			const st = stateOf(displayRun);
 			return (
 				<div style={{ ...rowStyle, padding: "14px 16px" }}>
 					<span style={{ color: st.color }}>●</span>
 					<div style={{ flex: 1 }}><b style={{ color: st.color }}>{st.txt}</b>
-						<div style={{ color: "#A1A1AA", fontSize: 11 }}>{latest ? relativeTime(latest.finished_at || latest.started_at) : ""}{latest?.cadence ? ` · ${latest.cadence}` : ""}</div>
+						<div style={{ color: "#A1A1AA", fontSize: 11 }}>{displayRun ? relativeTime(displayRun.finished_at || displayRun.started_at) : ""}{displayRun?.cadence ? ` · ${displayRun.cadence}` : ""}</div>
 					</div>
 				</div>
 			);
@@ -737,7 +744,7 @@ const RunsComponent: React.FC = () => {
 
 							{/* Content Display */}
 							{outputDisplayMode === "html" && (
-								<div className="output-content">{outputHtmlContent && parse(DOMPurify.sanitize(outputHtmlContent))}</div>
+								<div className="output-content" style={{ background: "#ffffff", borderRadius: 8, padding: "16px" }}>{outputHtmlContent && parse(DOMPurify.sanitize(outputHtmlContent))}</div>
 							)}
 
 							{outputDisplayMode === "iframe" && (
