@@ -602,7 +602,7 @@ const RunsComponent: React.FC = () => {
 			return (
 				<div style={{ ...rowStyle, padding: "14px 16px" }}>
 					<span style={{ color: st.color }}>●</span>
-					<div style={{ flex: 1 }}><b>{st.txt}</b>
+					<div style={{ flex: 1 }}><b style={{ color: st.color }}>{st.txt}</b>
 						<div style={{ color: "#A1A1AA", fontSize: 11 }}>{latest ? relativeTime(latest.finished_at || latest.started_at) : ""}{latest?.cadence ? ` · ${latest.cadence}` : ""}</div>
 					</div>
 				</div>
