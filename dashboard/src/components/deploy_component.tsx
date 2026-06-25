@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Spinner from "react-bootstrap/Spinner";
 import "./deploy_component.css";
-import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
+import { BrandLogo, getBrand } from "../config/branding";
 import { fetchAllProjectsAPI } from "../services/all_projects_services";
 import { BASE_URL } from "../services/base_service";
 
@@ -64,7 +64,9 @@ const DeployComponent: React.FC = () => {
 
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
-		const templateKey = searchParams.get("template_key");
+		// In a scoped brand (e.g. gitzoid), a bare /deploy defaults to that brand's template.
+		const brand = getBrand();
+		const templateKey = searchParams.get("template_key") || (brand.scoped ? brand.templateKey : null);
 
 		console.log("searchParams", searchParams);
 
@@ -94,7 +96,8 @@ const DeployComponent: React.FC = () => {
 		try {
 			const formData = new FormData();
 			formData.append("repo_url", githubRepo);
-			formData.append("template_key", searchParams.get("template_key") || "");
+			const brand = getBrand();
+			formData.append("template_key", searchParams.get("template_key") || (brand.scoped ? brand.templateKey || "" : ""));
 			formData.append("uid", uid);
 			formData.append("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
 			const isPremium = searchParams.get("is_premium") === "true";
@@ -141,7 +144,7 @@ const DeployComponent: React.FC = () => {
 		<div className="deploy-loading-page">
 			<div className="deploy-loading-container">
 				<div className="text-center">
-					<img src={GreenLogo} alt="WaveAssist Logo" className="deploy-logo mb-4" />
+					<BrandLogo className="deploy-logo mb-4" size={34} />
 					<div className="deploy-loader">
 						<Spinner animation="border" role="status" variant="success" className="mb-3" />
 						{isDeploying && <p className="deploy-message">{deploymentMessages[currentMessageIndex]}</p>}

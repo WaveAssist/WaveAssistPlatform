@@ -7,7 +7,7 @@ import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_servi
 import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext";
 import { usePostHog } from "posthog-js/react";
-import WaveAssistLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
+import { BrandLogo } from "../config/branding";
 import { getStoredAccessPlan, hasSuperAdminAccess } from "./plan";
 interface NavbarProps {
 	onToggleSidebar?: () => void;
@@ -168,7 +168,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 						<i className="bi bi-list"></i>
 					</Button>
 					<div className="navbar-logo-container flex-shrink-1">
-						<img src={WaveAssistLogo} alt="WaveAssist" className="navbar-logo" style={{ height: "24px", maxWidth: "150px", width: "auto" }} />
+						<BrandLogo className="navbar-logo" size={19} style={{ height: "24px", maxWidth: "150px", width: "auto" }} />
 					</div>
 					<div className="ms-auto d-flex align-items-center flex-shrink-0 navbar-actions">
 						{isSuperAdmin && (

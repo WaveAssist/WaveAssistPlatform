@@ -3,7 +3,7 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Spinner from "react-bootstrap/Spinner";
 import Alert from "react-bootstrap/Alert";
-import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
+import { BrandLogo, getBrand } from "../config/branding";
 
 import { useNavigate } from "react-router-dom";
 import { fetchAllProjectsAPI, createProjectAPI, deleteProjectApi } from "../services/all_projects_services";
@@ -17,6 +17,7 @@ interface Project {
 	project_key: string;
 	name: string;
 	is_premium?: boolean;
+	template_key?: string;
 	// Add other project properties as needed
 }
 
@@ -179,12 +180,29 @@ const AllProjectsComponent: React.FC = () => {
 		navigate(`/manage/assistant?project_key=${projectKey}`);
 	};
 
+	// Whitelabel: in a scoped brand (gitzoid) the dashboard shows only that
+	// template, and "Add" force-deploys it instead of opening the catalog.
+	const brand = getBrand();
+	const handleAdd = () => {
+		if (brand.scoped && brand.templateKey) {
+			navigate(`/deploy?template_key=${brand.templateKey}`);
+		} else if (brand.catalogUrl) {
+			window.open(brand.catalogUrl, "_self");
+		}
+	};
+	const visibleProjects = brand.scoped
+		? projectArray.filter(
+				(p: Project) =>
+					p.template_key === brand.templateKey || (p.project_key || "").toLowerCase().includes(brand.templateKey || "")
+		  )
+		: projectArray;
+
 	return (
 		<div className="base_component">
 			<div className="dashboard-header row flex-md-nowrap py-3 px-3">
 				<div className="col-6 d-flex align-items-center justify-content-start">
 					<div className="d-flex align-items-center mt-2" style={{ height: "100%" }}>
-						<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
+						<BrandLogo className="wp_logo" size={23} />
 					</div>
 				</div>
 				<div className="col-6 d-flex flex-row flex-nowrap justify-content-end align-items-center button-row">
@@ -198,14 +216,16 @@ const AllProjectsComponent: React.FC = () => {
 						<i className="bi bi-person"></i>
 						<span className="d-none d-md-inline ms-1">User ID</span>
 					</button>
-					<a
-						href="https://waveassist.ai/assistants"
-						target="_self"
-						rel="noopener noreferrer"
-						className="btn btn-outline-secondary btn-sm ms-2 use-template-button">
-						<i className="bi bi-copy"></i>
-						<span className="d-none d-md-inline ms-1">Assistants</span>
-					</a>
+					{!brand.scoped && brand.catalogUrl && (
+						<a
+							href={brand.catalogUrl}
+							target="_self"
+							rel="noopener noreferrer"
+							className="btn btn-outline-secondary btn-sm ms-2 use-template-button">
+							<i className="bi bi-copy"></i>
+							<span className="d-none d-md-inline ms-1">Assistants</span>
+						</a>
+					)}
 					<button className="btn btn-outline-secondary btn-sm logout_button ms-2 me-2" onClick={handleLogout}>
 						<i className="bi bi-box-arrow-right"></i>
 						<span className="d-none d-md-inline ms-1">Logout</span>
@@ -223,21 +243,21 @@ const AllProjectsComponent: React.FC = () => {
 				<div className="admin-panel">
 					<div className="content projects-row">
 						<div className="header">
-							<h2 className="admin-title mb-3 translucent_white">All Assistants</h2>
+							<h2 className="admin-title mb-3 translucent_white">{brand.scoped ? "My GitZoids" : "All Assistants"}</h2>
 						</div>
 
 						<div className="row ">
-							<div className="col-sm-4 project-card  " onClick={() => window.open("https://waveassist.ai/assistants", "_self")}>
+							<div className="col-sm-4 project-card  " onClick={handleAdd}>
 								<div className="card text-white bg-dark mb-3 ml-5 mr-5 add-project-card">
 									<div className="card-body d-flex align-items-center justify-content-center">
 										<div className="text-center">
 											<i className="bi bi-plus-lg add-icon translucent_blue fs-3"></i>
-											<p className="add-text translucent_blue">Add Assistant</p>
+											<p className="add-text translucent_blue">{brand.scoped ? "Add GitZoid" : "Add Assistant"}</p>
 										</div>
 									</div>
 								</div>
 							</div>
-							{projectArray.map((project: any) => (
+							{visibleProjects.map((project: any) => (
 								<div className="col-sm-4 project-card ml-5" key={project.project_key} onClick={() => handleViewDetails(project.project_key)}>
 									<div className="card text-white bg-dark mb-3 ml-5 mr-5">
 										<div className="card-body position-relative p-3">
@@ -308,18 +328,22 @@ const AllProjectsComponent: React.FC = () => {
 					</div>
 				</Modal.Body>
 				<Modal.Footer className="d-flex justify-content-between align-items-center">
-					<div className="text-white small mt-2">
-						<div>Want a head start?</div>
-						<Button
-							size="sm"
-							className="p-0 translucent_blue bg-transparent border-0 text-decoration-none"
-							onClick={() => window.open("https://waveassist.ai/assistants", "_self")}
-							onMouseOver={(e) => e.currentTarget.classList.add("text-decoration-underline")}
-							onMouseOut={(e) => e.currentTarget.classList.remove("text-decoration-underline")}>
-							{/* <i className="bi bi-lightning-fill me-1" style={{ fontSize: "0.8rem" }}></i> */}
-							Use an assistant instead →
-						</Button>
-					</div>
+					{!brand.scoped && brand.catalogUrl ? (
+						<div className="text-white small mt-2">
+							<div>Want a head start?</div>
+							<Button
+								size="sm"
+								className="p-0 translucent_blue bg-transparent border-0 text-decoration-none"
+								onClick={() => window.open(brand.catalogUrl as string, "_self")}
+								onMouseOver={(e) => e.currentTarget.classList.add("text-decoration-underline")}
+								onMouseOut={(e) => e.currentTarget.classList.remove("text-decoration-underline")}>
+								{/* <i className="bi bi-lightning-fill me-1" style={{ fontSize: "0.8rem" }}></i> */}
+								Use an assistant instead →
+							</Button>
+						</div>
+					) : (
+						<div />
+					)}
 
 					<div className="mt-2">
 						<Button variant="secondary" onClick={handleCloseModal}>

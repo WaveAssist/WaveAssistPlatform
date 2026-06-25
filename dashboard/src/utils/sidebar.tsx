@@ -1,8 +1,7 @@
 // src/Sidebar.js
 import { Link, useLocation } from "react-router-dom";
 import "./sidebar.css";
-import GreenLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
-import WavePredictLogo from "../assets/Logo/Wave_Predict_W_Logo.png";
+import { BrandLogo } from "../config/branding";
 interface SidebarProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -25,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName,
 				{!isCollapsed ? (
 					<div className="d-flex align-items-center justify-content-between">
 						<a href="/" className="d-flex align-items-center">
-							<img src={GreenLogo} className="wp_logo" alt="WavePredict Logo" />
+							<BrandLogo variant="full" className="wp_logo" size={23} />
 						</a>
 						<div className="d-flex gap-2">
 							{window.innerWidth >= 768 && onToggleCollapse && (
@@ -42,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName,
 					<div className="d-flex flex-column align-items-center collapsed-header">
 						<div className="mb-2 logo-container">
 							<a href="/">
-								<img src={WavePredictLogo} className="wp_logo_collapsed" alt="WavePredict Logo" />
+								<BrandLogo variant="mark" className="wp_logo_collapsed" size={18} />
 							</a>
 							<button className="btn btn-outline-secondary btn-sm expand-btn" onClick={onToggleCollapse} title="Expand sidebar">
 								<i className="bi bi-chevron-right"></i>

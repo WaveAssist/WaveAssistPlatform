@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./login_component.css";
-import WALogo from "../assets/Logo/Wave_Predict_W_Logo.png";
+import { BrandLogo, getBrand } from "../config/branding";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../components/firebase";
 // import { xProvider } from "../components/firebase";
@@ -116,7 +116,7 @@ const LoginComponent: React.FC = () => {
 				const name = data.user_data.name || "";
 				if (uid && posthog) {
 					posthog.identify(uid, { email, name, uid });
-					posthog.capture("login_succeeded", { method: "WaveAssist" });
+					posthog.capture("login_succeeded", { method: getBrand().analyticsName });
 				}
 			} catch (_err) {}
 
@@ -172,7 +172,7 @@ const LoginComponent: React.FC = () => {
 
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {
-				method: "WaveAssist",
+				method: getBrand().analyticsName,
 			});
 
 			setLoading(false);
@@ -280,7 +280,7 @@ const LoginComponent: React.FC = () => {
 
 			// ✅ Fire GA4 event for email link sent
 			ReactGA.event("email_link_sent", {
-				method: "WaveAssist",
+				method: getBrand().analyticsName,
 			});
 		} catch (error: any) {
 			console.error("Email sign-in failed:", error);
@@ -330,7 +330,7 @@ const LoginComponent: React.FC = () => {
 						console.log(`Safari fallback strategy ${i + 1} succeeded!`);
 
 						ReactGA.event("email_link_sent", {
-							method: "WaveAssist",
+							method: getBrand().analyticsName,
 						});
 						return;
 					} catch (retryError: any) {
@@ -378,9 +378,9 @@ const LoginComponent: React.FC = () => {
 		<div className="wa-login-page">
 			<div className="wa-card">
 				<div className="text-center mb-4">
-					<img src={WALogo} alt="WaveAssist Logo" className="img-fluid mb-4 wp_logo_login" />
-					<h1 className="wa-title">Welcome to WaveAssist</h1>
-					<p className="title-message">Sign up for free to access your workflows</p>
+					<BrandLogo className="img-fluid mb-4 wp_logo_login" size={42} style={{ marginBottom: "1.5rem" }} />
+					<h1 className="wa-title">{getBrand().welcome}</h1>
+					<p className="title-message">{getBrand().signup}</p>
 					{isCLILogin && <p className="title-message">This login flow was initiated from the CLI — complete it here to continue.</p>}
 				</div>
 

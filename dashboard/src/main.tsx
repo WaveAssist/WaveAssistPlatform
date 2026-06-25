@@ -6,6 +6,11 @@ import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
 
 import { ToastProvider } from "./utils/toast_context.tsx";
 import { PostHogProvider } from "posthog-js/react";
+import { captureBrandParam, getBrand } from "./config/branding.tsx";
+
+// Capture ?brand= and set the tab title before React mounts.
+captureBrandParam();
+document.title = getBrand().title;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>

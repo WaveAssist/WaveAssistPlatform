@@ -8,7 +8,7 @@ import { refreshUserProfile } from "../services/login_services";
 import { useToast } from "../utils/toast_context";
 import { useDodoCheckout } from "../hooks/useDodoCheckout";
 import { PLANS, PlanOption } from "../utils/plans";
-import WALogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
+import { BrandLogo } from "../config/branding";
 import "./upgrade_component.css";
 
 const UpgradeComponent: React.FC = () => {
@@ -106,7 +106,7 @@ const UpgradeComponent: React.FC = () => {
 		return (
 			<div className="upgrade-page">
 				<div className="upgrade-page-header">
-					<img src={WALogo} alt="WaveAssist" className="upgrade-logo" />
+					<BrandLogo className="upgrade-logo" size={30} />
 					<button className="upgrade-back-link" onClick={() => navigate("/manage")}>
 						<i className="bi bi-arrow-left me-1"></i>Back to dashboard
 					</button>
@@ -137,7 +137,7 @@ const UpgradeComponent: React.FC = () => {
 		return (
 			<div className="upgrade-page">
 				<div className="upgrade-page-header">
-					<img src={WALogo} alt="WaveAssist" className="upgrade-logo" />
+					<BrandLogo className="upgrade-logo" size={30} />
 				</div>
 				<div className="upgrade-success">
 					<div className="upgrade-success-icon">
@@ -163,7 +163,7 @@ const UpgradeComponent: React.FC = () => {
 	return (
 		<div className="upgrade-page">
 			<div className="upgrade-page-header">
-				<img src={WALogo} alt="WaveAssist" className="upgrade-logo" />
+				<BrandLogo className="upgrade-logo" size={30} />
 				<button className="upgrade-back-link" onClick={() => navigate("/manage")}>
 					<i className="bi bi-arrow-left me-1"></i>Back to dashboard
 				</button>

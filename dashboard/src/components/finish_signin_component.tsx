@@ -6,7 +6,7 @@ import { loginAPI, getStartedAPI } from "../services/login_services";
 import { Spinner } from "react-bootstrap";
 import ReactGA from "react-ga4";
 import { usePostHog } from "posthog-js/react";
-import WALogo from "../assets/Logo/Wave_Predict_W_Logo.png";
+import { BrandLogo, getBrand } from "../config/branding";
 import "./finish_signin_component.css";
 import { persistUserPlan } from "../utils/plan";
 
@@ -153,7 +153,7 @@ const FinishSignInComponent: React.FC = () => {
 			setLoading(false);
 			// ✅ Fire GA4 sign_up event
 			ReactGA.event("account_created", {
-				method: "WaveAssist",
+				method: getBrand().analyticsName,
 			});
 
 			// Clean up localStorage if we used the stored redirect
@@ -179,7 +179,7 @@ const FinishSignInComponent: React.FC = () => {
 		<div className="wa-login-page">
 			<div className="wa-card">
 				<div className="text-center mb-4">
-					<img src={WALogo} alt="WaveAssist Logo" className="img-fluid mb-4 wp_logo_login" />
+					<BrandLogo className="img-fluid mb-4 wp_logo_login" size={42} style={{ marginBottom: "1.5rem" }} />
 					<h1 className="wa-title">Completing Sign In</h1>
 					{email && <p className="title-message">Signing in as {email}</p>}
 				</div>
