@@ -5,6 +5,11 @@ from WaveAssistApi.settings import MONGO_CONNECTION_STRING
 import uuid
 from datetime import datetime, timezone
 
+# Process-level cache of (database, collection) pairs whose IODataKey index we've
+# already ensured, so we don't issue a createIndex on every write. Best-effort only.
+_ensured_iodatakey_indexes = set()
+
+
 class MongoManager:
     ##Init Function
     def __init__(self, collection_name=None, connection_string=MONGO_CONNECTION_STRING, database_name=DB_NAME):
@@ -13,10 +18,30 @@ class MongoManager:
         if collection_name is not None:
             self.collection = self.database[collection_name]
 
+    def _ensure_iodatakey_index(self):
+        """
+        Best-effort: make sure the current collection has an index on IODataKey so
+        lookups and upserts use an index instead of a full collection scan.
+
+        Intentionally swallows ALL exceptions and never raises — indexing is only an
+        optimization and must never interrupt the actual data write. Cached per
+        (database, collection) so it runs at most once per collection per process.
+        """
+        try:
+            cache_key = (self.collection.database.name, self.collection.name)
+            if cache_key in _ensured_iodatakey_indexes:
+                return
+            self.collection.create_index(IO_DATA_KEY)
+            _ensured_iodatakey_indexes.add(cache_key)
+        except Exception as e:
+            utils.logger.warning(f"⚠️ Could not ensure {IO_DATA_KEY} index (continuing): {str(e)}")
+
     def insert_or_replace_data_for_key(self, io_key, data, data_type='string'):
         """
         Insert or replace the document for a given key.
         """
+        # Best-effort index creation. Never raises, so the write below always runs.
+        self._ensure_iodatakey_index()
         try:
             document = {
                 IO_DATA_KEY: io_key,
