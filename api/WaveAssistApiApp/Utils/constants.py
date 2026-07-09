@@ -129,6 +129,9 @@ DODO_DEFAULT_API_KEY = "REMOVED_CREDENTIAL"
 DODO_DEFAULT_CREDITS_PRODUCT_ID = "pdt_0NaUMxiHUGKVnbT58MTW4"
 DODO_DEFAULT_PLAN_PLUS_PRODUCT_ID = "pdt_0NaUN5Yb442s7J9ZLm7Ly"
 DODO_DEFAULT_PLAN_PRO_PRODUCT_ID = "pdt_0NaUN2K3XpBUtSlBmjeMM"
+# GitZoid Pro DoDo product id. Reuses the existing PRO product id for now; replace with a
+# dedicated GitZoid product via env DODO_PLAN_GITZOID_PRO_PRODUCT_ID when it's created.
+DODO_DEFAULT_PLAN_GITZOID_PRO_PRODUCT_ID = DODO_DEFAULT_PLAN_PRO_PRODUCT_ID
 DODO_DEFAULT_WEBHOOK_SECRET = "REMOVED_CREDENTIAL"
 
 CREDITS_CHECK_INTERVAL_DEFAULT = 300   # 5 min
@@ -137,3 +140,39 @@ CREDITS_CHECK_INTERVAL_FAST = 30       # 30 sec after payment
 # WaveAssist credits = OpenRouter credits * this multiplier.
 # Gives WaveAssist a 20% margin on every credit dollar.
 WAVEASSIST_CREDIT_MULTIPLIER = 1.25
+
+# ---- Multi-brand (GitZoid trial) --------------------------------------------
+# Recognised products. A brand param outside this set falls back to "waveassist".
+VALID_PRODUCTS = {"waveassist", "gitzoid"}
+
+# GitZoid free-trial budget, in internal action-credits (never shown to the user).
+DEFAULT_TRIAL_CREDITS = 30
+
+# Cost per successful agent action, deducted from the trial budget. Reads as roughly
+# "10 PR reviews, 1 digest, 1 security scan" out of the 30-credit budget.
+TRIAL_ACTION_COSTS = {
+    "pr_review": 1,
+    "digest": 10,
+    "security_scan": 10,
+}
+
+# Drain guards for the trial (and any metered run).
+# A single action gets at most this many total attempts (1 original + retries) before we
+# stop retrying it, so a persistently-failing action can't loop and burn LLM cost.
+TRIAL_MAX_ATTEMPTS_PER_ACTION = 2
+# After this many consecutive failed runs on a deployment, auto-pause it.
+CIRCUIT_BREAKER_CONSECUTIVE_FAILURES = 3
+# Trial accounts may connect at most this many repos.
+TRIAL_MAX_REPOS = 5
+
+# Maps a node's identity to a trial action_type. The runtime meters on recorded SUCCESS
+# by matching the completed node's key / chain_label here — no agent-side reporting
+# contract needed. Tuned to GitZoid's fixed, known node set. Checked in the order below
+# (most specific first), so a "security_scan" node matches security before anything else.
+# Patterns are matched as substrings of the normalised (lowercased) identity, so keep them
+# specific enough not to collide with unrelated words. Extend as GitZoid's node set grows.
+NODE_ACTION_TYPE_PATTERNS = [
+    ("security_scan", ["security_scan", "security-scan", "securityscan", "security", "vuln"]),
+    ("digest", ["digest"]),
+    ("pr_review", ["pr_review", "pr-review", "prreview", "pull_request", "pullrequest", "code_review", "review"]),
+]

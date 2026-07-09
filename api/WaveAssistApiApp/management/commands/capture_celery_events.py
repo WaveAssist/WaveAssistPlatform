@@ -15,6 +15,7 @@ from celery.events import EventReceiver
 from WaveAssistApi.celery import app
 from WaveAssistApiApp.models import *
 from WaveAssistApiApp.Utils.constants import *
+from WaveAssistApiApp.Utils import metering
 
 
 class Command(BaseCommand):
@@ -83,6 +84,17 @@ class Command(BaseCommand):
                     node_run.traceback = error_message or ''
 
             node_run.save(update_fields=['status', 'started_at', 'finished_at', 'traceback'])
+
+            # GitZoid trial metering + circuit breaker fire on terminal transitions only.
+            # Scoped to GitZoid inside handle_run_terminal, so WaveAssist runs are untouched.
+            # Wrapped so a metering error can never corrupt the run record itself.
+            if ev_type == TASK_COMPLETED:
+                try:
+                    metering.handle_run_terminal(
+                        project, node, data_run, run_id=run_id, did_succeed=bool(did_succeed)
+                    )
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"⚠️ Metering hook error: {e}\n{traceback.format_exc()}"))
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"❌ NodeRun handling error: {e}\n{traceback.format_exc()}"))
 

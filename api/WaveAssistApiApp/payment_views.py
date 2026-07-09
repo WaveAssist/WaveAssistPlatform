@@ -17,8 +17,15 @@ from .Utils.utils import logger, fetch_credits_from_openrouter
 
 
 VALID_UPGRADE_PLANS = {
-    "plus": {"credits": 10, "price_usd": 9.99},
-    "pro": {"credits": 25, "price_usd": 19.99},
+    # WaveAssist legacy subscription tiers. The rebrand's WaveAssist surface is credits /
+    # pay-as-you-go (no tiers shown), but these remain valid for existing subscribers.
+    "plus": {"credits": 10, "price_usd": 9.99, "product": "waveassist"},
+    "pro": {"credits": 25, "price_usd": 19.99, "product": "waveassist"},
+    # GitZoid Pro — the ONLY GitZoid paid plan: $20/mo flat, unlimited from the user's view
+    # (no credit meter shown once purchased). "credits" here is the internal monthly OpenRouter
+    # allowance that funds the agent's LLM calls — never surfaced to the user. Tune it to real
+    # usage; "unlimited" is a product promise, so operationally this is the top-up lever.
+    "gitzoid_pro": {"credits": 25, "price_usd": 20.00, "product": "gitzoid"},
 }
 
 
@@ -149,11 +156,19 @@ def create_checkout(request):
                 return ResponseParser.getParsedErrorMessage("Invalid plan_name")
 
             plan_config = VALID_UPGRADE_PLANS[plan_name]
+            # A plan belongs to one brand. Don't let a WaveAssist account buy gitzoid_pro
+            # (or vice versa) — the account's product is authoritative.
+            plan_product = plan_config.get("product")
+            if plan_product and account_object.product != plan_product:
+                return ResponseParser.getParsedErrorMessage(
+                    f"Plan '{plan_name}' is not available for this account."
+                )
             amount_decimal = Decimal(str(plan_config["price_usd"]))
             credits_decimal = Decimal(str(plan_config["credits"]))
             _plan_defaults = {
                 "PLUS": DODO_DEFAULT_PLAN_PLUS_PRODUCT_ID,
                 "PRO": DODO_DEFAULT_PLAN_PRO_PRODUCT_ID,
+                "GITZOID_PRO": DODO_DEFAULT_PLAN_GITZOID_PRO_PRODUCT_ID,
             }
             product_id = os.environ.get(
                 f"DODO_PLAN_{plan_name.upper()}_PRODUCT_ID",
@@ -905,9 +920,27 @@ def get_billing_overview(request):
     )
     recent_payments = Payment.objects.filter(account=account_object).order_by("-created_at")[:20]
 
+    # Trial state (drives the GitZoid Billing page). "On trial" is the single source of truth
+    # in metering (GitZoid + not on a paid plan; plan_name is the paid signal, not is_premium).
+    from .Utils import metering
+    trial_used = account_object.trial_credits_used or 0
+    trial_limit = account_object.trial_credits_limit or 0
+    trial_remaining = max(0.0, trial_limit - trial_used)
+    on_trial = metering.account_is_on_trial(account_object)
+
     return ResponseParser.getParsedSuccessMessage(
         {
             "account_plan_name": account_object.plan_name,
+            "product": account_object.product,
+            "is_premium": account_object.is_premium,
+            "credits_remaining": account_object.credits_remaining,
+            "trial": {
+                "on_trial": on_trial,
+                "used": trial_used,
+                "limit": trial_limit,
+                "remaining": trial_remaining,
+                "exhausted": on_trial and trial_remaining <= 0,
+            },
             "subscription": latest_subscription.get_dict() if latest_subscription else None,
             "payments": [payment.get_dict() for payment in recent_payments],
         },

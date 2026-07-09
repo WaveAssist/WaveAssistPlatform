@@ -3,6 +3,7 @@ from django.db.models.functions import Lower
 from django_celery_beat.models import IntervalSchedule, CrontabSchedule
 from django.contrib.auth.hashers import make_password, is_password_usable
 import json
+import uuid
 
 SCHEDULE_TYPE_CHOICES = [
     ("none", "none"),
@@ -36,6 +37,36 @@ class Account(models.Model):
     credits_last_checked = models.DateTimeField(null=True, blank=True)
     credits_check_interval = models.IntegerField(default=300)
     credits_notification_sent = models.BooleanField(default=False)
+    # Multi-brand discriminator. Single-valued per account (guaranteed by domain-separated
+    # signup: each brand's front door creates its own account). Drives theme, flows and
+    # billing model. "waveassist" = credits/pay-as-you-go, "gitzoid" = trial -> fixed plan.
+    product = models.CharField(max_length=32, default="waveassist")
+    # Rotatable MCP bearer secret, distinct from account_uid (the identity). Lets us revoke/
+    # rotate MCP access without changing identity or any UID-authed API. Resolved to the uid
+    # at the MCP edge. Null until first generated; unique so a token maps to one account.
+    mcp_token = models.CharField(
+        max_length=64, unique=True, null=True, blank=True, default=None
+    )
+    # GitZoid-style trial: an action-credit budget spent only on SUCCESSFUL agent runs,
+    # weighted by action type (see TRIAL_ACTION_COSTS). Unused by credits-model brands.
+    trial_credits_used = models.FloatField(default=0)
+    trial_credits_limit = models.FloatField(default=30)
+
+    @staticmethod
+    def generate_mcp_token():
+        """A fresh MCP bearer secret. ~128 bits of entropy, prefixed for greppability."""
+        return "wa_" + uuid.uuid4().hex
+
+    def ensure_mcp_token(self):
+        """Mint an MCP token if this account doesn't have one yet; return it.
+
+        Called from both signup and login so every account converges to having a token
+        without a data migration. No-op (single read) when one already exists.
+        """
+        if not self.mcp_token:
+            self.mcp_token = Account.generate_mcp_token()
+            self.save(update_fields=["mcp_token"])
+        return self.mcp_token
 
     def __str__(self):
         return f"Account: {self.account_name} ({self.plan_name})"
@@ -59,6 +90,13 @@ class Account(models.Model):
         account_dict["credits_last_checked"] = self.credits_last_checked
         account_dict["credits_check_interval"] = self.credits_check_interval
         account_dict["credits_notification_sent"] = self.credits_notification_sent
+        account_dict["product"] = self.product
+        account_dict["mcp_token"] = self.mcp_token
+        account_dict["trial_credits_used"] = self.trial_credits_used
+        account_dict["trial_credits_limit"] = self.trial_credits_limit
+        account_dict["trial_credits_remaining"] = max(
+            0.0, (self.trial_credits_limit or 0) - (self.trial_credits_used or 0)
+        )
         return account_dict
 
     class Meta:
@@ -445,6 +483,9 @@ class Deployments(models.Model):
     data_run_object = models.ForeignKey("DataRuns", on_delete=models.CASCADE)
     version = models.CharField(max_length=100, default="1.0.0")
     is_running = models.BooleanField(default=True)
+    # Circuit breaker: consecutive failed runs since the last success. Reset to 0 on any
+    # success; when it hits CIRCUIT_BREAKER_CONSECUTIVE_FAILURES the deployment auto-pauses.
+    consecutive_failures = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -781,3 +822,78 @@ class Provider(models.Model):
         db_table = "WaveAssist_Provider"
         verbose_name = "Provider"
         verbose_name_plural = "Providers"
+
+
+class UsageLedger(models.Model):
+    """Append-only, signed usage/analytics ledger.
+
+    A single row records one credit movement. ``amount`` is SIGNED: negative = consumed
+    (an LLM call, a trial action), positive = granted (a purchase, a refund). Where the
+    ledger is authoritative (BYO/enterprise), balance == SUM(amount). For the standard
+    WaveAssist case the OpenRouter balance stays the accountant and this table is purely
+    analytics — nothing gates on it. ``source`` is a label for the analytics view, not
+    logic. Written across every provider via the SDK's instrumented call_llm.
+    """
+
+    SOURCE_CHOICES = [
+        ("llm", "llm"),
+        ("trial", "trial"),
+        ("purchase", "purchase"),
+        ("refund", "refund"),
+    ]
+
+    id = models.BigAutoField(primary_key=True)
+    account = models.ForeignKey("Account", on_delete=models.CASCADE, related_name="usage_events")
+    # Stored by key (not FK) so history survives project/run deletion or re-creation.
+    project_key = models.CharField(max_length=255, default="", null=True, blank=True)
+    run_id = models.CharField(max_length=255, default="", null=True, blank=True)
+    node_key = models.CharField(max_length=255, default="", null=True, blank=True)
+
+    source = models.CharField(max_length=32, default="llm")
+    # Signed credit movement. Negative = used, positive = granted.
+    amount = models.FloatField(default=0)
+
+    # LLM detail (nullable — only meaningful for source="llm").
+    provider = models.CharField(max_length=64, default="", null=True, blank=True)
+    model = models.CharField(max_length=128, default="", null=True, blank=True)
+    input_tokens = models.IntegerField(null=True, blank=True)
+    output_tokens = models.IntegerField(null=True, blank=True)
+    cost_usd = models.FloatField(null=True, blank=True)
+
+    # False for BYO/customer-key usage: recorded for display, never charged to credits.
+    billable = models.BooleanField(default=True)
+    # Dedupe key (e.g. one row per run_id+node) so retries can't double-write.
+    idempotency_key = models.CharField(
+        max_length=255, unique=True, null=True, blank=True, default=None
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Usage[{self.source}] {self.amount} ({self.account.account_uid})"
+
+    def get_dict(self):
+        return {
+            "id": self.id,
+            "account_uid": self.account.account_uid,
+            "project_key": self.project_key,
+            "run_id": self.run_id,
+            "node_key": self.node_key,
+            "source": self.source,
+            "amount": self.amount,
+            "provider": self.provider,
+            "model": self.model,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "cost_usd": self.cost_usd,
+            "billable": self.billable,
+            "created_at": self.created_at,
+        }
+
+    class Meta:
+        db_table = "WaveAssist_UsageLedger"
+        verbose_name = "Usage Ledger Entry"
+        verbose_name_plural = "Usage Ledger"
+        indexes = [
+            models.Index(fields=["account", "created_at"]),
+            models.Index(fields=["run_id"]),
+        ]

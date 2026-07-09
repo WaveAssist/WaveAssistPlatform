@@ -33,7 +33,7 @@ from WaveAssistApiApp import (
 )
 
 from django.views.decorators.csrf import csrf_exempt
-from WaveAssistApiApp import manage_views, wavemaker_views
+from WaveAssistApiApp import manage_views, wavemaker_views, account_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -282,6 +282,7 @@ urlpatterns = [
     ##SDK URL's
     path("sdk/send_email/", csrf_exempt(sdk_views.send_email), name="send_email"),
     path("sdk/check_account_credits/", csrf_exempt(sdk_views.check_account_credits), name="check_account_credits"),
+    path("sdk/record_usage/", csrf_exempt(sdk_views.record_usage), name="record_usage"),
     ##Runs URL's
     path(
         "runs/fetch_dag_runs/",
@@ -348,6 +349,22 @@ urlpatterns = [
         "api/v1/wavemaker/materialize_assistant",
         csrf_exempt(wavemaker_views.materialize_assistant),
         name="wavemaker_materialize_assistant",
+    ),
+    ##Account / multi-brand URL's
+    path(
+        "account/regenerate_mcp_token/",
+        csrf_exempt(account_views.regenerate_mcp_token),
+        name="regenerate_mcp_token",
+    ),
+    path(
+        "account/resolve_mcp_token/",
+        csrf_exempt(account_views.resolve_mcp_token),
+        name="resolve_mcp_token",
+    ),
+    path(
+        "account/trial_status/",
+        csrf_exempt(account_views.get_trial_status),
+        name="trial_status",
     ),
     ##Public Dashboard URL's
     path(

@@ -43,6 +43,9 @@ def login(request):  ##TCW
             should_get_started = True
         if account_object.celery_queue == "":
             should_get_started = True
+        # Ensure every account has an MCP token — login is the reliable touchpoint since
+        # get_started runs only on first setup.
+        account_object.ensure_mcp_token()
     except:
         should_get_started = True
     if should_get_started:

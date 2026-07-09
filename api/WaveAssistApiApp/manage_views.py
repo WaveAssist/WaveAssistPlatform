@@ -29,6 +29,11 @@ def get_started(request):  # TCW
     firebase_token = request.POST.get("firebase_token", "")
     is_test = int(request.POST.get("is_test", 0)) == 1
     is_operator_account = int(request.POST.get("is_operator_account", 1)) == 1
+    # Which brand's front door this signup came through. Stamped once on the account and
+    # authoritative thereafter. Anything unrecognised falls back to waveassist.
+    product = request.POST.get("product", "waveassist")
+    if product not in VALID_PRODUCTS:
+        product = "waveassist"
 
     try:
         firebase_uid, decoded_dict = get_firebase_uid(firebase_token)
@@ -89,10 +94,14 @@ def get_started(request):  # TCW
                 account_uid=account_uid,
                 created_by_user=user_object,
                 celery_queue=celery_queue,
+                product=product,
+                mcp_token=Account.generate_mcp_token(),
             )
             account_object.save()
         else:
             account_object = account_object.first()
+            # Backfill the MCP token for accounts created before this field existed.
+            account_object.ensure_mcp_token()
     except Exception as e:
         print("Account creation failed: " + str(e))
         return ResponseParser.getParsedErrorMessage("Account creation failed.")

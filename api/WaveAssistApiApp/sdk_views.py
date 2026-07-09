@@ -14,7 +14,8 @@ import mimetypes
 import base64
 import requests
 from postmarker.core import PostmarkClient
-from .models import Account
+from .models import Account, UsageLedger
+from .Utils import metering
 
 MAX_FILE_SIZE_MB = 10
 MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
@@ -248,6 +249,15 @@ def check_account_credits(request):
         except Account.DoesNotExist:
             return ResponseParser.getParsedErrorMessage("Account not found.")
 
+        # GitZoid trial spent → block the run until they upgrade to Pro. Always False for
+        # WaveAssist and paid accounts, so this can never gate a non-trial run.
+        if metering.trial_blocks_run(account):
+            return ResponseParser.getParsedSuccessMessage(
+                {"credits_available": False, "credits_remaining": 0, "trial_exhausted": True},
+                "200",
+                "Trial exhausted — upgrade to GitZoid Pro to continue.",
+            )
+
         if not account.open_router_key:
             return ResponseParser.getParsedErrorMessage("OpenRouter key not found.")
 
@@ -318,4 +328,82 @@ def check_account_credits(request):
     except Exception as e:
         utils.logger.error(f"Error in check_account_credits: {e}")
         return ResponseParser.getParsedErrorMessage(f"Error checking credits: {str(e)}")
+
+
+def _to_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _to_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@require_POST
+def record_usage(request):
+    """Record one LLM usage event in the analytics ledger.
+
+    Called by the instrumented SDK call_llm across every provider. Best-effort and
+    additive: it writes a UsageLedger row (tokens always, cost when the provider gave
+    one) and NEVER affects the account balance — for standard WaveAssist the OpenRouter
+    balance stays the accountant; this table is analytics (and the sole record for
+    BYO/enterprise). Idempotent per idempotency_key so retries can't double-write.
+    """
+    try:
+        success, message, user_object, project_object = validator.validate_user_and_project(
+            request, READ_GTE
+        )
+        if not success:
+            return ResponseParser.getParsedErrorMessage(message)
+
+        try:
+            account = Account.objects.get(created_by_user=user_object)
+        except Account.DoesNotExist:
+            return ResponseParser.getParsedErrorMessage("Account not found.")
+
+        cost_usd = _to_float(get_param(request, "cost_usd"))
+        # Signed credit movement (negative = used). Only meaningful where the ledger is
+        # authoritative (BYO/enterprise); derived from cost when the provider reports it.
+        amount = _to_float(get_param(request, "amount"))
+        if amount is None:
+            amount = -(cost_usd * WAVEASSIST_CREDIT_MULTIPLIER) if cost_usd else 0.0
+
+        billable = str(get_param(request, "billable") or "1") not in ("0", "false", "False")
+        idem = get_param(request, "idempotency_key") or None
+
+        fields = {
+            "account": account,
+            "project_key": get_param(request, "project_key") or "",
+            "run_id": get_param(request, "run_id") or "",
+            "node_key": get_param(request, "node_key") or "",
+            "source": get_param(request, "source") or "llm",
+            "amount": amount,
+            "provider": get_param(request, "provider") or "",
+            "model": get_param(request, "model") or "",
+            "input_tokens": _to_int(get_param(request, "input_tokens")),
+            "output_tokens": _to_int(get_param(request, "output_tokens")),
+            "cost_usd": cost_usd,
+            "billable": billable,
+        }
+
+        # With an idempotency key, retries dedupe to the same row; without one, always insert.
+        if idem:
+            row, created = UsageLedger.objects.get_or_create(idempotency_key=idem, defaults=fields)
+        else:
+            row, created = UsageLedger.objects.create(**fields), True
+
+        return ResponseParser.getParsedSuccessMessage(
+            {"recorded": bool(created), "id": row.id},
+            "200",
+            "Usage recorded." if created else "Usage already recorded.",
+        )
+
+    except Exception as e:
+        utils.logger.error(f"Error in record_usage: {e}")
+        return ResponseParser.getParsedErrorMessage(f"Error recording usage: {str(e)}")
 
