@@ -25,7 +25,7 @@ VALID_UPGRADE_PLANS = {
     # (no credit meter shown once purchased). "credits" here is the internal monthly OpenRouter
     # allowance that funds the agent's LLM calls — never surfaced to the user. Tune it to real
     # usage; "unlimited" is a product promise, so operationally this is the top-up lever.
-    "gitzoid_pro": {"credits": 25, "price_usd": 20.00, "product": "gitzoid"},
+    "gitzoid_pro": {"credits": 25, "price_usd": 19.00, "product": "gitzoid"},
 }
 
 

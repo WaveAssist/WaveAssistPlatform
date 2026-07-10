@@ -4,6 +4,8 @@ All additive: existing flows never call these, so shipping them changes nothing 
 current users. They back the rebrand's MCP-token rotation and the GitZoid trial meter.
 """
 
+from django.db.models import Sum, Count
+
 from .Utils.responseParser import ResponseParser
 from .Utils.utils import get_param
 from .models import Account, UsageLedger
@@ -103,30 +105,36 @@ def get_run_usage(request):
     project_key = get_param(request, "project_key") or ""
     run_id = get_param(request, "run_id")
 
-    rows = UsageLedger.objects.filter(account=account, source="llm")
+    qs = UsageLedger.objects.filter(account=account, source="llm")
     if project_key:
-        rows = rows.filter(project_key=project_key)
+        qs = qs.filter(project_key=project_key)
     if run_id:
-        rows = rows.filter(run_id=run_id)
+        qs = qs.filter(run_id=run_id)
 
-    agg = {}
-    for r in rows.only("run_id", "model", "input_tokens", "output_tokens", "cost_usd"):
-        key = r.run_id or ""
-        a = agg.get(key)
-        if a is None:
-            a = {"run_id": key, "calls": 0, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0, "models": set()}
-            agg[key] = a
-        a["calls"] += 1
-        a["input_tokens"] += r.input_tokens or 0
-        a["output_tokens"] += r.output_tokens or 0
-        a["cost_usd"] += r.cost_usd or 0.0
-        if r.model:
-            a["models"].add(r.model)
+    # Aggregate in the DB (GROUP BY run_id), not by pulling the whole — potentially large —
+    # row set into Python. Returns one row per run. Models are collected via a second,
+    # equally-bounded DISTINCT query (MySQL has no portable array-agg).
+    agg_rows = qs.values("run_id").annotate(
+        calls=Count("id"),
+        input_tokens=Sum("input_tokens"),
+        output_tokens=Sum("output_tokens"),
+        cost_usd=Sum("cost_usd"),
+    )
+
+    models_by_run = {}
+    for rid, model in qs.exclude(model="").values_list("run_id", "model").distinct():
+        models_by_run.setdefault(rid or "", set()).add(model)
 
     runs = []
-    for a in agg.values():
-        a["models"] = sorted(a["models"])
-        a["cost_usd"] = round(a["cost_usd"], 6)
-        runs.append(a)
+    for a in agg_rows:
+        rid = a["run_id"] or ""
+        runs.append({
+            "run_id": rid,
+            "calls": a["calls"] or 0,
+            "input_tokens": a["input_tokens"] or 0,
+            "output_tokens": a["output_tokens"] or 0,
+            "cost_usd": round(a["cost_usd"] or 0.0, 6),
+            "models": sorted(models_by_run.get(rid, set())),
+        })
 
     return ResponseParser.getParsedSuccessMessage({"runs": runs}, "200", "Run usage.")
