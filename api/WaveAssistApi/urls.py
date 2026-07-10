@@ -366,6 +366,11 @@ urlpatterns = [
         csrf_exempt(account_views.get_trial_status),
         name="trial_status",
     ),
+    path(
+        "account/run_usage/",
+        csrf_exempt(account_views.get_run_usage),
+        name="run_usage",
+    ),
     ##Public Dashboard URL's
     path(
         "dashboard/generate_link/",

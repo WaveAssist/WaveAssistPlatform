@@ -162,8 +162,12 @@ TRIAL_ACTION_COSTS = {
 TRIAL_MAX_ATTEMPTS_PER_ACTION = 2
 # After this many consecutive failed runs on a deployment, auto-pause it.
 CIRCUIT_BREAKER_CONSECUTIVE_FAILURES = 3
-# Trial accounts may connect at most this many repos.
+# A GitZoid account may connect at most this many repos across all its projects:
+# TRIAL_MAX_REPOS on the free trial, PRO_MAX_REPOS on GitZoid Pro.
 TRIAL_MAX_REPOS = 5
+PRO_MAX_REPOS = 50
+# The data key the GitZoid repo-selection multiselect saves under (read by its nodes).
+GITZOID_REPOS_KEY = "github_selected_resources"
 
 # Maps a node's identity to a trial action_type. The runtime meters on recorded SUCCESS
 # by matching the completed node's key / chain_label here — no agent-side reporting

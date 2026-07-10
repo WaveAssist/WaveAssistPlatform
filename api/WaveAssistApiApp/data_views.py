@@ -200,6 +200,53 @@ def set_data_for_key(request):
         except Exception as e:
             pass
 
+    # --- GitZoid repo cap ---------------------------------------------------------------
+    # A GitZoid account's total connected repos (summed across all its GitZoid projects)
+    # must stay within its plan: TRIAL_MAX_REPOS on the free trial, PRO_MAX_REPOS on Pro.
+    # Scoped strictly to the repo-selection key so no other data save pays this cost, and
+    # only for product == "gitzoid" (WaveAssist is never affected).
+    if data_key == GITZOID_REPOS_KEY:
+        try:
+            from .Utils import metering
+            account = Account.objects.get(created_by_user=user_object)
+        except Exception:
+            account = None
+        if account is not None and account.product == "gitzoid":
+            cap = TRIAL_MAX_REPOS if metering.account_is_on_trial(account) else PRO_MAX_REPOS
+            new_count = len(data) if isinstance(data, (list, tuple)) else 0
+            other_total = 0
+            try:
+                db_name = utils.get_database_name(user_object)
+                mongo_manager.database = mongo_manager.client[db_name]
+                gz_keys = (
+                    Project.objects.filter(
+                        accessprovided__type=0,
+                        accessprovided__project_access_type__gte=READ_GTE,
+                        accessprovided__user_object=user_object,
+                        template_key="gitzoid",
+                    )
+                    .values_list("project_key", flat=True)
+                    .distinct()
+                )
+                for pk in gz_keys:
+                    env_key = f"{pk}_default"
+                    if env_key == data_run_key:
+                        continue  # current project — replaced by new_count
+                    mongo_manager.collection = mongo_manager.database[env_key]
+                    val, _ = mongo_manager.fetch_data_for_key(GITZOID_REPOS_KEY)
+                    if isinstance(val, (list, tuple)):
+                        other_total += len(val)
+            except Exception as e:
+                utils.logger.error(f"GitZoid repo-cap count failed: {e}")
+            total = new_count + other_total
+            if total > cap:
+                plan = "your free trial" if cap == TRIAL_MAX_REPOS else "GitZoid Pro"
+                return ResponseParser.getParsedErrorMessage(
+                    f"Repo limit reached — {plan} covers up to {cap} repositories across your GitZoids "
+                    f"(you're trying to connect {total}). Remove some repos or upgrade to add more."
+                )
+    # ------------------------------------------------------------------------------------
+
     try:
         db_name = utils.get_database_name(user_object)
         mongo_manager.database = mongo_manager.client[db_name]

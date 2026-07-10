@@ -6,7 +6,7 @@ current users. They back the rebrand's MCP-token rotation and the GitZoid trial 
 
 from .Utils.responseParser import ResponseParser
 from .Utils.utils import get_param
-from .models import Account
+from .models import Account, UsageLedger
 
 
 def _get_account_by_uid(uid):
@@ -28,6 +28,7 @@ def _trial_dict(account):
         "product": account.product,
         "plan_name": account.plan_name,
         "is_premium": account.is_premium,
+        "mcp_token": account.mcp_token or account.ensure_mcp_token(),
         "trial_credits_used": used,
         "trial_credits_limit": limit,
         "trial_credits_remaining": remaining,
@@ -84,3 +85,48 @@ def get_trial_status(request):
     return ResponseParser.getParsedSuccessMessage(
         _trial_dict(account), "200", "Trial status."
     )
+
+
+def get_run_usage(request):
+    """Per-run LLM usage for a project, aggregated from the analytics ledger.
+
+    Read-only. Drives the runs-page usage display (WaveAssist only — the frontend
+    gates it by brand). Optionally narrowed to a single run_id. Returns one row per
+    run with summed tokens/cost and the distinct models used. Empty until the
+    instrumented SDK (>=0.8.11) records rows, so it degrades to "no data" cleanly.
+    """
+    uid = get_param(request, "uid")
+    account = _get_account_by_uid(uid)
+    if account is None:
+        return ResponseParser.getParsedErrorMessage("Account not found.")
+
+    project_key = get_param(request, "project_key") or ""
+    run_id = get_param(request, "run_id")
+
+    rows = UsageLedger.objects.filter(account=account, source="llm")
+    if project_key:
+        rows = rows.filter(project_key=project_key)
+    if run_id:
+        rows = rows.filter(run_id=run_id)
+
+    agg = {}
+    for r in rows.only("run_id", "model", "input_tokens", "output_tokens", "cost_usd"):
+        key = r.run_id or ""
+        a = agg.get(key)
+        if a is None:
+            a = {"run_id": key, "calls": 0, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0, "models": set()}
+            agg[key] = a
+        a["calls"] += 1
+        a["input_tokens"] += r.input_tokens or 0
+        a["output_tokens"] += r.output_tokens or 0
+        a["cost_usd"] += r.cost_usd or 0.0
+        if r.model:
+            a["models"].add(r.model)
+
+    runs = []
+    for a in agg.values():
+        a["models"] = sorted(a["models"])
+        a["cost_usd"] = round(a["cost_usd"], 6)
+        runs.append(a)
+
+    return ResponseParser.getParsedSuccessMessage({"runs": runs}, "200", "Run usage.")

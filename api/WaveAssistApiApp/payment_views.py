@@ -933,6 +933,7 @@ def get_billing_overview(request):
             "account_plan_name": account_object.plan_name,
             "product": account_object.product,
             "is_premium": account_object.is_premium,
+            "mcp_token": account_object.mcp_token or account_object.ensure_mcp_token(),
             "credits_remaining": account_object.credits_remaining,
             "trial": {
                 "on_trial": on_trial,
