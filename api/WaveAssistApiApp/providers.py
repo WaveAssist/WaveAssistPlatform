@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 import requests
 import hashlib
@@ -325,8 +326,17 @@ def oauth_callback(request):
         provider_name = state_data.get("provider_name")
         uid = state_data.get("uid")
         project_key = state_data.get("project_key")
+
+        # Return the user to their own brand's dashboard after OAuth — GitZoid lives on a
+        # separate domain (same as the DoDo checkout return). account.product is authoritative.
+        _oauth_account = Account.objects.filter(account_uid=uid).first()
+        frontend = (
+            os.environ.get("GITZOID_FRONTEND_URL", GITZOID_FRONTEND_URL)
+            if (_oauth_account and _oauth_account.product == "gitzoid")
+            else os.environ.get("FRONTEND_URL", FRONTEND_URL)
+        )
         failure_redirect_uri = (
-            FRONTEND_URL
+            frontend
             + "/manage/assistant?project_key="
             + project_key
             + "&is_integration_complete=0"
@@ -419,7 +429,7 @@ def oauth_callback(request):
 
         ##Redirect to dashboard.
         success_redirect_uri = (
-            FRONTEND_URL
+            frontend
             + "/manage/assistant?project_key="
             + project_key
             + "&is_integration_complete=1"
