@@ -231,16 +231,6 @@ const AllProjectsComponent: React.FC = () => {
 						<i className="bi bi-person"></i>
 						<span className="d-none d-md-inline ms-1">User ID</span>
 					</button>
-					{!brand.scoped && brand.catalogUrl && (
-						<a
-							href={brand.catalogUrl}
-							target="_self"
-							rel="noopener noreferrer"
-							className="btn btn-outline-secondary btn-sm ms-2 use-template-button">
-							<i className="bi bi-copy"></i>
-							<span className="d-none d-md-inline ms-1">Assistants</span>
-						</a>
-					)}
 					<button className="btn btn-outline-secondary btn-sm logout_button ms-2 me-2" onClick={handleLogout}>
 						<i className="bi bi-box-arrow-right"></i>
 						<span className="d-none d-md-inline ms-1">Logout</span>
