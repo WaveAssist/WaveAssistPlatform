@@ -8,7 +8,6 @@ from django.core.cache import cache
 import WaveAssistApiApp.Utils.utils as utils
 from WaveAssistApiApp.Utils.utils import fetch_credits_from_openrouter
 import requests
-import firebase_admin
 from firebase_admin import auth as firebase_auth
 from .firebase_init import initialize_firebase
 
@@ -157,34 +156,39 @@ def handle_cli_session(request, user_data):
     return
 
 
+# Firebase's public signing certs are shared and rotate slowly. Cache them (honoring Google's
+# Cache-Control) via a module-level cachecontrol session, so GitZoid token verification doesn't
+# re-fetch certs on every login — the same caching firebase_admin does for the default app.
+import cachecontrol as _cachecontrol
+import requests as _requests_lib
+from google.auth.transport import requests as _google_transport
+from google.oauth2 import id_token as _google_id_token
+
+_firebase_cert_request = _google_transport.Request(session=_cachecontrol.CacheControl(_requests_lib.session()))
+
+
 def get_firebase_uid(firebase_token):
     if not firebase_token:
         raise Exception("Firebase token not found")
 
-    # A brand's token is issued by that brand's Firebase project. Verify against WaveAssist
-    # (default) first, then GitZoid — whichever project issued the token succeeds.
+    # A brand's token is issued by that brand's Firebase project, so we try each brand's verifier.
     last_error = None
-    for app_name in (None, "gitzoid"):
-        try:
-            app = firebase_admin.get_app() if app_name is None else firebase_admin.get_app(app_name)
-        except ValueError:
-            continue  # app not initialized (e.g., GitZoid not configured yet)
-        try:
-            decoded_token = firebase_auth.verify_id_token(firebase_token, app=app)
-            firebase_uid = decoded_token.get("uid")
-            if firebase_uid:
-                return firebase_uid, decoded_token
-        except Exception as e:
-            last_error = e
 
-    # GitZoid without a service-account key: verify against its project id using Google's public
-    # certs (Firebase tokens are Google-signed). Naturally skipped if the token isn't a GitZoid one.
+    # WaveAssist — the default firebase_admin app (its service account), exactly as before.
     try:
-        from google.oauth2 import id_token as google_id_token
-        from google.auth.transport import requests as google_requests
+        decoded_token = firebase_auth.verify_id_token(firebase_token)
+        firebase_uid = decoded_token.get("uid")
+        if firebase_uid:
+            return firebase_uid, decoded_token
+    except Exception as e:
+        last_error = e
 
-        decoded_token = google_id_token.verify_firebase_token(
-            firebase_token, google_requests.Request(), audience=GITZOID_FIREBASE_PROJECT_ID
+    # GitZoid — verified against its project id using Google's public certs (no service-account
+    # key needed). A WaveAssist token won't match here (different project), so this runs only for
+    # genuine GitZoid tokens.
+    try:
+        decoded_token = _google_id_token.verify_firebase_token(
+            firebase_token, _firebase_cert_request, audience=GITZOID_FIREBASE_PROJECT_ID
         )
         if decoded_token:
             firebase_uid = decoded_token.get("user_id") or decoded_token.get("sub")
