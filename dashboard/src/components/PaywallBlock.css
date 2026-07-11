@@ -19,7 +19,7 @@
 }
 
 .paywall-modal {
-  background: #1C1F28;
+  background: var(--color-bg-card);
   border: 1px solid #FBB040;
   border-radius: 16px;
   padding: 30px;

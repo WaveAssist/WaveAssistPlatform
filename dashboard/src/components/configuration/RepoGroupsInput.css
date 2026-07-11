@@ -1,5 +1,5 @@
 /* RepoGroupsInput — group-builder for the Knowledge Digest. Follows the WaveAssist design system
-   (dark cards, 1px #2D313A borders, green primary). Uses design-system.css variables. */
+   (dark cards, 1px var(--color-border) borders, green primary). Uses design-system.css variables. */
 
 .repo-groups {
 	display: flex;
@@ -39,7 +39,7 @@
 
 .repo-group-name:focus {
 	border-color: var(--color-primary);
-	box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 	background-color: var(--color-bg-card);
 	color: var(--color-text-primary);
 }
@@ -153,7 +153,7 @@
 
 .repo-recipient-add .form-control:focus {
 	border-color: var(--color-primary);
-	box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 	background-color: var(--color-bg-card);
 	color: var(--color-text-primary);
 }

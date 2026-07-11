@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "./login_component.css";
-import WALogo from "../assets/Logo/Wave_Predict_W_Logo.png";
 import { BrandLogo, getBrand } from "../config/branding";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../components/firebase";
@@ -379,12 +378,7 @@ const LoginComponent: React.FC = () => {
 		<div className="wa-login-page">
 			<div className="wa-card">
 				<div className="text-center mb-4">
-					{getBrand().wordmark ? (
-							<BrandLogo className="mb-4" size={44} style={{ marginBottom: "1.5rem" }} />
-						) : (
-							<img src={WALogo} alt="WaveAssist Logo" className="img-fluid mb-4 wp_logo_login" />
-						)}
-					<h1 className="wa-title">{getBrand().welcome}</h1>
+					<BrandLogo className="mb-4" size={44} style={{ marginBottom: "1.5rem" }} />
 					<p className="title-message">{getBrand().signup}</p>
 					{isCLILogin && <p className="title-message">This login flow was initiated from the CLI — complete it here to continue.</p>}
 				</div>

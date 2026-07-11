@@ -2,14 +2,14 @@
 
 /* Modal CSS */
 .modal-body {
-    background-color: #1C1F28;
+    background-color: var(--color-bg-card);
     color: #FFFFFF;
-    border-bottom: 1px solid #2D313A;
+    border-bottom: 1px solid var(--color-border);
   }
   
   .modal-header {
-    background-color: #1C1F28;
-    border-bottom: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border-bottom: 1px solid var(--color-border);
   }
   
   .modal-title {
@@ -24,12 +24,12 @@
   }
   
   .model-text {
-    color: #A1A1AA !important;
+    color: var(--color-text-secondary) !important;
   }
   
   .modal-footer {
-    background-color: #1C1F28 !important;
-    border-top: 1px solid #2D313A !important;
+    background-color: var(--color-bg-card) !important;
+    border-top: 1px solid var(--color-border) !important;
   }
   
   .markdown-body {
@@ -38,11 +38,11 @@
   }
   
   .markdown-body a {
-    color: #1ED66C;
+    color: var(--color-primary);
     text-decoration: underline;
   }
   
   .markdown-body a:hover {
-    color: #148F47;
+    color: var(--color-primary-hover);
   }
   

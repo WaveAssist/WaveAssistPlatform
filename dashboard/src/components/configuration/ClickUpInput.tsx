@@ -118,8 +118,8 @@ const ClickUpInput: React.FC<ClickUpInputProps> = ({
 	const isDisabled = isLoading || value === "connecting" || value === "connected";
 	const isConfigured = value && value !== "" && value !== "null" && value !== "undefined";
 
-	const cardStyle = { backgroundColor: "#1C1F28", border: "1px solid #2D313A" };
-	const textMutedStyle = { color: "#A1A1AA" };
+	const cardStyle = { backgroundColor: "var(--color-bg-card)", border: "1px solid var(--color-border)" };
+	const textMutedStyle = { color: "var(--color-text-secondary)" };
 
 	if (isConfigured && value !== "connecting") {
 		return (
@@ -293,9 +293,9 @@ const ClickUpInput: React.FC<ClickUpInputProps> = ({
 	}
 
 	const popupMessage = showPopupMessage && (
-		<div className="mt-3 p-3 border rounded" style={{ backgroundColor: "#1C1F28", borderColor: "#1ED66C" }}>
+		<div className="mt-3 p-3 border rounded" style={{ backgroundColor: "var(--color-bg-card)", borderColor: "var(--color-primary)" }}>
 			<div className="d-flex align-items-center gap-2">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="#1ED66C">
+				<svg width="20" height="20" viewBox="0 0 24 24" style={{ fill: "var(--color-primary)" }}>
 					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
 				</svg>
 				<div className="flex-grow-1">
@@ -431,7 +431,7 @@ const ClickUpInput: React.FC<ClickUpInputProps> = ({
 			)}
 
 			{value === "connecting" && !showPopupMessage && (
-				<div className="mt-2 d-flex align-items-center gap-2" style={{ fontSize: "0.875rem", color: "#A1A1AA" }}>
+				<div className="mt-2 d-flex align-items-center gap-2" style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 						<path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
 					</svg>

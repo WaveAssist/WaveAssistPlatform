@@ -3,6 +3,8 @@ import { usePostHog } from "posthog-js/react";
 import { AgGridReact } from "ag-grid-react";
 import { fetchDagRunsApi } from "../../services/runs_services";
 import { fetchDataForKeyAPI, fetchTemplateApi } from "../../services/project_services";
+import { fetchRunUsage } from "../../services/account_services";
+import { getBrand } from "../../config/branding";
 import { useToast } from "../../utils/toast_context";
 import { useRefresh } from "../../utils/RefreshContext";
 import Modal from "react-bootstrap/Modal";
@@ -45,9 +47,25 @@ const relativeTime = (ts: string): string => {
 const RunsComponent: React.FC = () => {
 	const [runsArray, setRunsArray] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [usageByRun, setUsageByRun] = useState<Record<string, any>>({});
 	const { showToast } = useToast();
 	const { shouldRefresh } = useRefresh();
 	const posthog = usePostHog();
+
+	// Per-run LLM usage map (WaveAssist only) — joined into the runs table by run_id.
+	useEffect(() => {
+		if (!getBrand().showRunUsage) return;
+		const pk = localStorage.getItem("selected_project_key") || "";
+		fetchRunUsage(pk)
+			.then((d) => {
+				const map: Record<string, any> = {};
+				(d?.runs || []).forEach((u: any) => {
+					if (u.run_id) map[u.run_id] = u;
+				});
+				setUsageByRun(map);
+			})
+			.catch(() => {});
+	}, [runsArray.length]);
 
 	const fetchRuns = async () => {
 		try {
@@ -312,7 +330,7 @@ const RunsComponent: React.FC = () => {
 				return (
 					<span
 						className={`badge ${isSuccess ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}
-						style={isSuccess ? { backgroundColor: "#1ED66C", color: "#000000" } : {}}>
+						style={isSuccess ? { backgroundColor: "var(--color-primary)", color: "#000000" } : {}}>
 						{status}
 					</span>
 				);
@@ -344,23 +362,23 @@ const RunsComponent: React.FC = () => {
 							style={
 								isSuccess
 									? {
-											color: "#1ED66C",
-											borderColor: "#1ED66C",
+											color: "var(--color-primary)",
+											borderColor: "var(--color-primary)",
 											borderRadius: "6px",
 									  }
 									: { borderRadius: "6px" }
 							}
 							onMouseEnter={(e) => {
 								if (isSuccess && !isDisabled) {
-									e.currentTarget.style.backgroundColor = "#1ED66C";
+									e.currentTarget.style.backgroundColor = "var(--color-primary)";
 									e.currentTarget.style.color = "#000000";
-									e.currentTarget.style.boxShadow = "0 0 20px rgba(30, 214, 108, 0.15)";
+									e.currentTarget.style.boxShadow = "0 0 20px rgba(var(--color-primary-rgb), 0.15)";
 								}
 							}}
 							onMouseLeave={(e) => {
 								if (isSuccess && !isDisabled) {
 									e.currentTarget.style.backgroundColor = "transparent";
-									e.currentTarget.style.color = "#1ED66C";
+									e.currentTarget.style.color = "var(--color-primary)";
 									e.currentTarget.style.boxShadow = "none";
 								}
 							}}
@@ -375,18 +393,18 @@ const RunsComponent: React.FC = () => {
 							)}
 						</button>
 						{isProcessing && progressData && (
-							<div className="d-flex align-items-center gap-2" style={{ fontSize: "11px", color: "#A1A1AA" }}>
+							<div className="d-flex align-items-center gap-2" style={{ fontSize: "11px", color: "var(--color-text-secondary)" }}>
 								<div style={{ position: "relative", width: "40px", height: "40px" }}>
 									<svg width="40" height="40" style={{ transform: "rotate(-90deg)" }}>
 										{/* Background circle - dark theme */}
-										<circle cx="20" cy="20" r="16" fill="none" stroke="#2D313A" strokeWidth="3" />
+										<circle cx="20" cy="20" r="16" fill="none" style={{ stroke: "var(--color-border)" }} strokeWidth="3" />
 										{/* Progress circle */}
 										<circle
 											cx="20"
 											cy="20"
 											r="16"
 											fill="none"
-											stroke="#1ED66C"
+											style={{ stroke: "var(--color-primary)" }}
 											strokeWidth="3"
 											strokeDasharray={`${(progressData.progress / 100) * 100.53} 100.53`}
 											strokeLinecap="round"
@@ -400,7 +418,7 @@ const RunsComponent: React.FC = () => {
 											transform: "translate(-50%, -50%)",
 											fontSize: "8px",
 											fontWeight: "bold",
-											color: "#1ED66C",
+											color: "var(--color-primary)",
 											whiteSpace: "nowrap",
 										}}>
 										{progressData.progress.toFixed(0)}%
@@ -488,16 +506,34 @@ const RunsComponent: React.FC = () => {
 		},
 	];
 
+	// Usage column (WaveAssist only) — per-run cost/tokens joined from the ledger by run_id.
+	if (getBrand().showRunUsage) {
+		columnDefs.push({
+			headerName: "Usage",
+			flex: 2,
+			minWidth: 120,
+			resizable: true,
+			cellRenderer: (params: any) => {
+				const u = usageByRun[params.data.run_id];
+				if (!u || (!u.cost_usd && !u.input_tokens && !u.output_tokens)) return "—";
+				const cost = u.cost_usd ? `$${Number(u.cost_usd).toFixed(4)}` : "";
+				const toks = `${(u.input_tokens || 0) + (u.output_tokens || 0)} tok`;
+				return cost ? `${cost} · ${toks}` : toks;
+			},
+			cellStyle: { display: "flex", alignItems: "center", color: "var(--color-text-secondary)" },
+		} as any);
+	}
+
 	// ---- Summary view: chain status cards (or single-chain banner) + an activity feed ----
 	const stateOf = (r: any): { txt: string; color: string } => {
 		if (!r) return { txt: "Scheduled · not yet run", color: "#5b6472" };
 		if (r.status === "STARTED" || r.status === "RUNNING") {
 			const p = runProgress[r.run_id];
-			return { txt: p ? `Running · ${p.remaining >= 60 ? "~" + Math.round(p.remaining / 60) + "m left" : Math.round(p.remaining) + "s left"}` : "Running", color: "#1ED66C" };
+			return { txt: p ? `Running · ${p.remaining >= 60 ? "~" + Math.round(p.remaining / 60) + "m left" : Math.round(p.remaining) + "s left"}` : "Running", color: "var(--color-primary)" };
 		}
 		if (r.status === "FAILED") return { txt: "Failed", color: "#F85149" };
 		if (r.is_idle) return { txt: "Idle", color: "#9aa4b2" };
-		return { txt: "Done", color: "#1ED66C" };
+		return { txt: "Done", color: "var(--color-primary)" };
 	};
 	const chipColor = (label: string): string => {
 		let h = 0;
@@ -506,23 +542,23 @@ const RunsComponent: React.FC = () => {
 	};
 
 	const renderChainRuns = (label: string, chainRuns: any[]) => {
-		const row: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, background: "#1C1F28", border: "1px solid #2D313A", borderRadius: 10, padding: "9px 13px", marginBottom: 8 };
+		const row: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, background: "var(--color-bg-card)", border: "1px solid var(--color-border)", borderRadius: 10, padding: "9px 13px", marginBottom: 8 };
 		return (
 			<div style={{ marginTop: 16 }}>
 				<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
 					<button className="btn btn-sm btn-outline-secondary" style={{ borderRadius: 6, fontSize: 12 }} onClick={() => setSelectedChain(null)}>← All chains</button>
 					<span style={{ color: "#FFFFFF", fontWeight: 700, letterSpacing: "-0.02em" }}>{label}</span>
-					<span style={{ color: "#A1A1AA", fontSize: 12 }}>{chainRuns.length} runs</span>
+					<span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{chainRuns.length} runs</span>
 				</div>
 				{chainRuns.map((r) => {
 					const st = stateOf(r);
 					return (
 						<div key={`cd-${r.run_id}`} style={row}>
 							<span style={{ color: st.color, fontSize: 12, fontWeight: 700, minWidth: 64 }}>{st.txt.split(" · ")[0]}</span>
-							<div style={{ flex: 1, color: "#A1A1AA", fontSize: 12 }}>{formatTimestamp(r.started_at)}</div>
+							<div style={{ flex: 1, color: "var(--color-text-secondary)", fontSize: 12 }}>{formatTimestamp(r.started_at)}</div>
 							<button className="btn btn-sm btn-outline-secondary" style={{ borderRadius: 6, fontSize: 11 }} onClick={() => handleViewDetails(r)}>Status</button>
 							<button className="btn btn-sm btn-outline-secondary" style={{ borderRadius: 6, fontSize: 11 }} onClick={() => handleViewOutput(r.run_id)}>Output</button>
-							<span style={{ color: "#A1A1AA", fontSize: 12 }}>{relativeTime(r.started_at || r.finished_at)}</span>
+							<span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{relativeTime(r.started_at || r.finished_at)}</span>
 						</div>
 					);
 				})}
@@ -551,8 +587,8 @@ const RunsComponent: React.FC = () => {
 		const first = runs.length ? runs[runs.length - 1] : null;
 		const firstAlreadyShown = !!first && (first.status === "FAILED" || (first.status === "SUCCESS" && !first.is_idle));
 
-		const cardStyle: React.CSSProperties = { background: "#1C1F28", border: "1px solid #2D313A", borderRadius: 12, padding: 14, position: "relative", flex: "1 1 200px", minWidth: 180, cursor: "pointer", transition: "border-color 0.15s" };
-		const rowStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, background: "#1C1F28", border: "1px solid #2D313A", borderRadius: 10, padding: "9px 13px" };
+		const cardStyle: React.CSSProperties = { background: "var(--color-bg-card)", border: "1px solid var(--color-border)", borderRadius: 12, padding: 14, position: "relative", flex: "1 1 200px", minWidth: 180, cursor: "pointer", transition: "border-color 0.15s" };
+		const rowStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, background: "var(--color-bg-card)", border: "1px solid var(--color-border)", borderRadius: 10, padding: "9px 13px" };
 		const chip = (label: string) => (
 			<span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 6, color: chipColor(label), background: "rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>{label}</span>
 		);
@@ -567,14 +603,14 @@ const RunsComponent: React.FC = () => {
 			const displayRun = activeRun || latest;
 			const st = stateOf(displayRun);
 			return (
-				<div key={label} style={{ ...cardStyle, borderColor: selectedChain === label ? "#1ED66C" : "#2D313A" }} onClick={() => setSelectedChain(selectedChain === label ? null : label)} title="See this chain's runs">
-					<div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "12px 0 0 12px" }} />{displayRun && runProgress[displayRun.run_id] && (<div style={{ position: "absolute", right: 12, top: 12, width: 34, height: 34 }}><svg width="34" height="34" style={{ transform: "rotate(-90deg)" }}><circle cx="17" cy="17" r="14" fill="none" stroke="#2D313A" strokeWidth="3" /><circle cx="17" cy="17" r="14" fill="none" stroke="#1ED66C" strokeWidth="3" strokeDasharray={`${(runProgress[displayRun.run_id].progress / 100) * 87.96} 87.96`} strokeLinecap="round" /></svg><div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: 9, fontWeight: 700, color: "#1ED66C" }}>{runProgress[displayRun.run_id].progress.toFixed(0)}%</div></div>)}
+				<div key={label} style={{ ...cardStyle, borderColor: selectedChain === label ? "var(--color-primary)" : "var(--color-border)" }} onClick={() => setSelectedChain(selectedChain === label ? null : label)} title="See this chain's runs">
+					<div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "12px 0 0 12px" }} />{displayRun && runProgress[displayRun.run_id] && (<div style={{ position: "absolute", right: 12, top: 12, width: 34, height: 34 }}><svg width="34" height="34" style={{ transform: "rotate(-90deg)" }}><circle cx="17" cy="17" r="14" fill="none" style={{ stroke: "var(--color-border)" }} strokeWidth="3" /><circle cx="17" cy="17" r="14" fill="none" style={{ stroke: "var(--color-primary)" }} strokeWidth="3" strokeDasharray={`${(runProgress[displayRun.run_id].progress / 100) * 87.96} 87.96`} strokeLinecap="round" /></svg><div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: 9, fontWeight: 700, color: "var(--color-primary)" }}>{runProgress[displayRun.run_id].progress.toFixed(0)}%</div></div>)}
 					<div style={{ fontWeight: 700, fontSize: 14, color: "#FFFFFF", letterSpacing: "-0.02em" }}>{label}</div>
 					<div style={{ color: st.color, fontSize: 12, fontWeight: 700, marginTop: 6 }}>● {st.txt}</div>
 					<div style={{ color: "#FFFFFF", fontSize: 12, marginTop: 8 }}>
 						{activeRun ? "Run in progress" : (latest ? (latest.is_idle ? "No action this cycle" : latest.status === "FAILED" ? "Last run failed" : "Last run completed") : "")}
 					</div>
-					<div style={{ color: "#A1A1AA", fontSize: 11, marginTop: 3 }}>
+					<div style={{ color: "var(--color-text-secondary)", fontSize: 11, marginTop: 3 }}>
 						{displayRun ? relativeTime(displayRun.finished_at || displayRun.started_at) : ""}{displayRun?.cadence ? ` · ${displayRun.cadence}` : ""}
 					</div>
 				</div>
@@ -586,18 +622,18 @@ const RunsComponent: React.FC = () => {
 			<div key={`act-${r.run_id}`} style={rowStyle}>
 				{multi && chip(r.chain_label || "Run")}
 				<div style={{ flex: 1 }}><b style={{ color: r.status === "FAILED" ? "#F85149" : "#E6EDF3" }}>{r.status === "FAILED" ? "Run failed" : "Completed"}</b></div>
-				{outBtn(r.run_id)}<span style={{ color: "#A1A1AA", fontSize: 12 }}>{relativeTime(r.started_at || r.finished_at)}</span>
+				{outBtn(r.run_id)}<span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{relativeTime(r.started_at || r.finished_at)}</span>
 			</div>
 		));
 		Object.keys(idleByChain).forEach((label) => feed.push(
-			<div key={`hb-${label}`} style={{ ...rowStyle, background: "#10151c", borderStyle: "dashed", color: "#A1A1AA" }}>
+			<div key={`hb-${label}`} style={{ ...rowStyle, background: "#10151c", borderStyle: "dashed", color: "var(--color-text-secondary)" }}>
 				{multi && chip(label)}<div style={{ flex: 1, fontSize: 12.5 }}>{idleByChain[label]} idle check{idleByChain[label] === 1 ? "" : "s"} — nothing to do</div>
 			</div>
 		));
 		if (first && !firstAlreadyShown) feed.push(
-			<div key={`first-${first.run_id}`} style={{ ...rowStyle, borderLeft: "3px solid #1ED66C" }}>
+			<div key={`first-${first.run_id}`} style={{ ...rowStyle, borderLeft: "3px solid var(--color-primary)" }}>
 				{multi && chip(first.chain_label || "Run")}<div style={{ flex: 1, fontSize: 12.5, color: "#E6EDF3" }}>First run</div>
-				{outBtn(first.run_id)}<span style={{ color: "#A1A1AA", fontSize: 12 }}>{formatTimestamp(first.started_at)}</span>
+				{outBtn(first.run_id)}<span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{formatTimestamp(first.started_at)}</span>
 			</div>
 		);
 
@@ -610,7 +646,7 @@ const RunsComponent: React.FC = () => {
 				<div style={{ ...rowStyle, padding: "14px 16px" }}>
 					<span style={{ color: st.color }}>●</span>
 					<div style={{ flex: 1 }}><b style={{ color: st.color }}>{st.txt}</b>
-						<div style={{ color: "#A1A1AA", fontSize: 11 }}>{displayRun ? relativeTime(displayRun.finished_at || displayRun.started_at) : ""}{displayRun?.cadence ? ` · ${displayRun.cadence}` : ""}</div>
+						<div style={{ color: "var(--color-text-secondary)", fontSize: 11 }}>{displayRun ? relativeTime(displayRun.finished_at || displayRun.started_at) : ""}{displayRun?.cadence ? ` · ${displayRun.cadence}` : ""}</div>
 					</div>
 				</div>
 			);
@@ -619,7 +655,7 @@ const RunsComponent: React.FC = () => {
 		return (
 			<div style={{ overflowY: "auto", flex: 1 }}>
 				{runs.length === 0 ? (
-					<div style={{ color: "#A1A1AA", padding: 20 }}>No runs yet.</div>
+					<div style={{ color: "var(--color-text-secondary)", padding: 20 }}>No runs yet.</div>
 				) : (
 					<>
 						{multi ? <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>{cards}</div> : banner}
@@ -651,7 +687,7 @@ const RunsComponent: React.FC = () => {
 								<div
 									className="spinner-border mb-3"
 									role="status"
-									style={{ width: "3rem", height: "3rem", borderColor: "#1ED66C", borderRightColor: "transparent" }}>
+									style={{ width: "3rem", height: "3rem", borderColor: "var(--color-primary)", borderRightColor: "transparent" }}>
 									<span className="visually-hidden">Loading...</span>
 								</div>
 								<div className="text-white">Loading runs...</div>
@@ -696,7 +732,7 @@ const RunsComponent: React.FC = () => {
 								<div
 									className="spinner-border mb-3"
 									role="status"
-									style={{ width: "3rem", height: "3rem", borderColor: "#1ED66C", borderRightColor: "transparent" }}>
+									style={{ width: "3rem", height: "3rem", borderColor: "var(--color-primary)", borderRightColor: "transparent" }}>
 									<span className="visually-hidden">Loading...</span>
 								</div>
 								<div className="text-white">Loading run details...</div>
@@ -723,7 +759,7 @@ const RunsComponent: React.FC = () => {
 								<div
 									className="spinner-border mb-3"
 									role="status"
-									style={{ width: "3rem", height: "3rem", borderColor: "#1ED66C", borderRightColor: "transparent" }}>
+									style={{ width: "3rem", height: "3rem", borderColor: "var(--color-primary)", borderRightColor: "transparent" }}>
 									<span className="visually-hidden">Loading...</span>
 								</div>
 								<div className="text-white">Loading output content...</div>
@@ -755,7 +791,7 @@ const RunsComponent: React.FC = () => {
 											style={{
 												width: "100%",
 												height: "60vh",
-												border: "1px solid #2D313A",
+												border: "1px solid var(--color-border)",
 												borderRadius: "8px",
 												backgroundColor: "white",
 											}}

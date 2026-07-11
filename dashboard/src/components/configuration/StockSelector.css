@@ -25,7 +25,7 @@
 
 /* Selected Stock Badge */
 .stock-selected-badge {
-	background-color: #1ED66C !important;
+	background-color: var(--color-primary) !important;
 	color: #000000 !important;
 	margin-right: 0.5rem;
 	margin-bottom: 0.5rem;

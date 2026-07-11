@@ -1,5 +1,5 @@
 .base_component {
-  background-color: #0F1116;
+  background-color: var(--color-bg-main);
   height: 100vh;
   overflow: auto;
   position: relative;
@@ -65,7 +65,7 @@
 }
 
 .translucent_blue{
-  color: rgba(134,171,242,1) !important;
+  color: var(--color-primary) !important;
 }
 
 .admin-title {
@@ -90,8 +90,8 @@
   position: relative;
   transition: transform 0.2s, box-shadow 0.2s;
   margin-top:10px;
-  background-color: #1C1F28 !important;
-  border: 1px solid #2D313A !important;
+  background-color: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border) !important;
   min-width: 220px;
   min-height: 120px;
   display: flex;
@@ -102,9 +102,9 @@
 
 .project-card .card:hover {
   transform: scale(1.015);
-  background-color: #1C1F28 !important;
-  box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
-  border-color: #1ED66C !important;
+  background-color: var(--color-bg-card) !important;
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+  border-color: var(--color-primary) !important;
 }
 
 .add-project-card {
@@ -136,17 +136,17 @@
 }
 
 .btn-primary {
-  background-color: #1ED66C !important;
-  border-color: #1ED66C !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
   color: #000000 !important;
   border-radius: 6px;
 }
 
 .btn-primary:hover {
-  background-color: #148F47 !important;
-  border-color: #148F47 !important;
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
   color: #000000 !important;
-  box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
 }
 
 .ag-cell {

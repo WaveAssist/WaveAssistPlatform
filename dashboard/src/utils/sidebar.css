@@ -18,7 +18,7 @@
   }
 
 .side-div{
-    background-color: #16181F !important;
+    background-color: var(--color-bg-section) !important;
     width: 280px;
     position: fixed;
     top: 0;
@@ -41,13 +41,13 @@
   }
   
   .nav-pills .nav-link.active {
-    --bs-nav-pills-link-active-bg: #1ED66C;
+    --bs-nav-pills-link-active-bg: var(--color-primary);
     color: #000000 !important;
     font-weight: 500;
   }
   
   .nav-pills .nav-link.active:hover {
-    background-color: #148F47 !important;
+    background-color: var(--color-primary-hover) !important;
     color: #000000 !important;
   }
 
@@ -236,7 +236,7 @@
 
   .sidebar-collapsed .sidebar-group-divider {
     height: 1px;
-    background-color: #2D313A;
+    background-color: var(--color-border);
     border: none;
   }
 

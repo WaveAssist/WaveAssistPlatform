@@ -13,6 +13,7 @@ import {
 } from "../../services/project_services";
 import { deployProjectApi } from "../../services/navbar_services";
 import { BASE_URL } from "../../services/base_service";
+import { getBrand } from "../../config/branding";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../utils/toast_context";
 import { Button, Form, DropdownButton, Dropdown, Spinner } from "react-bootstrap";
@@ -259,8 +260,8 @@ const NodesComponent: React.FC = () => {
 			},
 			position: { x: 0, y: 0 }, // Placeholder — dagre sets actual values
 			style: {
-				background: "#1C1F28",
-				border: `1px solid ${n.is_enabled ? "#1ED66C" : "#d9534f"}`,
+				background: "var(--color-bg-card)",
+				border: `1px solid ${n.is_enabled ? "var(--color-primary)" : "#d9534f"}`,
 				color: "#fff",
 				borderRadius: 8,
 				fontSize: 13,
@@ -274,10 +275,10 @@ const NodesComponent: React.FC = () => {
 				target: n.node_key,
 				animated: true,
 				style: {
-					stroke: "#1ED66C",
+					stroke: "var(--color-primary)",
 					strokeWidth: 1.5,
 				},
-				markerEnd: { type: "arrowclosed", color: "#1ED66C" },
+				markerEnd: { type: "arrowclosed", color: getBrand().accent },
 			})),
 		);
 
@@ -760,13 +761,13 @@ const NodesComponent: React.FC = () => {
 						size="sm"
 						onClick={() => handleRun(params.data)}
 						title="Run node"
-						style={{ backgroundColor: "#1ED66C", borderColor: "#1ED66C", color: "#000000" }}
+						style={{ backgroundColor: "var(--color-primary)", borderColor: "var(--color-primary)", color: "#000000" }}
 						onMouseEnter={(e) => {
-							e.currentTarget.style.backgroundColor = "#148F47";
-							e.currentTarget.style.boxShadow = "0 0 20px rgba(30, 214, 108, 0.15)";
+							e.currentTarget.style.backgroundColor = "var(--color-primary-hover)";
+							e.currentTarget.style.boxShadow = "0 0 20px rgba(var(--color-primary-rgb), 0.15)";
 						}}
 						onMouseLeave={(e) => {
-							e.currentTarget.style.backgroundColor = "#1ED66C";
+							e.currentTarget.style.backgroundColor = "var(--color-primary)";
 							e.currentTarget.style.boxShadow = "none";
 						}}>
 						<i className="bi bi-play">Run</i>
@@ -787,7 +788,7 @@ const NodesComponent: React.FC = () => {
 				const cleanedCrontabSchedule = data.crontab_schedule.replace(/\(.*?\)/g, "");
 				return (
 					<div>
-						<span className="badge badge-important" style={{ backgroundColor: "#1ED66C", color: "#000000" }}>
+						<span className="badge badge-important" style={{ backgroundColor: "var(--color-primary)", color: "#000000" }}>
 							Starting Node
 						</span>{" "}
 						<span className="badge badge-primary">Cron</span> <span className="badge badge-secondary">{cleanedCrontabSchedule}</span>
@@ -796,7 +797,7 @@ const NodesComponent: React.FC = () => {
 			} else if (data.schedule_type === "interval") {
 				return (
 					<div>
-						<span className="badge badge-important" style={{ backgroundColor: "#1ED66C", color: "#000000" }}>
+						<span className="badge badge-important" style={{ backgroundColor: "var(--color-primary)", color: "#000000" }}>
 							Starting Node
 						</span>
 						<span className="badge badge-primary">Interval</span> <span className="badge badge-secondary">{data.interval_schedule}</span>
@@ -805,7 +806,7 @@ const NodesComponent: React.FC = () => {
 			} else if (data.schedule_type === "none") {
 				return (
 					<div>
-						<span className="badge badge-important" style={{ backgroundColor: "#1ED66C", color: "#000000" }}>
+						<span className="badge badge-important" style={{ backgroundColor: "var(--color-primary)", color: "#000000" }}>
 							Starting Node
 						</span>{" "}
 						<span className="badge badge-primary">Manual/Webhook Only</span>
@@ -1260,7 +1261,7 @@ const NodesComponent: React.FC = () => {
 				<Modal.Body>
 					{wizardDone ? (
 						<div className="text-center">
-							<span className="badge badge-primary mb-3 fs-6" style={{ backgroundColor: "#1ED66C", color: "#000000" }}>
+							<span className="badge badge-primary mb-3 fs-6" style={{ backgroundColor: "var(--color-primary)", color: "#000000" }}>
 								Deployed
 							</span>
 							<h5 className="mb-3">🎉 Your assistant has been successfully deployed! 🎉</h5>
@@ -1388,14 +1389,14 @@ const NodesComponent: React.FC = () => {
 							<Button
 								variant="outline-success"
 								onClick={() => navigate("/manage/runs")}
-								style={{ color: "#1ED66C", borderColor: "#1ED66C" }}
+								style={{ color: "var(--color-primary)", borderColor: "var(--color-primary)" }}
 								onMouseEnter={(e) => {
-									e.currentTarget.style.backgroundColor = "#1ED66C";
+									e.currentTarget.style.backgroundColor = "var(--color-primary)";
 									e.currentTarget.style.color = "#000000";
 								}}
 								onMouseLeave={(e) => {
 									e.currentTarget.style.backgroundColor = "transparent";
-									e.currentTarget.style.color = "#1ED66C";
+									e.currentTarget.style.color = "var(--color-primary)";
 								}}>
 								View Runs
 							</Button>
@@ -1406,7 +1407,7 @@ const NodesComponent: React.FC = () => {
 							className="w-100"
 							onClick={handleRunAndDeploy}
 							disabled={processingWizard || wizardLoading}
-							style={{ backgroundColor: "#1ED66C", borderColor: "#1ED66C", color: "#000000" }}>
+							style={{ backgroundColor: "var(--color-primary)", borderColor: "var(--color-primary)", color: "#000000" }}>
 							{processingWizard ? "Processing..." : wizardLoading ? "Loading..." : "Run and Deploy"}
 						</Button>
 					) : (

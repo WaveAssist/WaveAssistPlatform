@@ -1,6 +1,6 @@
 /* Assistant Container - Match Credits Design */
 .assistant-container {
-    background-color: #0F1116;
+    background-color: var(--color-bg-main);
     padding: 2rem;
     position: relative;
 }
@@ -29,8 +29,8 @@
 
 /* Status Card - Left Side (Similar to Available Credits Card) */
 .assistant-status-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 2rem;
     position: relative;
@@ -56,13 +56,13 @@
 
 .assistant-status-label {
     text-align: center;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     margin: 0.5rem 0 0 0;
     font-size: 1rem;
 }
 
 .assistant-details {
-    border-top: 1px solid #2D313A;
+    border-top: 1px solid var(--color-border);
     padding-top: 1.5rem;
     margin-top: 1rem;
 }
@@ -80,7 +80,7 @@
 
 .assistant-detail-label {
     font-size: 0.9rem;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-weight: 500;
 }
 
@@ -91,7 +91,7 @@
 }
 
 .assistant-detail-value.success {
-    color: #1ED66C;
+    color: var(--color-primary);
 }
 
 .assistant-detail-value.pending {
@@ -100,8 +100,8 @@
 
 /* Configuration Card - Right Side (Similar to Buy Credits Card) */
 .assistant-config-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -150,45 +150,45 @@
 }
 
 .assistant-config-footer .assistant-deploy-button.btn {
-    background-color: #1ED66C;
-    border: 1px solid #1ED66C;
+    background-color: var(--color-primary);
+    border: 1px solid var(--color-primary);
     color: #000000;
     font-weight: 500;
 }
 
 .assistant-config-footer .assistant-deploy-button.btn:hover {
-    background-color: #148F47;
-    border-color: #148F47;
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
     color: #000000;
-    box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
 }
 
 .assistant-config-footer .assistant-run-once-button.btn {
     background-color: transparent;
-    border: 1px solid #2D313A;
+    border: 1px solid var(--color-border);
     color: #FFFFFF;
     font-weight: 400;
 }
 
 .assistant-config-footer .assistant-run-once-button.btn:hover {
     background-color: rgba(255, 255, 255, 0.05);
-    border-color: #2D313A;
+    border-color: var(--color-border);
     color: #FFFFFF;
 }
 
 /* Update Banner */
 .assistant-update-banner {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
-    border-left: 3px solid #1ED66C;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-primary);
     border-radius: 12px;
     padding: 1rem 1.25rem;
 }
 
 /* Running section */
 .assistant-running-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 1rem 1.25rem;
 }
@@ -200,8 +200,8 @@
 
 /* Stock Search Styles */
 .stock-search-results-container {
-    background: #1C1F28;
-    border: 1px solid #2D313A;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     max-height: 200px;
     overflow-y: auto;
@@ -213,22 +213,22 @@
 }
 
 .stock-search-result:hover {
-    background-color: #16181F;
+    background-color: var(--color-bg-section);
 }
 
 /* Dark theme for stock search */
 .main-container .stock-search-results-container {
-    background: #1C1F28;
-    border-color: #2D313A;
+    background: var(--color-bg-card);
+    border-color: var(--color-border);
 }
 
 .main-container .stock-search-result {
     color: #ffffff;
-    border-bottom-color: #2D313A;
+    border-bottom-color: var(--color-border);
 }
 
 .main-container .stock-search-result:hover {
-    background-color: #16181F;
+    background-color: var(--color-bg-section);
 }
 
 .main-container .stock-search-result .fw-bold {
@@ -236,11 +236,11 @@
 }
 
 .main-container .stock-search-result .text-muted {
-    color: #A1A1AA !important;
+    color: var(--color-text-secondary) !important;
 }
 
 .stock-selected-badge {
-    background: #1ED66C !important;
+    background: var(--color-primary) !important;
     color: #000000 !important;
     margin: 2px;
     padding: 0.375rem 0.75rem !important;
@@ -277,19 +277,19 @@
 
 .form-control, .form-select {
     border-radius: 8px;
-    border: 1px solid #2D313A;
+    border: 1px solid var(--color-border);
     padding: 10px 12px;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: #1ED66C;
-    box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 }
 
 /* Dark theme overrides for the project */
 .main-container .assistant-container {
-    background-color: #0F1116;
+    background-color: var(--color-bg-main);
     color: #ffffff;
 }
 
@@ -298,8 +298,8 @@
 }
 
 .main-container .assistant-status-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
 }
 
 .main-container .assistant-status-text {
@@ -307,15 +307,15 @@
 }
 
 .main-container .assistant-status-label {
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
 }
 
 .main-container .assistant-details {
-    border-top-color: #2D313A;
+    border-top-color: var(--color-border);
 }
 
 .main-container .assistant-detail-label {
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
 }
 
 .main-container .assistant-detail-value {
@@ -323,8 +323,8 @@
 }
 
 .main-container .assistant-config-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
 }
 
 .main-container .assistant-config-title {
@@ -336,29 +336,29 @@
 }
 
 .main-container .form-control {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     color: #ffffff;
 }
 
 .main-container .form-control:focus {
-    background-color: #1C1F28;
-    border-color: #1ED66C;
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
     color: #ffffff;
-    box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 }
 
 .main-container .form-select {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     color: #ffffff;
 }
 
 .main-container .form-select:focus {
-    background-color: #1C1F28;
-    border-color: #1ED66C;
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
     color: #ffffff;
-    box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 }
 
 /* Dark theme for form text and placeholders */
@@ -367,35 +367,35 @@
 }
 
 .main-container .text-muted {
-    color: #A1A1AA !important;
+    color: var(--color-text-secondary) !important;
 }
 
 .main-container .form-text {
-    color: #A1A1AA !important;
+    color: var(--color-text-secondary) !important;
 }
 
 /* GitHub Input Dark Theme */
 .main-container .github-input-container .border {
-    background-color: #1C1F28 !important;
-    border: 1px solid #2D313A !important;
+    background-color: var(--color-bg-card) !important;
+    border: 1px solid var(--color-border) !important;
 }
 
 /* GitHub Input Dark Theme - Optional */
 .main-container .optional-inputs-section .github-input-container .border {
-    background-color: #16181F !important;
-    border: 1px solid #2D313A !important;
+    background-color: var(--color-bg-section) !important;
+    border: 1px solid var(--color-border) !important;
 }
 
 /* ClickUp Input Dark Theme */
 .main-container .clickup-input-container .border {
-    background-color: #1C1F28 !important;
-    border: 1px solid #2D313A !important;
+    background-color: var(--color-bg-card) !important;
+    border: 1px solid var(--color-border) !important;
 }
 
 /* ClickUp Input Dark Theme - Optional */
 .main-container .optional-inputs-section .clickup-input-container .border {
-    background-color: #16181F !important;
-    border: 1px solid #2D313A !important;
+    background-color: var(--color-bg-section) !important;
+    border: 1px solid var(--color-border) !important;
 }
 
 .main-container .github-input-container .fw-medium {
@@ -403,22 +403,22 @@
 }
 
 .main-container .github-input-container .small {
-    color: #A1A1AA !important;
+    color: var(--color-text-secondary) !important;
 }
 
 /* Optional Inputs Section */
 .optional-inputs-section {
-    border: 1px solid #2D313A;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 1rem;
-    background-color: #16181F;
+    background-color: var(--color-bg-section);
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
 }
 
 .main-container .optional-inputs-section {
-    background-color: #16181F;
-    border-color: #2D313A;
+    background-color: var(--color-bg-section);
+    border-color: var(--color-border);
 }
 
 /* Dark theme for optional inputs section */
@@ -427,50 +427,50 @@
 }
 
 .main-container .optional-inputs-section .form-control {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     color: #ffffff;
 }
 
 .main-container .optional-inputs-section .form-control:focus {
-    background-color: #1C1F28;
-    border-color: #1ED66C;
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
     color: #ffffff;
-    box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 }
 
 .main-container .optional-inputs-section .form-select {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     color: #ffffff;
 }
 
 .main-container .optional-inputs-section .form-select:focus {
-    background-color: #1C1F28;
-    border-color: #1ED66C;
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
     color: #ffffff;
-    box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 }
 
 .main-container .optional-inputs-section .form-text {
-    color: #A1A1AA !important;
+    color: var(--color-text-secondary) !important;
 }
 
 .main-container .optional-inputs-section .text-muted {
-    color: #A1A1AA !important;
+    color: var(--color-text-secondary) !important;
 }
 
 /* Temporary highlight for "Select Resources" buttons */
 @keyframes highlightPulse {
-    0% { box-shadow: 0 0 0 0 rgba(30, 214, 108, 0.8); transform: translateZ(0); }
-    70% { box-shadow: 0 0 0 10px rgba(30, 214, 108, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(30, 214, 108, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0.8); transform: translateZ(0); }
+    70% { box-shadow: 0 0 0 10px rgba(var(--color-primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0); }
 }
 
 .highlight-pulse {
     animation: highlightPulse 1s ease-out;
     animation-iteration-count: 3;
-    outline: 2px solid #1ED66C;
+    outline: 2px solid var(--color-primary);
 }
 
 /* Responsive Design */

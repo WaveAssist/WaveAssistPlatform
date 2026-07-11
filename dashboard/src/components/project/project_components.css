@@ -24,7 +24,7 @@
 
 
 .badge-primary {
-    background-color: #1ED66C !important;
+    background-color: var(--color-primary) !important;
     color: #000000 !important;
     border: none !important;
   }
@@ -39,19 +39,19 @@
   }
   
   .badge-secondary{
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     color: #FFFFFF;
   }
 
   .badge-important{
-    background-color: #1ED66C !important;
+    background-color: var(--color-primary) !important;
     color: #000000 !important;
     border: none !important;
   }
   
   .badge.badge-important {
-    background-color: #1ED66C !important;
+    background-color: var(--color-primary) !important;
     color: #000000 !important;
     border: none !important;
   }
@@ -85,15 +85,15 @@
 
 
 .log-viewer .ReactVirtualized__Grid__innerScrollContainer {
-  background-color: #0F1116 !important; /* Apply the darker color */
+  background-color: var(--color-bg-main) !important; /* Apply the darker color */
 }
 
 .bg_color_dark{
-  background-color: #0F1116 !important;
+  background-color: var(--color-bg-main) !important;
 }
 
 .log-container .ReactVirtualized__Grid__innerScrollContainer {
-  background-color: #0F1116 !important;
+  background-color: var(--color-bg-main) !important;
 }
 
 .grid-wrapper {
@@ -129,7 +129,7 @@
 }
 
 .output-content table, .output-content th, .output-content td {
-  border: 1px solid #2D313A;
+  border: 1px solid var(--color-border);
 }
 
 .output-content th, .output-content td {
@@ -139,7 +139,7 @@
 }
 
 .output-content th {
-  background-color: #1C1F28;
+  background-color: var(--color-bg-card);
   font-weight: 600;
   color: #FFFFFF;
   letter-spacing: -0.02em;
@@ -156,7 +156,7 @@
 }
 
 .output-content a {
-  color: #60a5fa;
+  color: var(--color-primary);
 }
 
 .output-content a:hover {
@@ -182,13 +182,13 @@
   display: block;
   margin: 0.5rem 0;
   font-size: 13px;
-  color: #A1A1AA;      /* design system: secondary text */
+  color: var(--color-text-secondary);      /* design system: secondary text */
   line-height: 1.2;
 }
 /* React Flow Controls panel styling */
 .react-flow__controls {
-  background-color: #1C1F28 !important; /* deeper dark, not fully black */
-  border: 1px solid #2D313A;
+  background-color: var(--color-bg-card) !important; /* deeper dark, not fully black */
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -196,9 +196,9 @@
 
 /* Control buttons */
 .react-flow__controls-button {
-  background-color: #1C1F28 !important;
+  background-color: var(--color-bg-card) !important;
   color: #FFFFFF !important; /* light gray text/icons */
-  border-bottom: 1px solid #2D313A;
+  border-bottom: 1px solid var(--color-border);
   padding: 10px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -210,7 +210,7 @@
 
 /* On hover - slightly brighter button */
 .react-flow__controls-button:hover {
-  background-color: #16181F !important;
+  background-color: var(--color-bg-section) !important;
   color: #FFFFFF !important;
 }
 .react-flow__controls-button svg {
@@ -234,8 +234,8 @@
   top: 100%;
   left: 0;
   right: 0;
-  background-color: #1C1F28;
-  border: 1px solid #2D313A;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   z-index: 1000;
@@ -245,7 +245,7 @@
 
 .ticker-dropdown-item {
   padding: 8px 12px;
-  border-bottom: 1px solid #2D313A;
+  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -255,7 +255,7 @@
 }
 
 .ticker-dropdown-item:hover {
-  background-color: #16181F;
+  background-color: var(--color-bg-section);
 }
 
 .ticker-dropdown-item .ticker-symbol {
@@ -271,7 +271,7 @@
 }
 
 .ticker-dropdown-item .ticker-exchange {
-  background-color: #1ED66C;
+  background-color: var(--color-primary);
   color: #000000;
   font-size: 10px;
   padding: 2px 6px;
@@ -302,17 +302,17 @@
 .stock-search-results-container {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid #2D313A;
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
-  background-color: #0F1116;
+  background-color: var(--color-bg-main);
 }
 
 .stock-selected-badge {
   font-size: 0.8rem;
   margin-right: 0.5rem;
   margin-bottom: 0.5rem;
-  background-color: #1ED66C !important;
-  border-color: #1ED66C !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
   color: #000000 !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -343,22 +343,22 @@
 }
 
 .btn-outline-success {
-  color: #1ED66C !important;
-  border-color: #1ED66C !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
   background-color: transparent !important;
 }
 
 .btn-outline-success:hover {
-  background-color: #1ED66C !important;
-  border-color: #1ED66C !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
   color: #000000 !important;
-  box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
 }
 /* ---------- Knowledge tab ---------- */
 @keyframes knowledgePulse {
-  0% { box-shadow: 0 0 0 0 rgba(30, 214, 108, 0.45); }
-  70% { box-shadow: 0 0 0 6px rgba(30, 214, 108, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(30, 214, 108, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0.45); }
+  70% { box-shadow: 0 0 0 6px rgba(var(--color-primary-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0); }
 }
 
 .knowledge-live-dot {
@@ -366,22 +366,22 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--color-primary, #1ED66C);
+  background-color: var(--color-primary, var(--color-primary));
   animation: knowledgePulse 2.4s ease-out infinite;
   flex-shrink: 0;
 }
 
 .knowledge-card {
-  background-color: var(--color-bg-card, #1C1F28);
-  border: 1px solid var(--color-border, #2D313A);
+  background-color: var(--color-bg-card, var(--color-bg-card));
+  border: 1px solid var(--color-border, var(--color-border));
   border-radius: 12px;
   margin-bottom: 16px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .knowledge-card:hover {
-  border-color: var(--color-primary, #1ED66C);
-  box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+  border-color: var(--color-primary, var(--color-primary));
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
 }
 
 .knowledge-card-header {
@@ -394,7 +394,7 @@
 }
 
 .knowledge-chevron {
-  color: #A1A1AA;
+  color: var(--color-text-secondary);
   font-size: 13px;
   display: inline-block;
   transition: transform 0.2s ease;

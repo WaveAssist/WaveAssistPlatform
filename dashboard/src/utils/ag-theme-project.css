@@ -8,12 +8,12 @@
 
 
 .ag-root-wrapper, .ag-measurement-container, .ag-apply-theme-variables {
-	--ag-background-color: var(--ag-inherited-background-color, #0F1116);
+	--ag-background-color: var(--ag-inherited-background-color, var(--color-bg-main));
 	--ag-foreground-color: var(--ag-inherited-foreground-color, #FFFFFF);
 	--ag-text-color: var(--ag-inherited-text-color, var(--ag-foreground-color));
-	--ag-accent-color: var(--ag-inherited-accent-color, #1ED66C);
+	--ag-accent-color: var(--ag-inherited-accent-color, var(--color-primary));
 	--ag-invalid-color: var(--ag-inherited-invalid-color, #e02525);
-	--ag-border-color: var(--ag-inherited-border-color, #2D313A);
+	--ag-border-color: var(--ag-inherited-border-color, var(--color-border));
 	--ag-wrapper-border: var(--ag-inherited-wrapper-border, none);
 	--ag-row-border: var(--ag-inherited-row-border, solid 1px var(--ag-border-color));
 	--ag-color-scheme: var(--ag-inherited-color-scheme, dark);
@@ -26,8 +26,8 @@
 	--ag-pinned-row-border: var(--ag-inherited-pinned-row-border, solid 1px var(--ag-border-color));
 	--ag-side-panel-border: var(--ag-inherited-side-panel-border, solid 1px var(--ag-border-color));
 	--ag-font-family: var(--ag-inherited-font-family, 'Inter');
-	--ag-chrome-background-color: var(--ag-inherited-chrome-background-color, #1C1F28);
-	--ag-header-background-color: var(--ag-inherited-header-background-color, #16181F);
+	--ag-chrome-background-color: var(--ag-inherited-chrome-background-color, var(--color-bg-card));
+	--ag-header-background-color: var(--ag-inherited-header-background-color, var(--color-bg-section));
 	--ag-header-font-family: var(--ag-inherited-header-font-family, var(--ag-font-family));
 	--ag-header-font-weight: var(--ag-inherited-header-font-weight, 600);
 	--ag-header-font-size: var(--ag-inherited-header-font-size, 14px);

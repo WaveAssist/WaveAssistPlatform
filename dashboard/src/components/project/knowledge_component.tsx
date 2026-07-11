@@ -8,10 +8,10 @@ import "./project_components.css";
 // independently collapsible cards). Primary source is the consolidated `brain` JSON key;
 // if a deployment predates it, we fall back to the per-repo `profile:{repo}` keys.
 
-const ACCENT = "#1ED66C";
-const BORDER = "1px solid #2D313A";
+const ACCENT = "var(--color-primary)";
+const BORDER = "1px solid var(--color-border)";
 const TEXT = "#FFFFFF";
-const MUTED = "#A1A1AA";
+const MUTED = "var(--color-text-secondary)";
 const BODY = "#D4D4D8";
 const CODE_BG = "rgba(255,255,255,0.06)";
 
@@ -119,7 +119,7 @@ const RepoCard: React.FC<{ entry: RepoEntry; open: boolean; onToggle: () => void
 						style={{
 							fontSize: 11,
 							color: ACCENT,
-							background: "rgba(30,214,108,0.12)",
+							background: "rgba(var(--color-primary-rgb),0.12)",
 							padding: "3px 10px",
 							borderRadius: 10,
 						}}>

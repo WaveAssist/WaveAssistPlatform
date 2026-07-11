@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════ */
 
 .credits-container {
-    background-color: #0F1116;
+    background-color: var(--color-bg-main);
     padding: 2rem;
     position: relative;
 }
@@ -44,20 +44,20 @@
 
 .plan-badge-free {
     background-color: rgba(161, 161, 170, 0.15);
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     border: 1px solid rgba(161, 161, 170, 0.25);
 }
 
 .plan-badge-paid {
-    background-color: rgba(30, 214, 108, 0.12);
-    color: #1ED66C;
-    border: 1px solid rgba(30, 214, 108, 0.3);
+    background-color: rgba(var(--color-primary-rgb), 0.12);
+    color: var(--color-primary);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
 }
 
 .refresh-btn {
     background: none;
-    border: 1px solid #2D313A;
-    color: #A1A1AA;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
     cursor: pointer;
     border-radius: 6px;
     width: 40px;
@@ -70,16 +70,16 @@
 }
 
 .refresh-btn:hover {
-    background-color: #1C1F28;
+    background-color: var(--color-bg-card);
     color: #FFFFFF;
-    border-color: #2D313A;
+    border-color: var(--color-border);
 }
 
 /* ── Available Credits Card ── */
 
 .available-credits-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 2rem;
     position: relative;
@@ -105,13 +105,13 @@
 
 .credit-balance-label {
     text-align: center;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     margin: 0.5rem 0 0 0;
     font-size: 1rem;
 }
 
 .credit-details {
-    border-top: 1px solid #2D313A;
+    border-top: 1px solid var(--color-border);
     padding-top: 1.5rem;
     margin-top: 1rem;
 }
@@ -129,7 +129,7 @@
 
 .credit-detail-label {
     font-size: 0.9rem;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-weight: 500;
 }
 
@@ -140,7 +140,7 @@
 }
 
 .credit-detail-value.total {
-    color: #1ED66C;
+    color: var(--color-primary);
 }
 
 .credit-detail-value.used {
@@ -194,14 +194,14 @@
 
 .subscription-billing-status {
     display: block;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     font-weight: 500;
 }
 
 .manage-billing-btn {
     flex: 0 0 auto;
-    background-color: #1ED66C;
+    background-color: var(--color-primary);
     border: none;
     color: #000000;
     padding: 0.5rem 1.25rem;
@@ -213,9 +213,9 @@
 }
 
 .manage-billing-btn:hover:not(:disabled) {
-    background-color: #148F47;
+    background-color: var(--color-primary-hover);
     color: #000000;
-    box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
 }
 
 .manage-billing-btn:disabled {
@@ -229,12 +229,12 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background-color: rgba(30, 214, 108, 0.1);
-    border: 1px solid rgba(30, 214, 108, 0.3);
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
     border-radius: 10px;
     padding: 0.85rem 1.25rem;
     margin-bottom: 1.5rem;
-    color: #1ED66C;
+    color: var(--color-primary);
     font-size: 0.92rem;
     font-weight: 500;
     animation: bannerSlideIn 0.35s ease-out;
@@ -248,7 +248,7 @@
 .checkout-banner-dismiss {
     background: none;
     border: none;
-    color: #1ED66C;
+    color: var(--color-primary);
     cursor: pointer;
     margin-left: auto;
     padding: 0.25rem;
@@ -284,15 +284,15 @@
 
 .manage-billing-hint {
     font-size: 0.75rem;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-weight: 400;
 }
 
 /* ── Buy Credits Card (paid users) ── */
 
 .buy-credits-card {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -337,8 +337,8 @@
 
 .credit-amount-btn {
     padding: 0.5rem;
-    border: 1px solid #2D313A;
-    background-color: #1C1F28;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-card);
     color: #ffffff;
     border-radius: 6px;
     cursor: pointer;
@@ -347,19 +347,19 @@
 }
 
 .credit-amount-btn:hover {
-    background-color: #16181F;
+    background-color: var(--color-bg-section);
 }
 
 .credit-amount-btn.active {
-    background-color: #16181F;
-    border-color: #1ED66C;
+    background-color: var(--color-bg-section);
+    border-color: var(--color-primary);
     color: #ffffff;
 }
 
 .custom-amount-input {
     padding: 0.5rem;
-    border: 1px solid #2D313A;
-    background-color: #1C1F28;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-card);
     color: #ffffff;
     border-radius: 6px;
     cursor: pointer;
@@ -372,12 +372,12 @@
 }
 
 .custom-amount-input:hover {
-    background-color: #16181F;
+    background-color: var(--color-bg-section);
 }
 
 .custom-amount-input.active {
-    background-color: #16181F;
-    border-color: #1ED66C;
+    background-color: var(--color-bg-section);
+    border-color: var(--color-primary);
     color: #ffffff;
 }
 
@@ -406,7 +406,7 @@
 }
 
 .dollar-sign {
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-weight: 500;
     font-size: 0.9rem;
     margin-right: 0.25rem;
@@ -422,7 +422,7 @@
 
 .add-credits-button {
     width: 100%;
-    background-color: #1ED66C;
+    background-color: var(--color-primary);
     border: none;
     color: #000000;
     padding: 0.75rem 1.5rem;
@@ -434,16 +434,16 @@
 }
 
 .add-credits-button:hover {
-    background-color: #148F47;
+    background-color: var(--color-primary-hover);
     color: #000000;
-    box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
 }
 
 /* ── Upgrade Plan Card (free users) ── */
 
 .upgrade-plan-card {
-    background: linear-gradient(135deg, #1C1F28 0%, #16181F 100%);
-    border: 1px solid #2D313A;
+    background: linear-gradient(135deg, var(--color-bg-card) 0%, var(--color-bg-section) 100%);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 2.5rem 2rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -457,7 +457,7 @@
 
 .upgrade-card-icon {
     font-size: 2.5rem;
-    color: #1ED66C;
+    color: var(--color-primary);
     margin-bottom: 1rem;
     line-height: 1;
 }
@@ -472,14 +472,14 @@
 
 .upgrade-card-desc {
     font-size: 0.9rem;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     margin: 0 0 1.75rem 0;
     line-height: 1.5;
     max-width: 280px;
 }
 
 .upgrade-card-btn {
-    background-color: #1ED66C;
+    background-color: var(--color-primary);
     border: none;
     color: #000;
     padding: 0.75rem 2.5rem;
@@ -491,8 +491,8 @@
 }
 
 .upgrade-card-btn:hover {
-    background-color: #148F47;
-    box-shadow: 0 0 24px rgba(30, 214, 108, 0.2);
+    background-color: var(--color-primary-hover);
+    box-shadow: 0 0 24px rgba(var(--color-primary-rgb), 0.2);
     transform: translateY(-1px);
 }
 
@@ -501,13 +501,13 @@
    ═══════════════════════════════════════════════ */
 
 .upgrade-modal .modal-content {
-    background-color: #0F1116;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-main);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
 }
 
 .upgrade-modal .modal-header {
-    border-bottom: 1px solid #2D313A;
+    border-bottom: 1px solid var(--color-border);
     padding: 1.5rem 2rem 1rem 2rem;
 }
 
@@ -518,7 +518,7 @@
 }
 
 .upgrade-modal-subtitle {
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     margin: 0.25rem 0 0 0;
 }
@@ -540,8 +540,8 @@
 }
 
 .upgrade-plan-option {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 1.75rem;
     display: flex;
@@ -551,12 +551,12 @@
 }
 
 .upgrade-plan-option:hover {
-    border-color: #1ED66C;
+    border-color: var(--color-primary);
 }
 
 .upgrade-plan-option.recommended {
-    border-color: #1ED66C;
-    background: linear-gradient(180deg, rgba(30, 214, 108, 0.04) 0%, #1C1F28 40%);
+    border-color: var(--color-primary);
+    background: linear-gradient(180deg, rgba(var(--color-primary-rgb), 0.04) 0%, var(--color-bg-card) 40%);
 }
 
 .recommended-badge {
@@ -564,7 +564,7 @@
     top: -11px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #1ED66C;
+    background-color: var(--color-primary);
     color: #000;
     padding: 3px 16px;
     border-radius: 20px;
@@ -598,7 +598,7 @@
 
 .plan-price-period {
     font-size: 0.9rem;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-weight: 400;
 }
 
@@ -615,11 +615,11 @@
     gap: 0.6rem;
     padding: 0.4rem 0;
     font-size: 0.88rem;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
 }
 
 .plan-features-list li i {
-    color: #1ED66C;
+    color: var(--color-primary);
     font-size: 0.85rem;
     flex-shrink: 0;
     margin-top: 2px;
@@ -641,24 +641,24 @@
 }
 
 .plan-select-btn.primary {
-    background-color: #1ED66C;
+    background-color: var(--color-primary);
     color: #000;
 }
 
 .plan-select-btn.primary:hover {
-    background-color: #148F47;
-    box-shadow: 0 0 20px rgba(30, 214, 108, 0.2);
+    background-color: var(--color-primary-hover);
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .plan-select-btn.secondary {
     background-color: transparent;
     color: #FFFFFF;
-    border: 1px solid #2D313A;
+    border: 1px solid var(--color-border);
 }
 
 .plan-select-btn.secondary:hover {
-    background-color: #16181F;
-    border-color: #2D313A;
+    background-color: var(--color-bg-section);
+    border-color: var(--color-border);
 }
 
 .plan-select-btn:disabled {
@@ -672,7 +672,7 @@
 }
 
 .upgrade-footer-note {
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-size: 0.8rem;
     margin: 0 0 0.5rem 0;
 }
@@ -681,7 +681,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    color: #1ED66C;
+    color: var(--color-primary);
     font-size: 0.82rem;
     font-weight: 500;
     text-decoration: none;
@@ -689,7 +689,7 @@
 }
 
 .upgrade-pricing-link:hover {
-    color: #148F47;
+    color: var(--color-primary-hover);
     text-decoration: underline;
 }
 
@@ -706,8 +706,8 @@
 }
 
 .purchase-summary {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 0.2rem;
@@ -718,7 +718,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
 }
 
 .summary-row:last-child {
@@ -726,7 +726,7 @@
 }
 
 .total-row {
-    border-top: 1px solid #2D313A;
+    border-top: 1px solid var(--color-border);
     padding-top: 0.7rem;
     margin-top: 0.9rem;
     font-weight: 600;
@@ -743,12 +743,12 @@
 .total-amount {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #1ED66C;
+    color: var(--color-primary);
 }
 
 .indian-currency-amount {
     font-size: 0.85rem;
-    color: #A1A1AA;
+    color: var(--color-text-secondary);
     font-weight: 500;
 }
 
@@ -774,7 +774,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     position: relative;
     overflow: hidden;
-    background-color: #1ED66C;
+    background-color: var(--color-primary);
     color: #000000;
     cursor: pointer;
 }
@@ -795,10 +795,10 @@
 }
 
 .payment-btn:hover {
-    background-color: #148F47;
+    background-color: var(--color-primary-hover);
     color: #000000;
     transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
 }
 
 .payment-btn:disabled {
@@ -824,16 +824,16 @@
    ═══════════════════════════════════════════════ */
 
 .main-container .modal-content {
-    background-color: #0F1116;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-main);
+    border: 1px solid var(--color-border);
 }
 
 .main-container .modal-header {
-    border-bottom-color: #2D313A;
+    border-bottom-color: var(--color-border);
 }
 
 .main-container .modal-footer {
-    border-top-color: #2D313A;
+    border-top-color: var(--color-border);
 }
 
 .main-container .modal-title {
@@ -845,16 +845,16 @@
 }
 
 .main-container .form-control {
-    background-color: #1C1F28;
-    border: 1px solid #2D313A;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     color: #ffffff;
 }
 
 .main-container .form-control:focus {
-    background-color: #1C1F28;
-    border-color: #1ED66C;
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
     color: #ffffff;
-    box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 }
 
 /* ═══════════════════════════════════════════════

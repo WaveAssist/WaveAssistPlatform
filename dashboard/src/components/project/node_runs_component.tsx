@@ -1,9 +1,42 @@
 import React, { useEffect, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { fetchNodeRunsApi } from "../../services/runs_services";
+import { fetchRunUsage } from "../../services/account_services";
+import { getBrand } from "../../config/branding";
 import { useToast } from "../../utils/toast_context";
 import "./project_components.css";
 import "../../utils/ag-theme-project.css";
+
+const mono = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+
+// Per-run LLM usage strip (model · tokens · cost) from the analytics ledger. Shown only
+// where the brand enables it (WaveAssist) and only when the ledger actually has rows.
+const RunUsageStrip: React.FC<{ runId: string }> = ({ runId }) => {
+	const [usage, setUsage] = useState<any | null>(null);
+	useEffect(() => {
+		if (!getBrand().showRunUsage || !runId) return;
+		const pk = localStorage.getItem("selected_project_key") || "";
+		fetchRunUsage(pk, runId)
+			.then((d) => setUsage((d?.runs && d.runs[0]) || null))
+			.catch(() => {});
+	}, [runId]);
+
+	if (!usage || (!usage.cost_usd && !usage.input_tokens && !usage.output_tokens)) return null;
+	const pill = (label: string, value: string) => (
+		<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+			<span style={{ fontFamily: mono, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-secondary)" }}>{label}</span>
+			<span style={{ fontFamily: mono, fontSize: 13, color: "var(--color-text-primary)" }}>{value}</span>
+		</div>
+	);
+	return (
+		<div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "center", padding: "10px 14px", marginBottom: 12, background: "var(--color-bg-card)", border: "1px solid var(--color-border)", borderRadius: 8 }}>
+			{usage.models?.length > 0 && pill("Model", usage.models.join(", "))}
+			{pill("Tokens in / out", `${usage.input_tokens ?? 0} / ${usage.output_tokens ?? 0}`)}
+			{usage.cost_usd ? pill("Cost", `$${Number(usage.cost_usd).toFixed(4)}`) : null}
+			{usage.calls ? pill("LLM calls", String(usage.calls)) : null}
+		</div>
+	);
+};
 
 interface Props {
 	dagRunId: string;
@@ -70,7 +103,7 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId, onLoadingComplete }) => 
 				return (
 					<span
 						className={`badge ${isSuccess ? "badge-primary" : status === "FAILED" ? "badge-danger" : "badge-secondary"}`}
-						style={isSuccess ? { backgroundColor: "#1ED66C", color: "#000000" } : {}}>
+						style={isSuccess ? { backgroundColor: "var(--color-primary)", color: "#000000" } : {}}>
 						{status}
 					</span>
 				);
@@ -124,7 +157,9 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId, onLoadingComplete }) => 
 	];
 
 	return (
-		<div className="ag-theme-custom grid-container" style={{ fontSize: "12px", height: "100%", width: "100%" }}>
+		<div style={{ height: "100%", width: "100%", display: "flex", flexDirection: "column" }}>
+			<RunUsageStrip runId={dagRunId} />
+			<div className="ag-theme-custom grid-container" style={{ fontSize: "12px", flex: 1, width: "100%" }}>
 			<AgGridReact
 				rowData={nodeRunsArray}
 				columnDefs={columnDefs}
@@ -134,6 +169,7 @@ const NodeRunsComponent: React.FC<Props> = ({ dagRunId, onLoadingComplete }) => 
 				defaultColDef={defaultColDef}
 				onGridReady={(params) => params.api.sizeColumnsToFit()}
 			/>
+			</div>
 		</div>
 	);
 };

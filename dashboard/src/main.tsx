@@ -6,11 +6,12 @@ import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
 
 import { ToastProvider } from "./utils/toast_context.tsx";
 import { PostHogProvider } from "posthog-js/react";
-import { captureBrandParam, getBrand } from "./config/branding.tsx";
+import { captureBrandParam, applyBrandToDocument } from "./config/branding.tsx";
 
-// Capture ?brand= and set the tab title before React mounts.
+// Resolve the brand and stamp <html data-brand> + tab title before React mounts.
+// (captureBrandParam is a no-op in production; VITE_BRAND is authoritative there.)
 captureBrandParam();
-document.title = getBrand().title;
+applyBrandToDocument();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>

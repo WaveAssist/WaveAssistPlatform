@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "dev:gitzoid": "VITE_BRAND=gitzoid vite",
+    "build": "node scripts/gen-redirects.mjs && tsc && vite build",
+    "build:waveassist": "VITE_BRAND=waveassist npm run build",
+    "build:gitzoid": "VITE_BRAND=gitzoid npm run build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "postinstall": "patch-package"

@@ -1,133 +1,190 @@
 // ============================================================
 // Brand config — the single source of truth for whitelabeling.
 // Two fixed brands only: waveassist (default) + gitzoid.
-// Active brand is chosen by a ?brand= param captured once at
-// app bootstrap (see captureBrandParam, called from main.tsx)
-// and persisted to localStorage. With no param the app renders
-// exactly as before (default = waveassist).
+//
+// The active brand is decided at BUILD TIME by VITE_BRAND
+// (set per Netlify site). This is authoritative in production —
+// a waveassist deployment can never be switched to gitzoid at
+// runtime. For local development only, a ?brand= param (persisted
+// to localStorage) can override, so both brands can be previewed
+// from one dev server. With nothing set, the app renders exactly
+// as before (default = waveassist).
+//
+// Colors live in CSS (design-system.css, keyed by
+// :root[data-brand="..."]). Per each brand studio, the mark is a
+// TYPESET wordmark, not an image: /waveassist (Volt Lime slash) and
+// /gitzoid (Patrol Green slash), both in JetBrains Mono. `accent`
+// here mirrors --color-primary for the few places JS needs the
+// value directly. Keep the two in sync.
 // ============================================================
 import React from "react";
-import waveLogo from "../assets/Logo/GreenLogo_Full_white_no_w.png";
-import waveMark from "../assets/Logo/Wave_Predict_W_Logo.png";
 
 export type BrandId = "waveassist" | "gitzoid";
 
+// Hosted MCP endpoint (WaveAgent) + plugin marketplace — shown in the Connect MCP panel.
+export const MCP_URL = "https://mcp.waveassist.ai/mcp";
+export const MCP_MARKETPLACE = "WaveAssist/WaveAgent";
+
 export interface Brand {
 	id: BrandId;
-	name: string;
+	name: string; // full wordmark label (lowercase), e.g. "waveassist"
 	analyticsName: string;
 	title: string; // browser tab title
-	wordmark: boolean; // true -> render the /gitzoid type wordmark instead of an image
-	accent: string; // brand accent (the slash, highlights)
-	logoFull?: string; // image brands only
-	logoMark?: string; // image brands only (collapsed)
+	accent: string; // brand accent (mirrors --color-primary in CSS)
+	markLabel: string; // collapsed-mark suffix after the slash ("" = bare slash)
+	billingModel: "credits" | "trial"; // WaveAssist = credits (PAYG); GitZoid = trial → Pro
+	showRunUsage: boolean; // show per-run LLM usage on the runs pages (WaveAssist only)
 	scoped: boolean; // restrict the dashboard to a single template
 	templateKey: string | null; // the template the "Add" button deploys
 	catalogUrl: string | null; // assistant catalog (null when scoped)
-	welcome: string; // login headline
-	signup: string; // login sub-headline
+	signup: string; // login sub-headline (tagline)
 }
 
 export const BRANDS: Record<BrandId, Brand> = {
 	waveassist: {
 		id: "waveassist",
-		name: "WaveAssist",
+		name: "waveassist",
 		analyticsName: "WaveAssist",
-		title: "WaveAssistDashboard",
-		wordmark: false,
-		accent: "#1ED66C",
-		logoFull: waveLogo,
-		logoMark: waveMark,
+		title: "WaveAssist",
+		accent: "#D8FF00", // Volt Lime — mirrors --color-primary
+		markLabel: "wa",
+		billingModel: "credits",
+		showRunUsage: true,
 		scoped: false,
 		templateKey: null,
 		catalogUrl: "https://waveassist.ai/assistants",
-		welcome: "Welcome to WaveAssist",
-		signup: "Sign up for free to access your workflows",
+		signup: "Run deterministic AI agents in the cloud.",
 	},
 	gitzoid: {
 		id: "gitzoid",
-		name: "GitZoid",
+		name: "gitzoid",
 		analyticsName: "GitZoid",
-		title: "GitZoid Control Panel",
-		wordmark: true,
-		accent: "#12C46A", // Patrol Green
+		title: "GitZoid",
+		accent: "#12C46A", // Patrol Green — mirrors --color-primary
+		markLabel: "gz",
+		billingModel: "trial",
+		showRunUsage: false,
 		scoped: true,
 		templateKey: "gitzoid",
 		catalogUrl: null,
-		welcome: "Welcome to GitZoid",
-		signup: "Reviews every PR, watches for risk, sums up your week.",
+		signup: "The product manager for your coding agents.",
 	},
 };
 
 const VALID_BRANDS = Object.keys(BRANDS) as BrandId[];
 
-/** Capture ?brand= once at bootstrap, before React mounts. Persisting
- *  here (synchronously) means the choice survives the Firebase auth
- *  redirect, so no per-component param threading is needed. */
+function isBrandId(value: string | null | undefined): value is BrandId {
+	return !!value && (VALID_BRANDS as string[]).includes(value);
+}
+
+let _cached: Brand | null = null;
+
+/** Resolve the active brand. Order:
+ *  1. VITE_BRAND (build-time) — authoritative, used in production.
+ *  2. ?brand= / localStorage — DEV ONLY, for local preview.
+ *  3. Default: waveassist.
+ *  Cached: the brand never changes within a session. */
+function resolveBrand(): Brand {
+	if (_cached) return _cached;
+
+	const envBrand = String(import.meta.env.VITE_BRAND ?? "").toLowerCase();
+	if (isBrandId(envBrand)) {
+		_cached = BRANDS[envBrand];
+		return _cached;
+	}
+
+	if (import.meta.env.DEV) {
+		try {
+			const stored = localStorage.getItem("brand");
+			if (isBrandId(stored)) {
+				_cached = BRANDS[stored];
+				return _cached;
+			}
+		} catch {
+			/* localStorage unavailable */
+		}
+	}
+
+	_cached = BRANDS.waveassist;
+	return _cached;
+}
+
+/** Capture ?brand= once at bootstrap (DEV ONLY). In production the
+ *  brand is fixed by the build, so the param is ignored. */
 export function captureBrandParam(): void {
+	if (!import.meta.env.DEV) return;
 	try {
 		const param = new URLSearchParams(window.location.search).get("brand");
-		if (param && (VALID_BRANDS as string[]).includes(param)) {
+		if (isBrandId(param)) {
 			localStorage.setItem("brand", param);
+			_cached = null; // allow the fresh param to win
 		}
 	} catch {
 		/* localStorage/URL unavailable: fall through to default */
 	}
 }
 
-/** The active brand. Never changes within a session, so a plain
- *  function (not a hook/context) is enough. Defaults to waveassist. */
+/** The active brand. Never changes within a session. Defaults to waveassist. */
 export function getBrand(): Brand {
+	return resolveBrand();
+}
+
+/** Stamp the document with the active brand: sets data-brand (drives the
+ *  CSS token set), the tab title, and the favicon. Called once from main.tsx. */
+export function applyBrandToDocument(): void {
+	const brand = getBrand();
 	try {
-		const stored = localStorage.getItem("brand");
-		if (stored && (VALID_BRANDS as string[]).includes(stored)) {
-			return BRANDS[stored as BrandId];
+		document.documentElement.dataset.brand = brand.id;
+		document.title = brand.title;
+		// Favicon: the lone slash on a carbon tile, tinted with the brand accent.
+		const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${brand.id === "gitzoid" ? "#0B0E12" : "#0B0C0F"}"/><text x="50%" y="50%" dy="0.02em" text-anchor="middle" dominant-baseline="central" font-family="'JetBrains Mono',ui-monospace,monospace" font-weight="700" font-size="46" fill="${brand.accent}">/</text></svg>`;
+		let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+		if (!link) {
+			link = document.createElement("link");
+			link.rel = "icon";
+			document.head.appendChild(link);
 		}
+		link.type = "image/svg+xml";
+		link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 	} catch {
-		/* ignore */
+		/* SSR / no document */
 	}
-	return BRANDS.waveassist;
 }
 
 interface BrandLogoProps {
 	variant?: "full" | "mark";
-	size?: number; // wordmark font-size (px); ignored by image brands
+	size?: number; // wordmark font-size (px)
 	className?: string;
 	style?: React.CSSProperties;
 	alt?: string;
 }
 
-/** Renders the active brand's mark. Image brands keep their existing
- *  <img> (and className-driven sizing) untouched. The gitzoid brand
- *  renders the /gitzoid type wordmark (JetBrains Mono, green slash). */
+/** Renders the active brand's typeset wordmark: a brand-accent slash "/"
+ *  followed by the brand name (full) or a short mark (collapsed). Both
+ *  brands are typographic — no raster logos. */
 export const BrandLogo: React.FC<BrandLogoProps> = ({ variant = "full", size, className, style, alt }) => {
 	const brand = getBrand();
-
-	if (brand.wordmark) {
-		const fontSize = size ?? 24;
-		const label = variant === "mark" ? "gz" : brand.name.toLowerCase();
-		return (
-			<span
-				className={className}
-				aria-label={alt ?? brand.name}
-				style={{
-					fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
-					fontWeight: 600,
-					fontSize: `${fontSize}px`,
-					lineHeight: 1,
-					letterSpacing: "-0.01em",
-					color: "#FFFFFF",
-					whiteSpace: "nowrap",
-					display: "inline-flex",
-					alignItems: "center",
-					userSelect: "none",
-					...style,
-				}}>
-				<span style={{ color: brand.accent }}>/</span>
-				{label}
-			</span>
-		);
-	}
-
-	return <img src={variant === "mark" ? brand.logoMark : brand.logoFull} alt={alt ?? brand.name} className={className} style={style} />;
+	const fontSize = size ?? 24;
+	const label = variant === "mark" ? brand.markLabel : brand.name;
+	return (
+		<span
+			className={className}
+			aria-label={alt ?? brand.analyticsName}
+			style={{
+				fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+				fontWeight: 600,
+				fontSize: `${fontSize}px`,
+				lineHeight: 1,
+				letterSpacing: "-0.02em",
+				color: "var(--color-text-primary)",
+				whiteSpace: "nowrap",
+				display: "inline-flex",
+				alignItems: "center",
+				userSelect: "none",
+				...style,
+			}}>
+			<span style={{ color: "var(--color-primary)" }}>/</span>
+			{label}
+		</span>
+	);
 };

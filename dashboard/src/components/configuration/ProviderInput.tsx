@@ -276,15 +276,15 @@ const ProviderInput: React.FC<ProviderInputProps> = ({
 	);
 
 	const popupMessage = showPopupMessage && (
-		<div className="mt-3 p-3 border rounded" style={{ backgroundColor: "#1C1F28", borderColor: "#1ED66C" }}>
+		<div className="mt-3 p-3 border rounded" style={{ backgroundColor: "var(--color-bg-card)", borderColor: "var(--color-primary)" }}>
 			<div className="d-flex align-items-center gap-2">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="#1ED66C">
+				<svg width="20" height="20" viewBox="0 0 24 24" style={{ fill: "var(--color-primary)" }}>
 					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
 				</svg>
 				<div className="flex-grow-1">
 					<div className="fw-medium text-white mb-1">{config.displayName} Authorization</div>
 					{popupBlocked ? (
-						<div className="small" style={{ color: "#A1A1AA" }}>
+						<div className="small" style={{ color: "var(--color-text-secondary)" }}>
 							Popup was blocked by your browser.
 							<button
 								className="btn btn-link p-0 text-white text-decoration-none ms-1"
@@ -294,7 +294,7 @@ const ProviderInput: React.FC<ProviderInputProps> = ({
 							</button>
 						</div>
 					) : (
-						<div className="small" style={{ color: "#A1A1AA" }}>
+						<div className="small" style={{ color: "var(--color-text-secondary)" }}>
 							Please complete the {config.displayName} authorization in the new window.
 						</div>
 					)}
@@ -308,7 +308,7 @@ const ProviderInput: React.FC<ProviderInputProps> = ({
 		return (
 			<>
 				<div className="provider-input-container">
-					<div className="p-3 border rounded" style={{ backgroundColor: "#1C1F28", borderColor: "#2D313A" }}>
+					<div className="p-3 border rounded" style={{ backgroundColor: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
 						<div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
 							<div className="d-flex align-items-center gap-3">
 								<ProviderIcon />
@@ -323,7 +323,7 @@ const ProviderInput: React.FC<ProviderInputProps> = ({
 										Connected to {config.displayName}
 									</div>
 									{selectedResourcesCount > 0 && (
-										<div className="small" style={{ color: "#A1A1AA" }}>
+										<div className="small" style={{ color: "var(--color-text-secondary)" }}>
 											{selectedResourcesCount} {config.selectResourcesLabel?.toLowerCase().replace("select ", "") || "resources"} selected
 										</div>
 									)}
@@ -389,7 +389,7 @@ const ProviderInput: React.FC<ProviderInputProps> = ({
 											e.preventDefault();
 											setShowManualModal(true);
 										}}
-										style={{ fontSize: "0.75rem", color: "#A1A1AA", textDecoration: "none" }}
+										style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", textDecoration: "none" }}
 										onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
 										onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}>
 										or manually update token
@@ -429,7 +429,7 @@ const ProviderInput: React.FC<ProviderInputProps> = ({
 	return (
 		<>
 			<div className="provider-input-container">
-				<div className="p-3 border rounded" style={{ backgroundColor: "#1C1F28", borderColor: "#2D313A" }}>
+				<div className="p-3 border rounded" style={{ backgroundColor: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
 					<div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
 						<div className="d-flex align-items-center gap-3">
 							<ProviderIcon />
@@ -437,7 +437,7 @@ const ProviderInput: React.FC<ProviderInputProps> = ({
 								<div className="fw-medium text-white" style={{ fontSize: "0.95rem" }}>
 									{config.displayName} Integration
 								</div>
-								<div className="small" style={{ color: "#A1A1AA" }}>
+								<div className="small" style={{ color: "var(--color-text-secondary)" }}>
 									{config.description}
 								</div>
 							</div>
@@ -467,7 +467,7 @@ const ProviderInput: React.FC<ProviderInputProps> = ({
 										e.preventDefault();
 										setShowManualModal(true);
 									}}
-									style={{ fontSize: "0.75rem", color: "#A1A1AA", textDecoration: "none" }}
+									style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", textDecoration: "none" }}
 									onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
 									onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}>
 									or manually enter your token

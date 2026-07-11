@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 .env
+# Playwright MCP screenshot artifacts
+.playwright-mcp/

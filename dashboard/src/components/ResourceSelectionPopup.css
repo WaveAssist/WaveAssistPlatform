@@ -48,7 +48,7 @@
 
 .resource-search-input:focus {
 	border-color: var(--color-primary) !important;
-	box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 	outline: none;
 }
 
@@ -264,7 +264,7 @@
 
 .resource-table-detail-input:focus {
 	border-color: var(--color-primary) !important;
-	box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
 }
 
 .resource-table-detail-input::placeholder {

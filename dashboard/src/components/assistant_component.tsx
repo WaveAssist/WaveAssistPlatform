@@ -739,7 +739,7 @@ const AssistantComponent: React.FC = () => {
 							<div className="assistant-update-banner">
 								<div className="d-flex align-items-center justify-content-between">
 									<div className="d-flex align-items-center">
-										<i className="bi bi-arrow-up-circle-fill me-3" style={{ fontSize: "1.5rem", color: "#1ED66C" }}></i>
+										<i className="bi bi-arrow-up-circle-fill me-3" style={{ fontSize: "1.5rem", color: "var(--color-primary)" }}></i>
 										<div>
 											<h6 className="mb-0 text-white">New version available</h6>
 											<p className="mb-0 text-muted" style={{ fontSize: "0.85rem" }}>
@@ -846,7 +846,7 @@ const AssistantComponent: React.FC = () => {
 												</Form>
 											)}
 											{templateData?.configuration_helper_message && (
-												<div className="alert bg-transparent text-white mb-4" style={{ fontSize: "0.8rem", border: "1px solid #2D313A" }}>
+												<div className="alert bg-transparent text-white mb-4" style={{ fontSize: "0.8rem", border: "1px solid var(--color-border)" }}>
 													<i className="bi bi-info-circle me-2 text-secondary-wa"></i>
 													{templateData.configuration_helper_message}
 												</div>
@@ -1001,11 +1001,11 @@ const AssistantComponent: React.FC = () => {
 				{isRunning && shouldShowGitHubWebhook() && (
 					<div className="row mt-3">
 						<div className="col-md-12">
-							<div className="assistant-config-card" style={{ borderLeft: "3px solid #1ED66C" }}>
+							<div className="assistant-config-card" style={{ borderLeft: "3px solid var(--color-primary)" }}>
 								<div className="assistant-config-content">
 									<div className="d-flex align-items-start">
 										<div className="me-3">
-											<i className="bi bi-github" style={{ fontSize: "2rem", color: "#1ED66C" }}></i>
+											<i className="bi bi-github" style={{ fontSize: "2rem", color: "var(--color-primary)" }}></i>
 										</div>
 										<div className="flex-grow-1">
 											<h6 className="text-white mb-2">Enable Real-time GitHub Connect (Optional)</h6>
@@ -1135,7 +1135,7 @@ const AssistantComponent: React.FC = () => {
 										value={webhookUrl}
 										readOnly
 										disabled
-										style={{ fontFamily: "monospace", fontSize: "0.9rem", backgroundColor: "#1C1F28", border: "1px solid #2D313A" }}
+										style={{ fontFamily: "monospace", fontSize: "0.9rem", backgroundColor: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
 									/>
 									<Button variant="outline-success" onClick={handleCopyWebhook}>
 										{webhookCopied ? (

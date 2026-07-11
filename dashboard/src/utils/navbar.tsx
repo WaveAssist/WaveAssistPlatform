@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Navbar, Nav, Button, Modal } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import "./navbar.css";
 import DarkDropdown from "./dark_dropdown";
 import { fetchEnvironmentsApi, deployProjectApi } from "../services/navbar_services";
@@ -8,7 +7,7 @@ import { useToast } from "./toast_context";
 import { useRefresh } from "./RefreshContext";
 import { usePostHog } from "posthog-js/react";
 import { BrandLogo } from "../config/branding";
-import { getStoredAccessPlan, hasSuperAdminAccess } from "./plan";
+import { hasSuperAdminAccess } from "./plan";
 interface NavbarProps {
 	onToggleSidebar?: () => void;
 }
@@ -17,7 +16,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const { showToast } = useToast();
 	const { triggerRefresh } = useRefresh();
 	const posthog = usePostHog();
-	const navNavigate = useNavigate();
 
 	const [environmentArray, setEnvironmentArray] = useState<{ name: string; key: string }[]>([]);
 	const envItems = environmentArray.map((env) => env.name);
@@ -43,10 +41,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 	const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 	const isUserPremium = localStorage.getItem("is_premium") === "true" || Boolean(userData.is_premium);
 
-	// Deploy only visible to super admin; Starter sees upgrade CTA.
-	const currentAccessPlan = getStoredAccessPlan();
+	// Deploy only visible to super admin.
 	const isSuperAdmin = hasSuperAdminAccess();
-	const isStarterPlan = currentAccessPlan === "starter";
 
 	const showDeployButton = !(isProjectPremium && !isUserPremium) && isSuperAdmin;
 
@@ -187,11 +183,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 								<i className="bi bi-cloud-arrow-up-fill"></i>
 							</Button>
 						)}
-					{isStarterPlan && !isMobile && (
-						<Button variant="outline-secondary" onClick={() => navNavigate("/manage/credits?upgrade=true")}>
-							<i className="bi bi-star"></i>
-						</Button>
-					)}
 					</div>
 				</>
 			) : (
@@ -223,12 +214,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 									Deploy
 								</Button>
 							)}
-						{isStarterPlan && (
-							<Button variant="outline-secondary" onClick={() => navNavigate("/manage/credits?upgrade=true")}>
-								<i className="bi bi-star me-2"></i>
-								Upgrade
-							</Button>
-						)}
 						</Nav>
 					</Navbar.Collapse>
 				</>

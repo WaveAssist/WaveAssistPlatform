@@ -4,6 +4,7 @@ import Modal from "react-bootstrap/Modal";
 import Spinner from "react-bootstrap/Spinner";
 import Alert from "react-bootstrap/Alert";
 import { BrandLogo, getBrand } from "../config/branding";
+import ConnectMcpPanel from "./ConnectMcpPanel";
 
 import { useNavigate } from "react-router-dom";
 import { fetchAllProjectsAPI, createProjectAPI, deleteProjectApi } from "../services/all_projects_services";
@@ -30,6 +31,7 @@ const AllProjectsComponent: React.FC = () => {
 	const [showModal, setShowModal] = useState(false);
 	const [isProjectKeyEdited, setIsProjectKeyEdited] = useState(false);
 	const [loading, setLoading] = useState(true);
+	const [showMcpPanel, setShowMcpPanel] = useState(false);
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const posthog = usePostHog();
@@ -186,8 +188,9 @@ const AllProjectsComponent: React.FC = () => {
 	const handleAdd = () => {
 		if (brand.scoped && brand.templateKey) {
 			navigate(`/deploy?template_key=${brand.templateKey}`);
-		} else if (brand.catalogUrl) {
-			window.open(brand.catalogUrl, "_self");
+		} else {
+			// WaveAssist: assistants are built over MCP, so "Add" opens the connect panel.
+			setShowMcpPanel(true);
 		}
 	};
 	const visibleProjects = brand.scoped
@@ -196,6 +199,18 @@ const AllProjectsComponent: React.FC = () => {
 					p.template_key === brand.templateKey || (p.project_key || "").toLowerCase().includes(brand.templateKey || "")
 		  )
 		: projectArray;
+
+	// GitZoid: land directly inside the assistant when there's exactly one — but only ONCE
+	// per session, so clicking "Back" reaches the list (to add/switch) without bouncing
+	// straight back in. With 0 or multiple GitZoids we always show the list.
+	useEffect(() => {
+		if (loading || !brand.scoped) return;
+		if (visibleProjects.length === 1 && !sessionStorage.getItem("gz_auto_opened")) {
+			sessionStorage.setItem("gz_auto_opened", "1");
+			handleViewDetails(visibleProjects[0].project_key);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [loading]);
 
 	return (
 		<div className="base_component">
@@ -355,6 +370,8 @@ const AllProjectsComponent: React.FC = () => {
 					</div>
 				</Modal.Footer>
 			</Modal>
+
+			<ConnectMcpPanel show={showMcpPanel} onHide={() => setShowMcpPanel(false)} />
 		</div>
 	);
 };

@@ -1,17 +1,21 @@
 /* WaveAssist Design System - CSS Variables */
 
 :root {
-  /* Color Palette */
-  --color-primary: #1ED66C;
-  --color-primary-hover: #148F47;
-  --color-pro-accent: #FBB040;
-  --color-bg-main: #0F1116;
-  --color-bg-section: #16181F;
-  --color-bg-card: #1C1F28;
-  --color-border: #2D313A;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A1A1AA;
-  --color-text-button: #000000;
+  /* Color Palette — brand-driven (WaveAssist default; GitZoid overrides below).
+     WaveAssist = Volt Lime on Carbon (WaveAssistStudio/colors_and_type.css). */
+  --color-primary: #D8FF00;            /* Volt Lime — the one accent */
+  --color-primary-rgb: 216, 255, 0;    /* accent as an RGB triplet, for rgba() tints */
+  --color-primary-hover: #C2E600;      /* accent-deep — hover on filled */
+  --color-primary-press: #A9CC00;      /* accent-press — active/pressed */
+  --color-pro-accent: #E0A23C;         /* amber — running/pending */
+  --color-bg-main: #0B0C0F;            /* carbon void — page background */
+  --color-bg-section: #0F1114;         /* alt section band */
+  --color-bg-card: #14161B;            /* cards, nav, panels */
+  --color-bg-card-2: #1A1D23;          /* raised panel, inputs, hover rows */
+  --color-border: #23262D;             /* every 1px hairline */
+  --color-text-primary: #ECEEF2;       /* primary text (cool near-white) */
+  --color-text-secondary: #8B909B;     /* secondary text, labels */
+  --color-text-button: #0B0C0F;        /* text on accent fills — always carbon */
   
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -25,12 +29,38 @@
   --radius-card: 8px;
   
   /* Shadows */
-  --shadow-active: 0 0 20px rgba(30, 214, 108, 0.15);
+  --shadow-active: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
   
   /* Background Pattern */
   --pattern-opacity: 0.4;
   --pattern-spacing: 24px;
+}
+
+/* ===== GitZoid brand overrides — Patrol Green on Carbon (GitZoidStudio/colors_and_type.css).
+   data-brand is set from VITE_BRAND at boot. ===== */
+:root[data-brand="gitzoid"] {
+  --color-primary: #12C46A;            /* Patrol Green — the one accent */
+  --color-primary-rgb: 18, 196, 106;
+  --color-primary-hover: #0E9E55;      /* accent-deep — hover */
+  --color-primary-press: #0B7E43;      /* accent-darker — active/pressed */
+  --color-pro-accent: #FBB040;         /* amber — warn/medium */
+  --color-bg-main: #0B0E12;            /* carbon — page background */
+  --color-bg-section: #0E1217;         /* alt section band */
+  --color-bg-card: #14181F;            /* cards, nav, panels */
+  --color-bg-card-2: #1A1F27;          /* raised panel, inputs */
+  --color-border: #232A33;             /* 1px hairline on carbon */
+  --color-text-primary: #FFFFFF;       /* headings / primary text */
+  --color-text-secondary: #9BA4B0;     /* muted body text */
+  --color-text-button: #0B0E12;        /* text on accent fills — carbon */
+}
+
+/* Bootstrap semantic override — success/pass IS the brand accent
+   (lime for WaveAssist, green for GitZoid), per both brand systems.
+   Doubled class raises specificity above Bootstrap's .text-success,
+   which is imported after this file in main.tsx. */
+.text-success.text-success {
+  color: var(--color-primary) !important;
 }
 
 /* Background Pattern Overlay */

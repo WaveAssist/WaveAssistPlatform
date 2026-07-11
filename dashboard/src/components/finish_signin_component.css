@@ -11,7 +11,7 @@
 }
 
 .text-success {
-	color: #1ED66C !important;
+	color: var(--color-primary) !important;
 }
 
 .btn-outline-light {

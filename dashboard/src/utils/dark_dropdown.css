@@ -7,8 +7,8 @@
 
   /* Custom styles for dark theme dropdown */
 .custom-dropdown-menu {
-  background-color: #1C1F28 !important; /* Card color */
-  border: 1px solid #2D313A !important;
+  background-color: var(--color-bg-card) !important; /* Card color */
+  border: 1px solid var(--color-border) !important;
 }
 
 .custom-dropdown-menu .dropdown-item {
@@ -16,7 +16,7 @@
 }
 
 .custom-dropdown-menu .dropdown-item:hover {
-  background-color: #16181F; /* Card hover color */
+  background-color: var(--color-bg-section); /* Card hover color */
   color: #FFFFFF; /* Text color on hover */
 }
 
@@ -28,7 +28,7 @@
 
 
 .dropdown-item.active {
-    background-color: #1ED66C !important;
+    background-color: var(--color-primary) !important;
     color: #000000 !important;
   }
 

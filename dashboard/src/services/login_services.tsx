@@ -1,6 +1,7 @@
 import { auth } from "../utils/firebase";
 import { callApi } from "./base_service";
 import { persistUserPlan } from "../utils/plan";
+import { getBrand } from "../config/branding";
 
 export const refreshUserProfile = async (): Promise<void> => {
 	try {
@@ -35,7 +36,9 @@ export const loginAPI = async (firebase_token: any, session_id?: any): Promise<a
 
 export const getStartedAPI = async (firebase_token: any, is_test: boolean = false, session_id?: any): Promise<any> => {
 	var path = "manage/get_started/";
-	const body = new URLSearchParams({ firebase_token: firebase_token, is_test: is_test ? "1" : "0" });
+	// Stamp the brand as the account's product on first signup (waveassist | gitzoid), so a
+	// GitZoid signup becomes a GitZoid account (trial, GitZoid billing) — not a WaveAssist one.
+	const body = new URLSearchParams({ firebase_token: firebase_token, is_test: is_test ? "1" : "0", product: getBrand().id });
 	if (session_id) body.append("session_id", session_id);
 	return callApi(path, body);
 };
