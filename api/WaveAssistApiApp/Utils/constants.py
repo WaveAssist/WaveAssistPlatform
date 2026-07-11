@@ -122,6 +122,11 @@ TASK_FAILED = 'FAILED'
 
 
 FRONTEND_URL = "https://app.waveassist.io"
+# GitZoid runs on its own domain — buyers return here after checkout. Overridable via env.
+GITZOID_FRONTEND_URL = "https://app.gitzoid.com"
+# GitZoid Firebase project id — lets the API verify GitZoid login tokens using Google's public
+# certs, so no service-account key is needed (the org may forbid SA-key creation).
+GITZOID_FIREBASE_PROJECT_ID = "gitzoid-dashboard"
 
 # DoDo Payments — defaults when env vars are not set (override via .env)
 DODO_DEFAULT_BASE_URL = "https://live.dodopayments.com"
@@ -129,9 +134,8 @@ DODO_DEFAULT_API_KEY = "REMOVED_CREDENTIAL"
 DODO_DEFAULT_CREDITS_PRODUCT_ID = "pdt_0NaUMxiHUGKVnbT58MTW4"
 DODO_DEFAULT_PLAN_PLUS_PRODUCT_ID = "pdt_0NaUN5Yb442s7J9ZLm7Ly"
 DODO_DEFAULT_PLAN_PRO_PRODUCT_ID = "pdt_0NaUN2K3XpBUtSlBmjeMM"
-# GitZoid Pro DoDo product id. Reuses the existing PRO product id for now; replace with a
-# dedicated GitZoid product via env DODO_PLAN_GITZOID_PRO_PRODUCT_ID when it's created.
-DODO_DEFAULT_PLAN_GITZOID_PRO_PRODUCT_ID = DODO_DEFAULT_PLAN_PRO_PRODUCT_ID
+# GitZoid Pro — its own DoDo product under the GitZoid brand ($19/mo).
+DODO_DEFAULT_PLAN_GITZOID_PRO_PRODUCT_ID = "pdt_0NiwEuXJyydYcVkBzf0T3"
 DODO_DEFAULT_WEBHOOK_SECRET = "REMOVED_CREDENTIAL"
 
 CREDITS_CHECK_INTERVAL_DEFAULT = 300   # 5 min

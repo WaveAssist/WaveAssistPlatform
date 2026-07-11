@@ -8,6 +8,7 @@ from django.core.cache import cache
 import WaveAssistApiApp.Utils.utils as utils
 from WaveAssistApiApp.Utils.utils import fetch_credits_from_openrouter
 import requests
+import firebase_admin
 from firebase_admin import auth as firebase_auth
 from .firebase_init import initialize_firebase
 
@@ -160,16 +161,39 @@ def get_firebase_uid(firebase_token):
     if not firebase_token:
         raise Exception("Firebase token not found")
 
-    # Verify the Firebase token
-    try:
-        decoded_token = firebase_auth.verify_id_token(firebase_token)
-    except Exception as e:
-        raise Exception(f"Failed to verify Firebase token: {str(e)}")
+    # A brand's token is issued by that brand's Firebase project. Verify against WaveAssist
+    # (default) first, then GitZoid — whichever project issued the token succeeds.
+    last_error = None
+    for app_name in (None, "gitzoid"):
+        try:
+            app = firebase_admin.get_app() if app_name is None else firebase_admin.get_app(app_name)
+        except ValueError:
+            continue  # app not initialized (e.g., GitZoid not configured yet)
+        try:
+            decoded_token = firebase_auth.verify_id_token(firebase_token, app=app)
+            firebase_uid = decoded_token.get("uid")
+            if firebase_uid:
+                return firebase_uid, decoded_token
+        except Exception as e:
+            last_error = e
 
-    firebase_uid = decoded_token.get("uid")
-    if not firebase_uid:
-        raise Exception("Firebase UID not found in the decoded token")
-    return firebase_uid, decoded_token
+    # GitZoid without a service-account key: verify against its project id using Google's public
+    # certs (Firebase tokens are Google-signed). Naturally skipped if the token isn't a GitZoid one.
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+
+        decoded_token = google_id_token.verify_firebase_token(
+            firebase_token, google_requests.Request(), audience=GITZOID_FIREBASE_PROJECT_ID
+        )
+        if decoded_token:
+            firebase_uid = decoded_token.get("user_id") or decoded_token.get("sub")
+            if firebase_uid:
+                return firebase_uid, decoded_token
+    except Exception as e:
+        last_error = e
+
+    raise Exception(f"Failed to verify Firebase token: {last_error}")
 
 
 def cli_login_status(request, session_id):

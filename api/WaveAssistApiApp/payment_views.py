@@ -149,7 +149,15 @@ def create_checkout(request):
             "use_case": use_case,
         }
 
-        return_url = f"{FRONTEND_URL}/manage/credits?checkout=complete"
+        # Return the buyer to their own brand's dashboard after checkout — GitZoid lives on a
+        # separate domain. account.product is authoritative. Env overrides the constant default,
+        # matching how config is resolved elsewhere (constant is the fallback if env is absent).
+        frontend = (
+            os.environ.get("GITZOID_FRONTEND_URL", GITZOID_FRONTEND_URL)
+            if account_object.product == "gitzoid"
+            else os.environ.get("FRONTEND_URL", FRONTEND_URL)
+        )
+        return_url = f"{frontend}/manage/credits?checkout=complete"
 
         if use_case == "subscription":
             if plan_name not in VALID_UPGRADE_PLANS:
