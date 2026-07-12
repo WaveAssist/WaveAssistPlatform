@@ -139,8 +139,15 @@ def get_started(request):  # TCW
 
     if account_object.open_router_key == "":
         try:
+            # GitZoid's trial runs on this per-account OpenRouter key but is gated by the
+            # action-credit meter (trial_credits_*), NOT the key balance — so the key must be
+            # pre-loaded high enough that the meter always runs out first. $5 is a deliberate
+            # safety ceiling: well above a full trial's real LLM spend, yet still a hard cap that
+            # bounds a failing-agent runaway (which the meter never stops, since it only charges
+            # delivered work). WaveAssist stays pay-as-you-go with its small starter grant.
+            trial_grant_usd = 5 if product == "gitzoid" else round(2 / WAVEASSIST_CREDIT_MULTIPLIER, 4)
             open_router_key, open_router_key_hash = utils.create_openrouter_token(
-                user_object.uid, grant_usd=round(2 / WAVEASSIST_CREDIT_MULTIPLIER, 4)
+                user_object.uid, grant_usd=trial_grant_usd
             )
             if open_router_key:
                 account_object.open_router_key = open_router_key

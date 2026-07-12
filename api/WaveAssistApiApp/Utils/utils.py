@@ -1561,7 +1561,7 @@ _TRIAL_ENDED_HTML_GITZOID = """<!doctype html>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td bgcolor="#12C46A" style="background-color:#12C46A;border-radius:9px;">
-                    <a href="https://app.gitzoid.com" style="display:inline-block;padding:14px 30px;font-size:14px;font-weight:700;color:#0B0E12;letter-spacing:0.2px;">Upgrade to Pro &rarr;</a>
+                    <a href="https://app.gitzoid.com/manage/credits?utm_source=email&amp;utm_campaign=trial_ended" style="display:inline-block;padding:14px 30px;font-size:14px;font-weight:700;color:#0B0E12;letter-spacing:0.2px;">Upgrade to Pro &rarr;</a>
                   </td>
                 </tr>
               </table>

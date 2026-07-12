@@ -176,10 +176,13 @@ PRO_MAX_REPOS = 50
 # The data key the GitZoid repo-selection multiselect saves under (read by its nodes).
 GITZOID_REPOS_KEY = "github_selected_resources"
 
-# Maps a DELIVERABLE leaf node to the trial action it represents. The runtime meters on the
-# recorded SUCCESS of these terminal nodes ONLY — never on the gate/fetch/init nodes that
-# also run (and succeed) on every scheduled tick. Anchoring to the deliverable node means:
-#   • an idle repo's every-2-min gate cycle charges nothing (no delivered work),
+# Maps a DELIVERABLE leaf node to the trial action it represents. Only these terminal nodes are
+# metered — never the gate/fetch/init nodes that also run (and succeed) on every scheduled tick.
+# But a deliverable node ALSO runs and "succeeds" on every tick (did_succeed only means it didn't
+# raise), so success alone is NOT delivery. Metering therefore additionally skips any run the node
+# marked idle via waveassist.mark_run_idle() — see metering.run_is_idle / handle_run_terminal.
+# Together:
+#   • an idle repo's every-2-min cycle charges nothing (post_comment ran but posted no review),
 #   • a run charges each action exactly once (see the per-action idempotency in metering.py),
 #   • credits track real output (a posted PR comment, a sent digest, a raised alert).
 # Exact node_key match (not substring) so unrelated nodes can never collide. These are the

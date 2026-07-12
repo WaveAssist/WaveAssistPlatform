@@ -10,6 +10,7 @@ from io import StringIO as StringIO
 from .Utils.constants import *
 import WaveAssistApiApp.Utils.utils as utils
 import WaveAssistApiApp.Utils.validator as validator
+from .Utils import metering
 from WaveAssistApi.celery import app
 from celery import chain, group
 from kombu.serialization import dumps
@@ -84,6 +85,16 @@ def deploy_project(request):  ##TCW
     account_object = utils.fetch_account_object_for_user(user_object)
     if not account_object:
         return ResponseParser.getParsedErrorMessage("Account not found for the user.")
+
+    # A spent GitZoid trial can't run: every scheduled tick would be gated and auto-stopped, so a
+    # redeploy just re-spins a dead schedule. Block it here with the same upgrade prompt the run-time
+    # gate uses. trial_blocks_run is False for WaveAssist (pay-as-you-go, never blocked on credits),
+    # for GitZoid Pro, and for a trial with budget left — so only a spent trial is stopped.
+    if metering.trial_blocks_run(account_object):
+        return ResponseParser.getParsedErrorMessage(
+            "Trial exhausted. Upgrade to GitZoid Pro to continue."
+        )
+
     queue_name = account_object.celery_queue
 
     # Check if there are any starting nodes

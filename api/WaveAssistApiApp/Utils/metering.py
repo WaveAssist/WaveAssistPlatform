@@ -14,6 +14,7 @@ from ..models import Account, AccessProvided, UsageLedger, Deployments
 from .constants import (
     TRIAL_ACTION_COSTS,
     GITZOID_METER_NODES,
+    IO_DATA_KEY,
 )
 from . import utils
 
@@ -156,16 +157,71 @@ def resume_account_deployments(account):
             logger.warning("Resume: resume_deployment failed: %s", e)
 
 
-def handle_run_terminal(project, node, data_run, *, run_id="", did_succeed=True):
+_mongo_client = None
+
+
+def _mongo():
+    """Lazily-created MongoClient for reading a run's run-scoped flags from the per-user store.
+    Lazy on purpose: importing this module — and the pure unit tests that pass ``is_idle``
+    explicitly — must never require pymongo or open a Mongo connection."""
+    global _mongo_client
+    if _mongo_client is None:
+        from pymongo import MongoClient
+        from WaveAssistApi.settings import MONGO_CONNECTION_STRING
+        _mongo_client = MongoClient(MONGO_CONNECTION_STRING)
+    return _mongo_client
+
+
+def run_is_idle(account, data_run, run_id):
+    """True if this run recorded a ``run_idle`` flag → it executed but delivered no billable work,
+    so it must NOT be metered.
+
+    A deliverable node "succeeds" (did_succeed=True means the code didn't raise) on EVERY scheduled
+    tick, including idle ones where it shipped nothing — no new PR to review, a silent security
+    scan, an off-week digest — and signalled that by calling ``waveassist.mark_run_idle()``. That
+    writes ``run_idle_<run_id>`` into the per-user store (``wa_<uid>[<data_run_key>]``) BEFORE the
+    node's TASK_COMPLETED event fires, so the flag is already visible when metering runs. Mirrors
+    the batched read in ``run_views._idle_run_ids`` but for a single run.
+
+    Fails OPEN toward not charging: any error, or a run we can't resolve, returns True. A metering
+    read that cannot positively confirm real delivery must never over-charge a trial — a skipped
+    charge only makes the trial last slightly longer, whereas a spurious charge is the exact bug
+    this guards against. (This is the opposite default from ``_idle_run_ids``, which for DISPLAY
+    errs toward showing a run; for BILLING the safe direction is to skip the charge.)
+    """
+    try:
+        owner = getattr(account, "created_by_user", None)
+        data_run_key = getattr(data_run, "data_run_key", "") or ""
+        if owner is None or not data_run_key or not run_id:
+            return True
+        db_name = utils.get_database_name(owner)
+        if not db_name:
+            return True
+        coll = _mongo()[db_name][data_run_key]
+        doc = coll.find_one({IO_DATA_KEY: f"run_idle_{run_id}"}, {IO_DATA_KEY: 1})
+        return doc is not None
+    except Exception as e:
+        logger.warning(
+            "Trial metering: run_idle read failed for run %s; skipping charge: %s", run_id, e
+        )
+        return True
+
+
+def handle_run_terminal(project, node, data_run, *, run_id="", did_succeed=True, is_idle=None):
     """Single entry point for the run-completion hook, scoped to GitZoid.
 
     WaveAssist deployments are completely unaffected: we resolve the account once and bail
     unless it's a GitZoid account, so no metering runs. For a trialling GitZoid account, a
-    successful deliverable node meters the trial. There is deliberately no failure handling:
-    a crashing agent is left to retry (no auto-pause) — the only automatic stop is trial
+    deliverable node that actually shipped work meters the trial. There is deliberately no failure
+    handling: a crashing agent is left to retry (no auto-pause) — the only automatic stop is trial
     exhaustion, which is handled at the credit-check gate via stop_trial_deployments.
-    (``data_run`` is unused now, kept for call-site compatibility.) Best-effort; the caller
-    also wraps in try/except.
+
+    A deliverable node reports did_succeed=True on every tick, so success alone does not mean work
+    was delivered. An IDLE run (nothing to review/alert/digest, which the node marks via
+    ``mark_run_idle()``) must not be charged. ``is_idle`` may be supplied by a caller that already
+    knows (and by the unit tests); when left as None we read the run's ``run_idle`` flag from the
+    per-user store via ``run_is_idle`` — only for a real metered candidate, so the lookup runs on a
+    tiny subset of events. Best-effort; the caller also wraps in try/except.
     """
     if project is None:
         return
@@ -173,15 +229,21 @@ def handle_run_terminal(project, node, data_run, *, run_id="", did_succeed=True)
     if account is None or account.product != "gitzoid":
         return
 
-    if did_succeed and node is not None and account_is_on_trial(account):
-        action_type = map_node_to_action_type(
-            getattr(node, "node_key", None), getattr(node, "chain_label", None)
-        )
-        if action_type:
-            meter_trial_success(
-                account,
-                action_type,
-                project_key=getattr(project, "project_key", "") or "",
-                run_id=run_id or "",
-                node_key=getattr(node, "node_key", "") or "",
-            )
+    if not (did_succeed and node is not None and account_is_on_trial(account)):
+        return
+    action_type = map_node_to_action_type(
+        getattr(node, "node_key", None), getattr(node, "chain_label", None)
+    )
+    if not action_type:
+        return
+    if is_idle is None:
+        is_idle = run_is_idle(account, data_run, run_id)
+    if is_idle:
+        return
+    meter_trial_success(
+        account,
+        action_type,
+        project_key=getattr(project, "project_key", "") or "",
+        run_id=run_id or "",
+        node_key=getattr(node, "node_key", "") or "",
+    )

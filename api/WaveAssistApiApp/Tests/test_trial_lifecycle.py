@@ -125,17 +125,75 @@ class TrialLifecycleTestCase(TestCase):
     def test_deliverable_node_meters_trial_idempotently(self):
         account = self._account(used=0, limit=30)
         deliverable = Nodes.objects.create(node_key="post_comment", project_object=self.project)
+        # is_idle=False = a run that actually shipped a review (production reads this from the
+        # absence of the run's run_idle flag).
         metering.handle_run_terminal(
-            self.project, deliverable, self.data_run, run_id="deliver-1", did_succeed=True
+            self.project, deliverable, self.data_run,
+            run_id="deliver-1", did_succeed=True, is_idle=False,
         )
         account.refresh_from_db()
         self.assertEqual(account.trial_credits_used, 1, "post_comment should charge 1 (pr_review)")
         # Same run replayed → no double charge.
         metering.handle_run_terminal(
-            self.project, deliverable, self.data_run, run_id="deliver-1", did_succeed=True
+            self.project, deliverable, self.data_run,
+            run_id="deliver-1", did_succeed=True, is_idle=False,
         )
         account.refresh_from_db()
         self.assertEqual(account.trial_credits_used, 1, "re-delivery must be idempotent")
+
+    def test_idle_deliverable_node_does_not_meter(self):
+        """A deliverable node that RAN but delivered nothing (idle) must not charge — even though
+        the run 'succeeded' (did_succeed=True means the code didn't raise, NOT that work shipped).
+        This is the every-2-min idle-repo case: post_comment runs, finds no PR to post, calls
+        waveassist.mark_run_idle(), and returns normally. Idle is passed explicitly here; in
+        production handle_run_terminal reads it from the run's run_idle flag."""
+        account = self._account(used=0, limit=30)
+        deliverable = Nodes.objects.create(node_key="post_comment", project_object=self.project)
+        metering.handle_run_terminal(
+            self.project, deliverable, self.data_run,
+            run_id="idle-1", did_succeed=True, is_idle=True,
+        )
+        account.refresh_from_db()
+        self.assertEqual(account.trial_credits_used, 0,
+                         "an idle deliverable run must not charge the trial")
+
+    def test_idle_flag_is_read_from_store_when_not_passed(self):
+        """Production path: with is_idle left unset, handle_run_terminal reads the run's run_idle
+        flag from the per-user store. Present flag (idle) → no charge; absent (delivered) → charge.
+        _mongo is faked (like tests/unit/test_skip_flag_parsing.py) so no real Mongo is needed."""
+
+        class _FakeStore:
+            """db[name] and coll[name] both return self; find_one reports whether the flag exists."""
+            def __init__(self, has_flag):
+                self._has = has_flag
+
+            def __getitem__(self, name):
+                return self
+
+            def find_one(self, *a, **k):
+                return {"IODataKey": "x"} if self._has else None
+
+        account = self._account(used=0, limit=30)
+        deliverable = Nodes.objects.create(node_key="post_comment", project_object=self.project)
+        orig_mongo = metering._mongo
+        try:
+            # run_idle flag present → treated as idle → not charged.
+            metering._mongo = lambda: _FakeStore(True)
+            metering.handle_run_terminal(
+                self.project, deliverable, self.data_run, run_id="store-idle", did_succeed=True
+            )
+            account.refresh_from_db()
+            self.assertEqual(account.trial_credits_used, 0, "flag present → idle → no charge")
+
+            # run_idle flag absent → real delivery → charged.
+            metering._mongo = lambda: _FakeStore(False)
+            metering.handle_run_terminal(
+                self.project, deliverable, self.data_run, run_id="store-live", did_succeed=True
+            )
+            account.refresh_from_db()
+            self.assertEqual(account.trial_credits_used, 1, "flag absent → delivered → charge")
+        finally:
+            metering._mongo = orig_mongo
 
     def test_gate_node_does_not_meter(self):
         account = self._account(used=0, limit=30)
