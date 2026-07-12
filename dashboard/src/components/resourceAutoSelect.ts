@@ -19,10 +19,14 @@ export const AUTO_SELECT_THRESHOLD = 15;
  *  - no resources -> select nothing.
  *  - <= AUTO_SELECT_THRESHOLD -> select all.
  *  - > AUTO_SELECT_THRESHOLD -> the first N non-archived (resources arrive most-recent-first).
+ *  - limit (optional) -> hard cap on how many are auto-selected, applied AFTER the above.
+ *    Used for GitZoid's per-plan repo cap (trial = 5, Pro = 50) so first-connect can't
+ *    auto-select past the cap and trigger a save error. Omit / <=0 means no cap (WaveAssist).
  */
 export function computeAutoSelection<T extends AutoSelectResource>(
 	resources: T[],
-	hasSavedSelection: boolean
+	hasSavedSelection: boolean,
+	limit?: number
 ): { ids: string[]; notice: string } {
 	if (hasSavedSelection) {
 		return { ids: [], notice: "" };
@@ -30,16 +34,30 @@ export function computeAutoSelection<T extends AutoSelectResource>(
 	if (resources.length === 0) {
 		return { ids: [], notice: "" };
 	}
-	if (resources.length <= AUTO_SELECT_THRESHOLD) {
+
+	const total = resources.length;
+	// Base preselection: small sets take all; larger sets take the most-recent, non-archived
+	// (resources arrive most-recent-first from the API).
+	const base =
+		total <= AUTO_SELECT_THRESHOLD
+			? resources.slice()
+			: resources.filter((r) => !r.archived).slice(0, AUTO_SELECT_THRESHOLD);
+
+	// Cap to the account's connect limit when one applies. Auto-selecting the first `limit`
+	// keeps the connect-and-done UX while staying under the cap; the user can swap which ones.
+	if (typeof limit === "number" && limit > 0 && base.length > limit) {
+		const capped = base.slice(0, limit);
 		return {
-			ids: resources.map((r) => r.id),
-			notice: `Selected all ${resources.length} repos — add or remove anytime.`,
+			ids: capped.map((r) => r.id),
+			notice: `Selected ${capped.length} of ${total} repos — your plan covers ${limit}. Swap any before saving.`,
 		};
 	}
-	// resources already arrive sorted most-recent-first from the API; exclude archived.
-	const top = resources.filter((r) => !r.archived).slice(0, AUTO_SELECT_THRESHOLD);
+
 	return {
-		ids: top.map((r) => r.id),
-		notice: `Selected your ${top.length} most active repos — add more anytime.`,
+		ids: base.map((r) => r.id),
+		notice:
+			total <= AUTO_SELECT_THRESHOLD
+				? `Selected all ${total} repos — add or remove anytime.`
+				: `Selected your ${base.length} most active repos — add more anytime.`,
 	};
 }

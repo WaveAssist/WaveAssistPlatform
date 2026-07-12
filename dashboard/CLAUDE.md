@@ -72,3 +72,31 @@ Two sites, same repo/branch. Each sets its own `VITE_BRAND` + `VITE_FIREBASE_*` 
 `Account.product` drives brand/billing on the backend. WaveAssist = credits (OpenRouter). GitZoid =
 free trial → `gitzoid_pro`. All backend behavior is additive and gated on `product == "gitzoid"`.
 The "paid" signal is `plan_name`, not `is_premium`.
+
+## `is_super_admin` vs `is_premium` — the node-editing gate
+
+**`is_super_admin` (on `User`) is the single functional gate for the node/DAG builder** — add,
+edit, delete, run a node, the Actions column, the deploy button. Frontend reads it via
+`hasSuperAdminAccess()` (`src/utils/plan.ts`); backend enforces it via `validate_super_admin`
+(`manage_views.py`). Non-admins (including all GitZoid end-users) get a **read-only** DAG.
+
+**`is_premium` is NOT an edit gate and NOT a billing signal** — it is a vestigial legacy
+"premium-project" lock (`isProjectPremium && !isUserPremium`). New projects default
+`is_premium=false`, billing is `plan_name`, and it gates nothing that `is_super_admin` doesn't
+already cover. Don't reintroduce `is_premium` as a capability gate, and don't "consolidate" it
+away casually — the leftover lock still touches shared **WaveAssist** paths, so any removal is a
+deliberate, separately-tested change, not a drive-by cleanup.
+
+## Deployment lifecycle policy (GitZoid trial)
+
+- **No failure circuit breaker.** A crashing/erroring agent is left to retry every tick — there is
+  intentionally no auto-pause on consecutive failures (the `consecutive_failures` column is unused).
+- **GitZoid trial exhausted → auto-stop.** When a trial hits 0 credits, the credit-check gate
+  (`sdk_views.check_account_credits`) calls `metering.stop_trial_deployments()` to disable the
+  celery-beat schedule and free the worker. This is the ONLY automatic deployment stop.
+- **Upgrade → auto-resume.** The DoDo webhook (`payment_views`) calls
+  `metering.resume_account_deployments()` for a `product == "gitzoid"` account once it's on a paid
+  plan (mirror `utils.resume_deployment` / `stop_deployment`).
+- **WaveAssist never auto-stops on empty credits** — it's pay-as-you-go: an out-of-credit run just
+  can't afford the LLM call and resumes seamlessly on top-up, with no deployment stop. Don't add a
+  credit-exhaustion stop to the WaveAssist path.

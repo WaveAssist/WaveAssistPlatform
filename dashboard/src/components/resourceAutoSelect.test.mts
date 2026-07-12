@@ -63,3 +63,37 @@ test("> threshold where fewer than threshold are non-archived -> selects all act
 	const { ids } = computeAutoSelection(repos, false);
 	assert.equal(ids.length, 12);
 });
+
+// ── GitZoid per-plan cap (limit argument) ─────────────────────────────────────
+test("limit caps auto-selection below the base set (trial = 5)", () => {
+	// 8 repos would normally all be selected (<= threshold); the trial cap of 5 trims it.
+	const repos = makeRepos(8);
+	const { ids, notice } = computeAutoSelection(repos, false, 5);
+	assert.equal(ids.length, 5);
+	assert.deepEqual(ids, repos.slice(0, 5).map((r) => r.id));
+	assert.equal(notice, "Selected 5 of 8 repos — your plan covers 5. Swap any before saving.");
+});
+
+test("limit caps the top-N branch too (> threshold, trial = 5)", () => {
+	const { ids } = computeAutoSelection(makeRepos(40), false, 5);
+	assert.equal(ids.length, 5);
+});
+
+test("limit >= base set is a no-op (Pro = 50 with few repos)", () => {
+	const repos = makeRepos(8);
+	const { ids, notice } = computeAutoSelection(repos, false, 50);
+	assert.equal(ids.length, 8);
+	assert.equal(notice, "Selected all 8 repos — add or remove anytime.");
+});
+
+test("no limit (WaveAssist) -> unchanged behavior", () => {
+	const repos = makeRepos(8);
+	const { ids } = computeAutoSelection(repos, false);
+	assert.equal(ids.length, 8);
+});
+
+test("limit is ignored when a saved selection exists", () => {
+	const { ids, notice } = computeAutoSelection(makeRepos(40), true, 5);
+	assert.equal(ids.length, 0);
+	assert.equal(notice, "");
+});

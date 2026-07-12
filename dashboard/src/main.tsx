@@ -6,7 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
 
 import { ToastProvider } from "./utils/toast_context.tsx";
 import { PostHogProvider } from "posthog-js/react";
-import { captureBrandParam, applyBrandToDocument } from "./config/branding.tsx";
+import { captureBrandParam, applyBrandToDocument, getBrand } from "./config/branding.tsx";
 
 // Resolve the brand and stamp <html data-brand> + tab title before React mounts.
 // (captureBrandParam is a no-op in production; VITE_BRAND is authoritative there.)
@@ -20,6 +20,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 			options={{
 				api_host: "https://us.i.posthog.com",
 				debug: import.meta.env.MODE === "development",
+				// Stamp `brand` on every event + pageview so one shared PostHog project can be
+				// segmented by brand (no per-call brand hacks needed).
+				loaded: (ph) => ph.register({ brand: getBrand().id }),
 			}}>
 			<ToastProvider>
 				<App />

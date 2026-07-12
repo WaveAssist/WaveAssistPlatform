@@ -195,7 +195,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName,
 					</li>
 				)}
 
-				{/* Nodes - Visible and unlocked for all plans */}
+				{/* Nodes — the DAG view. All brands see it; editing (add/edit/delete/run) is gated
+				    by is_super_admin (hasSuperAdminAccess), so non-admin users — including GitZoid
+				    end-users — get a read-only DAG for reference. */}
 				<li className="nav-item">
 					<Link
 						to="/manage/nodes"

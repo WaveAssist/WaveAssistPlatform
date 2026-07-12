@@ -274,7 +274,7 @@ const RunsComponent: React.FC = () => {
 			// Configure PDF options
 			const options = {
 				margin: 10,
-				filename: `waveassist_run_output_${Date.now()}.pdf`,
+				filename: `${getBrand().id}_run_output_${Date.now()}.pdf`,
 				image: { type: "jpeg", quality: 0.98 },
 				html2canvas: {
 					scale: 2,

@@ -38,6 +38,7 @@ interface ResourceSelectionPopupProps {
 	isDismissable?: boolean;
 	initiallySelectedResources?: Resource[];
 	resourceProperties?: ResourcePropertyConfig[];
+	autoSelectLimit?: number; // hard cap on first-connect auto-selection (GitZoid per-plan repo cap)
 }
 
 const PAGE_SIZE_OPTIONS = [10, 15, 25, 50];
@@ -52,6 +53,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 	isDismissable = true,
 	initiallySelectedResources = [],
 	resourceProperties = [],
+	autoSelectLimit,
 }) => {
 	const { showToast } = useToast();
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -93,7 +95,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 			ids = new Set(initiallySelectedResources.map((r) => r.id));
 			setAutoSelectNotice("");
 		} else {
-			const auto = computeAutoSelection(resources, hasSavedSelection);
+			const auto = computeAutoSelection(resources, hasSavedSelection, autoSelectLimit);
 			ids = new Set(auto.ids);
 			setAutoSelectNotice(auto.notice);
 		}

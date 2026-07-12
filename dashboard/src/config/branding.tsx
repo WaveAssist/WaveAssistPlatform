@@ -38,6 +38,8 @@ export interface Brand {
 	templateKey: string | null; // the template the "Add" button deploys
 	catalogUrl: string | null; // assistant catalog (null when scoped)
 	signup: string; // login sub-headline (tagline)
+	gaMeasurementId: string; // per-brand GA4 property, so each brand's analytics stay separate
+	pricingUrl: string; // marketing pricing page for this brand
 }
 
 export const BRANDS: Record<BrandId, Brand> = {
@@ -54,6 +56,8 @@ export const BRANDS: Record<BrandId, Brand> = {
 		templateKey: null,
 		catalogUrl: "https://waveassist.ai/assistants",
 		signup: "Run deterministic AI agents in the cloud.",
+		gaMeasurementId: "G-RHQ9VZRVXH",
+		pricingUrl: "https://waveassist.ai/pricing",
 	},
 	gitzoid: {
 		id: "gitzoid",
@@ -68,6 +72,10 @@ export const BRANDS: Record<BrandId, Brand> = {
 		templateKey: "gitzoid",
 		catalogUrl: null,
 		signup: "The product manager for your coding agents.",
+		// GitZoidWebsite GA4 property (483777017) — same ID as the GitZoid marketing site,
+		// so site + dashboard land in one property. NOT the Firebase auto-stream (G-9BBL3KD4DV).
+		gaMeasurementId: "G-PX7J3JNWKP",
+		pricingUrl: "https://gitzoid.com/pricing",
 	},
 };
 

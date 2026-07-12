@@ -8,7 +8,7 @@ import { refreshUserProfile } from "../services/login_services";
 import { useToast } from "../utils/toast_context";
 import { useDodoCheckout } from "../hooks/useDodoCheckout";
 import { PLANS, PlanOption } from "../utils/plans";
-import { BrandLogo } from "../config/branding";
+import { BrandLogo, getBrand } from "../config/branding";
 import "./upgrade_component.css";
 
 const UpgradeComponent: React.FC = () => {
@@ -219,7 +219,7 @@ const UpgradeComponent: React.FC = () => {
 
 				<div className="upgrade-page-footer">
 					<a
-						href="https://waveassist.ai/pricing"
+						href={getBrand().pricingUrl}
 						target="_blank"
 						rel="noopener noreferrer"
 						className="upgrade-pricing-link">

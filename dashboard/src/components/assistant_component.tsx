@@ -9,6 +9,7 @@ import { fetchRunningDeploymentApi, stopDeploymentApi, checkAssistantUpdateApi, 
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchAllProjectsAPI } from "../services/all_projects_services";
 import { fetchResourcesApi } from "../services/assistant_services";
+import { getBrand } from "../config/branding";
 import { BASE_URL } from "../services/base_service";
 import { convertToString, determineDataType } from "../utils/shared_functions";
 import InputFactory from "./configuration/InputFactory";
@@ -17,6 +18,21 @@ import { PROVIDER_CONFIGS } from "./configuration/providerConfigs";
 import "./assistant_component.css";
 
 const OAUTH_INPUTS = ["github", "hubspot", "slack", "linear"];
+
+// GitZoid caps connected repos per plan (backend TRIAL_MAX_REPOS=5 / PRO_MAX_REPOS=50). Cap the
+// first-connect auto-selection to that limit so it can't exceed the cap and fail the save. Reads
+// the raw plan_name (normalizeAccessPlan doesn't recognise "gitzoid_pro"), defaulting to the trial
+// cap. Returns undefined for WaveAssist / non-github providers — no cap, behavior unchanged.
+function githubAutoSelectLimit(providerName: string): number | undefined {
+	if (getBrand().id !== "gitzoid" || providerName !== "github") return undefined;
+	let plan = "";
+	try {
+		plan = String(JSON.parse(localStorage.getItem("user_data") || "{}").plan_name || "").toLowerCase();
+	} catch {
+		plan = "";
+	}
+	return plan === "gitzoid_pro" ? 50 : 5;
+}
 
 const AssistantComponent: React.FC = () => {
 	const { showToast } = useToast();
@@ -626,6 +642,7 @@ const AssistantComponent: React.FC = () => {
 				if (window?.dataLayer) {
 					window.dataLayer.push({
 						event: "assistant_deployed",
+						brand: getBrand().id,
 						user_id: uid,
 						project_id: projectKey,
 						assistant_key: assistantKey,
@@ -1115,6 +1132,7 @@ const AssistantComponent: React.FC = () => {
 					providerName={currentProviderName}
 					initiallySelectedResources={wizardSelectedResources[currentInputKey] || []}
 					resourceProperties={currentResourceProperties}
+					autoSelectLimit={githubAutoSelectLimit(currentProviderName)}
 				/>
 
 				{/* Webhook Modal */}

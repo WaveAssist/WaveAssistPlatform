@@ -154,7 +154,7 @@ const EnvironmentsComponent: React.FC = () => {
 
 	return (
 		<div className="main-container">
-			<PaywallBlock show={shouldBlockEnvironments} showUpgradeButton={!isSuperAdmin} />
+			<PaywallBlock show={shouldBlockEnvironments} showUpgradeButton={false} />
 			<div className="mt-3 d-flex flex-column" style={{ height: "100%" }}>
 				<div style={{ flex: "0 0 100%", display: "flex", flexDirection: "column" }}>
 					<div className="d-flex justify-content-between align-items-center mb-3">
