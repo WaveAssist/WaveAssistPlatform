@@ -61,6 +61,20 @@
 	font-size: 0.85rem;
 }
 
+/* Live plan-cap indicator (e.g. "3 of 5 selected — add up to 2 more"). */
+.resource-cap-hint {
+	flex-shrink: 0;
+	padding: 0 16px;
+	margin-bottom: 0.5rem;
+	color: var(--color-text-secondary);
+	font-size: 0.85rem;
+}
+
+/* When the cap is full, draw attention with the brand accent. */
+.resource-cap-hint-reached {
+	color: var(--color-primary);
+}
+
 /* Bulk action controls (Select all / Clear all) */
 .resource-bulk-actions {
 	display: flex;
@@ -153,6 +167,16 @@
 
 .resource-table-row-selected.resource-table-row-expanded {
 	background-color: var(--color-bg-section);
+}
+
+/* Locked = unselected row while the plan cap is full: dim it and drop the clickable affordance. */
+.resource-table-row-locked {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.resource-table-row-locked:hover:not(.resource-table-detail-row) {
+	background-color: transparent;
 }
 
 .resource-table-cell-id {

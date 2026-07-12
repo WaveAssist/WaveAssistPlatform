@@ -88,7 +88,7 @@ const ConnectMcpPanel: React.FC<Props> = ({ show, onHide }) => {
 			</Modal.Header>
 			<Modal.Body>
 				<p style={{ color: "var(--color-text-secondary)", marginTop: 0 }}>
-					Build &amp; deploy assistants from your editor. Add WaveAssist as an MCP server, then describe what you want — it appears here once deployed.
+					Build &amp; deploy assistants from your editor. Add WaveAssist as an MCP server, then describe what you want. It appears here once deployed.
 				</p>
 
 				{/* Identity */}
@@ -114,9 +114,9 @@ const ConnectMcpPanel: React.FC<Props> = ({ show, onHide }) => {
 					</div>
 				</div>
 
-				<CodeBlock label="Claude Code — CLI one-liner" code={cliSnippet} onCopy={copy} />
-				<CodeBlock label="Claude Code — plugin" code={pluginSnippet} onCopy={copy} />
-				<CodeBlock label="Cursor / any MCP host — ~/.cursor/mcp.json" code={cursorSnippet} onCopy={copy} />
+				<CodeBlock label="Claude Code: CLI one-liner" code={cliSnippet} onCopy={copy} />
+				<CodeBlock label="Claude Code: plugin" code={pluginSnippet} onCopy={copy} />
+				<CodeBlock label="Cursor / any MCP host: ~/.cursor/mcp.json" code={cursorSnippet} onCopy={copy} />
 			</Modal.Body>
 		</Modal>
 	);

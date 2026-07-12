@@ -16,7 +16,7 @@ const FIREBASE_CONFIGS = {
 	},
 	gitzoid: {
 		apiKey: "REMOVED_CREDENTIAL",
-		authDomain: "gitzoid-dashboard.firebaseapp.com",
+		authDomain: "app.gitzoid.com",
 		projectId: "gitzoid-dashboard",
 		storageBucket: "gitzoid-dashboard.firebasestorage.app",
 		messagingSenderId: "785810865022",

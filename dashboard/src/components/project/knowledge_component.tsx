@@ -159,7 +159,7 @@ const RepoCard: React.FC<{ entry: RepoEntry; open: boolean; onToggle: () => void
 							<ul style={listStyle}>
 								{p.keyFiles.slice(0, 10).map((k: any, i: number) => (
 									<li key={i} style={{ margin: "6px 0" }}>
-										<Code>{k.path}</Code> — {k.role}
+										<Code>{k.path}</Code>: {k.role}
 									</li>
 								))}
 							</ul>
@@ -171,7 +171,7 @@ const RepoCard: React.FC<{ entry: RepoEntry; open: boolean; onToggle: () => void
 							<ul style={listStyle}>
 								{p.components.slice(0, 8).map((c: any, i: number) => (
 									<li key={i} style={{ margin: "6px 0" }}>
-										<b style={{ color: TEXT, fontWeight: 600 }}>{c.name}</b> — {c.responsibility}
+										<b style={{ color: TEXT, fontWeight: 600 }}>{c.name}</b>: {c.responsibility}
 									</li>
 								))}
 							</ul>

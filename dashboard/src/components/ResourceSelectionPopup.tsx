@@ -3,6 +3,7 @@ import Modal from "react-bootstrap/Modal";
 import { Button, Form } from "react-bootstrap";
 import { useToast } from "../utils/toast_context";
 import { computeAutoSelection } from "./resourceAutoSelect";
+import { capHint, fitUnderCap, isCapReached, isSelectionLocked } from "./resourceSelectionCap";
 import "./ResourceSelectionPopup.css";
 
 interface Resource {
@@ -38,7 +39,9 @@ interface ResourceSelectionPopupProps {
 	isDismissable?: boolean;
 	initiallySelectedResources?: Resource[];
 	resourceProperties?: ResourcePropertyConfig[];
-	autoSelectLimit?: number; // hard cap on first-connect auto-selection (GitZoid per-plan repo cap)
+	autoSelectLimit?: number; // how many to auto-select on first connect (GitZoid: 3 trial / 50 Pro)
+	selectionCap?: number; // the plan's hard cap on how many can be selected + saved; drives both the
+	// first-connect notice and live enforcement (GitZoid: 5 trial / 50 Pro). Undefined = unlimited.
 }
 
 const PAGE_SIZE_OPTIONS = [10, 15, 25, 50];
@@ -54,6 +57,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 	initiallySelectedResources = [],
 	resourceProperties = [],
 	autoSelectLimit,
+	selectionCap,
 }) => {
 	const { showToast } = useToast();
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -95,7 +99,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 			ids = new Set(initiallySelectedResources.map((r) => r.id));
 			setAutoSelectNotice("");
 		} else {
-			const auto = computeAutoSelection(resources, hasSavedSelection, autoSelectLimit);
+			const auto = computeAutoSelection(resources, hasSavedSelection, autoSelectLimit, selectionCap);
 			ids = new Set(auto.ids);
 			setAutoSelectNotice(auto.notice);
 		}
@@ -129,6 +133,14 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 
 	const toggleSelect = useCallback(
 		(resourceId: string) => {
+			const isSelected = selectedIds.has(resourceId);
+			// Enforce the plan's selection cap: adding past it is a silent no-op (the row is also visually
+			// locked and the live cap hint explains why). Removing is always allowed — it frees a slot.
+			if (isSelectionLocked(isSelected, selectedIds.size, selectionCap)) {
+				return;
+			}
+			// Any manual edit dismisses the one-time first-connect banner so the live cap hint can take over.
+			setAutoSelectNotice("");
 			setSelectedIds((prev) => {
 				const next = new Set(prev);
 				if (next.has(resourceId)) {
@@ -145,31 +157,34 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 				return next;
 			});
 		},
-		[buildDefaultProperties]
+		[buildDefaultProperties, selectedIds, selectionCap]
 	);
 
 	const toggleExpand = useCallback((resourceId: string) => {
 		setExpandedRowId((current) => (current === resourceId ? null : resourceId)); // open this one only, or close if already open
 	}, []);
 
-	// Bulk: add every currently-filtered resource to the selection (search-aware).
+	// Bulk: add the currently-filtered resources to the selection (search-aware), stopping at the
+	// plan's selection cap so it can't overshoot (uncapped adds them all, as before).
 	const selectAllFiltered = useCallback(() => {
+		const additions = fitUnderCap(selectedIds, filteredResources.map((r) => r.id), selectionCap);
+		if (additions.length === 0) return;
 		setSelectedIds((prev) => {
 			const next = new Set(prev);
-			for (const r of filteredResources) {
-				next.add(r.id);
+			for (const id of additions) {
+				next.add(id);
 			}
 			return next;
 		});
 		setResourcePropertiesState((prev) => {
 			const next = { ...prev };
-			for (const r of filteredResources) {
-				if (!next[r.id]) next[r.id] = buildDefaultProperties();
+			for (const id of additions) {
+				if (!next[id]) next[id] = buildDefaultProperties();
 			}
 			return next;
 		});
 		setAutoSelectNotice("");
-	}, [filteredResources, buildDefaultProperties]);
+	}, [selectedIds, filteredResources, buildDefaultProperties, selectionCap]);
 
 	// Bulk: clear the entire selection.
 	const clearAll = useCallback(() => {
@@ -221,6 +236,10 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 		onClose();
 	};
 
+	// Live cap indicator ("3 of 5 selected — add up to 2 more" / limit-reached). Empty when uncapped.
+	const capHintText = capHint(selectedIds.size, selectionCap);
+	const capReached = isCapReached(selectedIds.size, selectionCap);
+
 	return (
 		<Modal show={isOpen} onHide={handleClose} size="xl" centered backdrop="static" className="resource-selection-popup">
 			<Modal.Header closeButton={isDismissable}>
@@ -242,14 +261,18 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 					/>
 				</div>
 
-				{autoSelectNotice && <div className="resource-autoselect-notice">{autoSelectNotice}</div>}
+				{autoSelectNotice ? (
+					<div className="resource-autoselect-notice">{autoSelectNotice}</div>
+				) : capHintText ? (
+					<div className={`resource-cap-hint${capReached ? " resource-cap-hint-reached" : ""}`}>{capHintText}</div>
+				) : null}
 
 				<div className="resource-bulk-actions">
 					<Button
 						variant="outline-secondary"
 						size="sm"
 						onClick={selectAllFiltered}
-						disabled={filteredResources.length === 0}
+						disabled={filteredResources.length === 0 || capReached}
 						aria-label="Select all filtered resources"
 						className="resource-bulk-btn">
 						Select all{filterText.trim() ? " (filtered)" : ""}
@@ -280,10 +303,13 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 							{paginatedResources.map((resource) => {
 								const isSelected = selectedIds.has(resource.id);
 								const isExpanded = expandedRowId === resource.id;
+								// Locked = an unselected row once the cap is full. Clicks/keys no-op via toggleSelect;
+								// the class + disabled button + aria-disabled make it clear it can't be added.
+								const locked = isSelectionLocked(isSelected, selectedIds.size, selectionCap);
 								return (
 									<React.Fragment key={resource.id}>
 										<tr
-											className={`resource-table-row ${isSelected ? "resource-table-row-selected" : ""} ${isExpanded ? "resource-table-row-expanded" : ""}`}
+											className={`resource-table-row ${isSelected ? "resource-table-row-selected" : ""} ${isExpanded ? "resource-table-row-expanded" : ""} ${locked ? "resource-table-row-locked" : ""}`}
 											onClick={() => toggleSelect(resource.id)}
 											role="button"
 											tabIndex={0}
@@ -293,6 +319,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 													toggleSelect(resource.id);
 												}
 											}}
+											aria-disabled={locked || undefined}
 											aria-expanded={isSelected ? isExpanded : undefined}>
 											{hasProperties && (
 												<td className="resource-table-col-chevron align-middle">
@@ -316,6 +343,7 @@ const ResourceSelectionPopup: React.FC<ResourceSelectionPopupProps> = ({
 												<Button
 													variant={isSelected ? "primary" : "outline-secondary"}
 													size="sm"
+													disabled={locked}
 													onClick={(e) => {
 														e.stopPropagation();
 														toggleSelect(resource.id);

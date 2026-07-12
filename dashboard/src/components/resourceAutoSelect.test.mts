@@ -17,7 +17,7 @@ test("<= threshold with no saved selection -> select all + 'all' banner", () => 
 	const { ids, notice } = computeAutoSelection(repos, false);
 	assert.equal(ids.length, 10);
 	assert.deepEqual(ids, repos.map((r) => r.id));
-	assert.equal(notice, "Selected all 10 repos — add or remove anytime.");
+	assert.equal(notice, "Selected all 10 repos. Add or remove anytime.");
 });
 
 test("exactly threshold -> still select all", () => {
@@ -34,7 +34,7 @@ test("> threshold -> preselect exactly threshold, excluding archived", () => {
 	for (const id of ids) {
 		assert.ok(!archived.has(id), `archived repo ${id} should not be selected`);
 	}
-	assert.equal(notice, "Selected your 15 most active repos — add more anytime.");
+	assert.equal(notice, "Selected your 15 most active repos. Add more anytime.");
 });
 
 test("> threshold preserves most-recent-first order (no archived)", () => {
@@ -64,26 +64,50 @@ test("> threshold where fewer than threshold are non-archived -> selects all act
 	assert.equal(ids.length, 12);
 });
 
-// ── GitZoid per-plan cap (limit argument) ─────────────────────────────────────
-test("limit caps auto-selection below the base set (trial = 5)", () => {
-	// 8 repos would normally all be selected (<= threshold); the trial cap of 5 trims it.
+// ── GitZoid per-plan cap (limit + planCap arguments) ──────────────────────────
+test("trial auto-selects 3 of a small set but the notice states the 5 cap", () => {
+	// 8 repos would normally all be selected (<= threshold); the trial auto-select of 3 trims it,
+	// and because the plan covers 5 the notice invites the user to add (not swap).
+	const repos = makeRepos(8);
+	const { ids, notice } = computeAutoSelection(repos, false, 3, 5);
+	assert.equal(ids.length, 3);
+	assert.deepEqual(ids, repos.slice(0, 3).map((r) => r.id));
+	assert.equal(notice, "Selected your 3 most active repos. Your plan covers 5, add more anytime.");
+});
+
+test("trial auto-select caps the top-N branch too (> threshold)", () => {
+	const { ids, notice } = computeAutoSelection(makeRepos(40), false, 3, 5);
+	assert.equal(ids.length, 3);
+	assert.equal(notice, "Selected your 3 most active repos. Your plan covers 5, add more anytime.");
+});
+
+test("trial with exactly 3 repos selects all (limit does not bite)", () => {
+	const repos = makeRepos(3);
+	const { ids, notice } = computeAutoSelection(repos, false, 3, 5);
+	assert.equal(ids.length, 3);
+	assert.equal(notice, "Selected all 3 repos. Add or remove anytime.");
+});
+
+test("limit == planCap fills the cap and tells the user to swap", () => {
+	// When auto-select fills the whole cap there is no headroom to add, so keep the swap wording.
+	const repos = makeRepos(8);
+	const { ids, notice } = computeAutoSelection(repos, false, 5, 5);
+	assert.equal(ids.length, 5);
+	assert.equal(notice, "Selected your 5 most active of 8 repos. You can include up to 5, swap any before saving.");
+});
+
+test("planCap omitted defaults to limit (fills the cap, swap wording)", () => {
 	const repos = makeRepos(8);
 	const { ids, notice } = computeAutoSelection(repos, false, 5);
 	assert.equal(ids.length, 5);
-	assert.deepEqual(ids, repos.slice(0, 5).map((r) => r.id));
-	assert.equal(notice, "Selected 5 of 8 repos — your plan covers 5. Swap any before saving.");
-});
-
-test("limit caps the top-N branch too (> threshold, trial = 5)", () => {
-	const { ids } = computeAutoSelection(makeRepos(40), false, 5);
-	assert.equal(ids.length, 5);
+	assert.equal(notice, "Selected your 5 most active of 8 repos. You can include up to 5, swap any before saving.");
 });
 
 test("limit >= base set is a no-op (Pro = 50 with few repos)", () => {
 	const repos = makeRepos(8);
-	const { ids, notice } = computeAutoSelection(repos, false, 50);
+	const { ids, notice } = computeAutoSelection(repos, false, 50, 50);
 	assert.equal(ids.length, 8);
-	assert.equal(notice, "Selected all 8 repos — add or remove anytime.");
+	assert.equal(notice, "Selected all 8 repos. Add or remove anytime.");
 });
 
 test("no limit (WaveAssist) -> unchanged behavior", () => {
@@ -93,7 +117,7 @@ test("no limit (WaveAssist) -> unchanged behavior", () => {
 });
 
 test("limit is ignored when a saved selection exists", () => {
-	const { ids, notice } = computeAutoSelection(makeRepos(40), true, 5);
+	const { ids, notice } = computeAutoSelection(makeRepos(40), true, 3, 5);
 	assert.equal(ids.length, 0);
 	assert.equal(notice, "");
 });

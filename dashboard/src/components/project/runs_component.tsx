@@ -5,6 +5,7 @@ import { fetchDagRunsApi } from "../../services/runs_services";
 import { fetchDataForKeyAPI, fetchTemplateApi } from "../../services/project_services";
 import { fetchRunUsage } from "../../services/account_services";
 import { getBrand } from "../../config/branding";
+import { isRunProcessing, shouldShowLiveProgress } from "./runProgress";
 import { useToast } from "../../utils/toast_context";
 import { useRefresh } from "../../utils/RefreshContext";
 import Modal from "react-bootstrap/Modal";
@@ -348,7 +349,7 @@ const RunsComponent: React.FC = () => {
 				const isFailed = status === "FAILED";
 				const canViewOutput = isSuccess || isFailed;
 				const isThisRunLoading = loadingOutputRunId === params.data.run_id;
-				const isProcessing = status === "STARTED" || status === "RUNNING";
+				const isProcessing = isRunProcessing(status);
 				const isDisabled = isProcessing || isThisRunLoading;
 				const runId = params.data.run_id;
 				const progressData = runProgress[runId];
@@ -604,7 +605,7 @@ const RunsComponent: React.FC = () => {
 			const st = stateOf(displayRun);
 			return (
 				<div key={label} style={{ ...cardStyle, borderColor: selectedChain === label ? "var(--color-primary)" : "var(--color-border)" }} onClick={() => setSelectedChain(selectedChain === label ? null : label)} title="See this chain's runs">
-					<div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "12px 0 0 12px" }} />{displayRun && runProgress[displayRun.run_id] && (<div style={{ position: "absolute", right: 12, top: 12, width: 34, height: 34 }}><svg width="34" height="34" style={{ transform: "rotate(-90deg)" }}><circle cx="17" cy="17" r="14" fill="none" style={{ stroke: "var(--color-border)" }} strokeWidth="3" /><circle cx="17" cy="17" r="14" fill="none" style={{ stroke: "var(--color-primary)" }} strokeWidth="3" strokeDasharray={`${(runProgress[displayRun.run_id].progress / 100) * 87.96} 87.96`} strokeLinecap="round" /></svg><div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: 9, fontWeight: 700, color: "var(--color-primary)" }}>{runProgress[displayRun.run_id].progress.toFixed(0)}%</div></div>)}
+					<div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "12px 0 0 12px" }} />{displayRun && shouldShowLiveProgress(displayRun.status, !!runProgress[displayRun.run_id]) && (<div style={{ position: "absolute", right: 12, top: 12, width: 34, height: 34 }}><svg width="34" height="34" style={{ transform: "rotate(-90deg)" }}><circle cx="17" cy="17" r="14" fill="none" style={{ stroke: "var(--color-border)" }} strokeWidth="3" /><circle cx="17" cy="17" r="14" fill="none" style={{ stroke: "var(--color-primary)" }} strokeWidth="3" strokeDasharray={`${(runProgress[displayRun.run_id].progress / 100) * 87.96} 87.96`} strokeLinecap="round" /></svg><div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: 9, fontWeight: 700, color: "var(--color-primary)" }}>{runProgress[displayRun.run_id].progress.toFixed(0)}%</div></div>)}
 					<div style={{ fontWeight: 700, fontSize: 14, color: "#FFFFFF", letterSpacing: "-0.02em" }}>{label}</div>
 					<div style={{ color: st.color, fontSize: 12, fontWeight: 700, marginTop: 6 }}>● {st.txt}</div>
 					<div style={{ color: "#FFFFFF", fontSize: 12, marginTop: 8 }}>
@@ -627,7 +628,7 @@ const RunsComponent: React.FC = () => {
 		));
 		Object.keys(idleByChain).forEach((label) => feed.push(
 			<div key={`hb-${label}`} style={{ ...rowStyle, background: "#10151c", borderStyle: "dashed", color: "var(--color-text-secondary)" }}>
-				{multi && chip(label)}<div style={{ flex: 1, fontSize: 12.5 }}>{idleByChain[label]} idle check{idleByChain[label] === 1 ? "" : "s"} — nothing to do</div>
+				{multi && chip(label)}<div style={{ flex: 1, fontSize: 12.5 }}>{idleByChain[label]} idle check{idleByChain[label] === 1 ? "" : "s"}, nothing to do</div>
 			</div>
 		));
 		if (first && !firstAlreadyShown) feed.push(

@@ -19,19 +19,32 @@ import "./assistant_component.css";
 
 const OAUTH_INPUTS = ["github", "hubspot", "slack", "linear"];
 
-// GitZoid caps connected repos per plan (backend TRIAL_MAX_REPOS=5 / PRO_MAX_REPOS=50). Cap the
-// first-connect auto-selection to that limit so it can't exceed the cap and fail the save. Reads
-// the raw plan_name (normalizeAccessPlan doesn't recognise "gitzoid_pro"), defaulting to the trial
-// cap. Returns undefined for WaveAssist / non-github providers — no cap, behavior unchanged.
+// GitZoid caps connected repos per plan (backend TRIAL_MAX_REPOS=5 / PRO_MAX_REPOS=50). Reads the
+// raw plan_name (normalizeAccessPlan doesn't recognise "gitzoid_pro"), defaulting to trial.
+function githubPlanIsPro(): boolean {
+	try {
+		return (
+			String(JSON.parse(localStorage.getItem("user_data") || "{}").plan_name || "").toLowerCase() ===
+			"gitzoid_pro"
+		);
+	} catch {
+		return false;
+	}
+}
+
+// How many repos to AUTO-select on first GitHub connect. Deliberately BELOW the trial cap (3 of 5)
+// so trial credits stretch across more digest runs and the user adds their own key repos up to the
+// cap — a one-click add, not a swap. Undefined for WaveAssist / non-github (no auto-cap, unchanged).
 function githubAutoSelectLimit(providerName: string): number | undefined {
 	if (getBrand().id !== "gitzoid" || providerName !== "github") return undefined;
-	let plan = "";
-	try {
-		plan = String(JSON.parse(localStorage.getItem("user_data") || "{}").plan_name || "").toLowerCase();
-	} catch {
-		plan = "";
-	}
-	return plan === "gitzoid_pro" ? 50 : 5;
+	return githubPlanIsPro() ? 50 : 3;
+}
+
+// The plan's hard repo cap, shown in the picker notice so it reads "covers 5" even when we
+// auto-select fewer. Undefined for WaveAssist / non-github providers.
+function githubRepoCap(providerName: string): number | undefined {
+	if (getBrand().id !== "gitzoid" || providerName !== "github") return undefined;
+	return githubPlanIsPro() ? 50 : 5;
 }
 
 const AssistantComponent: React.FC = () => {
@@ -1133,6 +1146,7 @@ const AssistantComponent: React.FC = () => {
 					initiallySelectedResources={wizardSelectedResources[currentInputKey] || []}
 					resourceProperties={currentResourceProperties}
 					autoSelectLimit={githubAutoSelectLimit(currentProviderName)}
+					selectionCap={githubRepoCap(currentProviderName)}
 				/>
 
 				{/* Webhook Modal */}

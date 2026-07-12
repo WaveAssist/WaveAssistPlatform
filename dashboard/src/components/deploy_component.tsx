@@ -10,17 +10,26 @@ import { BASE_URL } from "../services/base_service";
 const DeployComponent: React.FC = () => {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
+	const brand = getBrand();
 	const [isDeploying, setIsDeploying] = useState(false);
 	const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
 	const [githubRepo, setGithubRepo] = useState<string>("");
+	// Existing projects for this template: null = not checked yet, [] = none. When one already
+	// exists we ask before creating another instead of auto-deploying, so a stray visit to /deploy
+	// (e.g. a returning user clicking a marketing link) can't silently spin up duplicate projects.
+	const [existingMatches, setExistingMatches] = useState<any[] | null>(null);
+	const [forceCreate, setForceCreate] = useState(false);
 
 	const deploymentMessages = [
-		"🚀 Initializing your AI assistant... ",
-		"📦 Installing dependencies to power your workflow...",
-		"🔧 Configuring settings for peak performance...",
-		"⚡ Activating your customized assistant...",
-		"✨ Almost ready! Polishing the final touches...",
+		"Setting things up...",
+		"Preparing your account...",
+		"Configuring your workspace...",
+		"Bringing everything online...",
+		"Almost ready...",
 	];
+
+	const hasExisting = existingMatches !== null && existingMatches.length > 0;
+	const showConfirm = hasExisting && !forceCreate && !isDeploying;
 
 	// Rotate messages every 2 seconds when deploying
 	useEffect(() => {
@@ -40,12 +49,15 @@ const DeployComponent: React.FC = () => {
 		};
 	}, [isDeploying]);
 
+	// Auto-deploy once the template repo is known AND we've resolved existing projects. If the user
+	// already has a project for this template we hold and show the confirm screen instead; deploying
+	// only proceeds for a first project or an explicit "Create another".
 	useEffect(() => {
-		// Always deploy when github repo is available
-		if (githubRepo && !isDeploying) {
-			handleDeploy();
-		}
-	}, [githubRepo, isDeploying]); // Depend on githubRepo to trigger after update
+		if (!githubRepo || isDeploying) return;
+		if (existingMatches === null) return; // still checking
+		if (existingMatches.length > 0 && !forceCreate) return; // waiting on the confirm screen
+		handleDeploy();
+	}, [githubRepo, isDeploying, existingMatches, forceCreate]);
 
 	const fetchTemplate = async (templateKey: string) => {
 		try {
@@ -62,13 +74,26 @@ const DeployComponent: React.FC = () => {
 		}
 	};
 
+	// Look up whether the user already has a project for this template, matched the same way the
+	// projects list does (exact template_key, or a project_key that contains it).
+	const checkExisting = async (templateKey: string) => {
+		try {
+			const projectData = await fetchAllProjectsAPI();
+			const matches = (projectData.project_array || []).filter(
+				(p: any) => p.template_key === templateKey || (p.project_key || "").toLowerCase().includes(templateKey)
+			);
+			setExistingMatches(matches);
+		} catch (err) {
+			// Fail open: if we can't read the list, don't block a genuine first deploy.
+			console.error("Failed to check existing projects:", err);
+			setExistingMatches([]);
+		}
+	};
+
 	useEffect(() => {
 		const uid = localStorage.getItem("uid");
 		// In a scoped brand (e.g. gitzoid), a bare /deploy defaults to that brand's template.
-		const brand = getBrand();
 		const templateKey = searchParams.get("template_key") || (brand.scoped ? brand.templateKey : null);
-
-		console.log("searchParams", searchParams);
 
 		if (!templateKey) {
 			alert("Missing template_key in URL.");
@@ -87,6 +112,7 @@ const DeployComponent: React.FC = () => {
 		}
 
 		fetchTemplate(templateKey);
+		checkExisting(templateKey);
 	}, [searchParams, navigate]);
 
 	const handleDeploy = async () => {
@@ -96,7 +122,6 @@ const DeployComponent: React.FC = () => {
 		try {
 			const formData = new FormData();
 			formData.append("repo_url", githubRepo);
-			const brand = getBrand();
 			formData.append("template_key", searchParams.get("template_key") || (brand.scoped ? brand.templateKey || "" : ""));
 			formData.append("uid", uid);
 			formData.append("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -130,15 +155,74 @@ const DeployComponent: React.FC = () => {
 					state: { openWizard: true, allowDismiss: false },
 				});
 			} else {
-				alert("❌ Failed to deploy project, please try again.");
+				alert("Failed to deploy project, please try again.");
 			}
 		} catch (error) {
 			console.error("Deploy failed:", error);
-			alert("❌ Something went wrong while deploying. Please try again.");
+			alert("Something went wrong while deploying. Please try again.");
 		} finally {
 			setIsDeploying(false);
 		}
 	};
+
+	const handleOpenExisting = () => {
+		const matches = existingMatches || [];
+		if (matches.length === 1) {
+			navigate(`/manage/assistant?project_key=${matches[0].project_key}`);
+		} else {
+			navigate(`/manage`);
+		}
+	};
+
+	// Already have a project for this template: confirm before creating another.
+	if (showConfirm) {
+		return (
+			<div className="deploy-loading-page">
+				<div className="deploy-loading-container">
+					<div className="text-center" style={{ maxWidth: 360, margin: "0 auto" }}>
+						<BrandLogo className="deploy-logo mb-4" size={34} />
+						<h5 style={{ color: "var(--color-text-primary)", fontWeight: 600, marginBottom: 10 }}>
+							Create another {brand.title} project?
+						</h5>
+						<p style={{ color: "var(--color-text-secondary)", fontSize: 13.5, lineHeight: 1.5, marginBottom: 24 }}>
+							You already have a {brand.title} project. Open the one you have, or spin up a new one.
+						</p>
+						<button
+							onClick={handleOpenExisting}
+							style={{
+								width: "100%",
+								padding: "10px 16px",
+								borderRadius: 8,
+								border: "none",
+								background: "var(--color-primary)",
+								color: "var(--color-text-button)",
+								fontWeight: 600,
+								fontSize: 14,
+								cursor: "pointer",
+								marginBottom: 10,
+							}}>
+							Open my {brand.title}
+						</button>
+						<button
+							onClick={() => setForceCreate(true)}
+							style={{
+								width: "100%",
+								padding: "10px 16px",
+								borderRadius: 8,
+								background: "transparent",
+								border: "1px solid var(--color-border)",
+								color: "var(--color-text-secondary)",
+								fontWeight: 500,
+								fontSize: 14,
+								cursor: "pointer",
+							}}>
+							Create another
+						</button>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="deploy-loading-page">
@@ -148,7 +232,7 @@ const DeployComponent: React.FC = () => {
 					<div className="deploy-loader">
 						<Spinner animation="border" role="status" variant="success" className="mb-3" />
 						{isDeploying && <p className="deploy-message">{deploymentMessages[currentMessageIndex]}</p>}
-						{!isDeploying && <p className="deploy-message">Preparing your assistant...</p>}
+						{!isDeploying && <p className="deploy-message">Getting things ready...</p>}
 					</div>
 				</div>
 			</div>

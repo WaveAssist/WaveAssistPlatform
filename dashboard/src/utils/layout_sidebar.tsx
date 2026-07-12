@@ -5,6 +5,7 @@ import NavbarComponent from "./navbar";
 import { Container } from "react-bootstrap";
 import RefreshContext from "./RefreshContext";
 import { refreshUserProfile } from "../services/login_services";
+import GlobalStatusBanner from "../components/global_status_banner";
 
 interface LayoutProps {
 	children: ReactNode;
@@ -55,6 +56,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 					<div className="navbar-container">
 						<NavbarComponent onToggleSidebar={() => setSidebarOpen((o) => !o)} />
 					</div>
+					<GlobalStatusBanner />
 					<Container fluid className="flex-grow-1 p-3 ">
 						{children}
 					</Container>

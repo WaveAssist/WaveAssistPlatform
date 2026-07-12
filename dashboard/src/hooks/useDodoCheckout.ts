@@ -15,7 +15,11 @@ type DodoSdk = {
 const DODO_CHECKOUT_SCRIPT =
 	import.meta.env.VITE_DODO_CHECKOUT_SCRIPT ||
 	"https://cdn.jsdelivr.net/npm/dodopayments-checkout@latest/dist/index.js";
-const DODO_MODE = (import.meta.env.VITE_DODO_MODE || "test") as "test" | "live";
+// Always live. The overlay SDK only processes postMessage events (including the
+// checkout.closed fired by the X button) whose origin matches the `mode` it was
+// initialized with — live => checkout.dodopayments.com, the host the backend's
+// live checkout sessions load from. Test mode is intentionally not used.
+const DODO_MODE = "live" as const;
 
 const loadDodoCheckoutScript = async (): Promise<void> => {
 	if ((window as any).DodoPayments || (window as any).DodoPaymentsCheckout?.DodoPayments) return;

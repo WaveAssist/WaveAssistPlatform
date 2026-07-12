@@ -3,6 +3,13 @@
 React 18 + Vite + Bootstrap dashboard. **One codebase, two branded builds** — WaveAssist and
 GitZoid — deployed to separate domains, sharing one backend (`api.waveassist.io`) and DB.
 
+## UI copy rules
+
+- **Never use an em dash (`—`) in user-facing text** (banners, buttons, labels, toasts, any
+  product copy). Use periods, commas, or parentheses instead.
+- **No internal/system jargon in user-facing copy.** Say what the user sees, not the plumbing:
+  e.g. "GitZoid is paused", not "deployments are paused"; "your assistants", not "runs/DAGs".
+
 ## Multi-brand architecture
 
 The brand is chosen at **build time** by the `VITE_BRAND` env var (`waveassist` | `gitzoid`),

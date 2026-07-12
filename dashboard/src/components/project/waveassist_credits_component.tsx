@@ -193,7 +193,7 @@ const WaveAssistCreditsComponent: React.FC = () => {
 				<div className="buy-credits-card mt-3 subscription-billing-row">
 					<div className="subscription-billing-left">
 						<h5 className="buy-credits-title subscription-billing-title">Connect over MCP</h5>
-						<span className="subscription-billing-status">Build assistants from your editor — Claude Code, Cursor, and more.</span>
+						<span className="subscription-billing-status">Build assistants from your editor: Claude Code, Cursor, and more.</span>
 					</div>
 					<div className="manage-billing-wrapper">
 						<button className="manage-billing-btn" onClick={() => setShowMcpPanel(true)}>Connect MCP</button>

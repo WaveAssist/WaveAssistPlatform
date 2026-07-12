@@ -18,7 +18,7 @@ const CAPABILITIES = [
 	{ label: "Weekly digest", note: "included · ~1" },
 	{ label: "Security scan", note: "included · ~1" },
 ];
-const PRO_FEATURES = ["Unlimited PR reviews, digests & scans", "Up to 50 repos", "No per-seat pricing, no credits, no overage", "Works inside GitHub — no new tool to learn"];
+const PRO_FEATURES = ["Unlimited PR reviews, digests & scans", "Up to 50 repos", "No per-seat pricing, no credits, no overage", "Works inside GitHub, no new tool to learn"];
 
 interface Trial { on_trial: boolean; used: number; limit: number; remaining: number; exhausted: boolean }
 interface Billing {
@@ -201,7 +201,7 @@ const GitZoidBillingComponent: React.FC = () => {
 									<div style={{ height: "100%", width: `${pct}%`, background: "var(--color-primary)", borderRadius: 100 }} />
 								</div>
 								<div style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>
-									{exhausted ? "Trial complete — runs are paused until you upgrade." : `Trial usage · ${pct}% used`}
+									{exhausted ? "Trial complete. Runs are paused until you upgrade." : `Trial usage · ${pct}% used`}
 								</div>
 								<div style={{ margin: "18px 0 0" }}>
 									{CAPABILITIES.map((c) => (
@@ -211,7 +211,7 @@ const GitZoidBillingComponent: React.FC = () => {
 										</div>
 									))}
 								</div>
-								<p style={{ color: "var(--color-text-secondary)", fontSize: 12.5, margin: "16px 0 0" }}>First 10 outputs free — no card required.</p>
+								<p style={{ color: "var(--color-text-secondary)", fontSize: 12.5, margin: "16px 0 0" }}>First 10 outputs free, no card required.</p>
 							</div>
 						</div>
 

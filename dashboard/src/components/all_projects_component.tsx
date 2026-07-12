@@ -257,7 +257,7 @@ const AllProjectsComponent: React.FC = () => {
 									<div className="card-body d-flex align-items-center justify-content-center">
 										<div className="text-center">
 											<i className="bi bi-plus-lg add-icon translucent_blue fs-3"></i>
-											<p className="add-text translucent_blue">{brand.scoped ? "Add GitZoid" : "Add Assistant"}</p>
+											<p className="add-text translucent_blue">{brand.scoped ? (visibleProjects.length > 0 ? "Add another project" : `Add ${brand.title}`) : "Add Assistant"}</p>
 										</div>
 									</div>
 								</div>

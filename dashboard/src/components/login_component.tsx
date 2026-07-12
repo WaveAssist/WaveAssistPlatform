@@ -380,7 +380,7 @@ const LoginComponent: React.FC = () => {
 				<div className="text-center mb-4">
 					<BrandLogo className="mb-4" size={44} style={{ marginBottom: "1.5rem" }} />
 					<p className="title-message">{getBrand().signup}</p>
-					{isCLILogin && <p className="title-message">This login flow was initiated from the CLI — complete it here to continue.</p>}
+					{isCLILogin && <p className="title-message">This login flow was initiated from the CLI. Complete it here to continue.</p>}
 				</div>
 
 				{loading && (
