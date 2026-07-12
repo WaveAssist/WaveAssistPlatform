@@ -57,9 +57,6 @@ LOGS_LIMIT = 500
 IDENTITY_USERNAME = 'kakshil.shah@wavepredict.com'
 IDENTITY_PASSWORD = 'REMOVED_CREDENTIAL'
 
-TEST_KNOCK_KEY = 'REMOVED_CREDENTIAL'
-PROD_KNOCK_KEY = 'REMOVED_CREDENTIAL'
-
 POSTMARK_API_TOKEN = 'REMOVED_CREDENTIAL'
 
 FETCH_INSTALL_PACKAGES_CODE = '''
@@ -106,7 +103,15 @@ GET_STARTED_DATA = {
 
 # SendGrid settings
 SEND_GRID_KEY = "REMOVED_CREDENTIAL"
-DEFAULT_FROM_EMAIL = "WaveAssist Updates <updates@waveassist.ai>"
+
+# Brand-aware transactional sender. Both gitzoid.com and waveassist.ai are verified senders in
+# Postmark (DKIM + Return-Path), so each brand sends from its own domain. DEFAULT_FROM_EMAIL is the
+# WaveAssist fallback used when a product is unknown/absent; resolve via utils.get_from_email().
+DEFAULT_FROM_EMAIL = "WaveAssist <updates@waveassist.ai>"
+FROM_EMAIL_BY_PRODUCT = {
+    "waveassist": DEFAULT_FROM_EMAIL,
+    "gitzoid": "GitZoid <updates@gitzoid.com>",
+}
 
 
 DEFAULT_NODES_ARRAY = [
@@ -164,8 +169,6 @@ TRIAL_ACTION_COSTS = {
 # A single action gets at most this many total attempts (1 original + retries) before we
 # stop retrying it, so a persistently-failing action can't loop and burn LLM cost.
 TRIAL_MAX_ATTEMPTS_PER_ACTION = 2
-# After this many consecutive failed runs on a deployment, auto-pause it.
-CIRCUIT_BREAKER_CONSECUTIVE_FAILURES = 3
 # A GitZoid account may connect at most this many repos across all its projects:
 # TRIAL_MAX_REPOS on the free trial, PRO_MAX_REPOS on GitZoid Pro.
 TRIAL_MAX_REPOS = 5
@@ -173,14 +176,16 @@ PRO_MAX_REPOS = 50
 # The data key the GitZoid repo-selection multiselect saves under (read by its nodes).
 GITZOID_REPOS_KEY = "github_selected_resources"
 
-# Maps a node's identity to a trial action_type. The runtime meters on recorded SUCCESS
-# by matching the completed node's key / chain_label here — no agent-side reporting
-# contract needed. Tuned to GitZoid's fixed, known node set. Checked in the order below
-# (most specific first), so a "security_scan" node matches security before anything else.
-# Patterns are matched as substrings of the normalised (lowercased) identity, so keep them
-# specific enough not to collide with unrelated words. Extend as GitZoid's node set grows.
-NODE_ACTION_TYPE_PATTERNS = [
-    ("security_scan", ["security_scan", "security-scan", "securityscan", "security", "vuln"]),
-    ("digest", ["digest"]),
-    ("pr_review", ["pr_review", "pr-review", "prreview", "pull_request", "pullrequest", "code_review", "review"]),
-]
+# Maps a DELIVERABLE leaf node to the trial action it represents. The runtime meters on the
+# recorded SUCCESS of these terminal nodes ONLY — never on the gate/fetch/init nodes that
+# also run (and succeed) on every scheduled tick. Anchoring to the deliverable node means:
+#   • an idle repo's every-2-min gate cycle charges nothing (no delivered work),
+#   • a run charges each action exactly once (see the per-action idempotency in metering.py),
+#   • credits track real output (a posted PR comment, a sent digest, a raised alert).
+# Exact node_key match (not substring) so unrelated nodes can never collide. These are the
+# leaf nodes of GitZoid's three chains (config.yaml: post_comment / send_digest / triage_and_alert).
+GITZOID_METER_NODES = {
+    "post_comment": "pr_review",
+    "send_digest": "digest",
+    "triage_and_alert": "security_scan",
+}

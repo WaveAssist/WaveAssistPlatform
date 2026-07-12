@@ -14,9 +14,6 @@ from WaveAssistApiApp.data_views import set_data_for_key
 from WaveAssistApiApp.dashboard_views import get_firebase_uid
 import WaveAssistApiApp.Utils.AWSManager as aws_manager
 from WaveAssistApiApp.dashboard_views import handle_cli_session
-from knockapi import Knock
-
-knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.test import Client
 import json
 from WaveAssistApiApp.Utils.responseParser import ResponseParser
@@ -29,8 +26,9 @@ def get_started(request):  # TCW
     firebase_token = request.POST.get("firebase_token", "")
     is_test = int(request.POST.get("is_test", 0)) == 1
     is_operator_account = int(request.POST.get("is_operator_account", 1)) == 1
-    # Which brand's front door this signup came through. Stamped once on the account and
-    # authoritative thereafter. Anything unrecognised falls back to waveassist.
+    # Which brand's front door this signup came through. The POST param is a hint; the
+    # AUTHORITATIVE source is the verified Firebase token's project (aud claim) — that can't
+    # be spoofed. Set once on account create. Anything unrecognised falls back to waveassist.
     product = request.POST.get("product", "waveassist")
     if product not in VALID_PRODUCTS:
         product = "waveassist"
@@ -39,6 +37,13 @@ def get_started(request):  # TCW
         firebase_uid, decoded_dict = get_firebase_uid(firebase_token)
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f"Failed to login: {str(e)}")
+
+    # Override the self-asserted product with the brand the token was actually issued by:
+    # a GitZoid-project token → gitzoid, anything else → waveassist. The token wins over POST.
+    try:
+        product = "gitzoid" if decoded_dict.get("aud") == GITZOID_FIREBASE_PROJECT_ID else "waveassist"
+    except Exception:
+        pass
 
     ##Create User
     try:
@@ -74,9 +79,6 @@ def get_started(request):  # TCW
         except Exception as e:
             print("User creation failed: " + str(e))
             return ResponseParser.getParsedErrorMessage("User creation failed.")
-
-        ##Register user in Knock
-        knock_client.users.update(user_id=str(uid), name=name, email=username)
 
     ##Check for existing Account
     try:
@@ -151,7 +153,9 @@ def get_started(request):  # TCW
     account_dict = account_object.get_dict()
     user_dict["mongo_db_url"] = account_object.mongo_db_url
     output_dict = {"user_data": user_dict, "account": account_dict, "project_array": []}
-    utils.run_knock_workflow(str(user_object.uid), "welcome")
+    # Brand-aware welcome email, sent in-house via Postmark on a background thread so signup is
+    # never blocked or failed by mail delivery (replaces the former Knock "welcome" workflow).
+    utils.send_welcome_email(user_object, product)
     handle_cli_session(request, user_dict)
     return ResponseParser.getParsedSuccessMessage(
         output_dict, "200", "User and Account created successfully."

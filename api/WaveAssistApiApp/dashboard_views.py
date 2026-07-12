@@ -84,10 +84,6 @@ def login(request):  ##TCW
     ##CLI Handling.
     handle_cli_session(request, user_data)
 
-    ##Account run handling
-    if not account_object.is_working_running:
-        utils.run_knock_workflow(str(user_object.uid), "restart")
-
     ##Track PostHog event
     utils.track_posthog(
         uid=str(user_object.uid),

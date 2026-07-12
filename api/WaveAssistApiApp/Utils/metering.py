@@ -13,8 +13,7 @@ from django.db import IntegrityError, transaction
 from ..models import Account, AccessProvided, UsageLedger, Deployments
 from .constants import (
     TRIAL_ACTION_COSTS,
-    NODE_ACTION_TYPE_PATTERNS,
-    CIRCUIT_BREAKER_CONSECUTIVE_FAILURES,
+    GITZOID_METER_NODES,
 )
 from . import utils
 
@@ -41,20 +40,15 @@ def trial_blocks_run(account):
 
 
 def map_node_to_action_type(node_key, chain_label=None):
-    """Map a node's identity to a trial action_type, or None if nothing matches.
+    """Map a DELIVERABLE leaf node's key to its trial action_type, or None.
 
-    Matches specific substrings of the lowercased ``node_key``/``chain_label`` in the
-    order defined by NODE_ACTION_TYPE_PATTERNS (most specific first).
+    Exact node_key lookup against GITZOID_METER_NODES — only the terminal nodes that
+    represent delivered work are metered. Gate/fetch/init nodes (which succeed on every
+    scheduled tick, including idle repos) return None and are never charged. chain_label
+    is intentionally ignored: it's shared by every node in a chain, so matching on it would
+    bill the whole chain. Kept as an accepted arg for call-site compatibility.
     """
-    haystack = " ".join(
-        part for part in [str(node_key or ""), str(chain_label or "")] if part
-    ).lower()
-    if not haystack.strip():
-        return None
-    for action_type, patterns in NODE_ACTION_TYPE_PATTERNS:
-        if any(pattern in haystack for pattern in patterns):
-            return action_type
-    return None
+    return GITZOID_METER_NODES.get(str(node_key or "").strip())
 
 
 def resolve_account_for_project(project):
@@ -91,7 +85,9 @@ def meter_trial_success(account, action_type, *, project_key="", run_id="", node
     if not cost:
         return 0
 
-    idem = f"trial:{run_id}:{node_key}"
+    # Idempotent per (run_id, action_type): one run charges each action at most once, even
+    # if the event is re-delivered or a chain somehow completes the deliverable node twice.
+    idem = f"trial:{run_id}:{action_type}"
     try:
         with transaction.atomic():
             UsageLedger.objects.create(
@@ -115,55 +111,61 @@ def meter_trial_success(account, action_type, *, project_key="", run_id="", node
         return 0
 
 
-def _active_deployment_for(project, data_run):
-    return (
-        Deployments.objects.filter(
-            project_object=project, data_run_object=data_run, is_running=True
-        )
-        .order_by("-created_at")
-        .first()
-    )
+def stop_trial_deployments(project):
+    """Disable a spent GitZoid trial's schedule so the worker is freed.
 
-
-def register_run_success(project, data_run):
-    """Reset a deployment's consecutive-failure counter after any successful run."""
-    deployment = _active_deployment_for(project, data_run)
-    if deployment is None or (deployment.consecutive_failures or 0) == 0:
-        return
-    deployment.consecutive_failures = 0
-    deployment.save(update_fields=["consecutive_failures"])
-
-
-def register_run_failure(project, data_run):
-    """Increment the failure counter; auto-pause the deployment at the threshold.
-
-    Returns True if the deployment was paused by this call.
+    When a trial hits 0 credits its runs can only ever be gated (they can't succeed until
+    the account upgrades), yet the celery-beat PeriodicTask would otherwise keep firing
+    every tick forever. Stopping the deployment disables that schedule. Idempotent — only
+    running deployments are touched, so repeated calls are no-ops. Best-effort: a failure
+    here must never break the credit-check response that calls it.
     """
-    deployment = _active_deployment_for(project, data_run)
-    if deployment is None:
-        return False
-    deployment.consecutive_failures = (deployment.consecutive_failures or 0) + 1
-    if deployment.consecutive_failures >= CIRCUIT_BREAKER_CONSECUTIVE_FAILURES:
-        # utils.stop_deployment flips is_running + disables the celery-beat PeriodicTask.
+    for deployment in Deployments.objects.filter(project_object=project, is_running=True):
         try:
             utils.stop_deployment(deployment)
-        except Exception as e:  # never let a pause failure break run recording
-            logger.warning("Circuit breaker: stop_deployment failed: %s", e)
-        deployment.consecutive_failures = 0
-        deployment.save(update_fields=["consecutive_failures", "is_running"])
-        return True
-    deployment.save(update_fields=["consecutive_failures"])
-    return False
+        except Exception as e:
+            logger.warning("Trial stop: stop_deployment failed: %s", e)
+
+
+def resume_account_deployments(account):
+    """Re-enable an account's stopped deployments after it lands on a paid plan.
+
+    Mirror of stop_trial_deployments: once a GitZoid account upgrades to Pro, a schedule
+    that was paused when the trial ran out should run again. Resolves the account's owned
+    projects via its admin AccessProvided rows and resumes their stopped deployments.
+    Best-effort so a payment webhook can never fail on this. Note: this resumes ANY stopped
+    deployment the account owns, not only ones paused by trial exhaustion — acceptable while
+    a GitZoid account owns a single deployment.
+    """
+    owner = getattr(account, "created_by_user", None)
+    if owner is None:
+        return
+    project_ids = list(
+        AccessProvided.objects.filter(
+            user_object=owner, type=0, project_access_type__gte=3
+        ).values_list("project_object_id", flat=True)
+    )
+    if not project_ids:
+        return
+    for deployment in Deployments.objects.filter(
+        project_object_id__in=project_ids, is_running=False
+    ):
+        try:
+            utils.resume_deployment(deployment)
+        except Exception as e:
+            logger.warning("Resume: resume_deployment failed: %s", e)
 
 
 def handle_run_terminal(project, node, data_run, *, run_id="", did_succeed=True):
     """Single entry point for the run-completion hook, scoped to GitZoid.
 
     WaveAssist deployments are completely unaffected: we resolve the account once and bail
-    unless it's a GitZoid account, so no metering runs and — crucially — the circuit
-    breaker never auto-pauses an existing WaveAssist agent. For GitZoid: on success, meter
-    the trial (if trialling and the node maps to an action) and reset the failure counter;
-    on failure, advance the breaker. All best-effort; the caller also wraps in try/except.
+    unless it's a GitZoid account, so no metering runs. For a trialling GitZoid account, a
+    successful deliverable node meters the trial. There is deliberately no failure handling:
+    a crashing agent is left to retry (no auto-pause) — the only automatic stop is trial
+    exhaustion, which is handled at the credit-check gate via stop_trial_deployments.
+    (``data_run`` is unused now, kept for call-site compatibility.) Best-effort; the caller
+    also wraps in try/except.
     """
     if project is None:
         return
@@ -171,19 +173,15 @@ def handle_run_terminal(project, node, data_run, *, run_id="", did_succeed=True)
     if account is None or account.product != "gitzoid":
         return
 
-    if did_succeed:
-        if node is not None and account_is_on_trial(account):
-            action_type = map_node_to_action_type(
-                getattr(node, "node_key", None), getattr(node, "chain_label", None)
+    if did_succeed and node is not None and account_is_on_trial(account):
+        action_type = map_node_to_action_type(
+            getattr(node, "node_key", None), getattr(node, "chain_label", None)
+        )
+        if action_type:
+            meter_trial_success(
+                account,
+                action_type,
+                project_key=getattr(project, "project_key", "") or "",
+                run_id=run_id or "",
+                node_key=getattr(node, "node_key", "") or "",
             )
-            if action_type:
-                meter_trial_success(
-                    account,
-                    action_type,
-                    project_key=getattr(project, "project_key", "") or "",
-                    run_id=run_id or "",
-                    node_key=getattr(node, "node_key", "") or "",
-                )
-        register_run_success(project, data_run)
-    else:
-        register_run_failure(project, data_run)

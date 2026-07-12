@@ -6,7 +6,7 @@ from .Utils.responseParser import ResponseParser
 from .Utils.constants import *
 import WaveAssistApiApp.Utils.validator as validator
 import WaveAssistApiApp.Utils.utils as utils
-from WaveAssistApiApp.Utils.utils import get_param, fetch_credits_from_openrouter, get_email_template_credits_limit_reached
+from WaveAssistApiApp.Utils.utils import get_param, fetch_credits_from_openrouter, get_email_template_credits_expired, get_email_template_trial_ended
 from django.views.decorators.http import require_POST
 from django.core.validators import validate_email
 from django.utils import timezone
@@ -62,7 +62,12 @@ def send_email(request):
         subject = get_param(request, "subject")
         html_content = get_param(request, "html_content")
         attachment_file = request.FILES.get("attachment")  # <-- expecting uploaded file in form-data
-        from_email = DEFAULT_FROM_EMAIL
+        # Brand-aware sender: resolve the account's product so GitZoid projects send from the
+        # GitZoid domain. Falls back to the WaveAssist default if the account can't be resolved.
+        try:
+            from_email = utils.get_from_email(Account.objects.get(created_by_user=user_object).product)
+        except Account.DoesNotExist:
+            from_email = DEFAULT_FROM_EMAIL
 
         if not all([subject, html_content]):
             return ResponseParser.getParsedErrorMessage("Missing one or more required fields: subject, html_content")
@@ -196,19 +201,18 @@ def send_email_backup(from_email,
         return False
 
 
-def _send_credits_notification(to_email, assistant_name, required_credits, credits_remaining, plan_name=""):
-    """Send a one-time credit limit reached email for this account."""
+def _send_credits_notification(to_email):
+    """One-time WaveAssist 'credits ran out, add credits' email (best-effort).
+
+    WaveAssist only — GitZoid never hits an OpenRouter credit gate (Pro is unlimited, trial
+    exhaustion is handled by _send_trial_ended_email)."""
+    subject = "Your WaveAssist credits have run out"
+    from_email = utils.get_from_email("waveassist")
+    html_content = get_email_template_credits_expired()
     try:
-        subject = f"{assistant_name} - Credit Limit Reached"
-        html_content = get_email_template_credits_limit_reached(
-            assistant_name=assistant_name,
-            required_credits=required_credits,
-            credits_remaining=credits_remaining,
-            plan_name=plan_name,
-        )
         client = PostmarkClient(server_token=POSTMARK_API_TOKEN)
         client.emails.send(
-            From=DEFAULT_FROM_EMAIL,
+            From=from_email,
             To=to_email,
             Subject=subject,
             HtmlBody=html_content,
@@ -220,12 +224,38 @@ def _send_credits_notification(to_email, assistant_name, required_credits, credi
         # Best-effort internal notification: a dual failure is logged, not raised, but we
         # must check the return value — send_email_backup reports failure as False.
         if not send_email_backup(
-            from_email=DEFAULT_FROM_EMAIL,
+            from_email=from_email,
             to_emails=to_email,
             subject=subject,
             html_content=html_content,
         ):
             utils.logger.error(f"Credits notification email failed entirely (Postmark: {e})")
+
+
+def _send_trial_ended_email(to_email):
+    """One-time GitZoid 'trial ended, upgrade to Pro' email (best-effort)."""
+    subject = "Your GitZoid trial has ended"
+    from_email = utils.get_from_email("gitzoid")
+    html_content = get_email_template_trial_ended()
+    try:
+        client = PostmarkClient(server_token=POSTMARK_API_TOKEN)
+        client.emails.send(
+            From=from_email,
+            To=to_email,
+            Subject=subject,
+            HtmlBody=html_content,
+            TrackOpens=True,
+        )
+        utils.logger.info(f"Trial-ended email sent to {to_email}")
+    except Exception as e:
+        utils.logger.warning(f"Postmark failed for trial-ended email, trying backup: {e}")
+        if not send_email_backup(
+            from_email=from_email,
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_content,
+        ):
+            utils.logger.error(f"Trial-ended email failed entirely (Postmark: {e})")
 
 
 @require_POST
@@ -242,20 +272,33 @@ def check_account_credits(request):
             return ResponseParser.getParsedErrorMessage(message)
 
         required_credits = float(get_param(request, "required_credits") or 0)
-        assistant_name = get_param(request, "assistant_name") or "Your Assistant"
 
         try:
             account = Account.objects.get(created_by_user=user_object)
         except Account.DoesNotExist:
             return ResponseParser.getParsedErrorMessage("Account not found.")
 
-        # GitZoid trial spent → block the run until they upgrade to Pro. Always False for
-        # WaveAssist and paid accounts, so this can never gate a non-trial run.
-        if metering.trial_blocks_run(account):
+        # GitZoid never hits an OpenRouter credit gate: Pro is unlimited, and a trial run is
+        # governed only by its action-credit budget. A spent trial stops the schedule and emails
+        # the owner once (upgrade to Pro); anything else (Pro, or a trial with budget left) runs.
+        if account.product == "gitzoid":
+            if metering.trial_blocks_run(account):
+                # Every future tick would be gated too, so disable the schedule now and free the
+                # worker. It's re-enabled when the account upgrades (payment webhook).
+                metering.stop_trial_deployments(project_object)
+                if not account.credits_notification_sent:
+                    account.credits_notification_sent = True
+                    account.save()
+                    _send_trial_ended_email(to_email=user_object.username)
+                return ResponseParser.getParsedSuccessMessage(
+                    {"credits_available": False, "credits_remaining": 0, "trial_exhausted": True},
+                    "200",
+                    "Trial exhausted. Upgrade to GitZoid Pro to continue.",
+                )
             return ResponseParser.getParsedSuccessMessage(
-                {"credits_available": False, "credits_remaining": 0, "trial_exhausted": True},
+                {"credits_available": True, "credits_remaining": None},
                 "200",
-                "Trial exhausted — upgrade to GitZoid Pro to continue.",
+                "Credits available.",
             )
 
         if not account.open_router_key:
@@ -308,13 +351,7 @@ def check_account_credits(request):
         if not credits_available and not account.credits_notification_sent:
             account.credits_notification_sent = True
             account.save()
-            _send_credits_notification(
-                to_email=user_object.username,
-                assistant_name=assistant_name,
-                required_credits=required_credits,
-                credits_remaining=account.credits_remaining,
-                plan_name=account.plan_name or "",
-            )
+            _send_credits_notification(to_email=user_object.username)
 
         return ResponseParser.getParsedSuccessMessage(
             {

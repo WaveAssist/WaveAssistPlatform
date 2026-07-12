@@ -19,7 +19,6 @@ gunicorn==22.0.0
 mysqlclient==2.0.3
 firebase-admin==6.1.0
 PyYAML==6.0.2
-knockapi==1.0.0
 sendgrid==6.12.3
 waveassist>=0.1.7
 postmarker==1.0

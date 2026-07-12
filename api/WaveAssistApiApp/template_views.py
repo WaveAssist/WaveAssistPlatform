@@ -10,7 +10,7 @@ from .Utils.projectSetup import (
     configure_variables, get_latest_commit_sha, get_wanted_node_files,
 )
 from .Utils.constants import *
-from .Utils.utils import run_knock_workflow, track_posthog, get_repo_parts_from_url
+from .Utils.utils import track_posthog, get_repo_parts_from_url
 import base64
 import requests
 import yaml

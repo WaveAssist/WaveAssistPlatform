@@ -21,9 +21,6 @@ logger = Logger()
 import json
 import threading
 import requests
-from knockapi import Knock
-
-knock_client = Knock(api_key=PROD_KNOCK_KEY)
 from django.db.models.functions import Lower
 import posthog
 from django.conf import settings
@@ -60,13 +57,53 @@ def get_param(request, key: str, default=None):
         return default
 
 
-def run_knock_workflow(uid: str, workflow_key, data=None):
-    try:
-        knock_client.workflows.trigger(
-            key=workflow_key, recipients=[uid], actor=uid, data=data
-        )
-    except Exception as e:
-        print("Error in run_knock_start_workflow:", str(e))
+def get_from_email(product: str = "waveassist") -> str:
+    """Brand-aware transactional From header.
+
+    Resolves the sender for the given Account.product. Both brands' domains are verified in
+    Postmark, so each sends from its own domain. Any unknown/absent product falls back to the
+    WaveAssist sender, so a bad value can never produce an unverified From that would bounce."""
+    return FROM_EMAIL_BY_PRODUCT.get(product or "waveassist", DEFAULT_FROM_EMAIL)
+
+
+def send_welcome_email(user_object, product: str = "waveassist"):
+    """Send the brand-aware welcome email to a newly-created user.
+
+    Runs on a background thread so signup is never blocked or failed by mail delivery, mirroring
+    send_alert_email. Best-effort: Postmark first, SMTP backup on failure, and it never raises."""
+
+    def _send():
+        try:
+            to_email = str(getattr(user_object, "username", "") or "").strip()
+            if not to_email:
+                return
+            product_key = product if product in FROM_EMAIL_BY_PRODUCT else "waveassist"
+            subject = "Welcome to GitZoid" if product_key == "gitzoid" else "Welcome to WaveAssist"
+            html_content = get_email_template_welcome(product_key)
+            from_email = get_from_email(product_key)
+            try:
+                from postmarker.core import PostmarkClient
+                PostmarkClient(server_token=POSTMARK_API_TOKEN).emails.send(
+                    From=from_email,
+                    To=to_email,
+                    Subject=subject,
+                    HtmlBody=html_content,
+                    TrackOpens=True,
+                )
+            except Exception as primary_error:
+                # SMTP fallback lives in sdk_views; import lazily to avoid a circular import.
+                from WaveAssistApiApp.sdk_views import send_email_backup
+                if not send_email_backup(
+                    from_email=from_email,
+                    to_emails=to_email,
+                    subject=subject,
+                    html_content=html_content,
+                ):
+                    logger.error(f"Welcome email failed entirely for {to_email}: {primary_error}")
+        except Exception as e:
+            logger.error(f"send_welcome_email error: {e}")
+
+    threading.Thread(target=_send).start()
 
 
 def send_alert_email():
@@ -363,6 +400,22 @@ def stop_deployment(deployment_object):
     except Exception as e:
         print(f"An error occurred: {e}")
         raise Exception("Could not stop the Deployment: " + str(e))
+
+
+def resume_deployment(deployment_object):
+    """Inverse of stop_deployment: re-enable a paused deployment and its DAG schedules."""
+    try:
+        with transaction.atomic():
+            deployment_object.is_running = True
+            for dag in deployment_object.dag_set.all():
+                dag.periodic_task.enabled = True
+                dag.periodic_task.save()
+                dag.is_running = True
+                dag.save()
+            deployment_object.save()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise Exception("Could not resume the Deployment: " + str(e))
 
 
 def get_all_loki_jobs():
@@ -1003,182 +1056,540 @@ def set_data_for_key_internal(
         return False, f"Internal error: {str(e)}"
 
 
-def get_email_template_credits_limit_reached(
-    assistant_name: str,
-    required_credits: float,
-    credits_remaining: float,
-    plan_name: str = "",
-) -> str:
-    is_paid_plan = str(plan_name).lower() in ("plus", "pro")
+def get_email_template_welcome(product: str = "waveassist") -> str:
+    """Brand-aware welcome email HTML sent to a newly-created account.
 
-    if is_paid_plan:
-        cta_label = "Add Credits"
-        cta_url = FRONTEND_URL
-        plan_message = (
-            f"Your <strong>{plan_name.capitalize()} plan</strong> credits have run out. "
-            f"Top up your credits from the dashboard to keep <strong>{assistant_name}</strong> running."
-        )
-    else:
-        cta_label = "Upgrade Plan"
-        cta_url = "https://waveassist.ai/pricing"
-        plan_message = (
-            f"Your free credits have run out. Upgrade to <strong>Plus</strong> or <strong>Pro</strong> "
-            f"to get monthly credits and keep <strong>{assistant_name}</strong> running."
-        )
+    Light theme (renders consistently across mail clients, including iOS Gmail which force-lightens
+    dark emails), a typographic wordmark in a carbon chip so each brand's accent stays on its native
+    surface, and one accent used sparingly. GitZoid copy follows the brand rules (no em dashes, no
+    forbidden words) and is framed as onboarding for a user who has already signed up."""
+    if product == "gitzoid":
+        return _WELCOME_HTML_GITZOID
+    return _WELCOME_HTML_WAVEASSIST
 
-    return f"""<!doctype html>
+
+_WELCOME_HTML_WAVEASSIST = """<!doctype html>
 <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="x-apple-disable-message-reformatting" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="color-scheme" content="light" />
-    <meta name="supported-color-schemes" content="light" />
-    <title>{assistant_name} - Credit Limit Reached</title>
-    <!--[if mso]>
-    <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-    <![endif]-->
-    <style>
-        :root {{ color-scheme: light; supported-color-schemes: light; }}
-        body, table, td, p, a {{ -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }}
-        table, td {{ mso-table-lspace: 0pt; mso-table-rspace: 0pt; }}
-        img {{ border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }}
-        body {{ margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f3f4f6 !important; }}
-        .outer-bg {{ background-color: #f3f4f6 !important; }}
-        .inner-card {{ background-color: #ffffff !important; }}
-        .card-border {{ border-color: #e5e7eb !important; }}
-        .heading-text {{ color: #0f172a !important; }}
-        .body-text {{ color: #a1a1aa !important; }}
-        .muted-text {{ color: #6b7280 !important; }}
-        .footer-text {{ color: #9ca3af !important; }}
-        .cta-btn {{ background-color: #1ed66c !important; color: #000000 !important; }}
-        .secondary-link {{ color: #4b5563 !important; }}
-        @media screen and (max-width: 600px) {{
-            .content-padding {{ padding-left: 24px !important; padding-right: 24px !important; }}
-            .outer-padding {{ padding: 16px !important; }}
-            .heading-text {{ font-size: 22px !important; }}
-            .cta-btn {{ padding: 16px 40px !important; }}
-        }}
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Welcome to WaveAssist</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+  <style>
+    :root { color-scheme: light; supported-color-schemes: light; }
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    a { text-decoration: none; }
+    body { margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #EDEEF0 !important; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
+    @media screen and (max-width: 600px) {
+      .px { padding-left: 26px !important; padding-right: 26px !important; }
+      .h1 { font-size: 27px !important; }
+    }
+  </style>
 </head>
-<body bgcolor="#f3f4f6" style="margin:0;padding:0;background-color:#f3f4f6 !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="outer-bg" bgcolor="#f3f4f6" style="background-color:#f3f4f6 !important;">
-        <tr>
-            <td align="center" style="padding:48px 20px;" class="outer-padding">
+<body bgcolor="#EDEEF0" style="margin:0;padding:0;background-color:#EDEEF0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your account is live. Connect the MCP and run your first deterministic agent. $2 of runtime credit is on us.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EDEEF0" style="background-color:#EDEEF0;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
 
-                <!-- Inner card -->
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                    style="max-width:520px;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:12px;"
-                    class="inner-card card-border">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;background-color:#FFFFFF;border:1px solid #E3E5E9;border-radius:14px;">
 
-                    <!-- Logo -->
-                    <tr>
-                        <td align="center" style="padding:48px 40px 0 40px;" class="content-padding">
-                            <img src="https://waveassist.ai/images/logo/WaveAssist-W.png" alt="WaveAssist" width="80"
-                                style="display:block;max-width:80px;height:auto;margin:0 auto;" />
-                        </td>
-                    </tr>
-
-                    <!-- Heading -->
-                    <tr>
-                        <td align="center" style="padding:32px 40px 0 40px;" class="content-padding">
-                            <h1 class="heading-text" style="margin:0;font-size:26px;font-weight:700;color:#0f172a;letter-spacing:-0.03em;line-height:1.2;">
-                                {assistant_name} needs more credits
-                            </h1>
-                        </td>
-                    </tr>
-
-                    <!-- Divider accent -->
-                    <tr>
-                        <td align="center" style="padding:24px 40px 0 40px;">
-                            <div style="width:40px;height:3px;background-color:#1ed66c;border-radius:2px;"></div>
-                        </td>
-                    </tr>
-
-                    <!-- Body -->
-                    <tr>
-                        <td style="padding:24px 40px 0 40px;" class="content-padding">
-                            <p class="body-text" style="margin:0;font-size:15px;color:#a1a1aa;line-height:1.7;">
-                                {plan_message}
-                            </p>
-                        </td>
-                    </tr>
-
-                    <!-- Credit details box -->
-                    <tr>
-                        <td style="padding:24px 40px 0 40px;" class="content-padding">
-                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                style="background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
-                                <tr>
-                                    <td style="padding:16px 20px;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                                            <tr>
-                                                <td style="font-size:13px;color:#6b7280;padding-bottom:10px;">Credits required</td>
-                                                <td align="right" style="font-size:13px;font-weight:600;color:#0f172a;padding-bottom:10px;">${required_credits:.2f}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="font-size:13px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:10px;">Credits remaining</td>
-                                                <td align="right" style="font-size:13px;font-weight:600;color:#ef4444;border-top:1px solid #e5e7eb;padding-top:10px;">${credits_remaining:.2f}</td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- Primary CTA -->
-                    <tr>
-                        <td align="center" style="padding:36px 40px 0 40px;">
-                            <!--[if mso]>
-                            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
-                                href="{cta_url}" style="height:52px;v-text-anchor:middle;width:200px;"
-                                arcsize="15%" fillcolor="#1ED66C" stroke="f">
-                                <w:anchorlock/>
-                                <center style="color:#000000;font-family:sans-serif;font-size:15px;font-weight:bold;">{cta_label}</center>
-                            </v:roundrect>
-                            <![endif]-->
-                            <!--[if !mso]><!-->
-                            <a href="{cta_url}" target="_blank" class="cta-btn"
-                               style="display:inline-block;padding:16px 48px;background-color:#1ed66c;color:#000000;font-size:15px;font-weight:700;text-decoration:none;border-radius:8px;letter-spacing:-0.01em;">
-                                {cta_label}
-                            </a>
-                            <!--<![endif]-->
-                        </td>
-                    </tr>
-
-                    <!-- Secondary -->
-                    <tr>
-                        <td align="center" style="padding:20px 40px 48px 40px;">
-                            <p style="margin:0;font-size:13px;">
-                                <span class="muted-text" style="color:#71717a;">Questions? </span>
-                                <a href="mailto:support@waveassist.ai" target="_blank" class="secondary-link"
-                                   style="color:#a1a1aa;text-decoration:underline;">Contact support</a>
-                            </p>
-                        </td>
-                    </tr>
-
-                </table>
-                <!-- End inner card -->
-
-                <!-- Footer -->
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:520px;">
-                    <tr>
-                        <td align="center" style="padding:28px 20px 0 20px;">
-                            <p class="footer-text" style="margin:0 0 8px 0;font-size:11px;color:#52525b;line-height:1.5;letter-spacing:0.02em;">
-                                WaveAssist. Reliable AI Assistants as your Digital Workforce.
-                            </p>
-                            <p class="footer-text" style="margin:0;font-size:11px;color:#52525b;line-height:1.5;">
-                                &copy; {datetime.now().year} WaveAssist. All rights reserved.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-
+          <!-- wordmark lockup (carbon chip keeps lime on its native surface) -->
+          <tr>
+            <td class="px" style="padding:34px 44px 0 44px;">
+              <span style="display:inline-block;background-color:#0B0C0F;border-radius:8px;padding:9px 13px;">
+                <span class="mono" style="font-size:17px;font-weight:700;letter-spacing:-0.5px;color:#ECEEF2;"><span style="color:#D8FF00;">/</span>waveassist</span>
+              </span>
             </td>
-        </tr>
-    </table>
+          </tr>
+
+          <!-- eyebrow -->
+          <tr>
+            <td class="px" style="padding:30px 44px 0 44px;">
+              <span class="mono" style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#14161B;">The deterministic agent runtime</span>
+            </td>
+          </tr>
+
+          <!-- h1 -->
+          <tr>
+            <td class="px" style="padding:12px 44px 0 44px;">
+              <h1 class="h1" style="margin:0;font-size:32px;line-height:1.1;font-weight:800;letter-spacing:-0.8px;color:#0B0C0F;">You're in. Run your first agent.</h1>
+            </td>
+          </tr>
+
+          <!-- body -->
+          <tr>
+            <td class="px" style="padding:18px 44px 0 44px;">
+              <p style="margin:0;font-size:15px;line-height:1.65;color:#5A5F68;">
+                Welcome to WaveAssist. Describe a recurring job in plain English, your coding agent builds it over MCP, and we run and deploy it on your schedule. The same result, every run.
+              </p>
+            </td>
+          </tr>
+
+          <!-- steps -->
+          <tr>
+            <td class="px" style="padding:28px 44px 0 44px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding:16px 0;border-top:1px solid #E3E5E9;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td valign="top" width="42" class="mono" style="width:42px;font-size:13px;font-weight:700;color:#14161B;">01</td>
+                      <td valign="top">
+                        <div style="font-size:14px;font-weight:700;color:#0B0C0F;">Connect the MCP</div>
+                        <div style="margin-top:3px;font-size:13px;line-height:1.55;color:#6B7280;">Copy your MCP token from the dashboard and connect your editor.</div>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 0;border-top:1px solid #E3E5E9;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td valign="top" width="42" class="mono" style="width:42px;font-size:13px;font-weight:700;color:#14161B;">02</td>
+                      <td valign="top">
+                        <div style="font-size:14px;font-weight:700;color:#0B0C0F;">Describe the job</div>
+                        <div style="margin-top:3px;font-size:13px;line-height:1.55;color:#6B7280;">Tell your agent what to build, in plain English. It writes and tests the pipeline.</div>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 0;border-top:1px solid #E3E5E9;border-bottom:1px solid #E3E5E9;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td valign="top" width="42" class="mono" style="width:42px;font-size:13px;font-weight:700;color:#14161B;">03</td>
+                      <td valign="top">
+                        <div style="font-size:14px;font-weight:700;color:#0B0C0F;">Run on your schedule</div>
+                        <div style="margin-top:3px;font-size:13px;line-height:1.55;color:#6B7280;">We host it and run it, the same way every time. $2 of runtime credit is on us.</div>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA -->
+          <tr>
+            <td class="px" style="padding:30px 44px 0 44px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td bgcolor="#D8FF00" style="background-color:#D8FF00;border-radius:9px;">
+                    <a href="https://app.waveassist.io" style="display:inline-block;padding:14px 30px;font-size:14px;font-weight:700;color:#0B0C0F;letter-spacing:0.2px;">Open the dashboard &rarr;</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- meta -->
+          <tr>
+            <td class="px" style="padding:26px 44px 0 44px;">
+              <span class="mono" style="font-size:11px;letter-spacing:0.3px;color:#6B7280;">Deterministic by contract &nbsp;&middot;&nbsp; Built by your coding agent</span>
+            </td>
+          </tr>
+
+          <!-- footer -->
+          <tr>
+            <td class="px" style="padding:30px 44px 36px 44px;">
+              <div style="border-top:1px solid #E3E5E9;padding-top:20px;">
+                <span class="mono" style="font-size:12px;font-weight:700;color:#14161B;"><span style="color:#0B0C0F;">/</span>waveassist</span>
+                <p style="margin:8px 0 0 0;font-size:11px;line-height:1.7;color:#9096A0;">You're receiving this because you created a WaveAssist account.<br /><a href="https://waveassist.ai" style="color:#14161B;font-weight:700;text-decoration:underline;">waveassist.ai</a> &nbsp;&middot;&nbsp; The deterministic agent runtime</p>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+
+_WELCOME_HTML_GITZOID = """<!doctype html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Welcome to GitZoid</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+  <style>
+    :root { color-scheme: light; supported-color-schemes: light; }
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    a { text-decoration: none; }
+    body { margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #F2F3F1 !important; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
+    @media screen and (max-width: 600px) {
+      .px { padding-left: 26px !important; padding-right: 26px !important; }
+      .h1 { font-size: 27px !important; }
+    }
+  </style>
+</head>
+<body bgcolor="#F2F3F1" style="margin:0;padding:0;background-color:#F2F3F1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">The product manager for your coding agents. GitZoid reviews every change your agents ship, inside GitHub.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F2F3F1" style="background-color:#F2F3F1;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;background-color:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;">
+
+          <!-- wordmark lockup -->
+          <tr>
+            <td class="px" style="padding:34px 44px 0 44px;">
+              <span style="display:inline-block;background-color:#0B0E12;border-radius:8px;padding:9px 13px;">
+                <span class="mono" style="font-size:17px;font-weight:700;letter-spacing:-0.5px;color:#FFFFFF;"><span style="color:#12C46A;">/</span>gitzoid</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- eyebrow -->
+          <tr>
+            <td class="px" style="padding:30px 44px 0 44px;">
+              <span class="mono" style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#0B7E43;">Welcome to GitZoid</span>
+            </td>
+          </tr>
+
+          <!-- h1: lead with the positioning -->
+          <tr>
+            <td class="px" style="padding:12px 44px 0 44px;">
+              <h1 class="h1" style="margin:0;font-size:32px;line-height:1.12;font-weight:800;letter-spacing:-0.8px;color:#0B0B0C;">The product manager for your <span style="color:#0B7E43;">coding agents</span>.</h1>
+            </td>
+          </tr>
+
+          <!-- body: what GitZoid does -->
+          <tr>
+            <td class="px" style="padding:18px 44px 0 44px;">
+              <p style="margin:0;font-size:15px;line-height:1.65;color:#5F6773;">
+                GitZoid reviews every change your agents ship, catches the risks they miss, and tells you what they did all week. Deterministic oversight, inside GitHub.
+              </p>
+            </td>
+          </tr>
+
+          <!-- what you get: three patrols -->
+          <tr>
+            <td class="px" style="padding:28px 44px 0 44px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding:16px 0;border-top:1px solid #E7E6E2;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td valign="top" width="26" style="width:26px;padding-top:5px;"><div style="width:7px;height:7px;border-radius:50%;background-color:#12C46A;"></div></td>
+                      <td valign="top">
+                        <div class="mono" style="font-size:13px;font-weight:700;letter-spacing:0.3px;color:#0B0B0C;">PR Review</div>
+                        <div style="margin-top:4px;font-size:13px;line-height:1.55;color:#5F6773;">A review comment on every pull request, inside GitHub.</div>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 0;border-top:1px solid #E7E6E2;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td valign="top" width="26" style="width:26px;padding-top:5px;"><div style="width:7px;height:7px;border-radius:50%;background-color:#12C46A;"></div></td>
+                      <td valign="top">
+                        <div class="mono" style="font-size:13px;font-weight:700;letter-spacing:0.3px;color:#0B0B0C;">Security Watch</div>
+                        <div style="margin-top:4px;font-size:13px;line-height:1.55;color:#5F6773;">A weekly Repo Watch email on new risks.</div>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 0;border-top:1px solid #E7E6E2;border-bottom:1px solid #E7E6E2;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td valign="top" width="26" style="width:26px;padding-top:5px;"><div style="width:7px;height:7px;border-radius:50%;background-color:#12C46A;"></div></td>
+                      <td valign="top">
+                        <div class="mono" style="font-size:13px;font-weight:700;letter-spacing:0.3px;color:#0B0B0C;">Weekly Digest</div>
+                        <div style="margin-top:4px;font-size:13px;line-height:1.55;color:#5F6773;">A Monday email on what your agents did.</div>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- next step -->
+          <tr>
+            <td class="px" style="padding:22px 44px 0 44px;">
+              <p style="margin:0;font-size:14px;line-height:1.6;color:#0B0B0C;font-weight:700;">Next: connect your GitHub repos and start your first run.</p>
+              <p class="mono" style="margin:8px 0 0 0;font-size:12px;line-height:1.6;color:#5F6773;">First 10 outputs are free, no card. $19 a month after, flat, up to 50 repos.</p>
+            </td>
+          </tr>
+
+          <!-- CTA -->
+          <tr>
+            <td class="px" style="padding:24px 44px 0 44px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td bgcolor="#12C46A" style="background-color:#12C46A;border-radius:9px;">
+                    <a href="https://app.gitzoid.com" style="display:inline-block;padding:14px 30px;font-size:14px;font-weight:700;color:#0B0E12;letter-spacing:0.2px;">Connect your repos &rarr;</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- meta -->
+          <tr>
+            <td class="px" style="padding:26px 44px 0 44px;">
+              <span class="mono" style="font-size:11px;letter-spacing:0.3px;color:#5F6773;">Works with any coding agent &nbsp;&middot;&nbsp; GitHub-native &nbsp;&middot;&nbsp; No code retention</span>
+            </td>
+          </tr>
+
+          <!-- footer -->
+          <tr>
+            <td class="px" style="padding:30px 44px 36px 44px;">
+              <div style="border-top:1px solid #E7E6E2;padding-top:20px;">
+                <span class="mono" style="font-size:12px;font-weight:700;color:#0B0B0C;"><span style="color:#12C46A;">/</span>gitzoid</span>
+                <p style="margin:8px 0 0 0;font-size:11px;line-height:1.7;color:#8A8F98;">You are receiving this because you created a GitZoid account.<br /><a href="https://gitzoid.com" style="color:#0B7E43;font-weight:700;text-decoration:underline;">gitzoid.com</a> &nbsp;&middot;&nbsp; Built on the WaveAssist engine</p>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+
+def get_email_template_credits_expired() -> str:
+    """WaveAssist: pay-as-you-go runtime credits ran out.
+
+    New light brand design. WaveAssist never auto-stops (see the deployment lifecycle policy):
+    an out-of-credit run just can't afford the LLM call and resumes on the next scheduled tick the
+    moment the owner tops up."""
+    return _CREDITS_EXPIRED_HTML_WAVEASSIST
+
+
+def get_email_template_trial_ended() -> str:
+    """GitZoid: the free trial has been spent.
+
+    New light brand design, GitZoid copy rules (no em dashes, no forbidden words). CTA upgrades to
+    GitZoid Pro, the single paid plan. Sent once at trial exhaustion (see check_account_credits)."""
+    return _TRIAL_ENDED_HTML_GITZOID
+
+
+_CREDITS_EXPIRED_HTML_WAVEASSIST = """<!doctype html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Add credits to keep your assistants running</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+  <style>
+    :root { color-scheme: light; supported-color-schemes: light; }
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    a { text-decoration: none; }
+    body { margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #EDEEF0 !important; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
+    @media screen and (max-width: 600px) {
+      .px { padding-left: 26px !important; padding-right: 26px !important; }
+      .h1 { font-size: 27px !important; }
+    }
+  </style>
+</head>
+<body bgcolor="#EDEEF0" style="margin:0;padding:0;background-color:#EDEEF0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your runtime credits are spent. Add credits and your assistants pick up on their next scheduled run.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EDEEF0" style="background-color:#EDEEF0;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;background-color:#FFFFFF;border:1px solid #E3E5E9;border-radius:14px;">
+
+          <!-- wordmark lockup -->
+          <tr>
+            <td class="px" style="padding:34px 44px 0 44px;">
+              <span style="display:inline-block;background-color:#0B0C0F;border-radius:8px;padding:9px 13px;">
+                <span class="mono" style="font-size:17px;font-weight:700;letter-spacing:-0.5px;color:#ECEEF2;"><span style="color:#D8FF00;">/</span>waveassist</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- eyebrow -->
+          <tr>
+            <td class="px" style="padding:30px 44px 0 44px;">
+              <span class="mono" style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#14161B;">Action needed</span>
+            </td>
+          </tr>
+
+          <!-- h1 -->
+          <tr>
+            <td class="px" style="padding:12px 44px 0 44px;">
+              <h1 class="h1" style="margin:0;font-size:32px;line-height:1.12;font-weight:800;letter-spacing:-0.8px;color:#0B0C0F;">Your trial credits have run out.</h1>
+            </td>
+          </tr>
+
+          <!-- body -->
+          <tr>
+            <td class="px" style="padding:18px 44px 0 44px;">
+              <p style="margin:0;font-size:15px;line-height:1.65;color:#5A5F68;">
+                The $2 of runtime credit that came with your account is spent, so your assistants are paused. Add credits and they pick up right where they left off, on the next scheduled run.
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA -->
+          <tr>
+            <td class="px" style="padding:28px 44px 0 44px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td bgcolor="#D8FF00" style="background-color:#D8FF00;border-radius:9px;">
+                    <a href="https://app.waveassist.io" style="display:inline-block;padding:14px 30px;font-size:14px;font-weight:700;color:#0B0C0F;letter-spacing:0.2px;">Add credits &rarr;</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- meta -->
+          <tr>
+            <td class="px" style="padding:26px 44px 0 44px;">
+              <span class="mono" style="font-size:11px;letter-spacing:0.3px;color:#6B7280;">Pay as you go &nbsp;&middot;&nbsp; No subscription</span>
+            </td>
+          </tr>
+
+          <!-- footer -->
+          <tr>
+            <td class="px" style="padding:30px 44px 36px 44px;">
+              <div style="border-top:1px solid #E3E5E9;padding-top:20px;">
+                <span class="mono" style="font-size:12px;font-weight:700;color:#14161B;"><span style="color:#0B0C0F;">/</span>waveassist</span>
+                <p style="margin:8px 0 0 0;font-size:11px;line-height:1.7;color:#9096A0;">You're receiving this because you have a WaveAssist account.<br /><a href="https://waveassist.ai" style="color:#14161B;font-weight:700;text-decoration:underline;">waveassist.ai</a> &nbsp;&middot;&nbsp; The deterministic agent runtime</p>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+
+_TRIAL_ENDED_HTML_GITZOID = """<!doctype html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Your GitZoid trial has ended</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+  <style>
+    :root { color-scheme: light; supported-color-schemes: light; }
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    a { text-decoration: none; }
+    body { margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #F2F3F1 !important; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
+    @media screen and (max-width: 600px) {
+      .px { padding-left: 26px !important; padding-right: 26px !important; }
+      .h1 { font-size: 27px !important; }
+    }
+  </style>
+</head>
+<body bgcolor="#F2F3F1" style="margin:0;padding:0;background-color:#F2F3F1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">You have used your free outputs. Upgrade to GitZoid Pro to keep reviews, security watches, and weekly digests running.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F2F3F1" style="background-color:#F2F3F1;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;background-color:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;">
+
+          <!-- wordmark lockup -->
+          <tr>
+            <td class="px" style="padding:34px 44px 0 44px;">
+              <span style="display:inline-block;background-color:#0B0E12;border-radius:8px;padding:9px 13px;">
+                <span class="mono" style="font-size:17px;font-weight:700;letter-spacing:-0.5px;color:#FFFFFF;"><span style="color:#12C46A;">/</span>gitzoid</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- eyebrow -->
+          <tr>
+            <td class="px" style="padding:30px 44px 0 44px;">
+              <span class="mono" style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#0B7E43;">Your trial</span>
+            </td>
+          </tr>
+
+          <!-- h1 -->
+          <tr>
+            <td class="px" style="padding:12px 44px 0 44px;">
+              <h1 class="h1" style="margin:0;font-size:32px;line-height:1.12;font-weight:800;letter-spacing:-0.8px;color:#0B0B0C;">Your GitZoid trial has ended.</h1>
+            </td>
+          </tr>
+
+          <!-- body -->
+          <tr>
+            <td class="px" style="padding:18px 44px 0 44px;">
+              <p style="margin:0;font-size:15px;line-height:1.65;color:#5F6773;">
+                You have used all your free outputs, so GitZoid has paused. Upgrade to GitZoid Pro to keep PR reviews, security watches, and weekly digests running across your repos.
+              </p>
+            </td>
+          </tr>
+
+          <!-- price detail -->
+          <tr>
+            <td class="px" style="padding:20px 44px 0 44px;">
+              <p class="mono" style="margin:0;font-size:12px;line-height:1.6;color:#5F6773;">$19 a month, flat, up to 50 repos. Cancel anytime.</p>
+            </td>
+          </tr>
+
+          <!-- CTA -->
+          <tr>
+            <td class="px" style="padding:24px 44px 0 44px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td bgcolor="#12C46A" style="background-color:#12C46A;border-radius:9px;">
+                    <a href="https://app.gitzoid.com" style="display:inline-block;padding:14px 30px;font-size:14px;font-weight:700;color:#0B0E12;letter-spacing:0.2px;">Upgrade to Pro &rarr;</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- meta -->
+          <tr>
+            <td class="px" style="padding:26px 44px 0 44px;">
+              <span class="mono" style="font-size:11px;letter-spacing:0.3px;color:#5F6773;">PR Review &nbsp;&middot;&nbsp; Security Watch &nbsp;&middot;&nbsp; Weekly Digest</span>
+            </td>
+          </tr>
+
+          <!-- footer -->
+          <tr>
+            <td class="px" style="padding:30px 44px 36px 44px;">
+              <div style="border-top:1px solid #E7E6E2;padding-top:20px;">
+                <span class="mono" style="font-size:12px;font-weight:700;color:#0B0B0C;"><span style="color:#12C46A;">/</span>gitzoid</span>
+                <p style="margin:8px 0 0 0;font-size:11px;line-height:1.7;color:#8A8F98;">You are receiving this because you have a GitZoid account.<br /><a href="https://gitzoid.com" style="color:#0B7E43;font-weight:700;text-decoration:underline;">gitzoid.com</a> &nbsp;&middot;&nbsp; Built on the WaveAssist engine</p>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
 </body>
 </html>"""
 

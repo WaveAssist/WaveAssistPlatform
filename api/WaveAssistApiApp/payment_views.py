@@ -140,7 +140,7 @@ def create_checkout(request):
 
     try:
         customer_email = user_object.username or ""
-        customer_name = user_object.name or account_object.account_name or "WaveAssist User"
+        customer_name = user_object.name or account_object.account_name or "Customer"
         customer_payload = {"email": customer_email, "name": customer_name}
 
         metadata = {
@@ -374,6 +374,15 @@ def _mark_payment_completed(
     ):
         account.plan_name = upgrade_plan
         account.save()
+
+        # A GitZoid account paused when its trial ran out should run again now that it's on
+        # a paid plan. Best-effort — never fail the payment webhook on a resume hiccup.
+        if account.product == "gitzoid":
+            try:
+                from .Utils import metering
+                metering.resume_account_deployments(account)
+            except Exception as e:
+                logger.warning("Upgrade resume failed: %s", e)
 
         if subscription_id:
             subscription, _ = BillingSubscription.objects.get_or_create(
