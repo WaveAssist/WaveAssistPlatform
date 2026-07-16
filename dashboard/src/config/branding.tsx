@@ -39,6 +39,7 @@ export interface Brand {
 	catalogUrl: string | null; // assistant catalog (null when scoped)
 	signup: string; // login sub-headline (tagline)
 	gaMeasurementId: string; // per-brand GA4 property, so each brand's analytics stay separate
+	posthogKey: string; // per-brand PostHog project, matching that brand's marketing site
 	pricingUrl: string; // marketing pricing page for this brand
 }
 
@@ -57,6 +58,7 @@ export const BRANDS: Record<BrandId, Brand> = {
 		catalogUrl: "https://waveassist.ai/assistants",
 		signup: "Run deterministic AI agents in the cloud.",
 		gaMeasurementId: "G-RHQ9VZRVXH",
+		posthogKey: "REMOVED_CREDENTIAL", // shared with the WaveAssist marketing site
 		pricingUrl: "https://waveassist.ai/pricing",
 	},
 	gitzoid: {
@@ -75,6 +77,9 @@ export const BRANDS: Record<BrandId, Brand> = {
 		// GitZoidWebsite GA4 property (483777017) — same ID as the GitZoid marketing site,
 		// so site + dashboard land in one property. NOT the Firebase auto-stream (G-9BBL3KD4DV).
 		gaMeasurementId: "G-PX7J3JNWKP",
+		// GitZoid marketing site's PostHog project, so GitZoid site + dashboard land together
+		// (not the shared WaveAssist project the dashboard used before).
+		posthogKey: "REMOVED_CREDENTIAL",
 		pricingUrl: "https://gitzoid.com/pricing",
 	},
 };

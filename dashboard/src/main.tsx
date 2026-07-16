@@ -16,11 +16,11 @@ applyBrandToDocument();
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
 		<PostHogProvider
-			apiKey="REMOVED_CREDENTIAL"
+			apiKey={getBrand().posthogKey}
 			options={{
 				api_host: "https://us.i.posthog.com",
 				debug: import.meta.env.MODE === "development",
-				// Stamp `brand` on every event + pageview so one shared PostHog project can be
+				// Stamp `brand` on every event + pageview so each brand's PostHog project can be
 				// segmented by brand (no per-call brand hacks needed).
 				loaded: (ph) => ph.register({ brand: getBrand().id }),
 			}}>
