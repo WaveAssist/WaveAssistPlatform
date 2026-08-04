@@ -270,3 +270,31 @@ def test_fetch_node_runs_unwraps_nested_array(client):
         uid="u", project_key="p", data_run_key="p_test", dag_run_id="r1"
     )
     assert out == [{"node_key": "n1", "status": "SUCCESS"}]
+
+
+# --------------------------------------------------------------------------- #
+# resolve_mcp_token — wa_ token -> account uid
+# --------------------------------------------------------------------------- #
+@respx.mock
+def test_resolve_mcp_token_returns_account_uid(client):
+    """POST /account/resolve_mcp_token/ with the wa_ token -> returns data['uid']."""
+    route = respx.post(f"{BASE}/account/resolve_mcp_token/").mock(
+        return_value=httpx.Response(
+            200, json={"success": "1", "data": {"uid": "acct-uuid-999", "product": "waveassist"}}
+        )
+    )
+    assert client.resolve_mcp_token("wa_deadbeefcafe") == "acct-uuid-999"
+    assert parse_qs(route.calls.last.request.content.decode())["mcp_token"] == ["wa_deadbeefcafe"]
+
+
+@respx.mock
+def test_resolve_mcp_token_raises_on_invalid(client):
+    """A rotated/unknown token -> the failure envelope raises WaveAssistError."""
+    respx.post(f"{BASE}/account/resolve_mcp_token/").mock(
+        return_value=httpx.Response(
+            200, json={"success": "0", "message": "Invalid MCP token.", "status": "E01"}
+        )
+    )
+    with pytest.raises(WaveAssistError) as ei:
+        client.resolve_mcp_token("wa_rotated_away")
+    assert ei.value.status == "E01"

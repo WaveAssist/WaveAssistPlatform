@@ -57,9 +57,52 @@ def _is_http_request() -> bool:
         return False
 
 
+# Cache of resolved MCP tokens (wa_… -> account uid) for this process, keyed by the
+# raw token. Multi-tenant safe: each distinct caller's token resolves to its own uid,
+# and a rotated/reissued token is simply a new key. Bounded by the number of distinct
+# callers a process serves.
+_UID_CACHE: dict[str, str] = {}
+
+
+def _exchange_if_token(raw: str) -> str:
+    """Turn a rotatable `wa_` MCP token into the account uid every WaveAssist API
+    authenticates against; pass a plain uid through untouched.
+
+    The dashboard's Connect panel hands users a `wa_`-prefixed token for the
+    `Authorization` header, but every downstream endpoint validates `User.uid`
+    (a UUID) — so the token must be exchanged first (`/account/resolve_mcp_token/`).
+    Resolved once per token, then cached. Raises WaveAssistError on an
+    invalid/rotated token."""
+    if not raw.startswith("wa_"):
+        return raw
+    cached = _UID_CACHE.get(raw)
+    if cached:
+        return cached
+    client = _client()
+    try:
+        uid = client.resolve_mcp_token(raw)
+    except WaveAssistError as e:
+        raise WaveAssistError(
+            "Invalid or expired WaveAssist MCP token. Regenerate it on the "
+            "WaveAssist Credits page (Connect) and update your MCP client config.",
+            status=e.status,
+        ) from e
+    finally:
+        client.close()
+    if not uid:
+        raise WaveAssistError("MCP token could not be resolved to an account.")
+    _UID_CACHE[raw] = uid
+    return uid
+
+
 def _resolve_uid() -> str | None:
-    """UID from the HTTP header (hosted) first, else local env / config file (stdio)."""
-    return _uid_from_request() or config.load_uid()
+    """The account uid to authenticate with: HTTP header (hosted) first, else local
+    env / config file (stdio). A rotatable `wa_` MCP token is exchanged for its
+    account uid (cached); a plain uid is used as-is."""
+    raw = _uid_from_request() or config.load_uid()
+    if not raw:
+        return None
+    return _exchange_if_token(raw)
 
 
 def _require_uid() -> str:
@@ -178,7 +221,21 @@ def waveassist_login(uid: str = "") -> dict:
 def waveassist_status() -> dict:
     """Show login status (configured UID + API base) and the agents this machine
     has built with WaveAgent (from the local registry)."""
-    uid = _resolve_uid()
+    try:
+        uid = _resolve_uid()
+    except WaveAssistError as e:
+        # A configured but invalid/rotated MCP token: surface the auth problem here
+        # rather than crashing the status call.
+        return {
+            "ok": False,
+            "logged_in": False,
+            "uid_present": bool(_uid_from_request() or config.load_uid()),
+            "uid": None,
+            "error": e.message,
+            "transport": "http" if _is_http_request() else "stdio",
+            "api_base": config.api_base(),
+            "app_base": config.app_base(),
+        }
     return {
         "ok": True,
         "logged_in": bool(uid),

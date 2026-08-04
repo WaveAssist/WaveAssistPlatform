@@ -1,12 +1,16 @@
 [project]
 name = "waveassist-mcp"
-version = "0.1.1"
+version = "0.1.2"
 description = "WaveAssist MCP server — build & deploy deterministic recurring agents from Claude Code or Cursor."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    "mcp>=1.2.0",
+    # Pin below 2.0: mcp 2.0 removed `mcp.server.fastmcp.FastMCP` (renamed to
+    # `mcp.server.mcpserver.MCPServer`), which server.py imports. The bump is a
+    # separate, tested migration. Without this cap a clean `pip install .` (the
+    # Docker build) pulls 2.0 and crashes on import.
+    "mcp>=1.2.0,<2",
     "httpx>=0.27",
     "uvicorn>=0.30",
 ]

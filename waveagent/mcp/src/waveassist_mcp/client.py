@@ -91,6 +91,17 @@ class WaveAssistClient:
             return None
         return None
 
+    def resolve_mcp_token(self, token: str) -> str | None:
+        """Exchange a rotatable `wa_` MCP token (the credential the dashboard's
+        Connect panel hands out) for the account uid every other endpoint
+        authenticates against.
+
+        Returns the uid string, or raises WaveAssistError (status "E01",
+        message "Invalid MCP token.") if the token is unknown or has been rotated.
+        """
+        data = self._post_form("/account/resolve_mcp_token/", {"mcp_token": token})
+        return (data or {}).get("uid") if isinstance(data, dict) else None
+
     # ------------------------------------------------------------------ #
     # projects + code + deploy
     # ------------------------------------------------------------------ #

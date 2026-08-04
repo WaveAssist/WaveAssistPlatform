@@ -565,3 +565,78 @@ def test_run_logs_maps_environment():
     assert out["environment"] == "p_ab12_default"
     assert out["node_runs"] == []  # no dag_run_id -> no node fetch
     assert _form(route.calls.last.request)["data_run_key"] == ["p_ab12_default"]
+
+
+# --------------------------------------------------------------------------- #
+# wa_ MCP token resolution
+#
+# The dashboard Connect panel hands users a rotatable `wa_` token for the
+# Authorization header, but every WaveAssist endpoint authenticates on User.uid
+# (a UUID). REGRESSION: the edge used to send the `wa_` token verbatim as the uid,
+# which the API rejected with E01 ("User not authorized or found."). It must be
+# exchanged via /account/resolve_mcp_token/ BEFORE any downstream call.
+# --------------------------------------------------------------------------- #
+@respx.mock
+def test_wa_token_is_resolved_before_api_call(monkeypatch):
+    monkeypatch.setenv("WAVEASSIST_UID", "wa_deadbeefcafe")
+    server._UID_CACHE.clear()
+
+    resolve = respx.post(f"{BASE}/account/resolve_mcp_token/").mock(
+        return_value=httpx.Response(200, json=_env({"uid": "acct-uuid-999", "product": "waveassist"}))
+    )
+    projects = respx.post(f"{BASE}/manage/fetch_all_projects/").mock(
+        return_value=httpx.Response(200, json=_env({"project_array": [{"project_key": "p_ab12", "name": "P"}]}))
+    )
+
+    out = server.waveassist_list_projects()
+
+    assert out["ok"] is True
+    # the wa_ token was exchanged...
+    assert resolve.called
+    assert _form(resolve.calls.last.request)["mcp_token"] == ["wa_deadbeefcafe"]
+    # ...and the RESOLVED uid — not the wa_ token — was sent downstream
+    assert _form(projects.calls.last.request)["uid"] == ["acct-uuid-999"]
+    # output masks the resolved uid, and never leaks the raw token
+    assert out["uid"] == server._mask("acct-uuid-999")
+
+
+@respx.mock
+def test_wa_token_resolution_is_cached(monkeypatch):
+    monkeypatch.setenv("WAVEASSIST_UID", "wa_deadbeefcafe")
+    server._UID_CACHE.clear()
+    resolve = respx.post(f"{BASE}/account/resolve_mcp_token/").mock(
+        return_value=httpx.Response(200, json=_env({"uid": "acct-uuid-999"}))
+    )
+    respx.post(f"{BASE}/manage/fetch_all_projects/").mock(
+        return_value=httpx.Response(200, json=_env({"project_array": []}))
+    )
+    server.waveassist_list_projects()
+    server.waveassist_list_projects()
+    assert resolve.call_count == 1  # resolved once, then served from cache
+
+
+@respx.mock
+def test_wa_token_invalid_surfaces_clear_error(monkeypatch):
+    monkeypatch.setenv("WAVEASSIST_UID", "wa_rotated_away")
+    server._UID_CACHE.clear()
+    resolve = respx.post(f"{BASE}/account/resolve_mcp_token/").mock(
+        return_value=httpx.Response(200, json={"success": "0", "message": "Invalid MCP token.", "status": "E01"})
+    )
+    projects = respx.post(f"{BASE}/manage/fetch_all_projects/").mock(
+        return_value=httpx.Response(200, json=_env({"project_array": []}))
+    )
+    out = server.waveassist_list_projects()
+    assert out["ok"] is False
+    assert "MCP token" in out["error"]        # actionable message, not a raw E01
+    assert resolve.called
+    assert not projects.called                # never hit the real API with a bad token
+
+
+def test_plain_uid_is_never_sent_for_resolution(monkeypatch):
+    """A non-wa_ uid (the legacy path) must NOT trigger an HTTP resolve — it is
+    used verbatim. Guards the `startswith('wa_')` gate."""
+    server._UID_CACHE.clear()
+    # conftest pins WAVEASSIST_UID=test-uid-1234 (no wa_ prefix); resolving it would
+    # require HTTP. With no respx mock active, any HTTP attempt raises — so a green
+    # assertion here proves no network call was made.
+    assert server._resolve_uid() == "test-uid-1234"
