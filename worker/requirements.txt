@@ -1,36 +1,30 @@
-requests>=2.32.5
-pandas>=2.2.3
-celery>=5.4.0
-redis>=4.6.0
-python-json-logger>=3.2.0
-celery-singleton>=0.3.1
-waveassist>=0.8.12
-dotenv>=0.9.9
-yfinance>=0.2.64
-openai>=2.11.0
-pymongo>=4.4.1
-aiohttp>=3.13.2
-beautifulsoup4>=4.13.4
-crawlee>=1.2.1
-httpx>=0.28.1
-lxml>=6.0.2
-ta>=0.11.0
-weasyprint>=67.0
-PyYAML>=6.0
-boto3>=1.42.96
+# Pinned to the tested, working set (verified end-to-end on this build) for
+# reproducibility. Bump deliberately and re-run tests/e2e; do not loosen to `>=`.
+# Note: the API image pins celery==5.5.3 while the worker resolved to 5.6.3 — this
+# pair is tested-compatible (shared Redis broker + camera event stream). Keep them
+# compatible when bumping either.
+requests==2.34.2
+pandas==2.3.3
+celery==5.6.3
+redis==8.1.0
+python-json-logger==4.2.0
+celery-singleton==0.3.1
+waveassist==0.8.12
+dotenv==0.9.9
+python-dotenv==1.2.3
+yfinance==1.7.0
+openai==3.8.0
+pymongo==4.18.0
+aiohttp==3.14.3
+beautifulsoup4==4.15.0
+crawlee==1.10.0
+httpx==0.28.1
+lxml==6.1.3
+ta==0.11.0
+weasyprint==69.0
+PyYAML==6.0.3
+boto3==1.43.89
+numpy==2.2.6
 # Pure-Python SQL Server (TDS) driver, baked in so Ornate-connected agents don't
 # pip-install it at runtime. No system libs (FreeTDS) needed; import name is `pytds`.
-python-tds>=1.15.0
-
-
-
-
-
-
-
-
-
-
-
-
-
+python-tds==1.17.1
