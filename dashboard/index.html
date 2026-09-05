@@ -3,12 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-NTQNGDRS');</script>
+    <!-- Google Tag Manager — loaded only when telemetry is enabled for this build.
+         %VITE_TELEMETRY% is replaced by Vite at build time; "off" (self-hosted default)
+         skips GTM entirely so a private box never beacons to Google. -->
+    <script>
+    if ("%VITE_TELEMETRY%".toLowerCase() !== "off") {
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-NTQNGDRS');
+    }
+    </script>
     <!-- End Google Tag Manager -->
     
     <link rel="icon"  href="/src/assets/favicon.ico" />
@@ -28,10 +34,9 @@
     <title>WaveAssistDashboard</title>
   </head>
   <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NTQNGDRS"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
+    <!-- The GTM <noscript> iframe was removed: it cannot be gated by the telemetry
+         flag (no JS), so it would beacon to Google even on a telemetry-off build.
+         The SPA requires JavaScript anyway. -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
