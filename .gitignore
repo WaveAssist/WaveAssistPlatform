@@ -4,8 +4,12 @@
 *.env
 !*.env.example
 EXTRACTED_SECRETS*
-secrets/
-agents/
+# Keep the bind-mount source dirs present in a fresh clone, but never commit their
+# contents (real secrets / imported agent source).
+secrets/*
+!secrets/.gitkeep
+agents/*
+!agents/.gitkeep
 node_modules/
 .venv/
 venv/

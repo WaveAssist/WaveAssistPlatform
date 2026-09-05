@@ -114,6 +114,11 @@ services:
     command: ["./start_beat.sh"]
     env_file: .env
     environment: *api-env
+    volumes:
+      # Shares the API's log dir (/data/logs) and Firebase secret mount so beat runs
+      # with the same runtime context as the API (it imports the same Django app).
+      - platform_data:/data
+      - ${SECRETS_DIR:-./secrets}:/run/secrets:ro
     depends_on:
       api: {condition: service_healthy}
       redis: {condition: service_healthy}
@@ -124,6 +129,11 @@ services:
     command: ["./start_camera.sh"]
     env_file: .env
     environment: *api-env
+    volumes:
+      # Camera records run/node status; it needs the shared log dir and, for Firebase
+      # auth deployments, the same service-account mount the API uses.
+      - platform_data:/data
+      - ${SECRETS_DIR:-./secrets}:/run/secrets:ro
     depends_on:
       api: {condition: service_healthy}
       redis: {condition: service_healthy}
