@@ -48,10 +48,28 @@ SECRET_KEY = _require_env("DJANGO_SECRET_KEY")
 DEBUG = False
 IS_DOCKER=True
 
-ALLOWED_HOSTS = ['wavepredictbackend.us-east-1.elasticbeanstalk.com','*','api.wavepredict.com', 'https://app.waveassist.io', 'https://api.waveassist.io']
-CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:4200','https://dashboard.wavepredict.com','http://localhost:4200','https://app.waveassist.io', 'https://api.waveassist.io']
-CSRF_TRUSTED_ORIGINS = ['https://*.waveassist.io', 'https://*.127.0.0.1', 'http://*.127.0.0.1', 'https://*.wavepredict.com']
-CORS_ORIGIN_ALLOW_ALL = True
+# Host / CORS / CSRF policy is env-overridable per deployment; defaults preserve the
+# hosted-cloud behaviour (unset => exactly as before). A locked-down internet box sets
+# WA_ALLOWED_HOSTS to its public hostname(s) PLUS the internal names the app calls
+# itself by: 'localhost' (health probe), 'api' (worker/beat/camera/mcp -> http://api:8000),
+# and '127.0.0.1'. Set WA_CORS_ORIGINS to the dashboard origin(s) and WA_CORS_ALLOW_ALL=0.
+def _csv_env(name):
+    return [x.strip() for x in os.getenv(name, "").split(",") if x.strip()]
+
+ALLOWED_HOSTS = _csv_env("WA_ALLOWED_HOSTS") or [
+    'wavepredictbackend.us-east-1.elasticbeanstalk.com', '*', 'api.wavepredict.com',
+    'app.waveassist.io', 'api.waveassist.io',
+]
+CORS_ALLOWED_ORIGINS = _csv_env("WA_CORS_ORIGINS") or [
+    'http://127.0.0.1:4200', 'https://dashboard.wavepredict.com', 'http://localhost:4200',
+    'https://app.waveassist.io', 'https://api.waveassist.io',
+]
+CSRF_TRUSTED_ORIGINS = _csv_env("WA_CSRF_TRUSTED_ORIGINS") or [
+    'https://*.waveassist.io', 'https://*.127.0.0.1', 'http://*.127.0.0.1', 'https://*.wavepredict.com',
+]
+# Allow-all CORS defaults ON (hosted behaviour); set WA_CORS_ALLOW_ALL=0 to restrict to
+# CORS_ALLOWED_ORIGINS on a locked-down deployment.
+CORS_ORIGIN_ALLOW_ALL = os.getenv("WA_CORS_ALLOW_ALL", "1").strip().lower() in ("1", "true", "yes", "on")
 CORS_ALLOW_CREDENTIALS = True
 
 

@@ -22,11 +22,13 @@ ZERODHA_ACCESS_TOKEN_KEY = os.getenv('ZERODHA_ACCESS_TOKEN_KEY', '')  # swept: v
 AWSS3_ACCESS_KEY = os.getenv('AWSS3_ACCESS_KEY', '')  # swept: value from env, see .env
 AWSS3_SECRET = os.getenv('AWSS3_SECRET', '')  # swept: value from env, see .env
 
-# Gmail SMTP credentials
+# SMTP credentials + server. Defaults are Gmail (hosted behaviour); a self-hosted box
+# can point the SMTP backup at its own relay via WA_SMTP_SERVER / WA_SMTP_PORT and
+# authenticate with MAILER_LOGIN_EMAIL / MAILER_LOGIN_EMAIL_PASSWORD.
 MAILER_LOGIN_EMAIL = os.getenv('MAILER_LOGIN_EMAIL', '')  # swept: value from env, see .env
 MAILER_LOGIN_EMAIL_PASSWORD = os.getenv('MAILER_LOGIN_EMAIL_PASSWORD', '')  # swept: value from env, see .env
-SMTP_SERVER = 'smtp.gmail.com'
-SMTP_PORT = 587
+SMTP_SERVER = os.getenv('WA_SMTP_SERVER', 'smtp.gmail.com')
+SMTP_PORT = int(os.getenv('WA_SMTP_PORT', '587'))
 
 TEMPORARY_CREATE_USER_KEY = os.getenv('TEMPORARY_CREATE_USER_KEY', '')  # swept: value from env, see .env
 
@@ -107,10 +109,12 @@ SEND_GRID_KEY = os.getenv('SEND_GRID_KEY', '')  # swept: value from env, see .en
 # Brand-aware transactional sender. Both gitzoid.com and waveassist.ai are verified senders in
 # Postmark (DKIM + Return-Path), so each brand sends from its own domain. DEFAULT_FROM_EMAIL is the
 # WaveAssist fallback used when a product is unknown/absent; resolve via utils.get_from_email().
-DEFAULT_FROM_EMAIL = "WaveAssist <updates@waveassist.ai>"
+# A self-hosted deployment sending from its own domain sets WA_FROM_EMAIL (and must
+# verify that sender with its email provider / Postmark), e.g. "Acme <reports@acme.example>".
+DEFAULT_FROM_EMAIL = os.getenv('WA_FROM_EMAIL', "WaveAssist <updates@waveassist.ai>")
 FROM_EMAIL_BY_PRODUCT = {
     "waveassist": DEFAULT_FROM_EMAIL,
-    "gitzoid": "GitZoid <updates@gitzoid.com>",
+    "gitzoid": os.getenv('WA_FROM_EMAIL', "GitZoid <updates@gitzoid.com>"),
 }
 
 
