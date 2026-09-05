@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WaveAgent — Overview</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b1020;color:#e7ecf5;line-height:1.55;
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:36px 22px 70px}
+  h1{font-size:26px;margin:0 0 4px;letter-spacing:-.3px}
+  .tag{color:#8a96b2;font-size:14px;margin-bottom:6px}
+  .pills{margin:14px 0 30px}
+  .pill{display:inline-block;background:#0f3d2e;color:#46e0a0;border:1px solid #1c7a57;
+    border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600;margin:3px 6px 3px 0}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:#9fb0d6;
+    margin:32px 0 12px;font-weight:700;border-bottom:1px solid #1e2742;padding-bottom:8px}
+  .card{background:#121a30;border:1px solid #1e2742;border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  ul{margin:0;padding-left:20px} li{margin-bottom:7px}
+  b{color:#fff}
+  .flow{font-size:13.5px;color:#cdd7ee}
+  .flow code{color:#9fe7c4}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  pre{background:#0c1426;border:1px solid #1e2742;border-radius:10px;padding:14px 16px;
+    overflow-x:auto;font-size:12.5px;color:#cfe3ff;margin:10px 0}
+  .muted{color:#8a96b2}
+  .step{color:#6ea8ff;font-weight:700}
+  a{color:#6ea8ff}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.two{grid-template-columns:1fr}}
+  .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8a96b2;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>WaveAgent</h1>
+  <div class="tag">Build &amp; deploy deterministic, recurring WaveAssist agents from inside Claude Code or Cursor — in plain English.</div>
+  <div class="pills">
+    <span class="pill">✓ Live-proven (real email sent)</span>
+    <span class="pill">✓ 28 unit tests</span>
+    <span class="pill">✓ Fresh review: 32 fixes</span>
+    <span class="pill">✓ Beta-ready</span>
+  </div>
+
+  <h2>1 · What's done</h2>
+  <div class="card">
+    <ul>
+      <li>A new product at <code>WA/WaveAgent/</code> — <b>three layers in one repo</b>:
+        a portable <b>SKILL</b> (the build-time brain), a thin <b>MCP server</b> (8 typed tools, zero reasoning), and <b>packaging</b> for a Claude Code plugin + a Cursor mirror.</li>
+      <li><b>No Composio, no <code>call_tool</code>.</b> Generated agents reach any tool with plain <code>requests</code> + a key you store in WaveAssist; <code>call_llm</code> handles runtime reasoning (no user LLM key).</li>
+      <li><b>Proven end-to-end on the live API</b> with a ClickUp→weekly-email agent: create → push code → install → test → arm schedule → a real AI-written email delivered.</li>
+      <li><b>Audited &amp; hardened</b>: a fresh multi-agent review found 32 issues (1 blocker, 8 major, rest minor/nit) — <b>all fixed</b> and re-verified (parity in sync, no secrets leaked, plugin server loads all 8 tools).</li>
+    </ul>
+  </div>
+
+  <h2>2 · How it works</h2>
+  <div class="card">
+    <p class="flow"><b>The host coding agent is the brain.</b> Driven by the SKILL, it runs this loop and the MCP tools just talk to WaveAssist:</p>
+    <p class="flow">
+      <span class="step">1</span> auth (your UID) →
+      <span class="step">2</span> gather requirements →
+      <span class="step">3</span> design nodes &amp; <b>confirm with you</b> →
+      <span class="step">4</span> collect keys (reuses what's available; else shows you how to get the token) →
+      <span class="step">5</span> write flat <code>{node}.py</code> + <code>config.yaml</code> →
+      <span class="step">6</span> deploy <b>unarmed</b> →
+      <span class="step">7</span> <b>live dry-run test</b> (side-effects gated) →
+      <span class="step">8</span> fix until green →
+      <span class="step">9</span> <b>arm the schedule</b> — never before a green test.
+    </p>
+    <p class="muted" style="font-size:13px;margin-bottom:0">A deployed agent = a GitHub repo of <code>config.yaml</code> + one flat Python file per node, wired only through WaveAssist's key-value store, run on a schedule by WaveAssist's workers.</p>
+  </div>
+
+  <h2>3 · How you can test it</h2>
+  <div class="two">
+    <div class="card">
+      <div class="k">A · Offline (10 sec)</div>
+      <pre>cd WA/WaveAgent/mcp
+.venv/bin/python -m pytest -q          # 28 passed
+cd .. &amp;&amp; bash scripts/check_bundles.sh  # BUNDLES IN SYNC</pre>
+    </div>
+    <div class="card">
+      <div class="k">B · Live pipeline (no editor)</div>
+      <pre>cd WA/WaveAgent/mcp
+WAVEASSIST_UID=&lt;uid&gt; WAVEASSIST_HOME=/tmp/wa \
+  .venv/bin/python scripts/e2e_clickup.py deploy key test
+# look for  "is_green": true
+# then:  ... e2e_clickup.py arm   (go live)
+#        ... e2e_clickup.py disarm (stop)</pre>
+    </div>
+  </div>
+  <div class="card">
+    <div class="k">C · The real experience — in Cursor (works today, no publish)</div>
+    <pre>cp WA/WaveAgent/cursor/mcp.json   ~/.cursor/mcp.json   # then edit the /ABSOLUTE/PATH
+cp -r WA/WaveAgent/cursor/skills  ~/.cursor/skills
+# restart Cursor, then in chat:</pre>
+    <p class="flow" style="margin:0"><span class="muted">“using waveassist, log me in with uid <code>&lt;uid&gt;</code>, then build an agent that emails me the top Hacker News stories every morning.”</span></p>
+    <p class="muted" style="font-size:12.5px;margin:10px 0 0">Claude Code: <code>claude mcp add</code> the local server (or install the plugin once the repo is on GitHub). Full steps in <code>INSTALL.md</code>. Requires <code>uv</code> installed.</p>
+  </div>
+
+  <h2>4 · Next steps</h2>
+  <div class="card">
+    <ul>
+      <li><b>Push <code>WaveAgent/</code> to GitHub</b> → <code>/plugin marketplace add WaveAssist/WaveAgent</code> then becomes the one-command install (root <code>marketplace.json</code> + bundled server; no PyPI needed).</li>
+      <li><b>Decide on the live demo agent</b> — it's currently armed (Mon 9am, real ClickUp token). Disarm it (command above) if you don't want the weekly email.</li>
+      <li><b>Optional — backend <code>requirements:</code> install</b> (deferred): today only packages baked into the worker image are usable; re-enabling pip-install in the WorkerEngine would let generated agents use any library.</li>
+      <li><b>Public hardening (the gate to public launch)</b>: scoped/revocable API key instead of raw UID, a write-only secret KV type + out-of-band entry, a server-side validate endpoint, rate limits. See <code>docs/SPEC.md §3</code>.</li>
+      <li><b>Optional</b>: publish <code>waveassist-mcp</code> to PyPI for a cleaner install.</li>
+    </ul>
+  </div>
+
+  <p class="muted" style="font-size:12.5px;margin-top:26px">
+    Key docs: <code>README.md</code> · <code>INSTALL.md</code> · <code>docs/SPEC.md</code> · <code>docs/api-contracts.md</code> · <code>docs/TEST_REPORT.html</code> (live test evidence).
+    Nothing is committed to git — all changes are in your working tree.
+  </p>
+
+</div>
+</body>
+</html>
