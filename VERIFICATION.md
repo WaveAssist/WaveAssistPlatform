@@ -1,11 +1,75 @@
 # Production verification and agent handoff
 
-**Status: Git consolidation is complete. Production readiness is NOT confirmed.**
+**Status: A clean stack builds, boots, and passes a deterministic full-stack E2E test.
+Priorities A–D are substantially verified on an isolated Compose project; the customer
+profiles (password/billing-off) are exercised end-to-end. Live provider sends, full
+Firebase login, and the hosted production data cutover remain for their own authorized
+passes. Nothing has been pushed, published, or deployed to a remote server.**
 
 This document is the handoff for the remaining implementation, review, and integration
-work. Use the current source and fresh test results as authority. Earlier conversation
-claims about a working Docker stack are not proof that this final repository works.
-Nothing has been pushed, published, or deployed to a remote server.
+work. Use the current source and fresh test results as authority.
+
+---
+
+## Verification results — 2026-09-05 (branch `verify/production-readiness`)
+
+**Environment:** Colima (Docker 29.5.2, **arm64**), docker-compose 5.5.1, isolated project
+`wa-verify` with disposable credentials and volumes. Images build **natively arm64** here;
+they are arch-neutral and build amd64 on x86 hosts (amd64 on target hardware is not yet
+proven — build on the target or emulate to confirm). Tested revision: `verify/production-readiness`.
+
+**One deterministic full-stack test is green** (`tests/e2e/run_e2e.py`): a 2-node DAG is
+imported, triggered over the HTTP webhook, and its exact final value (`42`) is asserted
+through the data API — proving API → Redis → worker → SDK → API → Mongo → worker events →
+camera → MySQL → runs API. It exits nonzero on failure and replaces the removed `e2e_test.sh`.
+
+| Phase | Verified this pass |
+| --- | --- |
+| **A — reproducible install** | Arch-neutral native build; clean boot on empty volumes (migrations, explicit bootstrap, readiness probe, worker queue subscription, camera, beat). Restarted the stack twice: migrations idempotent ("No migrations to apply"), `seed_admin` idempotent ("user exists, account exists"), imported data + stored values persisted. Conflicting admin UID/email fails clearly and (under `start.sh set -eu`) fails the boot. Core boots and runs with **MCP both enabled and disabled**. |
+| **B — core end-to-end** | The E2E DAG (above). Both node styles exercised (top-level script + explicit `run_task()`). **Beat scheduling**: armed a 1-min interval agent → beat fired a run **unattended** (~50s) → disarm disabled the PeriodicTask. Failed-node path: the failed node is recorded `FAILED` with traceback (see Findings on downstream behaviour). |
+| **C — login / dashboard** | Password login verified via API (`must_change` flagged on default) and in-browser (Playwright): login → dashboard → imported agent visible. Core routes (Assistant/Runs/Knowledge/Deployments/Nodes) reachable with **billing off**; no billing UI in nav. Only the local API is contacted — **no Firebase or telemetry network calls** in password mode. |
+| **D — flags / providers / MCP** | Billing-off: runs execute with no credit gating. **Telemetry-off leak fixed and verified**: GTM was beaconing to Google Analytics/DoubleClick even when off; now gated — zero Google/PostHog traffic on a telemetry-off build. MCP: real client `initialize` + `tools/list` + authenticated `list_projects` against the local API. LLM/email/OAuth paths mapped; email transport made configurable. |
+| **E — ops (subset)** | **Backup/restore rehearsed**: MySQL (40 tables, both projects, DagRuns/NodeRuns) and Mongo (stored values incl. `final_result=42`) dumped from the running stack and restored onto **empty** containers. Host/CORS and SMTP/from-email made deployment-configurable. Backup/restore + migration runbook added. |
+
+### Fixes made this pass (see git log on the branch)
+
+- **Build:** removed forced `--platform=linux/amd64` (arch-neutral); `mysqlclient` 2.0.3→2.2.7 + `pkg-config`; WeasyPrint runtime libs in the worker (PDF reporting); pinned API + worker deps to the tested set.
+- **Compose:** mounted `/data` and `/run/secrets` into `beat` and `camera`; wired `VITE_BRAND` into the web build args; kept `agents/`+`secrets/` bind-mount dirs in a fresh clone.
+- **Worker:** `TaskRunner` now calls `waveassist.init()` per run — `set_worker_defaults()` alone left the SDK uninitialized on 0.8.12 (node `store_data`/`fetch_data` raised). This was the one real blocker to any run succeeding.
+- **Dashboard:** Google Tag Manager gated on the telemetry flag (was unconditional).
+- **API:** `WA_ALLOWED_HOSTS`/`WA_CORS_ORIGINS`/`WA_CSRF_TRUSTED_ORIGINS`/`WA_CORS_ALLOW_ALL` and `WA_SMTP_SERVER`/`WA_SMTP_PORT`/`WA_FROM_EMAIL` env overrides (hosted-preserving defaults).
+- **Deploy:** `deploy/profiles/{hosted,cloud-customer,connected-customer}.env.example` (generic names) + `deploy/profiles/README.md` + `deploy/backup_restore.md`; `tests/e2e/` fixtures + runner.
+
+### Findings / limitations (accept or address before cutover)
+
+- **A failed node does NOT halt its downstream.** `TaskRunner.run_code` catches node
+  exceptions, records the node `FAILED`, and returns without raising, so the celery chain
+  continues and downstream nodes still run; `run_task`'s `autoretry` therefore never fires
+  for node-code errors. This matches current hosted behaviour and was left unchanged — agents
+  must not assume an upstream failure blocks the chain. Changing it is a deliberate,
+  separately-tested engine change.
+- **amd64 target hardware not yet proven.** Images built and ran natively as arm64 here.
+  Build/boot on the actual x86 server (or under emulation) before customer cutover.
+- **Email** primary is Postmark; the SMTP fallback host/port and sender are now env-configurable,
+  but **no live send was performed** (deferred to the authorized live pass). A box needs either a
+  Postmark token + verified sender or SMTP relay creds.
+- **MCP `deploy_agent`** materializes through the backend's GitHub (wavemaker) integration
+  (`GITHUB_TOKEN`/`GITHUB_USERNAME`); without it, use `deploy_local_agent` (no GitHub needed).
+  User-facing repo OAuth needs a seeded `Provider` row (empty DB has none).
+- **Local file storage** (`save_file_local`) writes to `/data/storage` but has no browser
+  serving route; the one UI consumer (DAG-image) is commented out, and published dashboards are
+  served from Mongo via Django (`d/<token>`), so this does not affect the target workloads.
+- **LLM `call_llm`** works with billing off; set `open_router_key` (or Azure config) in the KV store.
+- **celery version skew** api 5.5.3 / worker 5.6.3 (both pinned, tested-compatible over the shared broker/events); keep compatible when bumping.
+
+### What remains unverified (own authorized passes)
+
+- Live outbound provider sends (email, LLM spend, GitHub/OAuth writes) — the agreed next pass.
+- Full Firebase login (needs a service-account key) and billing-on webhook flows in provider test mode.
+- Hosted production data migration/cutover/rollback with real multi-account data.
+- amd64 build/boot on target server hardware.
+
+---
 
 ## 1. Scope and constraints
 
