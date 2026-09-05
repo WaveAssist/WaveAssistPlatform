@@ -1,13 +1,19 @@
-# Use a lighter Python runtime as a parent image
-FROM --platform=linux/amd64 python:3.10-slim
+# Use a lighter Python runtime as a parent image.
+# Arch-neutral: builds natively for the host (arm64 on Apple silicon / AWS Graviton,
+# amd64 on x86 servers). Do not pin --platform here; choose the arch at build time
+# with `docker build --platform` or Compose if a specific target is required.
+FROM python:3.10-slim
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies.
+# pkg-config is required by mysqlclient >= 2.2 to locate libmysqlclient
+# (older 2.0.x used mysql_config directly); default-libmysqlclient-dev provides it.
 RUN apt-get update && apt-get install -y \
     gcc \
     default-libmysqlclient-dev \
+    pkg-config \
     build-essential \
     graphviz \
     curl \
