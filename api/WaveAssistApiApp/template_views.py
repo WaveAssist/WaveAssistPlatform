@@ -15,6 +15,7 @@ import base64
 import requests
 import yaml
 from WaveAssistApiApp import manage_views, deployment_views
+from WaveAssistApiApp.Utils import runtime_flags as flags
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
 from django.http import HttpResponse
@@ -277,6 +278,8 @@ def upgrade_assistant(request):
 
 
 def get_template(request, slug):
+    if not flags.use_remote_catalog:
+        return ResponseParser.getParsedErrorMessage("Template catalog is not available in this deployment.")
     # Step 1: Netlify Identity login
     identity_url = "https://waveassist.io/.netlify/identity/token"
     identity_payload = {
@@ -327,6 +330,8 @@ def get_template(request, slug):
 
 @cache_page(60 * 60)  # Cache for 1 hr
 def list_templates(request):
+    if not flags.use_remote_catalog:
+        return ResponseParser.getParsedSuccessMessage([], "200", "No remote catalog in this deployment.")
     # Step 1: Authenticate with Netlify Identity
     identity_url = "https://waveassist.io/.netlify/identity/token"
     payload = {

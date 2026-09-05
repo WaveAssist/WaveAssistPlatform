@@ -7,6 +7,7 @@ from datetime import datetime
 from django.http import FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from WaveAssistApiApp.models import User, Project, Nodes
+from WaveAssistApiApp.Utils import runtime_flags as flags
 from .Utils.constants import AWSS3_ACCESS_KEY_VALUE, AWSS3_SECRET_KEY_VALUE
 from .Utils.responseParser import ResponseParser
 from .Utils.utils import upload_file_to_s3, zip_directory, user_has_project_access
@@ -65,7 +66,8 @@ def pull_bundle(request, project_id):
     uid = user.uid
     timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     s3_file_name = f"{uid}/{project_id}/{timestamp}.zip" if uid and project_id else f"{timestamp}.zip"
-    upload_file_to_s3(zip_path, s3_file_name)
+    if flags.use_s3:
+        upload_file_to_s3(zip_path, s3_file_name)
 
     response = FileResponse(open(zip_path, "rb"), as_attachment=True)
     response["Content-Disposition"] = f'attachment; filename="{project_id}.zip"'

@@ -205,7 +205,8 @@ def set_data_for_key(request):
     # must stay within its plan: TRIAL_MAX_REPOS on the free trial, PRO_MAX_REPOS on Pro.
     # Scoped strictly to the repo-selection key so no other data save pays this cost, and
     # only for product == "gitzoid" (WaveAssist is never affected).
-    if data_key == GITZOID_REPOS_KEY:
+    from .Utils import runtime_flags
+    if runtime_flags.billing_enabled and data_key == GITZOID_REPOS_KEY:
         try:
             from .Utils import metering
             account = Account.objects.get(created_by_user=user_object)

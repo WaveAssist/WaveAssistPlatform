@@ -123,3 +123,7 @@ ENV/
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+db.sqlite3
+django.env
+firebase_admin.json
+localtest.sqlite3

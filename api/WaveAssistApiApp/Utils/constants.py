@@ -1,7 +1,7 @@
 import os
 
 
-WORKER_TOKEN = "REMOVED_CREDENTIAL"
+WORKER_TOKEN = os.getenv('WORKER_TOKEN', '')  # swept: value from env, see .env
 PD_DATA_KEY = 'PDData'
 IO_DATA_KEY = 'IODataKey'
 DB_NAME = "WaveAssist"
@@ -14,21 +14,21 @@ INTEGRATIONS_SUFFIX_KEY = "_integrations"
 
 SHARED_OPERATOR_QUEUE = 'queue_7a5804de-f037-4c0d-aaa0-fa5211d7afd7'
 
-ZERODHA_API_KEY = "ZERODHA_API_KEY"
-ZERODHA_API_SECRET_KEY = "ZERODHA_API_SECRET"
-ZERODHA_ACCESS_TOKEN_KEY = "ZERODHA_ACCESS_TOKEN_KEY"
+ZERODHA_API_KEY = os.getenv('ZERODHA_API_KEY', '')  # swept: value from env, see .env
+ZERODHA_API_SECRET_KEY = os.getenv('ZERODHA_API_SECRET_KEY', '')  # swept: value from env, see .env
+ZERODHA_ACCESS_TOKEN_KEY = os.getenv('ZERODHA_ACCESS_TOKEN_KEY', '')  # swept: value from env, see .env
 
 
-AWSS3_ACCESS_KEY = "AWSS3_ACCESS_KEY"
-AWSS3_SECRET = "AWSS3_SECRET"
+AWSS3_ACCESS_KEY = os.getenv('AWSS3_ACCESS_KEY', '')  # swept: value from env, see .env
+AWSS3_SECRET = os.getenv('AWSS3_SECRET', '')  # swept: value from env, see .env
 
 # Gmail SMTP credentials
-MAILER_LOGIN_EMAIL = 'kakshil.shah@waveassist.ai'
-MAILER_LOGIN_EMAIL_PASSWORD = '***REDACTED-CREDENTIAL***'
+MAILER_LOGIN_EMAIL = os.getenv('MAILER_LOGIN_EMAIL', '')  # swept: value from env, see .env
+MAILER_LOGIN_EMAIL_PASSWORD = os.getenv('MAILER_LOGIN_EMAIL_PASSWORD', '')  # swept: value from env, see .env
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 587
 
-TEMPORARY_CREATE_USER_KEY = 'REMOVED_CREDENTIAL'
+TEMPORARY_CREATE_USER_KEY = os.getenv('TEMPORARY_CREATE_USER_KEY', '')  # swept: value from env, see .env
 
 
 ADMIN_GTE = 3
@@ -36,28 +36,28 @@ WRITE_GTE = 2
 READ_GTE = 1
 
 # GitHub credentials for accessing private repositories
-GITHUB_USERNAME = 'WaveAssist'
-GITHUB_TOKEN = 'REMOVED_CREDENTIAL'
+GITHUB_USERNAME = os.getenv('GITHUB_USERNAME', '')  # swept: value from env, see .env
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN', '')  # swept: value from env, see .env
 
 
 DAG_TASK = 'celery_worker.run_dag'
 RUN_TASK = 'celery_worker.run_task'
 
-AWSS3_ACCESS_KEY_VALUE = os.getenv('AWS_ACCESS_KEY_ID','REMOVED_CREDENTIAL')
-AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY','REMOVED_CREDENTIAL')
+AWSS3_ACCESS_KEY_VALUE = os.getenv('AWS_ACCESS_KEY_ID', '')  # swept: value from env, see .env
+AWSS3_SECRET_KEY_VALUE = os.getenv('AWS_SECRET_ACCESS_KEY', '')  # swept: value from env, see .env
 
-JWT_SECRET = os.getenv('JWT_SECRET', 'REMOVED_CREDENTIAL')
+JWT_SECRET = os.getenv('JWT_SECRET', '')  # swept: value from env, see .env
 
-OPENROUTER_PROVISIONING_KEY = os.getenv('OPENROUTER_PROVISIONING_KEY', 'REMOVED_CREDENTIAL')
+OPENROUTER_PROVISIONING_KEY = os.getenv('OPENROUTER_PROVISIONING_KEY', '')  # swept: value from env, see .env
 
 LOKI_URL = os.getenv('LOKI_URL', 'http://localhost:3100')
 # LOKI_URL = 'http://34.196.124.60:3100'
 LOGS_LIMIT = 500
 
-IDENTITY_USERNAME = 'kakshil.shah@wavepredict.com'
-IDENTITY_PASSWORD = 'REMOVED_CREDENTIAL'
+IDENTITY_USERNAME = os.getenv('IDENTITY_USERNAME', '')  # swept: value from env, see .env
+IDENTITY_PASSWORD = os.getenv('IDENTITY_PASSWORD', '')  # swept: value from env, see .env
 
-POSTMARK_API_TOKEN = 'REMOVED_CREDENTIAL'
+POSTMARK_API_TOKEN = os.getenv('POSTMARK_API_TOKEN', '')  # swept: value from env, see .env
 
 FETCH_INSTALL_PACKAGES_CODE = '''
 def run_task():
@@ -102,7 +102,7 @@ GET_STARTED_DATA = {
 
 
 # SendGrid settings
-SEND_GRID_KEY = "REMOVED_CREDENTIAL"
+SEND_GRID_KEY = os.getenv('SEND_GRID_KEY', '')  # swept: value from env, see .env
 
 # Brand-aware transactional sender. Both gitzoid.com and waveassist.ai are verified senders in
 # Postmark (DKIM + Return-Path), so each brand sends from its own domain. DEFAULT_FROM_EMAIL is the
@@ -135,13 +135,13 @@ GITZOID_FIREBASE_PROJECT_ID = "gitzoid-dashboard"
 
 # DoDo Payments — defaults when env vars are not set (override via .env)
 DODO_DEFAULT_BASE_URL = "https://live.dodopayments.com"
-DODO_DEFAULT_API_KEY = "REMOVED_CREDENTIAL"
+DODO_DEFAULT_API_KEY = os.getenv('DODO_DEFAULT_API_KEY', '')  # swept: value from env, see .env
 DODO_DEFAULT_CREDITS_PRODUCT_ID = "pdt_0NaUMxiHUGKVnbT58MTW4"
 DODO_DEFAULT_PLAN_PLUS_PRODUCT_ID = "pdt_0NaUN5Yb442s7J9ZLm7Ly"
 DODO_DEFAULT_PLAN_PRO_PRODUCT_ID = "pdt_0NaUN2K3XpBUtSlBmjeMM"
 # GitZoid Pro — its own DoDo product under the GitZoid brand ($19/mo).
 DODO_DEFAULT_PLAN_GITZOID_PRO_PRODUCT_ID = "pdt_0NiwEuXJyydYcVkBzf0T3"
-DODO_DEFAULT_WEBHOOK_SECRET = "REMOVED_CREDENTIAL"
+DODO_DEFAULT_WEBHOOK_SECRET = os.getenv('DODO_DEFAULT_WEBHOOK_SECRET', '')  # swept: value from env, see .env
 
 CREDITS_CHECK_INTERVAL_DEFAULT = 300   # 5 min
 CREDITS_CHECK_INTERVAL_FAST = 30       # 30 sec after payment

@@ -16,7 +16,7 @@ from .constants import (
     GITZOID_METER_NODES,
     IO_DATA_KEY,
 )
-from . import utils
+from . import utils, runtime_flags
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ _FREE_PLANS = {None, "", "starter"}
 
 def account_is_on_trial(account):
     """True for a GitZoid account that hasn't upgraded to a paid plan yet."""
-    return account.product == "gitzoid" and (account.plan_name in _FREE_PLANS)
+    return runtime_flags.billing_enabled and account.product == "gitzoid" and (account.plan_name in _FREE_PLANS)
 
 
 def trial_blocks_run(account):

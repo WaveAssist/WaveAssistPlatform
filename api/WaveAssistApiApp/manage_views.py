@@ -1,3 +1,4 @@
+import os
 import json
 import uuid
 
@@ -13,6 +14,7 @@ from WaveAssistApiApp.Utils.MongoManager import MongoManager
 from WaveAssistApiApp.data_views import set_data_for_key
 from WaveAssistApiApp.dashboard_views import get_firebase_uid
 import WaveAssistApiApp.Utils.AWSManager as aws_manager
+from WaveAssistApiApp.Utils import runtime_flags as flags
 from WaveAssistApiApp.dashboard_views import handle_cli_session
 from django.test import Client
 import json
@@ -56,7 +58,7 @@ def get_started(request):  # TCW
         uid = str(uuid.uuid4())
         name = request.POST.get("name", decoded_dict.get("full_name", ""))
         username = request.POST.get("email", decoded_dict.get("email", "email"))
-        password = request.POST.get("password", "REMOVED_CREDENTIAL")
+        password = request.POST.get("password", os.getenv("DEFAULT_ACCOUNT_PASSWORD", ""))
         company_name = request.POST.get("company_name", "Company")
         can_create_projects = True
         ##Check for name, if name not present, create name from email.
@@ -111,7 +113,14 @@ def get_started(request):  # TCW
     if account_object.mongo_db_url == "" and not is_test:
         ##Create Mongo url
         try:
-            mongo_url, db_name = utils.create_mongo_url(user_object)
+            if flags.use_atlas:
+                mongo_url, db_name = utils.create_mongo_url(user_object)
+            else:
+                # Self-hosted: no Atlas Admin API. Use the deployment's own Mongo
+                # (settings.MONGO_CONNECTION_STRING) with a per-account database name.
+                from django.conf import settings as _settings
+                mongo_url = _settings.MONGO_CONNECTION_STRING
+                db_name = utils.get_database_name(user_object)
             account_object.mongo_db_url = mongo_url
             account_object.db_name = db_name
             account_object.save()
@@ -125,6 +134,7 @@ def get_started(request):  # TCW
         account_object.worker_service_arn == ""
         and not is_test
         and not is_operator_account
+        and flags.use_fargate
     ):
         ##Create Worker
         try:
@@ -137,7 +147,7 @@ def get_started(request):  # TCW
                 "Worker creation failed." + str(e)
             )
 
-    if account_object.open_router_key == "":
+    if account_object.open_router_key == "" and flags.billing_enabled:
         try:
             # GitZoid's trial runs on this per-account OpenRouter key but is gated by the
             # action-credit meter (trial_credits_*), NOT the key balance — so the key must be
@@ -1218,4 +1228,27 @@ def delete_data_run(request):  # TCW
 
     return ResponseParser.getParsedSuccessMessage(
         {}, "200", "Data Run deleted successfully."
+    )
+
+
+def password_login(request):
+    """Self-hosted username/password login (WA_AUTH=password). Verifies against env
+    creds (WA_ADMIN_USERNAME / WA_ADMIN_PASSWORD, default admin/admin) and returns the
+    box's admin UID. The UID stays the underlying credential — this just gates it."""
+    from WaveAssistApiApp.Utils import runtime_flags as flags
+    if flags.AUTH != "password":
+        return ResponseParser.getParsedErrorMessage("Password login is not enabled for this deployment.")
+    username = request.POST.get("username", "")
+    password = request.POST.get("password", "")
+    admin_user = os.getenv("WA_ADMIN_USERNAME", "admin")
+    admin_pass = os.getenv("WA_ADMIN_PASSWORD", "admin")
+    if username != admin_user or password != admin_pass:
+        return ResponseParser.getParsedErrorMessage("Invalid username or password.")
+    user_object = User.objects.filter(is_super_admin=True, uid=os.getenv("WAVEASSIST_ADMIN_UID", "")).first()
+    if user_object is None:
+        return ResponseParser.getParsedErrorMessage("No admin account exists. Run seed_admin.")
+    must_change = (admin_pass == "admin")
+    return ResponseParser.getParsedSuccessMessage(
+        {"uid": user_object.uid, "must_change": must_change},
+        "200", "Login successful.",
     )

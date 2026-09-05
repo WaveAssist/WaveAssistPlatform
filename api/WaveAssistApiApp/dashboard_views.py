@@ -226,7 +226,7 @@ def fetch_assistant(request, assistant_key):
             except Project.DoesNotExist:
                 pass
 
-        if not repo_url:
+        if assistant is None and project is None:
             return ResponseParser.getParsedErrorMessage("Assistant not found.", 404)
 
         # Auth gate for the WaveMaker (Project) branch only.
@@ -241,8 +241,13 @@ def fetch_assistant(request, assistant_key):
             if not utils.does_user_have_access_to_project(user_object, project, access_gte=READ_GTE):
                 return ResponseParser.getParsedErrorMessage("Not authorized for this project", 403)
 
-        owner, repo_name = get_repo_parts_from_url(repo_url)
-        yaml_config = get_config_yaml_from_github(repo_name, owner)
+        if project is not None and project.local_configuration:
+            yaml_config = project.local_configuration
+        elif repo_url:
+            owner, repo_name = get_repo_parts_from_url(repo_url)
+            yaml_config = get_config_yaml_from_github(repo_name, owner)
+        else:
+            return ResponseParser.getParsedErrorMessage("No configuration has been imported for this project.", 404)
         is_valid, message = validate_yaml_config(yaml_config)
 
         if not is_valid:

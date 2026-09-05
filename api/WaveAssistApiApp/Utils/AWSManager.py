@@ -3,6 +3,7 @@ import json
 from django.conf import settings
 import WaveAssistApiApp.Utils.utils as utils
 from WaveAssistApiApp.Utils.constants import *
+from WaveAssistApiApp.Utils import runtime_flags as flags
 
 UID = '9088b203-66a6-4c0d-a57a-31b33963a6c8'
 
@@ -21,7 +22,7 @@ AWS_CLUSTER = 'WaveAssistFargateCluster'
 
 # Initialize the ECS client
 ecs_client = boto3.client('ecs', region_name="us-east-1", aws_access_key_id=AWSS3_ACCESS_KEY_VALUE,
-                          aws_secret_access_key=AWSS3_SECRET_KEY_VALUE)
+                          aws_secret_access_key=AWSS3_SECRET_KEY_VALUE) if flags.use_fargate else None
 
 
 def register_task_definition(task_definition_json):
@@ -72,4 +73,3 @@ def create_worker(uid):
     service_arn = create_fargate_service(service_name=service_name,
                                          task_definition_arn=task_arn)
     return service_arn
-

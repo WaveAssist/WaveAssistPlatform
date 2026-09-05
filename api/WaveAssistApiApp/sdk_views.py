@@ -7,6 +7,7 @@ from .Utils.constants import *
 import WaveAssistApiApp.Utils.validator as validator
 import WaveAssistApiApp.Utils.utils as utils
 from WaveAssistApiApp.Utils.utils import get_param, fetch_credits_from_openrouter, get_email_template_credits_expired, get_email_template_trial_ended
+from WaveAssistApiApp.Utils import runtime_flags as flags
 from django.views.decorators.http import require_POST
 from django.core.validators import validate_email
 from django.utils import timezone
@@ -278,6 +279,11 @@ def check_account_credits(request):
         except Account.DoesNotExist:
             return ResponseParser.getParsedErrorMessage("Account not found.")
 
+        if not flags.billing_enabled:
+            return ResponseParser.getParsedSuccessMessage(
+                {"credits_available": True, "credits_remaining": None},
+                "200", "Billing disabled (self-hosted); credits unlimited.",
+            )
         # GitZoid never hits an OpenRouter credit gate: Pro is unlimited, and a trial run is
         # governed only by its action-credit budget. A spent trial stops the schedule and emails
         # the owner once (upgrade to Pro); anything else (Pro, or a trial with budget left) runs.

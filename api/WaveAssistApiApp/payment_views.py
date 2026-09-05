@@ -1,4 +1,5 @@
 import base64
+from WaveAssistApiApp.Utils import runtime_flags as flags
 import hashlib
 import hmac
 import json
@@ -115,6 +116,8 @@ def _utc_dt(raw_value):
 
 
 def create_checkout(request):
+    if not flags.billing_enabled:
+        return ResponseParser.getParsedErrorMessage("Billing is disabled in this deployment.")
     uid = request.POST.get("uid", "")
     use_case = request.POST.get("use_case", "").strip().lower()
     amount = request.POST.get("amount", "")
@@ -730,6 +733,8 @@ def _normalize_event_payload(payload):
 
 
 def dodo_webhook(request):
+    if not flags.billing_enabled:
+        return ResponseParser.getParsedErrorMessage("Billing is disabled in this deployment.")
     raw_body = request.body or b""
 
     webhook_id = (

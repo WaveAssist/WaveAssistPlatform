@@ -22,17 +22,21 @@ from datetime import datetime, timedelta
 import pytz
 from urllib.parse import unquote
 from WaveAssistApiApp import deployment_views
+from WaveAssistApiApp.Utils import runtime_flags as flags
 import waveassist
 
 # Initialize the CloudWatch Logs client
 client = boto3.client('logs',
                         aws_access_key_id=AWSS3_ACCESS_KEY_VALUE,
                         aws_secret_access_key=AWSS3_SECRET_KEY_VALUE,
-                      region_name='us-east-1')  # Replace 'your-region' with the appropriate AWS region
+                      region_name='us-east-1') if flags.use_cloudwatch else None
 
 
 def fetch_logs_from_aws(start_datetime, end_datetime, log_group_name, filter_pattern):
     log_array = []
+    if not flags.use_cloudwatch:
+        # Self-hosted: logs come from container/journald, not CloudWatch.
+        return log_array
     previous_next_token = ''
     while True:
         params = {
@@ -76,6 +80,13 @@ def fetch_logs(request):
     # Parameters
     log_group_name = request.POST.get('log_group_name', '/ecs/WaveAssistWorkerTasks')
     node_key_csv = request.POST.get('node_key_csv')
+
+    if not flags.use_cloudwatch:
+        from .Utils.local_logs import read_logs
+        import os
+        logs = read_logs(os.getenv('WAVEASSIST_LOG_DIR', '/data/logs'), project_object.project_key,
+                         tuple(key.strip() for key in (node_key_csv or '').split(',') if key.strip()))
+        return ResponseParser.getParsedSuccessMessage({'logs': logs}, '200', 'Logs fetched successfully')
 
     filter_pattern = utils.generate_filter_pattern(node_key_csv, project_object)
 

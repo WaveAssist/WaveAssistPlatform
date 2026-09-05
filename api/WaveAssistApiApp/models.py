@@ -267,6 +267,7 @@ class Project(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255, default="", null=True)
     project_key = models.CharField(max_length=255, unique=True)
+    local_configuration = models.JSONField(default=dict, blank=True)
     integration_array = models.ManyToManyField("Integrations", blank=True)
     is_premium = models.BooleanField(
         default=False
@@ -348,6 +349,7 @@ class Nodes(models.Model):
 
     ##Params
     python_code = models.TextField(default="")
+    local_source_path = models.CharField(max_length=1024, default="", blank=True)
     input_data_key_array = models.ManyToManyField(
         "DataKey", related_name="input_data_array", blank=True
     )

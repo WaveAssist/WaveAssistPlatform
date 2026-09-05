@@ -18,6 +18,22 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+# --- self-hosted / fail-closed config (added by platform sweep) ---
+WAVEASSIST_SELF_HOSTED = os.getenv("WAVEASSIST_SELF_HOSTED", "0").strip().lower() in ("1", "true", "yes", "on")
+
+def _require_env(name):
+    """Required secret/infra var. No production fallback lives in code, so a missing
+    value fails closed instead of silently connecting to WaveAssist production."""
+    val = os.getenv(name)
+    if val is None or val == "":
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            f"{name} is not set. Set it in this deployment's .env "
+            f"(no production default is baked into the code)."
+        )
+    return val
+# --- end sweep helper ---
+
 import posthog
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
@@ -26,7 +42,7 @@ import posthog
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'REMOVED_CREDENTIAL'
+SECRET_KEY = _require_env("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -60,7 +76,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'posthog.integrations.django.PosthogContextMiddleware',
+    *(['posthog.integrations.django.PosthogContextMiddleware'] if os.getenv('WA_TELEMETRY','on').strip().lower() in ('1','true','yes','on') else []),
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -93,8 +109,8 @@ WSGI_APPLICATION = 'WaveAssistApi.wsgi.application'
 
 DB_NAME = os.getenv('DB_NAME', 'waveassistdb')
 DB_USER = os.getenv('DB_USER', 'waveassist')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'REMOVED_CREDENTIAL')
-DB_HOST = os.getenv('DB_HOST', 'waveassistdb.cc7ssiig4bl4.us-east-1.rds.amazonaws.com')
+DB_PASSWORD = _require_env('DB_PASSWORD')
+DB_HOST = _require_env('DB_HOST')
 DB_PORT = os.getenv('DB_PORT', '3306')
 
 DATABASES = {
@@ -113,7 +129,7 @@ DATABASES = {
 }
 
 
-MONGO_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING', 'REMOVED_CREDENTIAL')
+MONGO_CONNECTION_STRING = _require_env('MONGODB_CONNECTION_STRING')
 
 CACHES = {
     'default': {
@@ -167,12 +183,16 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-FIREBASE_ADMIN_CREDENTIALS = os.path.join(BASE_DIR, 'firebase_admin.json')
+FIREBASE_ADMIN_CREDENTIALS = os.getenv('FIREBASE_CREDENTIALS_PATH', os.path.join(BASE_DIR, 'firebase_admin.json'))
 
 
-POSTHOG_API_KEY = os.getenv('POSTHOG_API_KEY', 'REMOVED_CREDENTIAL')
+POSTHOG_API_KEY = os.getenv('POSTHOG_API_KEY', '')
 POSTHOG_HOST = os.getenv('POSTHOG_HOST', 'https://app.posthog.com')
 
-# Configure PostHog Python client
-posthog.api_key = POSTHOG_API_KEY
-posthog.host = POSTHOG_HOST
+# Configure PostHog Python client (telemetry can be turned off per deployment)
+_TELEMETRY_ON = os.getenv('WA_TELEMETRY', 'on').strip().lower() in ('1','true','yes','on')
+if _TELEMETRY_ON and POSTHOG_API_KEY:
+    posthog.api_key = POSTHOG_API_KEY
+    posthog.host = POSTHOG_HOST
+else:
+    posthog.disabled = True

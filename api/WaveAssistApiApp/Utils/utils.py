@@ -1,3 +1,4 @@
+import os
 ##PYTHON IMPORTS
 import uuid
 
@@ -290,6 +291,11 @@ def check_dag(start_node, all_nodes):
 
 def get_code_for_node(node_object, project_key):
     node_python_code = node_object.python_code
+    if node_object.local_source_path:
+        import ast
+        module = ast.parse(node_python_code)
+        if any(isinstance(node, ast.FunctionDef) and node.name == "run_task" for node in module.body):
+            return node_python_code
     python_code = "def run_task():\n"
     python_code += "    " + node_python_code.replace("\n", "\n    ") + "\n\n"
     return python_code
@@ -300,6 +306,7 @@ def get_task_dict_for_node(node_object, uid):
         "node_key": node_object.node_key,
         "project_key": node_object.project_object.project_key,
         "uid": uid,
+        "source_path": node_object.local_source_path,
     }
     return task_dict
 
@@ -487,9 +494,9 @@ import pymongo
 import requests
 from requests.auth import HTTPDigestAuth
 
-mongo_url = "REMOVED_CREDENTIAL"
-public_key = "nzaopldm"
-private_key = "REMOVED_CREDENTIAL"
+mongo_url = os.getenv('ATLAS_ADMIN_MONGO_URL', '')
+public_key = os.getenv('ATLAS_ADMIN_PUBLIC_KEY', '')
+private_key = os.getenv('ATLAS_ADMIN_PRIVATE_KEY', '')
 
 
 def create_mongo_url(user_object):
@@ -693,6 +700,9 @@ def get_repo_parts_from_url(repo_url):
 
 
 def track_posthog(uid, event, props):
+    from WaveAssistApiApp.Utils import runtime_flags as flags
+    if not flags.telemetry_enabled:
+        return
     try:
         posthog.capture(distinct_id=str(uid), event=event, properties=props or {})
     except:
@@ -1638,3 +1648,25 @@ def fetch_credits_from_openrouter(open_router_key: str) -> dict:
     if result["limit_remaining"] == 0:
         result = _call()
     return result
+
+
+def save_file_local(file, name, public=False):
+    """Self-hosted counterpart to upload_file_to_s3: write to a local storage dir
+    (WAVEASSIST_STORAGE_DIR, default ./storage) served by the box web tier.
+    Returns (True, relative_key) or (False, None)."""
+    try:
+        base = os.getenv("WAVEASSIST_STORAGE_DIR", "storage")
+        dest = os.path.join(base, name)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        data = file.read() if hasattr(file, "read") else file
+        if hasattr(file, "read") and hasattr(file, "seek"):
+            try: file.seek(0)
+            except Exception: pass
+            data = file.read()
+        mode = "wb" if isinstance(data, (bytes, bytearray)) else "w"
+        with open(dest, mode) as fh:
+            fh.write(data)
+        return True, name
+    except Exception as e:
+        print("save_file_local error:", e)
+        return False, None

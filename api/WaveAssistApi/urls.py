@@ -34,8 +34,10 @@ from WaveAssistApiApp import (
 
 from django.views.decorators.csrf import csrf_exempt
 from WaveAssistApiApp import manage_views, wavemaker_views, account_views
+from WaveAssistApiApp.health_views import ready
 
 urlpatterns = [
+    path("health/ready/", ready, name="ready"),
     path("admin/", admin.site.urls),
     ##Dashboard URL's
     path("", csrf_exempt(dashboard_views.index), name="index"),
@@ -58,6 +60,9 @@ urlpatterns = [
     ##Manage URL's
     path(
         "manage/get_started/", csrf_exempt(manage_views.get_started), name="get_started"
+    ),
+    path(
+        "manage/password_login/", csrf_exempt(manage_views.password_login), name="password_login"
     ),
     path(
         "manage/create_user/", csrf_exempt(manage_views.create_user), name="create_user"

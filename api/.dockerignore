@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+!.env.example
+EXTRACTED_SECRETS*
+django.env
+firebase_admin.json
+*.sqlite3
+__pycache__/
+*.pyc
+.pytest_cache/

@@ -19,6 +19,7 @@ from datetime import datetime
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from WaveAssistApiApp.data_views import set_data_for_key
+from WaveAssistApiApp.Utils import runtime_flags as flags
 from django.test import Client
 from celery.exceptions import TimeoutError
 from django.db import transaction
@@ -51,7 +52,10 @@ def generate_dag_image(request):
 
     image_stream = utils.generate_dag_visualization(dag_dict)
     file_name = "API/" + str(uuid.uuid4()) + ".png"  ##Better name if needed.
-    success, s3_key = utils.upload_file_to_s3(image_stream, file_name, 1)
+    if flags.use_s3:
+        success, s3_key = utils.upload_file_to_s3(image_stream, file_name, 1)
+    else:
+        success, s3_key = utils.save_file_local(image_stream, file_name, public=True)
 
     if success:
         output_dict = {"status": "success", "s3_key": s3_key}
