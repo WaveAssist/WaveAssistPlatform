@@ -1,0 +1,22 @@
+# Deterministic two-node DAG fixture for the platform end-to-end test.
+# No external network writes: both nodes only use the WaveAssist SDK (store_data/
+# fetch_data), which round-trips through this deployment's own API + Mongo.
+#
+#   produce (starting node, top-level-script style)
+#       -> stores seed_value (from the webhook body {"n": N}, default 21)
+#   consume (run_after produce, explicit run_task() style)
+#       -> reads seed_value, computes final_result = seed * 2, stores it
+#
+# The runner triggers `produce` over HTTP and asserts final_result == 2*N.
+name: E2E Two Node DAG
+timezone: UTC
+nodes:
+  - key: produce
+    name: Produce
+    file_name: produce.py
+    starting_node: true
+  - key: consume
+    name: Consume
+    file_name: consume.py
+    run_after: [produce]
+variables: []
