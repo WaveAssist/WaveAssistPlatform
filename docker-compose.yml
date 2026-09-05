@@ -1,0 +1,171 @@
+# WaveAssist platform — the whole stack on one host.
+#   cp .env.example .env    # fill secrets + flags
+#   docker compose build
+#   docker compose up -d
+# Services: mysql · mongo · redis · api · worker · beat · camera · mcp · web(nginx)
+# Build all services from this repository.
+
+x-api-env: &api-env
+  DJANGO_SETTINGS_MODULE: WaveAssistApi.settings
+  WAVEASSIST_SELF_HOSTED: "1"
+  WA_BOOTSTRAP_ADMIN: ${WA_BOOTSTRAP_ADMIN:-1}
+  WAVEASSIST_ADMIN_UID: ${WAVEASSIST_ADMIN_UID:-boxadmin000000000000admin}
+  WAVEASSIST_ADMIN_EMAIL: ${WAVEASSIST_ADMIN_EMAIL:-admin@waveassist.local}
+  WA_WORKER_PROVISIONING: ${WA_WORKER_PROVISIONING:-shared_queue}
+  WA_DB_PROVISIONING: ${WA_DB_PROVISIONING:-local}
+  WA_BILLING: ${WA_BILLING:-off}
+  WA_STORAGE: ${WA_STORAGE:-local}
+  WA_LOGS: ${WA_LOGS:-local}
+  WA_CATALOG: ${WA_CATALOG:-local}
+  WA_TELEMETRY: ${WA_TELEMETRY:-off}
+  WA_AUTH: ${WA_AUTH:-local}
+  WA_ADMIN_USERNAME: ${WA_ADMIN_USERNAME:-admin}
+  WA_ADMIN_PASSWORD: ${WA_ADMIN_PASSWORD:-admin}
+  DB_HOST: ${DB_HOST:-mysql}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_NAME: ${DB_NAME:-waveassist}
+  DB_USER: ${DB_USER:-waveassist}
+  DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+  MONGODB_CONNECTION_STRING: ${MONGODB_CONNECTION_STRING:-mongodb://mongo:27017/}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}
+  WORKER_TOKEN: ${WORKER_TOKEN:-boxworkertoken}
+  WAVEASSIST_STORAGE_DIR: /data/storage
+  WAVEASSIST_LOG_DIR: /data/logs
+  FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-/nonexistent-firebase.json}
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      MYSQL_DATABASE: ${DB_NAME:-waveassist}
+      MYSQL_USER: ${DB_USER:-waveassist}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes: [mysql_data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    volumes: [mongo_data:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    image: waveassist-platform-api:latest
+    env_file: .env
+    environment: *api-env
+    volumes:
+      - platform_data:/data
+      - ${AGENTS_DIR:-./agents}:/agents:ro
+      - ${SECRETS_DIR:-./secrets}:/run/secrets:ro
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8000/health/ready/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    depends_on:
+      mysql: {condition: service_healthy}
+      mongo: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    ports: ["8000:8000"]
+    restart: unless-stopped
+
+  worker:
+    build: ./worker
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      ACCOUNT_ID: 7a5804de-f037-4c0d-aaa0-fa5211d7afd7   # bare uuid -> queue_<uuid> == SHARED_OPERATOR_QUEUE
+      BASE_URL: http://api:8000
+      WORKER_TOKEN: ${WORKER_TOKEN:-boxworkertoken}
+      WAVEASSIST_API_BASE_URL: http://api:8000
+      WAVEASSIST_LOG_DIR: /data/logs
+    volumes:
+      - platform_data:/data
+      - ${AGENTS_DIR:-./agents}:/agents:ro
+    depends_on:
+      redis: {condition: service_healthy}
+      api: {condition: service_healthy}
+    restart: unless-stopped
+
+  beat:
+    image: waveassist-platform-api:latest
+    command: ["./start_beat.sh"]
+    env_file: .env
+    environment: *api-env
+    depends_on:
+      api: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  camera:
+    image: waveassist-platform-api:latest
+    command: ["./start_camera.sh"]
+    env_file: .env
+    environment: *api-env
+    depends_on:
+      api: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  mcp:
+    build: ./waveagent/mcp
+    profiles: [mcp]
+    environment:
+      WAVEASSIST_API_BASE: http://api:8000
+      WAVEASSIST_APP_BASE: ${PUBLIC_APP_URL:-http://localhost:8080}
+      WAVEASSIST_HOME: /data/waveassist
+      PORT: "9000"
+      WAVEASSIST_MCP_HOST: 0.0.0.0
+    depends_on:
+      api: {condition: service_healthy}
+    volumes: [mcp_data:/data/waveassist]
+    ports: ["9000:9000"]
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./dashboard
+      args:
+        VITE_WAVEASSIST_FIREBASE_CONFIG: ${VITE_WAVEASSIST_FIREBASE_CONFIG:-}
+        VITE_GITZOID_FIREBASE_CONFIG: ${VITE_GITZOID_FIREBASE_CONFIG:-}
+        VITE_WAVEASSIST_POSTHOG_KEY: ${VITE_WAVEASSIST_POSTHOG_KEY:-}
+        VITE_GITZOID_POSTHOG_KEY: ${VITE_GITZOID_POSTHOG_KEY:-}
+        VITE_DASHBOARD_BASE_URL: ${PUBLIC_API_URL:-http://localhost:8000}
+        VITE_AUTH_MODE: ${WA_AUTH:-local}
+        VITE_TELEMETRY: ${WA_TELEMETRY:-off}
+        VITE_BILLING: ${WA_BILLING:-off}
+        VITE_MCP_URL: ${PUBLIC_MCP_URL:-http://localhost:9000/mcp}
+        VITE_LOCAL_UID: ${WAVEASSIST_ADMIN_UID:-boxadmin000000000000admin}
+    depends_on:
+      api: {condition: service_healthy}
+    ports: ["8080:3000"]
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  mongo_data:
+  redis_data:
+  platform_data:
+  mcp_data:
