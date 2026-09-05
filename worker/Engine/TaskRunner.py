@@ -26,7 +26,13 @@ class TaskRunner(object):
             namespace = {}
             try:
                 import waveassist
+                # Set defaults AND actively initialize. set_worker_defaults() alone only
+                # populates _config.DEFAULT_* fallbacks; on SDK 0.8.12 the active config
+                # (LOGIN_TOKEN/PROJECT_KEY/...) stays unset, so store_data/fetch_data raise
+                # "WaveAssist is not initialized". init() sets the active config and is
+                # version-robust (works on 0.8.12 and 0.9.x).
                 waveassist.set_worker_defaults(self.uid, self.project_key, self.environment_key, self.run_id)
+                waveassist.init(self.uid, self.project_key, self.environment_key, self.run_id)
 
                 # Inject the custom print function into the namespace
                 namespace['print'] = self.custom_print
