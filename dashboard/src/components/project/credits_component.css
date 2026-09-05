@@ -1,0 +1,905 @@
+/* ═══════════════════════════════════════════════
+   Credits Page
+   ═══════════════════════════════════════════════ */
+
+.credits-container {
+    background-color: var(--color-bg-main);
+    padding: 2rem;
+    position: relative;
+}
+
+/* ── Header ── */
+
+.credits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.credits-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.credits-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.plan-badge-free {
+    background-color: rgba(161, 161, 170, 0.15);
+    color: var(--color-text-secondary);
+    border: 1px solid rgba(161, 161, 170, 0.25);
+}
+
+.plan-badge-paid {
+    background-color: rgba(var(--color-primary-rgb), 0.12);
+    color: var(--color-primary);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
+}
+
+.refresh-btn {
+    background: none;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+}
+
+.refresh-btn:hover {
+    background-color: var(--color-bg-card);
+    color: #FFFFFF;
+    border-color: var(--color-border);
+}
+
+/* ── Available Credits Card ── */
+
+.available-credits-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+    .available-credits-card {
+        margin-bottom: 0;
+    }
+}
+
+.credit-balance-amount {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    text-align: center;
+    margin: 0;
+    line-height: 1;
+}
+
+.credit-balance-label {
+    text-align: center;
+    color: var(--color-text-secondary);
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+.credit-details {
+    border-top: 1px solid var(--color-border);
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.credit-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.credit-detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.credit-detail-label {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.credit-detail-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.credit-detail-value.total {
+    color: var(--color-primary);
+}
+
+.credit-detail-value.used {
+    color: #FFFFFF;
+}
+
+/* ── Subscription & Billing row ── */
+
+/* Subscription & Billing: text left, button right */
+.buy-credits-card.subscription-billing-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: auto;
+    min-height: 0;
+    padding: 0.8rem 1rem;
+    gap: 0.75rem;
+}
+
+@media (min-width: 992px) {
+    .buy-credits-card.subscription-billing-row {
+        min-height: 82px;
+        max-height: 94px;
+        overflow: hidden;
+    }
+}
+
+.subscription-billing-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+}
+
+.subscription-billing-left {
+    min-width: 0;
+    flex: 1 1 auto;
+    text-align: left;
+}
+
+.subscription-billing-row .manage-billing-btn {
+    flex-shrink: 0;
+}
+
+.subscription-billing-title {
+    white-space: nowrap;
+    margin-bottom: 0.25rem !important;
+}
+
+.subscription-billing-status {
+    display: block;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.manage-billing-btn {
+    flex: 0 0 auto;
+    background-color: var(--color-primary);
+    border: none;
+    color: #000000;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.manage-billing-btn:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+    color: #000000;
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.manage-billing-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ── Checkout Success Banner ── */
+
+.checkout-success-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
+    border-radius: 10px;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1.5rem;
+    color: var(--color-primary);
+    font-size: 0.92rem;
+    font-weight: 500;
+    animation: bannerSlideIn 0.35s ease-out;
+}
+
+.checkout-success-banner i.bi-check-circle-fill {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.checkout-banner-dismiss {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    cursor: pointer;
+    margin-left: auto;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.checkout-banner-dismiss:hover {
+    opacity: 1;
+}
+
+@keyframes bannerSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Manage Billing hint ── */
+
+.manage-billing-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+.manage-billing-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 400;
+}
+
+/* ── Buy Credits Card (paid users) ── */
+
+.buy-credits-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.buy-credits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.buy-credits-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.buy-credits-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.credit-amount-section {
+    margin-bottom: 1.5rem;
+}
+
+.credit-amount-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.credit-amount-btn {
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-card);
+    color: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.credit-amount-btn:hover {
+    background-color: var(--color-bg-section);
+}
+
+.credit-amount-btn.active {
+    background-color: var(--color-bg-section);
+    border-color: var(--color-primary);
+    color: #ffffff;
+}
+
+.custom-amount-input {
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-card);
+    color: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+}
+
+.custom-amount-input:hover {
+    background-color: var(--color-bg-section);
+}
+
+.custom-amount-input.active {
+    background-color: var(--color-bg-section);
+    border-color: var(--color-primary);
+    color: #ffffff;
+}
+
+.custom-amount-input input {
+    width: 100%;
+    padding: 0;
+    border-radius: 6px;
+    text-align: center;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+}
+
+.custom-amount-input input:focus {
+    border: none;
+    box-shadow: none;
+    outline: none;
+    color: inherit;
+}
+
+.custom-amount-input input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.dollar-sign {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-right: 0.25rem;
+    user-select: none;
+}
+
+.add-credits-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-credits-button {
+    width: 100%;
+    background-color: var(--color-primary);
+    border: none;
+    color: #000000;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    margin-bottom: 0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.add-credits-button:hover {
+    background-color: var(--color-primary-hover);
+    color: #000000;
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+}
+
+/* ── Upgrade Plan Card (free users) ── */
+
+.upgrade-plan-card {
+    background: linear-gradient(135deg, var(--color-bg-card) 0%, var(--color-bg-section) 100%);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.upgrade-card-icon {
+    font-size: 2.5rem;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+
+.upgrade-card-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0 0 0.75rem 0;
+    letter-spacing: -0.02em;
+}
+
+.upgrade-card-desc {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin: 0 0 1.75rem 0;
+    line-height: 1.5;
+    max-width: 280px;
+}
+
+.upgrade-card-btn {
+    background-color: var(--color-primary);
+    border: none;
+    color: #000;
+    padding: 0.75rem 2.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.upgrade-card-btn:hover {
+    background-color: var(--color-primary-hover);
+    box-shadow: 0 0 24px rgba(var(--color-primary-rgb), 0.2);
+    transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════
+   Upgrade Modal
+   ═══════════════════════════════════════════════ */
+
+.upgrade-modal .modal-content {
+    background-color: var(--color-bg-main);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+}
+
+.upgrade-modal .modal-header {
+    border-bottom: 1px solid var(--color-border);
+    padding: 1.5rem 2rem 1rem 2rem;
+}
+
+.upgrade-modal-title {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.upgrade-modal-subtitle {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin: 0.25rem 0 0 0;
+}
+
+.upgrade-modal .modal-body {
+    padding: 2rem;
+}
+
+.upgrade-plans-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+    .upgrade-plans-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.upgrade-plan-option {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: border-color 0.2s ease;
+}
+
+.upgrade-plan-option:hover {
+    border-color: var(--color-primary);
+}
+
+.upgrade-plan-option.recommended {
+    border-color: var(--color-primary);
+    background: linear-gradient(180deg, rgba(var(--color-primary-rgb), 0.04) 0%, var(--color-bg-card) 40%);
+}
+
+.recommended-badge {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--color-primary);
+    color: #000;
+    padding: 3px 16px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.plan-option-name {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 0 0 0.75rem 0;
+}
+
+.plan-option-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.plan-price-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #FFFFFF;
+    line-height: 1;
+}
+
+.plan-price-period {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    font-weight: 400;
+}
+
+.plan-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+    flex: 1;
+}
+
+.plan-features-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.4rem 0;
+    font-size: 0.88rem;
+    color: var(--color-text-secondary);
+}
+
+.plan-features-list li i {
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.plan-select-btn {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+}
+
+.plan-select-btn.primary {
+    background-color: var(--color-primary);
+    color: #000;
+}
+
+.plan-select-btn.primary:hover {
+    background-color: var(--color-primary-hover);
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.plan-select-btn.secondary {
+    background-color: transparent;
+    color: #FFFFFF;
+    border: 1px solid var(--color-border);
+}
+
+.plan-select-btn.secondary:hover {
+    background-color: var(--color-bg-section);
+    border-color: var(--color-border);
+}
+
+.plan-select-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.upgrade-footer {
+    text-align: center;
+    margin-top: 1.25rem;
+}
+
+.upgrade-footer-note {
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.upgrade-pricing-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-primary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.upgrade-pricing-link:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+}
+
+.upgrade-pricing-link i {
+    font-size: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════
+   Purchase Credits Modal
+   ═══════════════════════════════════════════════ */
+
+.purchase-modal-content {
+    padding: 0.5rem 0;
+}
+
+.purchase-summary {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-secondary);
+}
+
+.summary-row:last-child {
+    margin-bottom: 0;
+}
+
+.total-row {
+    border-top: 1px solid var(--color-border);
+    padding-top: 0.7rem;
+    margin-top: 0.9rem;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.total-amount-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+}
+
+.total-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.indian-currency-amount {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+/* ── Payment Buttons ── */
+
+.payment-buttons-row {
+    display: flex;
+    gap: 5rem;
+    width: 100%;
+    justify-content: center;
+    padding-top: 1rem;
+}
+
+.payment-btn {
+    flex: 0 1 auto;
+    min-width: 200px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-primary);
+    color: #000000;
+    cursor: pointer;
+}
+
+.payment-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transition: left 0.5s;
+}
+
+.payment-btn:hover::before {
+    left: 100%;
+}
+
+.payment-btn:hover {
+    background-color: var(--color-primary-hover);
+    color: #000000;
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.payment-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.payment-btn-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.payment-logo {
+    height: 18px;
+    width: auto;
+    display: inline-block;
+}
+
+/* ═══════════════════════════════════════════════
+   Dark Theme Modal Overrides
+   ═══════════════════════════════════════════════ */
+
+.main-container .modal-content {
+    background-color: var(--color-bg-main);
+    border: 1px solid var(--color-border);
+}
+
+.main-container .modal-header {
+    border-bottom-color: var(--color-border);
+}
+
+.main-container .modal-footer {
+    border-top-color: var(--color-border);
+}
+
+.main-container .modal-title {
+    color: #ffffff;
+}
+
+.main-container .form-label {
+    color: #ffffff;
+}
+
+.main-container .form-control {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    color: #ffffff;
+}
+
+.main-container .form-control:focus {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+/* ═══════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+    .credits-container {
+        padding: 1rem;
+    }
+
+    .credits-header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .credits-title {
+        font-size: 1.5rem;
+    }
+
+    .buy-credits-card {
+        height: auto;
+        min-height: 200px;
+    }
+
+    .available-credits-card {
+        height: auto;
+        min-height: 250px;
+    }
+
+    .credits-container .row {
+        margin: 0 -0.5rem;
+    }
+
+    .credits-container .col-md-6 {
+        padding: 0 0.5rem;
+    }
+
+    .upgrade-plan-card {
+        margin-top: 1rem;
+        height: auto;
+    }
+
+    .credit-balance-amount {
+        font-size: 2.5rem;
+    }
+}

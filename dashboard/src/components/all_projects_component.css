@@ -1,0 +1,178 @@
+.base_component {
+  background-color: var(--color-bg-main);
+  height: 100vh;
+  overflow: auto;
+  position: relative;
+}
+
+.wp_logo {
+  height: 25px;
+  width: auto;
+}
+
+
+.wp_logo_login {
+  height: 75px !important;
+  width: auto;
+  margin-top: 10px;
+  margin-bottom: 30px;
+  margin-left: 10px;
+}
+.logout_button {
+  margin: 0;
+}
+
+.separator {
+  border-top: 1px solid #fff;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.separator-less-top {
+  border-top: 1px solid #fff;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+.admin-panel {
+  height: auto;
+  width: auto;
+  margin-top: 20px;
+}
+
+.content {
+  width: auto;
+  height: auto;
+  padding: 30px;
+  border-radius: 5px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+
+.translucent_white{
+  color: rgba(255,255,255,0.80) !important;
+}
+
+.translucent_white_more{
+  color: rgba(255,255,255,0.50) !important;
+}
+
+.translucent_blue{
+  color: var(--color-primary) !important;
+}
+
+.admin-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.95);
+}
+
+.project-card {
+  cursor: pointer;
+}
+
+.projects-row{
+  padding-left: 15%;
+  padding-right:15%
+}
+
+.project-card .card {
+  width: 100%;
+  aspect-ratio: 2;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top:10px;
+  background-color: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border) !important;
+  min-width: 220px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.project-card .card:hover {
+  transform: scale(1.015);
+  background-color: var(--color-bg-card) !important;
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+  border-color: var(--color-primary) !important;
+}
+
+.add-project-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.add-icon {
+  font-size: 3rem; /* Adjust size as needed */
+}
+
+.add-text {
+  margin-top: 10px;
+  font-size: 1.25rem;
+}
+
+.card-title {
+  margin-bottom: 5px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.delete-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #000000 !important;
+  border-radius: 6px;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: #000000 !important;
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.ag-cell {
+  user-select: text !important;
+}
+
+.button-row {
+  gap: 0.5rem;
+  flex-wrap: nowrap !important;
+}
+
+@media (max-width: 767.98px) {
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .projects-row {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .projects-row {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+}

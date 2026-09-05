@@ -1,0 +1,362 @@
+# WaveAssist Dashboard Design Guidelines
+
+IMPORTANT: Always use the latest design guidelines and color palette, do not use any old design or any other colors.
+
+## Typography
+
+- **UI Font:** Inter (imported from Google Fonts)
+- **Headings:**
+  - Weight: Bold (700) for H1, Semi-Bold (600) for H2-H6
+  - Letter-spacing: -0.02em
+  - Color: #FFFFFF
+- **Body Text:**
+  - Weight: Regular (400)
+  - Standard spacing
+  - Primary: #FFFFFF
+  - Secondary: #A1A1AA
+
+## Color Palette
+
+### Background Colors
+
+- **Main Background:** #0F1116
+- **Section Background (Alternate):** #16181F
+- **Card/Panel Background:** #1C1F28
+- **Navbar Background:** #16181F
+- **Sidebar Background:** #16181F
+
+### Border Colors
+
+- **Primary Border:** #2D313A (always use 1px thickness)
+- **Border Radius:**
+  - Buttons: 6px
+  - Cards: 8px-12px
+
+### Action Colors
+
+- **Primary Action:** #1ED66C (Bright Green)
+- **Primary Hover:** #148F47
+- **Pro Accent:** #FBB040 (Yellow - for premium features)
+
+### Text Colors
+
+- **Primary Text:** #FFFFFF (White)
+- **Secondary Text:** #A1A1AA (Cool Gray)
+- **Text on Primary Button:** #000000 (Black)
+
+## UI Elements
+
+### Primary Button
+
+```css
+background-color: #1ed66c;
+color: #000000;
+border: none;
+border-radius: 6px;
+padding: 0.5rem 1rem;
+font-weight: 400;
+transition: all 0.2s ease;
+```
+
+**Hover State:**
+
+```css
+background-color: #148f47;
+box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+```
+
+### Secondary Button
+
+```css
+background-color: transparent;
+color: #ffffff;
+border: 1px solid #2d313a;
+border-radius: 6px;
+padding: 0.5rem 1rem;
+font-weight: 400;
+transition: all 0.2s ease;
+```
+
+**Hover State:**
+
+```css
+background-color: rgba(255, 255, 255, 0.05);
+```
+
+### Active State/Glow
+
+Use on active nodes, selected items, or main CTAs:
+
+```css
+box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+```
+
+### Cards
+
+```css
+background-color: #1c1f28;
+border: 1px solid #2d313a;
+border-radius: 8px;
+padding: 1.5rem;
+```
+
+**Card Hover (if interactive):**
+
+```css
+box-shadow: 0 0 20px rgba(30, 214, 108, 0.15);
+border-color: #1ed66c;
+```
+
+## Background Pattern
+
+All main sections should include a subtle background pattern overlay:
+
+```css
+background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+background-size: 24px 24px;
+opacity: 0.4;
+```
+
+Implementation:
+
+- Applied globally to `body` via `::before` pseudo-element
+- Position: fixed, z-index: -10
+- Use `.bg-pattern` class for section-specific patterns
+
+## Textures & Gradients
+
+### Background Pattern Implementation
+
+- Pattern: `radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px)`
+- Spacing: 24px
+- Opacity: 40%
+- Position: Absolutely positioned with z-index: -10
+
+### Text Gradient (H1 Headers Only)
+
+```css
+background: linear-gradient(to bottom, #ffffff, #a1a1aa);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+```
+
+## Form Elements
+
+### Input Fields
+
+```css
+background-color: #1c1f28;
+border: 1px solid #2d313a;
+border-radius: 8px;
+color: #ffffff;
+padding: 0.75rem 1rem;
+```
+
+**Focus State:**
+
+```css
+border-color: #1ed66c;
+box-shadow: 0 0 0 0.2rem rgba(30, 214, 108, 0.25);
+```
+
+**Placeholder:**
+
+```css
+color: rgba(255, 255, 255, 0.6);
+```
+
+### Select/Dropdown
+
+Same styling as input fields. Dropdown menu:
+
+```css
+background-color: #1c1f28;
+border: 1px solid #2d313a;
+```
+
+## Modals
+
+### Modal Styling
+
+```css
+.modal-body,
+.modal-header,
+.modal-footer {
+	background-color: #1c1f28;
+	border-color: #2d313a;
+	color: #ffffff;
+}
+```
+
+### Modal Title
+
+```css
+color: #ffffff;
+font-weight: 600;
+letter-spacing: -0.02em;
+```
+
+## Navigation
+
+### Sidebar Active Link
+
+```css
+background-color: #1ed66c;
+color: #000000;
+font-weight: 500;
+```
+
+### Navbar
+
+- Background: #16181F
+- Border-bottom: 1px solid #2D313A
+- Height: 60px
+
+## AG Grid Theme
+
+- Background: #0F1116
+- Header Background: #16181F
+- Cell Background: #0F1116
+- Border: #2D313A
+- Accent Color: #1ED66C
+- Font: Inter
+
+## Badges
+
+### Primary Badge
+
+```css
+background-color: #1ed66c;
+color: #000000;
+```
+
+### Secondary Badge
+
+```css
+background-color: #1c1f28;
+border: 1px solid #2d313a;
+color: #ffffff;
+```
+
+## Important Notes
+
+1. **Never use old colors:**
+
+   - ❌ #141721, #1A2430, #232F42, #428d4f, #28a745
+   - ✅ Use new palette: #0F1116, #16181F, #1C1F28, #1ED66C
+
+2. **Button Text Color:**
+
+   - Primary buttons: #000000 (black text)
+   - Secondary buttons: #FFFFFF (white text)
+
+3. **Borders:**
+
+   - Always 1px solid #2D313A
+   - Never use thicker borders or different colors
+
+4. **Background Pattern:**
+
+   - Applied globally, no need to add manually to each component
+   - Use `.bg-pattern` class only for section-specific overlays
+
+5. **Font Family:**
+
+   - Always use Inter, never Open Sans or other fonts
+   - Import: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');`
+
+6. **Remove Decorative SVGs:**
+
+   - Remove all decorative BackgroundSVGs (TopRightSVG, BottomLeftSVG, curved circles, decorative shapes)
+   - Keep only functional patterns
+
+7. **Section Backgrounds:**
+   - Main sections: `background-color: #0F1116`
+   - Alternate sections: `background-color: #16181F`
+   - Always add pattern overlay for consistency
+
+## Design System File
+
+All design system variables and utilities are defined in:
+`/src/utils/design-system.css`
+
+Use CSS variables from this file when possible:
+
+- `var(--color-primary)` for #1ED66C
+- `var(--color-bg-main)` for #0F1116
+- `var(--color-bg-card)` for #1C1F28
+- etc.
+
+## Component-Specific Guidelines
+
+### Login Page
+
+- Background: #0F1116
+- Card: #1C1F28 with #2D313A border
+- Primary button: #1ED66C with black text
+
+### Assistant Component
+
+- Container: #0F1116
+- Status Card: #1C1F28 with #2D313A border
+- Config Card: #1C1F28 with #2D313A border
+- Deploy Button: #1ED66C with black text
+
+### Credits Component
+
+- Container: #0F1116
+- Cards: #1C1F28 with #2D313A border
+- Total amount: #1ED66C color
+
+### Project Cards
+
+- Background: #1C1F28
+- Border: #2D313A
+- Hover: Green glow effect with border-color: #1ED66C
+
+## Code Examples
+
+### Creating a Primary Button
+
+```tsx
+<Button className="btn-primary">Click Me</Button>
+```
+
+Bootstrap's `.btn-primary` is already styled to match design system.
+
+### Creating a Card
+
+```tsx
+<div className="card-wa">{/* Card content */}</div>
+```
+
+Or manually:
+
+```css
+.card {
+	background-color: #1c1f28;
+	border: 1px solid #2d313a;
+	border-radius: 8px;
+	padding: 1.5rem;
+}
+```
+
+### Creating a Section with Pattern
+
+```tsx
+<section className="bg-main bg-pattern">{/* Section content */}</section>
+```
+
+## Testing Checklist
+
+When adding new components, ensure:
+
+- [ ] Uses Inter font
+- [ ] Uses correct color palette (no old colors)
+- [ ] Primary buttons have black text
+- [ ] Cards have #1C1F28 background and #2D313A border
+- [ ] Borders are 1px solid #2D313A
+- [ ] Hover states include green glow for primary actions
+- [ ] Form inputs have correct focus states
+- [ ] Text colors match guidelines (#FFFFFF primary, #A1A1AA secondary)

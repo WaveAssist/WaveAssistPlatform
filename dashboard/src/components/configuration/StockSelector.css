@@ -1,0 +1,62 @@
+/* Stock Search Results Container */
+.stock-search-results-container {
+	background-color: #f8f9fa;
+	border: 1px solid #dee2e6;
+	border-radius: 0.375rem;
+	max-height: 200px;
+	overflow-y: auto;
+	position: relative;
+	z-index: 1000;
+}
+
+/* Stock Search Result Item */
+.stock-search-result {
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.stock-search-result:hover {
+	background-color: #e9ecef;
+}
+
+.stock-search-result:last-child {
+	border-bottom: none !important;
+}
+
+/* Selected Stock Badge */
+.stock-selected-badge {
+	background-color: var(--color-primary) !important;
+	color: #000000 !important;
+	margin-right: 0.5rem;
+	margin-bottom: 0.5rem;
+	padding: 0.375rem 0.75rem !important;
+	font-size: 0.8rem;
+	border-radius: 6px !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	max-width: 100%;
+	word-break: break-word;
+}
+
+.stock-selected-badge .btn-close {
+	font-size: 0.75rem;
+	opacity: 0.8 !important;
+	color: #000000 !important;
+	background: none;
+	border: none;
+	padding: 0 !important;
+	margin-left: 0;
+	line-height: 1;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 16px !important;
+	height: 16px !important;
+}
+
+.stock-selected-badge .btn-close:hover {
+	opacity: 1 !important;
+	color: #000000 !important;
+}
+

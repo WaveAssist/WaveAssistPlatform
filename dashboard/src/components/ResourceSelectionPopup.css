@@ -1,0 +1,349 @@
+/* Resource Selection Popup - design system aligned */
+
+.resource-selection-popup .modal-content {
+	background-color: var(--color-bg-card);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-card);
+	color: var(--color-text-primary);
+}
+
+.resource-selection-popup .modal-header {
+	background-color: var(--color-bg-card);
+	border-bottom: 1px solid var(--color-border);
+	color: var(--color-text-primary);
+}
+
+.resource-selection-popup .modal-body.resource-selection-popup-body {
+	background-color: var(--color-bg-main);
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	height: 65vh;
+	min-height: 320px;
+}
+
+/* Search input above table: full width, symmetric padding */
+.resource-search-wrapper {
+	position: relative;
+	flex-shrink: 0;
+	padding: 12px 16px 0 16px;
+	margin-bottom: 14px;
+}
+
+.resource-search-input {
+	width: 100%;
+	padding-left: 16px;
+	padding-right: 16px;
+	height: 40px;
+	background-color: var(--color-bg-card) !important;
+	border: 1px solid var(--color-border) !important;
+	color: var(--color-text-primary) !important;
+	font-size: 0.9rem;
+	border-radius: 8px;
+}
+
+.resource-search-input::placeholder {
+	color: var(--color-text-secondary);
+}
+
+.resource-search-input:focus {
+	border-color: var(--color-primary) !important;
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+	outline: none;
+}
+
+/* Auto-select notice (first connect) */
+.resource-autoselect-notice {
+	flex-shrink: 0;
+	padding: 0 16px;
+	margin-bottom: 0.5rem;
+	color: var(--color-text-secondary);
+	font-size: 0.85rem;
+}
+
+/* Live plan-cap indicator (e.g. "3 of 5 selected — add up to 2 more"). */
+.resource-cap-hint {
+	flex-shrink: 0;
+	padding: 0 16px;
+	margin-bottom: 0.5rem;
+	color: var(--color-text-secondary);
+	font-size: 0.85rem;
+}
+
+/* When the cap is full, draw attention with the brand accent. */
+.resource-cap-hint-reached {
+	color: var(--color-primary);
+}
+
+/* Bulk action controls (Select all / Clear all) */
+.resource-bulk-actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-shrink: 0;
+	padding: 0 16px;
+	margin-bottom: 0.75rem;
+}
+
+.resource-bulk-btn {
+	font-size: 0.8rem;
+	border-radius: var(--radius-button);
+}
+
+.resource-selection-popup .modal-footer {
+	background-color: var(--color-bg-card);
+	border-top: 1px solid var(--color-border);
+	color: var(--color-text-primary);
+}
+
+/* Table wrapper with scroll */
+.resource-table-wrapper {
+	flex: 1;
+	overflow: auto;
+	min-height: 0;
+}
+
+.resource-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+}
+
+.resource-table th,
+.resource-table td {
+	border-bottom: 1px solid var(--color-border);
+	padding: 12px 16px;
+	text-align: left;
+	background-color: var(--color-bg-main);
+	color: var(--color-text-primary);
+}
+
+.resource-table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background-color: var(--color-bg-section);
+	color: var(--color-text-secondary);
+	font-weight: 600;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.resource-table-col-chevron {
+	width: 30px;
+	min-width: 30px;
+	vertical-align: middle;
+}
+
+.resource-table-col-resource {
+	min-width: 200px;
+}
+
+.resource-table-col-name {
+	min-width: 150px;
+}
+
+.resource-table-col-select {
+	text-align: left;
+}
+
+/* Row states */
+.resource-table-row {
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.resource-table-row[aria-expanded="true"] {
+	cursor: pointer;
+}
+
+.resource-table-row:hover:not(.resource-table-detail-row) {
+	background-color: var(--color-bg-section);
+}
+
+.resource-table-row-selected {
+	background-color: var(--color-bg-section);
+}
+
+.resource-table-row-selected.resource-table-row-expanded {
+	background-color: var(--color-bg-section);
+}
+
+/* Locked = unselected row while the plan cap is full: dim it and drop the clickable affordance. */
+.resource-table-row-locked {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.resource-table-row-locked:hover:not(.resource-table-detail-row) {
+	background-color: transparent;
+}
+
+.resource-table-cell-id {
+	font-family: var(--font-family);
+}
+
+.resource-table-cell-name {
+	color: var(--color-text-secondary);
+}
+
+/* Select button */
+.resource-table-select-btn {
+	min-width: 96px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	padding: 6px 12px;
+	border-radius: var(--radius-button);
+}
+
+.resource-table-cell-select {
+	text-align: left;
+}
+
+.resource-table-select-btn.btn-primary {
+	background-color: var(--color-primary);
+	color: var(--color-text-button);
+	border-color: var(--color-primary);
+}
+
+.resource-table-select-btn.btn-primary:hover {
+	background-color: var(--color-primary-hover);
+	border-color: var(--color-primary-hover);
+	color: var(--color-text-button);
+	box-shadow: var(--shadow-active);
+}
+
+/* Chevron */
+.resource-table-chevron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	color: var(--color-text-secondary);
+	transition: transform 0.15s ease;
+}
+
+.resource-table-chevron-expanded {
+	transform: rotate(90deg);
+}
+
+.resource-table-chevron-placeholder {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+}
+
+/* Expanded detail row */
+.resource-table-detail-row {
+	background-color: var(--color-bg-section);
+}
+
+.resource-table-detail-cell {
+	border-bottom: 1px solid var(--color-border);
+	padding: 0;
+	vertical-align: top;
+}
+
+.resource-table-detail-content {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	padding: 12px 16px 16px 52px; /* ~36px indent from chevron area (30px + 22px) */
+	align-items: flex-end;
+}
+
+.resource-table-detail-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.resource-table-detail-field-fixed {
+	width: 160px;
+	flex: 0 0 160px;
+}
+
+.resource-table-detail-label {
+	font-size: 0.75rem;
+	color: var(--color-text-secondary);
+	margin-bottom: 0;
+	font-weight: 500;
+}
+
+.resource-table-detail-optional {
+	color: var(--color-text-secondary);
+	opacity: 0.85;
+	font-weight: 400;
+}
+
+.resource-table-detail-input {
+	background-color: var(--color-bg-card) !important;
+	border: 1px solid var(--color-border) !important;
+	color: var(--color-text-primary) !important;
+	font-size: 0.8rem;
+	border-radius: 8px;
+}
+
+.resource-table-detail-input:focus {
+	border-color: var(--color-primary) !important;
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+.resource-table-detail-input::placeholder {
+	color: rgba(255, 255, 255, 0.5);
+}
+
+/* Pagination */
+.resource-table-pagination {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-shrink: 0;
+	padding: 12px 16px;
+	border-top: 1px solid var(--color-border);
+	background-color: var(--color-bg-card);
+}
+
+.resource-table-pagesize {
+	width: auto;
+	min-width: 100px;
+	background-color: var(--color-bg-section) !important;
+	border: 1px solid var(--color-border) !important;
+	color: var(--color-text-primary) !important;
+	font-size: 0.8rem;
+}
+
+.resource-table-pagination-info {
+	font-size: 0.8rem;
+	color: var(--color-text-secondary);
+}
+
+/* Footer count */
+.resource-selection-count {
+	color: var(--color-text-primary);
+	font-size: 0.9rem;
+	font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.resource-selection-popup .modal-body.resource-selection-popup-body {
+		height: 70vh;
+	}
+
+	.resource-search-wrapper {
+		padding-left: 16px;
+	}
+
+	.resource-table-detail-content {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.resource-table-detail-field-fixed {
+		width: 100%;
+		flex: 1 1 auto;
+	}
+}

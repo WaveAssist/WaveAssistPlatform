@@ -1,0 +1,48 @@
+/* Modal CSS properties */
+
+/* Modal CSS */
+.modal-body {
+    background-color: var(--color-bg-card);
+    color: #FFFFFF;
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .modal-header {
+    background-color: var(--color-bg-card);
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .modal-title {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  
+  .modal-close-button button.btn-close {
+    color: #FFFFFF !important;
+    filter: brightness(0) invert(1);
+  }
+  
+  .model-text {
+    color: var(--color-text-secondary) !important;
+  }
+  
+  .modal-footer {
+    background-color: var(--color-bg-card) !important;
+    border-top: 1px solid var(--color-border) !important;
+  }
+  
+  .markdown-body {
+    background-color: transparent !important;
+    color: #FFFFFF !important;
+  }
+  
+  .markdown-body a {
+    color: var(--color-primary);
+    text-decoration: underline;
+  }
+  
+  .markdown-body a:hover {
+    color: var(--color-primary-hover);
+  }
+  

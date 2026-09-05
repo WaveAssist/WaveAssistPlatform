@@ -1,0 +1,177 @@
+/* WaveAssist Design System - CSS Variables */
+
+:root {
+  /* Color Palette — brand-driven (WaveAssist default; GitZoid overrides below).
+     WaveAssist = Volt Lime on Carbon (WaveAssistStudio/colors_and_type.css). */
+  --color-primary: #D8FF00;            /* Volt Lime — the one accent */
+  --color-primary-rgb: 216, 255, 0;    /* accent as an RGB triplet, for rgba() tints */
+  --color-primary-hover: #C2E600;      /* accent-deep — hover on filled */
+  --color-primary-press: #A9CC00;      /* accent-press — active/pressed */
+  --color-pro-accent: #E0A23C;         /* amber — running/pending */
+  --color-bg-main: #0B0C0F;            /* carbon void — page background */
+  --color-bg-section: #0F1114;         /* alt section band */
+  --color-bg-card: #14161B;            /* cards, nav, panels */
+  --color-bg-card-2: #1A1D23;          /* raised panel, inputs, hover rows */
+  --color-border: #23262D;             /* every 1px hairline */
+  --color-text-primary: #ECEEF2;       /* primary text (cool near-white) */
+  --color-text-secondary: #8B909B;     /* secondary text, labels */
+  --color-text-button: #0B0C0F;        /* text on accent fills — always carbon */
+  
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-weight-heading: 600;
+  --font-weight-bold: 700;
+  --font-weight-regular: 400;
+  --letter-spacing-heading: -0.02em;
+  
+  /* Border Radius */
+  --radius-button: 6px;
+  --radius-card: 8px;
+  
+  /* Shadows */
+  --shadow-active: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  /* Background Pattern */
+  --pattern-opacity: 0.4;
+  --pattern-spacing: 24px;
+}
+
+/* ===== GitZoid brand overrides — Patrol Green on Carbon (GitZoidStudio/colors_and_type.css).
+   data-brand is set from VITE_BRAND at boot. ===== */
+:root[data-brand="gitzoid"] {
+  --color-primary: #12C46A;            /* Patrol Green — the one accent */
+  --color-primary-rgb: 18, 196, 106;
+  --color-primary-hover: #0E9E55;      /* accent-deep — hover */
+  --color-primary-press: #0B7E43;      /* accent-darker — active/pressed */
+  --color-pro-accent: #FBB040;         /* amber — warn/medium */
+  --color-bg-main: #0B0E12;            /* carbon — page background */
+  --color-bg-section: #0E1217;         /* alt section band */
+  --color-bg-card: #14181F;            /* cards, nav, panels */
+  --color-bg-card-2: #1A1F27;          /* raised panel, inputs */
+  --color-border: #232A33;             /* 1px hairline on carbon */
+  --color-text-primary: #FFFFFF;       /* headings / primary text */
+  --color-text-secondary: #9BA4B0;     /* muted body text */
+  --color-text-button: #0B0E12;        /* text on accent fills — carbon */
+}
+
+/* Bootstrap semantic override — success/pass IS the brand accent
+   (lime for WaveAssist, green for GitZoid), per both brand systems.
+   Doubled class raises specificity above Bootstrap's .text-success,
+   which is imported after this file in main.tsx. */
+.text-success.text-success {
+  color: var(--color-primary) !important;
+}
+
+/* Background Pattern Overlay */
+.bg-pattern {
+  position: relative;
+}
+
+.bg-pattern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: var(--pattern-spacing) var(--pattern-spacing);
+  opacity: var(--pattern-opacity);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Primary Button */
+.btn-primary-wa {
+  background-color: var(--color-primary);
+  color: var(--color-text-button);
+  border: none;
+  border-radius: var(--radius-button);
+  padding: 0.5rem 1rem;
+  font-weight: var(--font-weight-regular);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-wa:hover {
+  background-color: var(--color-primary-hover);
+  color: var(--color-text-button);
+  box-shadow: var(--shadow-active);
+}
+
+.btn-primary-wa:active {
+  background-color: var(--color-primary-hover);
+  transform: translateY(1px);
+}
+
+.btn-primary-wa:disabled {
+  background-color: var(--color-text-secondary);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Secondary Button */
+.btn-secondary-wa {
+  background-color: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 0.5rem 1rem;
+  font-weight: var(--font-weight-regular);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-wa:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+/* Active State with Glow */
+.active-glow {
+  box-shadow: var(--shadow-active);
+}
+
+/* Card Styling */
+.card-wa {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+}
+
+/* Text Gradient for H1 */
+h1.text-gradient {
+  background: linear-gradient(to bottom, var(--color-text-primary), var(--color-text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Section Backgrounds */
+.bg-main {
+  background-color: var(--color-bg-main);
+}
+
+.bg-section {
+  background-color: var(--color-bg-section);
+}
+
+.bg-card {
+  background-color: var(--color-bg-card);
+}
+
+/* Text Colors */
+.text-primary-wa {
+  color: var(--color-text-primary);
+}
+
+.text-secondary-wa {
+  color: var(--color-text-secondary);
+}
+
+/* Border */
+.border-wa {
+  border: 1px solid var(--color-border);
+}
+

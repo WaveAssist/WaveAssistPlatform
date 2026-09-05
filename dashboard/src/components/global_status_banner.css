@@ -1,0 +1,80 @@
+/* Global account-status bar — sits under the navbar, spans the content column.
+   Flat carbon, 1px hairline, brand tokens only (no hardcoded brand color). */
+
+.global-status-banner {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	padding: 0.7rem 1.25rem;
+	background-color: rgba(var(--color-primary-rgb), 0.08);
+	border-bottom: 1px solid var(--color-border);
+	color: var(--color-text-primary);
+	font-size: 0.9rem;
+	animation: globalBannerSlideIn 0.3s ease-out;
+}
+
+.global-status-banner > i.bi {
+	color: var(--color-primary);
+	font-size: 1.15rem;
+	flex-shrink: 0;
+}
+
+.global-status-banner-text {
+	flex: 1 1 auto;
+}
+
+.global-status-banner-cta {
+	flex-shrink: 0;
+	background-color: var(--color-primary);
+	color: var(--color-text-button);
+	border: none;
+	border-radius: 8px;
+	padding: 0.35rem 0.9rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.global-status-banner-cta:hover {
+	background-color: var(--color-primary-hover);
+}
+
+.global-status-banner-dismiss {
+	flex-shrink: 0;
+	background: none;
+	border: none;
+	color: var(--color-text-secondary);
+	cursor: pointer;
+	padding: 0.25rem;
+	line-height: 1;
+	opacity: 0.8;
+	transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.global-status-banner-dismiss:hover {
+	opacity: 1;
+	color: var(--color-text-primary);
+}
+
+@keyframes globalBannerSlideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (max-width: 576px) {
+	.global-status-banner {
+		flex-wrap: wrap;
+		font-size: 0.85rem;
+	}
+	.global-status-banner-text {
+		flex: 1 1 100%;
+		order: 3;
+	}
+}

@@ -1,0 +1,197 @@
+body {
+	background-color: var(--color-bg-main) !important;
+	margin: 0;
+	padding: 0;
+}
+
+
+wp_logo {
+	max-width: 170px !important;
+	height: auto !important;
+}
+
+@media screen and (max-width: 768px) {
+	wp_logo {
+		max-width: 200px;
+	}
+}
+
+.title-message{
+    padding-bottom: 20px !important;
+    font-size: 18px;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    color: var(--color-text-secondary);
+  }
+.login-buttons {
+	width: 100%;
+	max-width: 350px;
+	margin: 0 auto;
+}
+
+.login-buttons .btn {
+	padding: 0.75rem 1rem;
+	font-weight: 500;
+	border-radius: 6px;
+	transition: all 0.2s;
+}
+
+/* Email input styles */
+.email-input-container {
+	width: 100%;
+	max-width: 350px;
+	margin: 0 auto;
+}
+
+.email-input-container .form-control {
+	background: var(--color-bg-card);
+	border: 1px solid var(--color-border);
+	border-radius: 8px;
+	color: #ffffff;
+	padding: 0.75rem 1rem;
+	font-size: 1rem;
+	transition: all 0.2s;
+}
+
+.email-input-container .form-control:focus {
+	background: var(--color-bg-card);
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+	color: #ffffff;
+}
+
+.email-input-container .form-control::placeholder {
+	color: rgba(255, 255, 255, 0.6);
+}
+
+.email-input-container .form-control.is-invalid {
+	border-color: #dc3545;
+}
+
+.email-input-container .invalid-feedback {
+	color: #dc3545;
+	font-size: 0.875rem;
+	margin-top: 0.25rem;
+}
+
+/* Divider styles */
+.divider-container {
+	display: flex;
+	align-items: center;
+	margin: 1rem 0;
+	width: 100%;
+	max-width: 350px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.divider {
+	flex: 1;
+	height: 1px;
+	background: var(--color-border);
+}
+
+.divider-text {
+	color: var(--color-text-secondary);
+	padding: 0 1rem;
+	font-size: 0.875rem;
+}
+
+/* Email sent styles */
+.email-sent-container {
+	width: 100%;
+	max-width: 350px;
+	margin: 0 auto;
+}
+
+.text-muted {
+	color: var(--color-text-secondary) !important;
+}
+
+/* More specific selector to override Bootstrap */
+.wa-card .text-muted {
+	color: var(--color-text-secondary) !important;
+}
+
+.email-sent-container .text-muted {
+	color: var(--color-text-secondary) !important;
+}
+
+.text-success {
+	color: var(--color-primary) !important;
+}
+
+.btn-outline-light {
+	color: #ffffff;
+	border: 1px solid var(--color-border);
+	background-color: transparent;
+	border-radius: 6px;
+	transition: all 0.2s;
+}
+
+.btn-outline-light:hover {
+	color: #ffffff;
+	background-color: rgba(255, 255, 255, 0.05);
+	border-color: var(--color-border);
+}
+
+.btn-primary {
+	background-color: var(--color-primary);
+	border-color: var(--color-primary);
+	color: #000000;
+	border-radius: 6px;
+}
+
+.btn-primary:hover {
+	background-color: var(--color-primary-hover);
+	border-color: var(--color-primary-hover);
+	color: #000000;
+	box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.btn-primary:disabled {
+	background-color: var(--color-text-secondary);
+	border-color: var(--color-text-secondary);
+	opacity: 0.5;
+}
+
+.wp_logo_login {
+	height: auto;
+	margin-bottom: 1.5rem;
+}
+
+.logo-section{
+	margin-top: -40vh !important;
+}
+
+/* Center card */
+.wa-card {
+	width: 100%;
+	max-width: 420px;
+	background: var(--color-bg-card);
+	border: 1px solid var(--color-border);
+	border-radius: 12px;
+	padding: 2.5rem;
+	text-align: center;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+  .wa-title {
+	font-size: 1.3rem;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	line-height: 1.1;
+	color: #ffffff;
+  }
+
+  .wa-login-page {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	background: var(--color-bg-main);
+	padding: 2rem;
+	position: relative;
+}
+
+  

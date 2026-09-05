@@ -1,0 +1,40 @@
+/* Deploy loading page - matching login page styling */
+.deploy-loading-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #0b0d14;
+  padding: 2rem;
+  color: white;
+}
+
+.deploy-loading-container {
+  width: 100%;
+  max-width: 420px;
+  background: #131621;
+  border-radius: 1rem;
+  padding: 2.5rem;
+  text-align: center;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.deploy-logo {
+  height: auto;
+  margin-bottom: 2rem;
+  max-width: 200px;
+}
+
+.deploy-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.deploy-message {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin-top: 1rem;
+  font-family: 'Roboto', sans-serif;
+}

@@ -1,0 +1,504 @@
+/* Assistant Container - Match Credits Design */
+.assistant-container {
+    background-color: var(--color-bg-main);
+    padding: 2rem;
+    position: relative;
+}
+
+/* Mobile responsive padding */
+@media (max-width: 767px) {
+    .assistant-container {
+        padding: 1rem 0.75rem;
+    }
+}
+
+.assistant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.assistant-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+/* Status Card - Left Side (Similar to Available Credits Card) */
+.assistant-status-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+    .assistant-status-card {
+        margin-bottom: 0;
+    }
+}
+
+.assistant-status-text {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    text-align: center;
+    margin: 0;
+    line-height: 1;
+}
+
+.assistant-status-label {
+    text-align: center;
+    color: var(--color-text-secondary);
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+.assistant-details {
+    border-top: 1px solid var(--color-border);
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.assistant-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.assistant-detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.assistant-detail-label {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.assistant-detail-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.assistant-detail-value.success {
+    color: var(--color-primary);
+}
+
+.assistant-detail-value.pending {
+    color: #ffc107;
+}
+
+/* Configuration Card - Right Side (Similar to Buy Credits Card) */
+.assistant-config-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.assistant-config-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.assistant-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.assistant-config-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.assistant-config-footer {
+    margin-top: auto;
+    text-align: center;
+}
+
+.assistant-config-footer .assistant-action-button {
+    flex: 1;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.assistant-config-footer .assistant-deploy-button.btn {
+    background-color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    color: #000000;
+    font-weight: 500;
+}
+
+.assistant-config-footer .assistant-deploy-button.btn:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+    color: #000000;
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.assistant-config-footer .assistant-run-once-button.btn {
+    background-color: transparent;
+    border: 1px solid var(--color-border);
+    color: #FFFFFF;
+    font-weight: 400;
+}
+
+.assistant-config-footer .assistant-run-once-button.btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-border);
+    color: #FFFFFF;
+}
+
+/* Update Banner */
+.assistant-update-banner {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-primary);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+/* Running section */
+.assistant-running-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+.assistant-stop-button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+}
+
+/* Stock Search Styles */
+.stock-search-results-container {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.stock-search-result {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.stock-search-result:hover {
+    background-color: var(--color-bg-section);
+}
+
+/* Dark theme for stock search */
+.main-container .stock-search-results-container {
+    background: var(--color-bg-card);
+    border-color: var(--color-border);
+}
+
+.main-container .stock-search-result {
+    color: #ffffff;
+    border-bottom-color: var(--color-border);
+}
+
+.main-container .stock-search-result:hover {
+    background-color: var(--color-bg-section);
+}
+
+.main-container .stock-search-result .fw-bold {
+    color: #ffffff;
+}
+
+.main-container .stock-search-result .text-muted {
+    color: var(--color-text-secondary) !important;
+}
+
+.stock-selected-badge {
+    background: var(--color-primary) !important;
+    color: #000000 !important;
+    margin: 2px;
+    padding: 0.375rem 0.75rem !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    position: relative;
+}
+
+.stock-selected-badge .btn-close {
+    position: static;
+    width: 16px !important;
+    height: 16px !important;
+    background: none !important;
+    border-radius: 0;
+    border: none;
+    color: #000000 !important;
+    font-size: 0.75rem;
+    opacity: 0.8 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.stock-selected-badge .btn-close:hover {
+    opacity: 1 !important;
+    color: #000000 !important;
+}
+
+
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 10px 12px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+/* Dark theme overrides for the project */
+.main-container .assistant-container {
+    background-color: var(--color-bg-main);
+    color: #ffffff;
+}
+
+.main-container .assistant-title {
+    color: #FFFFFF;
+}
+
+.main-container .assistant-status-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}
+
+.main-container .assistant-status-text {
+    color: #ffffff;
+}
+
+.main-container .assistant-status-label {
+    color: var(--color-text-secondary);
+}
+
+.main-container .assistant-details {
+    border-top-color: var(--color-border);
+}
+
+.main-container .assistant-detail-label {
+    color: var(--color-text-secondary);
+}
+
+.main-container .assistant-detail-value {
+    color: #ffffff;
+}
+
+.main-container .assistant-config-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}
+
+.main-container .assistant-config-title {
+    color: #ffffff;
+}
+
+.main-container .form-label {
+    color: #ffffff;
+}
+
+.main-container .form-control {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    color: #ffffff;
+}
+
+.main-container .form-control:focus {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+.main-container .form-select {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    color: #ffffff;
+}
+
+.main-container .form-select:focus {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+/* Dark theme for form text and placeholders */
+.main-container .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.main-container .text-muted {
+    color: var(--color-text-secondary) !important;
+}
+
+.main-container .form-text {
+    color: var(--color-text-secondary) !important;
+}
+
+/* GitHub Input Dark Theme */
+.main-container .github-input-container .border {
+    background-color: var(--color-bg-card) !important;
+    border: 1px solid var(--color-border) !important;
+}
+
+/* GitHub Input Dark Theme - Optional */
+.main-container .optional-inputs-section .github-input-container .border {
+    background-color: var(--color-bg-section) !important;
+    border: 1px solid var(--color-border) !important;
+}
+
+/* ClickUp Input Dark Theme */
+.main-container .clickup-input-container .border {
+    background-color: var(--color-bg-card) !important;
+    border: 1px solid var(--color-border) !important;
+}
+
+/* ClickUp Input Dark Theme - Optional */
+.main-container .optional-inputs-section .clickup-input-container .border {
+    background-color: var(--color-bg-section) !important;
+    border: 1px solid var(--color-border) !important;
+}
+
+.main-container .github-input-container .fw-medium {
+    color: #ffffff !important;
+}
+
+.main-container .github-input-container .small {
+    color: var(--color-text-secondary) !important;
+}
+
+/* Optional Inputs Section */
+.optional-inputs-section {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: var(--color-bg-section);
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.main-container .optional-inputs-section {
+    background-color: var(--color-bg-section);
+    border-color: var(--color-border);
+}
+
+/* Dark theme for optional inputs section */
+.main-container .optional-inputs-section .form-label {
+    color: #ffffff;
+}
+
+.main-container .optional-inputs-section .form-control {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    color: #ffffff;
+}
+
+.main-container .optional-inputs-section .form-control:focus {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+.main-container .optional-inputs-section .form-select {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    color: #ffffff;
+}
+
+.main-container .optional-inputs-section .form-select:focus {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+.main-container .optional-inputs-section .form-text {
+    color: var(--color-text-secondary) !important;
+}
+
+.main-container .optional-inputs-section .text-muted {
+    color: var(--color-text-secondary) !important;
+}
+
+/* Temporary highlight for "Select Resources" buttons */
+@keyframes highlightPulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0.8); transform: translateZ(0); }
+    70% { box-shadow: 0 0 0 10px rgba(var(--color-primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0); }
+}
+
+.highlight-pulse {
+    animation: highlightPulse 1s ease-out;
+    animation-iteration-count: 3;
+    outline: 2px solid var(--color-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+    .assistant-config-card {
+        height: auto;
+        min-height: 200px;
+        padding: 1rem;
+    }
+    
+    .assistant-status-card {
+        height: auto;
+        min-height: 250px;
+    }
+    
+    .assistant-container .row {
+        margin: 0 -0.5rem;
+    }
+    
+    .assistant-container .col-md-6 {
+        padding: 0 0.5rem;
+    }
+    
+    .assistant-header {
+        margin-bottom: 1rem;
+    }
+    
+    .assistant-title {
+        font-size: 1.5rem;
+    }
+}

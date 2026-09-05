@@ -1,0 +1,173 @@
+/* RepoGroupsInput — group-builder for the Knowledge Digest. Follows the WaveAssist design system
+   (dark cards, 1px var(--color-border) borders, green primary). Uses design-system.css variables. */
+
+.repo-groups {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.repo-groups-empty {
+	color: var(--color-text-secondary);
+	font-size: 0.8rem;
+	padding: 12px;
+	border: 1px dashed var(--color-border);
+	border-radius: 8px;
+}
+
+.repo-group-card {
+	background-color: var(--color-bg-card);
+	border: 1px solid var(--color-border);
+	border-radius: 8px;
+	padding: 16px;
+}
+
+.repo-group-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.repo-group-name {
+	flex: 1 1 auto;
+	background-color: var(--color-bg-card);
+	border: 1px solid var(--color-border);
+	border-radius: 6px;
+	color: var(--color-text-primary);
+}
+
+.repo-group-name:focus {
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+	background-color: var(--color-bg-card);
+	color: var(--color-text-primary);
+}
+
+.repo-group-remove {
+	background: transparent;
+	border: 1px solid var(--color-border);
+	color: var(--color-text-secondary);
+	border-radius: 6px;
+	padding: 0.35rem 0.75rem;
+	font-size: 0.8rem;
+	transition: all 0.2s ease;
+}
+
+.repo-group-remove:hover {
+	background-color: rgba(255, 255, 255, 0.05);
+	color: var(--color-text-primary);
+}
+
+.repo-group-label {
+	color: var(--color-text-secondary);
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin: 10px 0 6px;
+}
+
+.repo-group-repos {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.repo-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background-color: var(--color-bg-main);
+	border: 1px solid var(--color-border);
+	border-radius: 6px;
+	padding: 4px 10px;
+	font-size: 0.82rem;
+	color: var(--color-text-primary);
+	cursor: pointer;
+}
+
+.repo-checkbox input {
+	accent-color: var(--color-primary);
+	cursor: pointer;
+}
+
+.repo-checkbox-disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.repo-checkbox-name {
+	color: var(--color-text-primary);
+}
+
+.repo-checkbox-tag {
+	color: var(--color-text-secondary);
+	font-size: 0.7rem;
+}
+
+.repo-recipients {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+
+.repo-recipient-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background-color: var(--color-bg-main);
+	border: 1px solid var(--color-border);
+	color: var(--color-text-primary);
+	border-radius: 12px;
+	padding: 2px 10px;
+	font-size: 0.78rem;
+}
+
+.repo-recipient-remove {
+	background: transparent;
+	border: none;
+	color: var(--color-text-secondary);
+	font-size: 1rem;
+	line-height: 1;
+	padding: 0;
+	cursor: pointer;
+}
+
+.repo-recipient-remove:hover {
+	color: var(--color-text-primary);
+}
+
+.repo-recipient-add {
+	display: flex;
+	gap: 8px;
+	max-width: 420px;
+}
+
+.repo-recipient-add .form-control {
+	background-color: var(--color-bg-card);
+	border: 1px solid var(--color-border);
+	border-radius: 6px;
+	color: var(--color-text-primary);
+}
+
+.repo-recipient-add .form-control:focus {
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+	background-color: var(--color-bg-card);
+	color: var(--color-text-primary);
+}
+
+.repo-recipient-btn {
+	white-space: nowrap;
+}
+
+.repo-group-hint {
+	color: var(--color-text-secondary);
+	font-size: 0.72rem;
+	margin-top: 6px;
+}
+
+.repo-group-add {
+	align-self: flex-start;
+}
