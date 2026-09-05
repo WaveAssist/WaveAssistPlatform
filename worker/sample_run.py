@@ -17,8 +17,8 @@ dag_kwargs = {
             'code_to_run': 'def run_task():\n    print("node 2")'
         }
     },
-    'collection_key': 'REMOVED_CREDENTIAL',
-    'dag_key': 'DAG_proj1_node1_Deployment_v1_REMOVED_CREDENTIAL',
+    'collection_key': 'example_environment',
+    'dag_key': 'DAG_proj1_node1_Deployment_v1_example_environment',
 }
 
 # Trigger the DAG

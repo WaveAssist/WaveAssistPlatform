@@ -8,7 +8,6 @@ import requests
 logger = Logger(account_key=ACCOUNT_KEY)
 from datetime import datetime
 
-BASE_URL = 'https://api.waveassist.io'
 
 def generate_flow_layers(dependencies_dict):
     try:

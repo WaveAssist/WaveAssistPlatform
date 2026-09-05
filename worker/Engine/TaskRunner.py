@@ -10,6 +10,7 @@ class TaskRunner(object):
             self.node_key = task_dict['node_key']
             self.project_key = task_dict['project_key']
             self.code_to_run = task_dict['code_to_run']
+            self.source_path = task_dict.get('source_path') or "<string>"
             self.uid = task_dict.get('uid', ACCOUNT_ID)
             self.environment_key = environment_key
             self.run_id = str(run_id)
@@ -29,9 +30,11 @@ class TaskRunner(object):
 
                 # Inject the custom print function into the namespace
                 namespace['print'] = self.custom_print
+                namespace['__file__'] = self.source_path
+                namespace['__name__'] = '__waveassist_node__'
 
                 # Try to compile the provided code to check for syntax errors
-                compiled_code = compile(self.code_to_run, "<string>", "exec")
+                compiled_code = compile(self.code_to_run, self.source_path, "exec")
 
                 # Execute the compiled code in the given namespace
                 exec(compiled_code, namespace)
@@ -65,7 +68,6 @@ class TaskRunner(object):
                 utils.logger.info("Completed Node: " + str(self.node_key), extra=self.extra_dict)
                 utils.log_event(dispatcher, self.run_id, TASK_COMPLETED, self.node_key, self.project_key, self.environment_key, result, error_message)
             return result
-
 
 
 

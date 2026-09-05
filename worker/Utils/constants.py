@@ -4,7 +4,9 @@ from config import *
 
 ##Main constants
 ACCOUNT_ID = os.getenv('ACCOUNT_ID', ACCOUNT_ID_LOCAL_TEST)
-REDIS_URL = os.getenv('REDIS_URL', 'redis://master.waveassistredis.jcqnm3.use1.cache.amazonaws.com:6379/0')
+REDIS_URL = os.getenv('REDIS_URL')
+if not REDIS_URL:
+    raise RuntimeError("REDIS_URL is not set (no production default baked in). Set it in this deployment's .env.")
 QUEUE_NAME = 'queue_' + ACCOUNT_ID
 
 ##Other logs

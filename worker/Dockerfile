@@ -26,7 +26,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install the Claude Code CLI (used by the `claude_cli_token` LLM provider, which
 # runs `claude -p` authenticated by an account's setup token). Native installer —
 # no Node.js required; lands in /root/.local/bin.
-RUN curl -fsSL https://claude.ai/install.sh | bash
+ARG INSTALL_CLAUDE_CLI=0
+# Optional: only used by the claude_cli LLM provider. Non-fatal — the box uses
+# OpenRouter/Azure, and the installer segfaults under amd64 emulation.
+RUN if [ "$INSTALL_CLAUDE_CLI" = "1" ]; then curl -fsSL https://claude.ai/install.sh | bash || echo "claude cli install skipped"; else echo "claude cli install disabled (INSTALL_CLAUDE_CLI=0)"; fi
 ENV PATH="/root/.local/bin:${PATH}"
 
 # Set the working directory in the container

@@ -1,6 +1,38 @@
 import logging
+import os
+import socket
+import time
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
 from pythonjsonlogger import jsonlogger
 from Utils.constants import *
+
+
+class ProcessFileHandler(logging.Handler):
+    """Each prefork worker owns its file so rotations cannot race."""
+    def __init__(self, directory, formatter):
+        super().__init__()
+        self.directory = Path(directory)
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self.setFormatter(formatter)
+        self.pid = None
+        self.output = None
+
+    def emit(self, record):
+        try:
+            if self.pid != os.getpid():
+                if self.output:
+                    self.output.close()
+                self.pid = os.getpid()
+                for path in self.directory.glob('worker-*.log*'):
+                    if path.stat().st_mtime < time.time() - 7 * 86400:
+                        path.unlink(missing_ok=True)
+                path = self.directory / f'worker-{socket.gethostname()}-{self.pid}.log'
+                self.output = RotatingFileHandler(path, maxBytes=2_000_000, backupCount=3)
+                self.output.setFormatter(self.formatter)
+            self.output.emit(record)
+        except Exception:
+            self.handleError(record)
 
 
 # Define the new JSON Logger class
@@ -21,6 +53,8 @@ class Logger:
 
         # Add the console handler to the logger
         self.logger.addHandler(console_handler)
+        if os.getenv('WAVEASSIST_LOG_DIR'):
+            self.logger.addHandler(ProcessFileHandler(os.environ['WAVEASSIST_LOG_DIR'], formatter))
         self.logger.propagate = False
 
         # Configure root logger so library loggers (e.g. "waveassist") are captured as JSON
@@ -57,4 +91,3 @@ class Logger:
     def error(self, message, **extra):
         """Log an error message with optional extra context."""
         self.log("error", message, **extra)
-

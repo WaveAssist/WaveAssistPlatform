@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+!.env.example
+EXTRACTED_SECRETS*
+*.sqlite3
+__pycache__/
+*.pyc
+Logs/
