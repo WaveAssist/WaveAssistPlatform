@@ -3,6 +3,8 @@ import "./login_component.css";
 import { BrandLogo, getBrand } from "../config/branding";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../components/firebase";
+import { IS_LOCAL_AUTH, IS_PASSWORD_AUTH, LOCAL_UID } from "../config/runtime";
+import { callApi } from "../services/base_service";
 // import { xProvider } from "../components/firebase";
 import { signInWithPopup, signInWithRedirect, getRedirectResult, sendSignInLinkToEmail } from "firebase/auth";
 import { loginAPI, getStartedAPI } from "../services/login_services";
@@ -51,6 +53,29 @@ const LoginComponent: React.FC = () => {
 	const [loading, setLoading] = useState<boolean>(false);
 	const [loaderMessage, setLoaderMessage] = useState("");
 	const [email, setEmail] = useState<string>("");
+	const [localUid, setLocalUid] = useState<string>("");
+	const [pwUser, setPwUser] = useState<string>("");
+	const [pwPass, setPwPass] = useState<string>("");
+	const [pwError, setPwError] = useState<string | null>(null);
+
+	const handlePasswordLogin = async () => {
+		setPwError(null);
+		try {
+			const body = new URLSearchParams();
+			body.append("username", pwUser);
+			body.append("password", pwPass);
+			const data = await callApi("manage/password_login/", body);
+			if (data && data.uid) {
+				localStorage.setItem("uid", data.uid);
+				if (data.must_change) localStorage.setItem("wa_pw_must_change", "1");
+				navigate(redirect);
+			} else {
+				setPwError("Invalid username or password.");
+			}
+		} catch (e) {
+			setPwError("Invalid username or password.");
+		}
+	};
 	const [emailSent, setEmailSent] = useState<boolean>(false);
 	const [emailError, setEmailError] = useState<string | null>(null);
 	const is_test = false; // ALWAYS KEEP as FALSE
@@ -69,6 +94,12 @@ const LoginComponent: React.FC = () => {
 			}
 		};
 
+		// Single-tenant box: a baked-in UID means no login step at all.
+		if (IS_LOCAL_AUTH && LOCAL_UID && !uid && !localStorage.getItem("uid")) {
+			localStorage.setItem("uid", LOCAL_UID);
+			navigate(redirect);
+			return;
+		}
 		// Handle uid parameter from URL
 		if (uid) {
 			localStorage.setItem("uid", uid);
@@ -392,7 +423,50 @@ const LoginComponent: React.FC = () => {
 					</div>
 				)}
 
-				{!emailSent ? (
+				{IS_PASSWORD_AUTH && !loading && (
+					<div className="email-input-container mb-3">
+						<input
+							type="text"
+							className="form-control mb-2"
+							placeholder="Username"
+							value={pwUser}
+							onChange={(e) => setPwUser(e.target.value)}
+						/>
+						<input
+							type="password"
+							className="form-control"
+							placeholder="Password"
+							value={pwPass}
+							onChange={(e) => setPwPass(e.target.value)}
+							onKeyPress={(e) => { if (e.key === "Enter") handlePasswordLogin(); }}
+						/>
+						{pwError && <div className="text-danger mt-2" style={{ fontSize: "0.9rem" }}>{pwError}</div>}
+						<button onClick={handlePasswordLogin} className="btn btn-primary w-100 mt-3" disabled={loading}>
+							Sign in
+						</button>
+					</div>
+				)}
+
+				{IS_LOCAL_AUTH && !loading && (
+					<div className="email-input-container mb-3">
+						<input
+							type="text"
+							className="form-control"
+							placeholder="Enter your WaveAssist UID"
+							value={localUid}
+							onChange={(e) => setLocalUid(e.target.value)}
+							onKeyPress={(e) => { if (e.key === "Enter" && localUid.trim()) { localStorage.setItem("uid", localUid.trim()); navigate(redirect); } }}
+						/>
+						<button
+							onClick={() => { if (localUid.trim()) { localStorage.setItem("uid", localUid.trim()); navigate(redirect); } }}
+							className="btn btn-primary w-100 mt-3"
+							disabled={loading}>
+							Continue
+						</button>
+					</div>
+				)}
+
+				{!IS_LOCAL_AUTH && !IS_PASSWORD_AUTH && (!emailSent ? (
 					<>
 						<div className="email-input-container mb-3">
 							<input
@@ -452,7 +526,7 @@ const LoginComponent: React.FC = () => {
 							Try a different email
 						</button>
 					</div>
-				)}
+				))}
 
 				{cliLoginComplete && (
 					<div className="text-center mt-4">

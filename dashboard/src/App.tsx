@@ -27,9 +27,10 @@ import CreditsComponent from "./components/project/credits_dodo_component";
 import AssistantComponent from "./components/assistant_component";
 import UpgradeComponent from "./components/upgrade_component";
 import ReactGA from "react-ga4";
+import { TELEMETRY_ENABLED } from "./config/runtime";
 import { getBrand } from "./config/branding";
 // Per-brand GA4 property, so GitZoid analytics don't land in WaveAssist's property.
-ReactGA.initialize(getBrand().gaMeasurementId);
+if (TELEMETRY_ENABLED) ReactGA.initialize(getBrand().gaMeasurementId);
 
 function App() {
 	return (

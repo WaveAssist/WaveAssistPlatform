@@ -1,3 +1,4 @@
+import { BILLING_ENABLED } from "../config/runtime";
 // src/Sidebar.js
 import { Link, useLocation } from "react-router-dom";
 import "./sidebar.css";
@@ -158,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName,
 				</li>
 
 				{/* Billing - Visible for all plans */}
-				<li className="nav-item">
+				{BILLING_ENABLED && <li className="nav-item">
 					<Link
 						to="/manage/credits"
 						className={`nav-link ${location.pathname === "/manage/credits" ? "active" : "text-white"} mb-1 ${
@@ -180,7 +181,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, planName: _planName,
 							</>
 						)}
 					</Link>
-				</li>
+				</li>}
 
 				{/* Divider between Modules and Customizations - only in collapsed view */}
 				{isCollapsed && (

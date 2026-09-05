@@ -9,6 +9,7 @@ import {
 	deleteNodeApi,
 	runDAGApi,
 	setDataForKeyApi,
+	fetchDataForKeyAPI,
 	fetchTemplateApi,
 } from "../../services/project_services";
 import { deployProjectApi } from "../../services/navbar_services";
@@ -88,6 +89,7 @@ const NodesComponent: React.FC = () => {
 	const [showWizard, setShowWizard] = useState(false);
 	const [wizardInputs, setWizardInputs] = useState<any[]>([]);
 	const [wizardValues, setWizardValues] = useState<Record<string, string>>({});
+	const [wizardDataTypes, setWizardDataTypes] = useState<Record<string, string>>({});
 	const [processingWizard, setProcessingWizard] = useState(false);
 	const [wizardDone, setWizardDone] = useState(false);
 	const [startingNodeKey, setStartingNodeKey] = useState<string | null>(null);
@@ -122,22 +124,27 @@ const NodesComponent: React.FC = () => {
 		setWizardLoading(true);
 		try {
 			const template_data = await fetchTemplateApi(template_key);
-			const input_array = template_data.input_array;
+			const input_array = [...(template_data.input_array || []), ...(template_data.optional_input_array || [])];
 			setWizardInputs(input_array);
 			const defaults: Record<string, string> = {};
-			input_array.forEach((i: any) => {
-				if (i.default_value !== undefined) {
-					defaults[i.key] = i.default_value;
-				} else if (Array.isArray(i.options) && i.options.length > 0) {
-					defaults[i.key] = i.options[0];
-				} else {
-					defaults[i.key] = "";
+			const types: Record<string, string> = {};
+			await Promise.all(input_array.map(async (i: any) => {
+				let value = i.default_value ?? (i.options?.[0]?.key ?? i.options?.[0]) ?? "";
+				types[i.key] = typeof value === "string" ? "string" : "json";
+				try {
+					const stored = await fetchDataForKeyAPI(i.key);
+					value = stored.data;
+					types[i.key] = stored.data_type || types[i.key];
+				} catch (error) {
+					if (!(error instanceof Error) || error.message !== "Data not found") throw error;
 				}
-			});
+				defaults[i.key] = typeof value === "string" ? value : JSON.stringify(value);
+			}));
+			setWizardDataTypes(types);
 			setWizardValues(defaults);
 		} catch (err) {
 			console.error("Error fetching assistant:", err);
-			showToast("Could not find anything to configure.", "warning");
+			showToast("Could not load project configuration. Check the project source and your access.", "warning");
 			setShowWizard(false); // Dismiss the wizard modal
 		} finally {
 			setWizardLoading(false);
@@ -693,7 +700,7 @@ const NodesComponent: React.FC = () => {
 		const emptyInputs = wizardInputs.filter((input) => {
 			const value = wizardValues[input.key];
 			// Check if value is empty, null, undefined, or just whitespace
-			return !value || value.trim() === "";
+			return input.is_optional === false && (!value || value.trim() === "");
 		});
 
 		// Additional validation for stock-type inputs
@@ -714,7 +721,10 @@ const NodesComponent: React.FC = () => {
 		setProcessingWizard(true);
 		try {
 			for (const input of wizardInputs) {
-				await setDataForKeyApi(wizardValues[input.key], input.key, "string");
+				const text = wizardValues[input.key];
+				const type = wizardDataTypes[input.key] || "string";
+				const value = type === "json" && text !== "" ? JSON.parse(text) : text;
+				await setDataForKeyApi(value, input.key, type);
 			}
 			if (startingNodeKey) {
 				const env = localStorage.getItem("selected_env_key") || "";
@@ -1363,7 +1373,7 @@ const NodesComponent: React.FC = () => {
 												</Form.Select>
 											) : (
 												<Form.Control
-													type="text"
+													type={input_dict.type === "password" ? "password" : input_dict.type === "number" ? "number" : "text"}
 													value={wizardValues[input_dict.key] || ""}
 													onChange={(e) => handleWizardInputChange(input_dict.key, e.target.value)}
 												/>

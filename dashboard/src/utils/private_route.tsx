@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { usePostHog } from "posthog-js/react";
+import { IS_LOCAL_AUTH, LOCAL_UID } from "../config/runtime";
 
 interface PrivateRouteProps {
 	component: React.ComponentType<any>;
@@ -10,6 +11,10 @@ interface PrivateRouteProps {
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, layout: Layout, ...rest }) => {
 	const location = useLocation();
 	const posthog = usePostHog();
+	// Single-tenant box: auto-enter with the baked-in UID, no login page.
+	if (IS_LOCAL_AUTH && LOCAL_UID && !localStorage.getItem("uid")) {
+		localStorage.setItem("uid", LOCAL_UID);
+	}
 	const isAuthenticated = !!localStorage.getItem("uid");
 
 	useEffect(() => {

@@ -22,7 +22,7 @@ import React from "react";
 export type BrandId = "waveassist" | "gitzoid";
 
 // Hosted MCP endpoint (WaveAgent) + plugin marketplace — shown in the Connect MCP panel.
-export const MCP_URL = "https://mcp.waveassist.ai/mcp";
+export const MCP_URL = (import.meta.env.VITE_MCP_URL && String(import.meta.env.VITE_MCP_URL).trim()) || "https://mcp.waveassist.ai/mcp";
 export const MCP_MARKETPLACE = "WaveAssist/WaveAgent";
 
 export interface Brand {
@@ -58,7 +58,7 @@ export const BRANDS: Record<BrandId, Brand> = {
 		catalogUrl: "https://waveassist.ai/assistants",
 		signup: "Run deterministic AI agents in the cloud.",
 		gaMeasurementId: "G-RHQ9VZRVXH",
-		posthogKey: "REMOVED_CREDENTIAL", // shared with the WaveAssist marketing site
+		posthogKey: import.meta.env.VITE_WAVEASSIST_POSTHOG_KEY || "", // shared with the WaveAssist marketing site
 		pricingUrl: "https://waveassist.ai/pricing",
 	},
 	gitzoid: {
@@ -79,7 +79,7 @@ export const BRANDS: Record<BrandId, Brand> = {
 		gaMeasurementId: "G-PX7J3JNWKP",
 		// GitZoid marketing site's PostHog project, so GitZoid site + dashboard land together
 		// (not the shared WaveAssist project the dashboard used before).
-		posthogKey: "REMOVED_CREDENTIAL",
+		posthogKey: import.meta.env.VITE_GITZOID_POSTHOG_KEY || "",
 		pricingUrl: "https://gitzoid.com/pricing",
 	},
 };

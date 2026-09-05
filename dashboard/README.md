@@ -1,30 +1,47 @@
-# React + TypeScript + Vite
+# WaveAssistDashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite dashboard for WaveAssist — projects, the node/DAG builder, runs,
+environments/variables, and dashboards. One codebase; the backend and auth are chosen at
+**build time** via `VITE_*` env, so the same source builds the hosted app and a
+self-hosted box build.
 
-Currently, two official plugins are available:
+## Develop
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: "latest",
-    sourceType: "module",
-    project: ["./tsconfig.json", "./tsconfig.node.json"],
-    tsconfigRootDir: __dirname,
-  },
-};
+```
+npm install
+npm run dev            # WaveAssist brand
+npm run dev:gitzoid    # GitZoid brand
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Build
+
+```
+npm run build          # tsc + vite build -> dist/
+```
+
+Served as static files (see `Dockerfile` / `nginx.conf`).
+
+## Build-time config (`VITE_*`, see `.env.example`)
+
+| Var | Purpose |
+|---|---|
+| `VITE_DASHBOARD_BASE_URL` | API base (e.g. the box's `http://host:8000`) |
+| `VITE_AUTH_MODE` | `firebase` (default) · `local` (UID auto-login) · `password` |
+| `VITE_LOCAL_UID` | with `local` mode: baked admin UID → auto-enter, no login page |
+| `VITE_TELEMETRY` | `on` (default) · `off` (PostHog/GA) |
+| `VITE_BILLING` | `on` (default) · `off` (hide upgrade/credits UI) |
+| `VITE_MCP_URL` | Connect-MCP endpoint shown in the UI |
+| `VITE_BRAND` | `waveassist` · `gitzoid` (see `CLAUDE.md`) |
+
+Because Vite compiles these into the bundle, a **self-hosted build** is produced by
+building with the box values; the cloud build (defaults unset) targets the hosted API.
+
+## Auth modes
+
+- **firebase** — Google login (hosted / multi-user).
+- **local** — single-tenant box: `VITE_LOCAL_UID` set → auto-login, no page; unset →
+  a minimal UID field.
+- **password** — username/password form; posts to `manage/password_login/` which returns
+  the admin UID (default creds `admin`/`admin`, shown with a change warning).
+
+See `CLAUDE.md` in this folder for brand/theming architecture and the copy rules.
