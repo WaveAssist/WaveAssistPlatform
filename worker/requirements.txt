@@ -1,0 +1,36 @@
+requests>=2.32.5
+pandas>=2.2.3
+celery>=5.4.0
+redis>=4.6.0
+python-json-logger>=3.2.0
+celery-singleton>=0.3.1
+waveassist>=0.8.12
+dotenv>=0.9.9
+yfinance>=0.2.64
+openai>=2.11.0
+pymongo>=4.4.1
+aiohttp>=3.13.2
+beautifulsoup4>=4.13.4
+crawlee>=1.2.1
+httpx>=0.28.1
+lxml>=6.0.2
+ta>=0.11.0
+weasyprint>=67.0
+PyYAML>=6.0
+boto3>=1.42.96
+# Pure-Python SQL Server (TDS) driver, baked in so Ornate-connected agents don't
+# pip-install it at runtime. No system libs (FreeTDS) needed; import name is `pytds`.
+python-tds>=1.15.0
+
+
+
+
+
+
+
+
+
+
+
+
+
