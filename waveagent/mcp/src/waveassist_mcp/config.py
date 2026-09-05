@@ -22,11 +22,21 @@ CONFIG_PATH = CONFIG_DIR / "config.json"
 
 
 def api_base() -> str:
-    return os.environ.get("WAVEASSIST_API_BASE", DEFAULT_API_BASE).rstrip("/")
+    """Hosted API base. WAVEASSIST_API_BASE_URL is accepted too (the SDK's name), so a
+    self-hosted server needs only one variable set for both the SDK and the MCP."""
+    return (
+        os.environ.get("WAVEASSIST_API_BASE")
+        or os.environ.get("WAVEASSIST_API_BASE_URL")
+        or DEFAULT_API_BASE
+    ).rstrip("/")
 
 
 def app_base() -> str:
-    return os.environ.get("WAVEASSIST_APP_BASE", DEFAULT_APP_BASE).rstrip("/")
+    return (
+        os.environ.get("WAVEASSIST_APP_BASE")
+        or os.environ.get("WAVEASSIST_DASHBOARD_URL")
+        or DEFAULT_APP_BASE
+    ).rstrip("/")
 
 
 def _read_config() -> dict:
