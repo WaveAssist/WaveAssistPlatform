@@ -168,6 +168,7 @@ services:
         VITE_BILLING: ${WA_BILLING:-off}
         VITE_MCP_URL: ${PUBLIC_MCP_URL:-http://localhost:9000/mcp}
         VITE_LOCAL_UID: ${WAVEASSIST_ADMIN_UID:-boxadmin000000000000admin}
+        VITE_BRAND: ${VITE_BRAND:-waveassist}
     depends_on:
       api: {condition: service_healthy}
     ports: ["8080:3000"]

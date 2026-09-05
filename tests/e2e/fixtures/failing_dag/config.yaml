@@ -1,0 +1,14 @@
+# Failure-path fixture: boom raises; after runs only if boom succeeds. Used to prove a
+# failed node is recorded FAILED and its downstream is blocked (not run).
+name: E2E Failing DAG
+timezone: UTC
+nodes:
+  - key: boom
+    name: Boom
+    file_name: boom.py
+    starting_node: true
+  - key: after
+    name: After
+    file_name: after.py
+    run_after: [boom]
+variables: []

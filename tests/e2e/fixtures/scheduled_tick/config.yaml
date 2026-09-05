@@ -1,0 +1,13 @@
+# Single-node agent on a 1-minute interval schedule, used to prove that celery-beat
+# actually fires scheduled runs (arm -> beat -> worker -> recorded), unattended.
+name: E2E Scheduled Tick
+timezone: UTC
+nodes:
+  - key: tick
+    name: Tick
+    file_name: tick.py
+    starting_node: true
+    schedule:
+      interval:
+        every: 1
+        period: minutes
