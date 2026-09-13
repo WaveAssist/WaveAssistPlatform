@@ -6,7 +6,7 @@ PD_DATA_KEY = 'PDData'
 IO_DATA_KEY = 'IODataKey'
 DB_NAME = "WaveAssist"
 
-BROKER_DOMAIN = os.getenv('BROKER_DOMAIN', 'b-83686e9f-2c14-4878-91eb-96a9c4e00b8e.mq.us-east-1.amazonaws.com')
+BROKER_DOMAIN = os.getenv('BROKER_DOMAIN', '')  # value from env (was a hardcoded Amazon MQ endpoint; currently unused)
 
 DATA_KEY = "DATA"
 DATA_TYPE_KEY = "DATA_TYPE"

@@ -1,7 +1,7 @@
 # Use the linux image as the base image.
 # Arch-neutral: builds natively for the host (arm64 on Apple silicon / AWS Graviton,
 # amd64 on x86 servers). Do not pin --platform here.
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive

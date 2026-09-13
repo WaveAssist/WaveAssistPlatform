@@ -93,7 +93,16 @@ services:
     restart: unless-stopped
 
   worker:
-    build: ./worker
+    build:
+      context: ./worker
+      # Opt-in agent-runtime extras (MSSQL/MySQL drivers + headless-Chromium PDF).
+      # Default 0 keeps the base image lean; set INSTALL_AGENT_EXTRAS=1 in .env for
+      # agents whose nodes need DB drivers or PDF rendering.
+      # INSTALL_CLAUDE_CLI=1 adds the Claude Code CLI, required by the
+      # `claude_cli_token` LLM provider (narration on a Claude subscription token).
+      args:
+        INSTALL_AGENT_EXTRAS: ${INSTALL_AGENT_EXTRAS:-0}
+        INSTALL_CLAUDE_CLI: ${INSTALL_CLAUDE_CLI:-0}
     environment:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       ACCOUNT_ID: 7a5804de-f037-4c0d-aaa0-fa5211d7afd7   # bare uuid -> queue_<uuid> == SHARED_OPERATOR_QUEUE

@@ -2,7 +2,7 @@
 # Arch-neutral: builds natively for the host (arm64 on Apple silicon / AWS Graviton,
 # amd64 on x86 servers). Do not pin --platform here; choose the arch at build time
 # with `docker build --platform` or Compose if a specific target is required.
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # Set the working directory in the container
 WORKDIR /app
