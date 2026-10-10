@@ -59,7 +59,11 @@ LOGS_LIMIT = 500
 IDENTITY_USERNAME = os.getenv('IDENTITY_USERNAME', '')  # swept: value from env, see .env
 IDENTITY_PASSWORD = os.getenv('IDENTITY_PASSWORD', '')  # swept: value from env, see .env
 
-POSTMARK_API_TOKEN = os.getenv('POSTMARK_API_TOKEN', '')  # swept: value from env, see .env
+# Resend (transactional email). RESEND_API_KEY sends for every brand; when RESEND_API_KEY_GITZOID
+# is set, GitZoid sends use it instead (each brand's key is restricted to its own domain).
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')  # value from env, see .env
+RESEND_API_KEY_GITZOID = os.getenv('RESEND_API_KEY_GITZOID', '')  # value from env, see .env
+RESEND_API_URL = "https://api.resend.com/emails"
 
 FETCH_INSTALL_PACKAGES_CODE = '''
 def run_task():
@@ -106,11 +110,11 @@ GET_STARTED_DATA = {
 # SendGrid settings
 SEND_GRID_KEY = os.getenv('SEND_GRID_KEY', '')  # swept: value from env, see .env
 
-# Brand-aware transactional sender. Both gitzoid.com and waveassist.ai are verified senders in
-# Postmark (DKIM + Return-Path), so each brand sends from its own domain. DEFAULT_FROM_EMAIL is the
+# Brand-aware transactional sender. Both gitzoid.com and waveassist.ai are verified domains in
+# Resend (DKIM + SPF), so each brand sends from its own domain. DEFAULT_FROM_EMAIL is the
 # WaveAssist fallback used when a product is unknown/absent; resolve via utils.get_from_email().
 # A self-hosted deployment sending from its own domain sets WA_FROM_EMAIL (and must
-# verify that sender with its email provider / Postmark), e.g. "Acme <reports@acme.example>".
+# verify that domain with Resend), e.g. "Acme <reports@acme.example>".
 DEFAULT_FROM_EMAIL = os.getenv('WA_FROM_EMAIL', "WaveAssist <updates@waveassist.ai>")
 FROM_EMAIL_BY_PRODUCT = {
     "waveassist": DEFAULT_FROM_EMAIL,

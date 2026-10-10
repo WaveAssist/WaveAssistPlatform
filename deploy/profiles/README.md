@@ -48,7 +48,8 @@ nodes are fully deterministic need no LLM key.
 
 ## Email (reporting / notifications)
 
-Primary transport is Postmark (`POSTMARK_API_TOKEN` + a verified sender domain). The
+Primary transport is Resend (`RESEND_API_KEY` + a domain verified in Resend; optional
+`RESEND_API_KEY_GITZOID` for GitZoid sends). The
 fallback is SMTP — now configurable for a self-hosted relay via `WA_SMTP_SERVER` /
 `WA_SMTP_PORT` + `MAILER_LOGIN_EMAIL` / `MAILER_LOGIN_EMAIL_PASSWORD`. Set `WA_FROM_EMAIL`
 to a sender your provider will accept. With neither configured, sends fail loudly (no
