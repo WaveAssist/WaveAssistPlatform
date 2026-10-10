@@ -170,7 +170,7 @@ def get_started(request):  # TCW
     account_dict = account_object.get_dict()
     user_dict["mongo_db_url"] = account_object.mongo_db_url
     output_dict = {"user_data": user_dict, "account": account_dict, "project_array": []}
-    # Brand-aware welcome email, sent in-house via Postmark on a background thread so signup is
+    # Brand-aware welcome email, sent in-house via Resend on a background thread so signup is
     # never blocked or failed by mail delivery (replaces the former Knock "welcome" workflow).
     utils.send_welcome_email(user_object, product)
     handle_cli_session(request, user_dict)

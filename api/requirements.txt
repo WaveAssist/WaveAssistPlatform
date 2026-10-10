@@ -21,7 +21,6 @@ firebase-admin==6.1.0
 PyYAML==6.0.2
 sendgrid==6.12.3
 waveassist==0.8.12
-postmarker==1.0
 posthog==6.7.0
 authlib==1.6.4
 

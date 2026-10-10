@@ -11,10 +11,8 @@ from WaveAssistApiApp.Utils import runtime_flags as flags
 from django.views.decorators.http import require_POST
 from django.core.validators import validate_email
 from django.utils import timezone
-import mimetypes
 import base64
 import requests
-from postmarker.core import PostmarkClient
 from .models import Account, UsageLedger
 from .Utils import metering
 
@@ -66,9 +64,10 @@ def send_email(request):
         # Brand-aware sender: resolve the account's product so GitZoid projects send from the
         # GitZoid domain. Falls back to the WaveAssist default if the account can't be resolved.
         try:
-            from_email = utils.get_from_email(Account.objects.get(created_by_user=user_object).product)
+            product = Account.objects.get(created_by_user=user_object).product
         except Account.DoesNotExist:
-            from_email = DEFAULT_FROM_EMAIL
+            product = "waveassist"
+        from_email = utils.get_from_email(product)
 
         if not all([subject, html_content]):
             return ResponseParser.getParsedErrorMessage("Missing one or more required fields: subject, html_content")
@@ -93,9 +92,6 @@ def send_email(request):
                 f"Too many cc/bcc recipients (max {MAX_EXTRA_RECIPIENTS})."
             )
 
-        # Prepare Postmark client
-        client = PostmarkClient(server_token=POSTMARK_API_TOKEN)
-
         # Build attachment if present
         attachments = []
         if attachment_file:
@@ -105,40 +101,32 @@ def send_email(request):
                 )
             file_data = attachment_file.read()
             encoded_file = base64.b64encode(file_data).decode()
-            mime_type, _ = mimetypes.guess_type(attachment_file.name)
-            mime_type = mime_type or "application/octet-stream"
 
             attachments.append({
-                "Name": attachment_file.name,
-                "Content": encoded_file,
-                "ContentType": mime_type,
-                "ContentID": None
+                "filename": attachment_file.name,
+                "content": encoded_file,
             })
 
 
         try:
-            # Send the email. Cc/Bcc are only included when present (Postmark wants
-            # comma-separated strings) so the owner-only path is byte-for-byte unchanged.
-            send_kwargs = dict(
-                From=from_email,
-                To=to_email,
-                Subject=subject,
-                HtmlBody=html_content,
-                TrackOpens=True,
-                Attachments=attachments if attachments else None,
+            # Send the email. Cc/Bcc are only included when present.
+            utils.send_email_resend(
+                from_email,
+                to_email,
+                subject,
+                html_content,
+                cc=cc_list,
+                bcc=bcc_list,
+                attachments=attachments,
+                product=product,
             )
-            if cc_list:
-                send_kwargs["Cc"] = ",".join(cc_list)
-            if bcc_list:
-                send_kwargs["Bcc"] = ",".join(bcc_list)
-            client.emails.send(**send_kwargs)
             return ResponseParser.getParsedSuccessMessage(
                 {"status": "sent", "to_email": to_email, "cc": cc_list, "bcc": bcc_list},
                 '200',
-                "Email sent successfully via Postmark."
+                "Email sent successfully via Resend."
             )
         except Exception as primary_error:
-            # Postmark failed — try the SMTP backup. If THAT also fails we must report an
+            # Resend failed — try the SMTP backup. If THAT also fails we must report an
             # error, not success: a fake 200 here means silent data loss and defeats the
             # SDK's retry logic.
             backup_sent = send_email_backup(from_email=from_email,
@@ -149,12 +137,12 @@ def send_email(request):
                                             bcc=bcc_list)
             if not backup_sent:
                 return ResponseParser.getParsedErrorMessage(
-                    f"Email send failed via both Postmark and backup: {str(primary_error)}"
+                    f"Email send failed via both Resend and backup: {str(primary_error)}"
                 )
             return ResponseParser.getParsedSuccessMessage(
                 {"status": "sent_backup", "to_email": to_email, "cc": cc_list, "bcc": bcc_list},
                 '200',
-                "Email sent via backup method due to Postmark failure."
+                "Email sent via backup method due to Resend failure."
             )
     except Exception as e:
         return ResponseParser.getParsedErrorMessage(f"Error sending email: {str(e)}")
@@ -211,17 +199,10 @@ def _send_credits_notification(to_email):
     from_email = utils.get_from_email("waveassist")
     html_content = get_email_template_credits_expired()
     try:
-        client = PostmarkClient(server_token=POSTMARK_API_TOKEN)
-        client.emails.send(
-            From=from_email,
-            To=to_email,
-            Subject=subject,
-            HtmlBody=html_content,
-            TrackOpens=True,
-        )
+        utils.send_email_resend(from_email, to_email, subject, html_content, product="waveassist")
         utils.logger.info(f"Credits notification email sent to {to_email}")
     except Exception as e:
-        utils.logger.warning(f"Postmark failed for credits notification, trying backup: {e}")
+        utils.logger.warning(f"Resend failed for credits notification, trying backup: {e}")
         # Best-effort internal notification: a dual failure is logged, not raised, but we
         # must check the return value — send_email_backup reports failure as False.
         if not send_email_backup(
@@ -230,7 +211,7 @@ def _send_credits_notification(to_email):
             subject=subject,
             html_content=html_content,
         ):
-            utils.logger.error(f"Credits notification email failed entirely (Postmark: {e})")
+            utils.logger.error(f"Credits notification email failed entirely (Resend: {e})")
 
 
 def _send_trial_ended_email(to_email):
@@ -239,24 +220,17 @@ def _send_trial_ended_email(to_email):
     from_email = utils.get_from_email("gitzoid")
     html_content = get_email_template_trial_ended()
     try:
-        client = PostmarkClient(server_token=POSTMARK_API_TOKEN)
-        client.emails.send(
-            From=from_email,
-            To=to_email,
-            Subject=subject,
-            HtmlBody=html_content,
-            TrackOpens=True,
-        )
+        utils.send_email_resend(from_email, to_email, subject, html_content, product="gitzoid")
         utils.logger.info(f"Trial-ended email sent to {to_email}")
     except Exception as e:
-        utils.logger.warning(f"Postmark failed for trial-ended email, trying backup: {e}")
+        utils.logger.warning(f"Resend failed for trial-ended email, trying backup: {e}")
         if not send_email_backup(
             from_email=from_email,
             to_emails=to_email,
             subject=subject,
             html_content=html_content,
         ):
-            utils.logger.error(f"Trial-ended email failed entirely (Postmark: {e})")
+            utils.logger.error(f"Trial-ended email failed entirely (Resend: {e})")
 
 
 @require_POST

@@ -62,16 +62,49 @@ def get_from_email(product: str = "waveassist") -> str:
     """Brand-aware transactional From header.
 
     Resolves the sender for the given Account.product. Both brands' domains are verified in
-    Postmark, so each sends from its own domain. Any unknown/absent product falls back to the
+    Resend, so each sends from its own domain. Any unknown/absent product falls back to the
     WaveAssist sender, so a bad value can never produce an unverified From that would bounce."""
     return FROM_EMAIL_BY_PRODUCT.get(product or "waveassist", DEFAULT_FROM_EMAIL)
+
+
+def send_email_resend(from_email, to_email, subject, html_content, cc=None, bcc=None,
+                      attachments=None, product: str = "waveassist"):
+    """Send one email through Resend's HTTP API and return its Resend id.
+
+    Raises on any failure so callers can fall back to the SMTP backup. `attachments` items are
+    {"filename", "content"} with base64 content. GitZoid sends use RESEND_API_KEY_GITZOID when
+    set; everything else uses RESEND_API_KEY. Open tracking is a per-domain Resend setting."""
+    api_key = (RESEND_API_KEY_GITZOID if product == "gitzoid" else "") or RESEND_API_KEY
+    if not api_key:
+        raise Exception("RESEND_API_KEY is not set")
+    payload = {
+        "from": from_email,
+        "to": [to_email] if isinstance(to_email, str) else list(to_email),
+        "subject": subject,
+        "html": html_content,
+    }
+    if cc:
+        payload["cc"] = list(cc)
+    if bcc:
+        payload["bcc"] = list(bcc)
+    if attachments:
+        payload["attachments"] = attachments
+    response = requests.post(
+        RESEND_API_URL,
+        json=payload,
+        headers={"Authorization": f"Bearer {api_key}"},
+        timeout=30,
+    )
+    if response.status_code >= 300:
+        raise Exception(f"Resend error {response.status_code}: {response.text[:300]}")
+    return response.json().get("id")
 
 
 def send_welcome_email(user_object, product: str = "waveassist"):
     """Send the brand-aware welcome email to a newly-created user.
 
     Runs on a background thread so signup is never blocked or failed by mail delivery, mirroring
-    send_alert_email. Best-effort: Postmark first, SMTP backup on failure, and it never raises."""
+    send_alert_email. Best-effort: Resend first, SMTP backup on failure, and it never raises."""
 
     def _send():
         try:
@@ -83,14 +116,7 @@ def send_welcome_email(user_object, product: str = "waveassist"):
             html_content = get_email_template_welcome(product_key)
             from_email = get_from_email(product_key)
             try:
-                from postmarker.core import PostmarkClient
-                PostmarkClient(server_token=POSTMARK_API_TOKEN).emails.send(
-                    From=from_email,
-                    To=to_email,
-                    Subject=subject,
-                    HtmlBody=html_content,
-                    TrackOpens=True,
-                )
+                send_email_resend(from_email, to_email, subject, html_content, product=product_key)
             except Exception as primary_error:
                 # SMTP fallback lives in sdk_views; import lazily to avoid a circular import.
                 from WaveAssistApiApp.sdk_views import send_email_backup
